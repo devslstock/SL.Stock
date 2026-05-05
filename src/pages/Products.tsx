@@ -18,6 +18,8 @@ export default function Products() {
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [isStockEntryOpen, setIsStockEntryOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isImporting, setIsImporting] = useState(false)
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
@@ -85,9 +87,9 @@ export default function Products() {
     }
   }
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>, type: 'new' | 'stock') => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const executeImport = async (type: 'new' | 'stock') => {
+    if (!selectedFile) return
+    setIsImporting(true)
 
     const reader = new FileReader()
     reader.onload = async (evt) => {
@@ -104,7 +106,6 @@ export default function Products() {
         if (parts.length < 2) continue
 
         if (type === 'new') {
-          // Expected format: Cod Interno | Cod Principal (EAN) | Descrição
           if (parts[0]?.trim().toLowerCase().includes('cod interno')) continue // skip header
 
           const codInterno = parts[0]?.trim() || ''
@@ -114,7 +115,6 @@ export default function Products() {
           const qty = parseInt(parts[4]?.trim() || '0')
           const batch = parts[5]?.trim() || ''
 
-          // Use the EAN (Cod Principal) as the main code for scanning. If it doesn't exist, fallback to Cod Interno.
           const code = codPrincipal || codInterno
           const ext = codInterno !== code ? codInterno : ''
 
@@ -151,11 +151,13 @@ export default function Products() {
       }
 
       queryClient.invalidateQueries({ queryKey: ['products'] })
-      toast.success(type === 'new' ? `${count} produtos importados!` : `${count} estoques atualizados!`)
+      toast.success(type === 'new' ? `${count} produtos importados com sucesso!` : `${count} estoques atualizados com sucesso!`)
+      setSelectedFile(null)
+      setIsImporting(false)
       setIsImportOpen(false)
       setIsStockEntryOpen(false)
     }
-    reader.readAsText(file)
+    reader.readAsText(selectedFile)
   }
 
   return (
@@ -281,22 +283,34 @@ export default function Products() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+      <Dialog open={isImportOpen} onOpenChange={(open) => { setIsImportOpen(open); if(!open) setSelectedFile(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Importar Produtos (CSV / Excel)</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">Cole a sua planilha ou importe o arquivo (.csv, .txt).<br/>Formato esperado: <b>Cod Interno | Cod Principal (EAN) | Descrição</b></p>
-            <Input type="file" accept=".csv,.txt" onChange={(e) => handleImport(e, 'new')} />
+            <Input type="file" accept=".csv,.txt" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsImportOpen(false)}>Cancelar</Button>
+              <Button onClick={() => executeImport('new')} disabled={!selectedFile || isImporting}>
+                {isImporting ? 'Processando...' : 'Importar'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isStockEntryOpen} onOpenChange={setIsStockEntryOpen}>
+      <Dialog open={isStockEntryOpen} onOpenChange={(open) => { setIsStockEntryOpen(open); if(!open) setSelectedFile(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Entrada de Estoque (CSV)</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">Formato: Cód (ou Externo); Descrição (ignorada); Qtd a somar</p>
-            <Input type="file" accept=".csv,.txt" onChange={(e) => handleImport(e, 'stock')} />
+            <Input type="file" accept=".csv,.txt" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsStockEntryOpen(false)}>Cancelar</Button>
+              <Button onClick={() => executeImport('stock')} disabled={!selectedFile || isImporting}>
+                {isImporting ? 'Processando...' : 'Atualizar Estoque'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
