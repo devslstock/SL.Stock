@@ -1,5 +1,5 @@
 // ============================================
-// Database Types - Conferência Fácil
+// Database Types - Estoque Fácil
 // ============================================
 
 export type OperationType = 'LOAD' | 'INVENTORY' | 'BLIND_RECEIPT'

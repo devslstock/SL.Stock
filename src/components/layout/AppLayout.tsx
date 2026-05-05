@@ -32,7 +32,7 @@ export default function AppLayout() {
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <Boxes className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg gradient-text">Conferência Fácil</span>
+          <span className="font-bold text-lg gradient-text">Estoque Fácil</span>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -63,7 +63,7 @@ export default function AppLayout() {
             <Boxes className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-sm gradient-text">Conferência Fácil</h1>
+            <h1 className="font-bold text-sm gradient-text">Estoque Fácil</h1>
             <p className="text-xs text-muted-foreground">Logística Inteligente</p>
           </div>
         </div>
