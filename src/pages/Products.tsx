@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { mockProducts } from '@/data/mockData'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { productsApi } from '@/api/products'
 import type { Product } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,24 +9,50 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from '@/components/ui/toaster'
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Search,
-  Package,
-  Upload,
-  Archive,
-  FileDown,
-} from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown } from 'lucide-react'
 
 export default function Products() {
-  const [products, setProducts] = useState<Product[]>(mockProducts)
+  const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [isStockEntryOpen, setIsStockEntryOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: productsApi.getProducts,
+  })
+
+  const createMutation = useMutation({
+    mutationFn: productsApi.createProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('Produto criado com sucesso')
+      setIsDialogOpen(false)
+      setEditingProduct(null)
+    },
+    onError: (e: any) => toast.error(`Erro ao criar: ${e.message}`)
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: Partial<Product> }) => productsApi.updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('Produto atualizado com sucesso')
+      setIsDialogOpen(false)
+      setEditingProduct(null)
+    },
+    onError: (e: any) => toast.error(`Erro ao atualizar: ${e.message}`)
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: productsApi.deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.info('Produto removido')
+    }
+  })
 
   const filtered = products.filter(p =>
     p.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,44 +63,34 @@ export default function Products() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const data: Partial<Product> = {
+    const data = {
       code: formData.get('code') as string,
       external_code: formData.get('external_code') as string,
       description: formData.get('description') as string,
       stock: Number(formData.get('stock')),
-      group: formData.get('group') as string,
+      group_name: formData.get('group_name') as string,
       batch: formData.get('batch') as string,
     }
 
     if (editingProduct) {
-      setProducts(prev =>
-        prev.map(p => p.id === editingProduct.id ? { ...p, ...data } as Product : p)
-      )
-      toast.success('Produto atualizado com sucesso')
+      updateMutation.mutate({ id: editingProduct.id, data })
     } else {
-      const newProduct: Product = {
-        id: `p${Date.now()}`,
-        ...data,
-        created_at: new Date().toISOString(),
-      } as Product
-      setProducts(prev => [...prev, newProduct])
-      toast.success('Produto criado com sucesso')
+      createMutation.mutate(data)
     }
-    setIsDialogOpen(false)
-    setEditingProduct(null)
   }
 
   const handleDelete = (id: string) => {
-    setProducts(prev => prev.filter(p => p.id !== id))
-    toast.info('Produto removido')
+    if (window.confirm('Tem certeza que deseja remover este produto?')) {
+      deleteMutation.mutate(id)
+    }
   }
 
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>, type: 'new' | 'stock') => {
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>, type: 'new' | 'stock') => {
     const file = e.target.files?.[0]
     if (!file) return
 
     const reader = new FileReader()
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       const text = evt.target?.result as string
       const lines = text.split('\n')
       let count = 0
@@ -89,38 +106,43 @@ export default function Products() {
           const code = parts[0]?.trim()
           const ext = parts[1]?.trim()
           const desc = parts[2]?.trim()
-          const group = parts[3]?.trim()
+          const group_name = parts[3]?.trim()
           const qty = parseInt(parts[4]?.trim() || '0')
           const batch = parts[5]?.trim()
 
           if (code && desc) {
-            setProducts(prev => [...prev, {
-              id: `imp${Date.now()}-${count}`,
-              code,
-              external_code: ext,
-              description: desc,
-              group,
-              stock: qty,
-              batch,
-              created_at: new Date().toISOString(),
-            }])
-            count++
+            try {
+              await productsApi.createProduct({
+                code,
+                external_code: ext,
+                description: desc,
+                group_name,
+                stock: qty,
+                batch,
+              })
+              count++
+            } catch (err) {
+              console.error(err)
+            }
           }
         } else {
           const codeOrExt = parts[0]?.trim()
           const qtyToAdd = parseInt(parts[2]?.trim() || '0')
           if (codeOrExt && qtyToAdd) {
-            setProducts(prev => prev.map(p => {
-              if (p.code === codeOrExt || p.external_code === codeOrExt) {
+            const prod = products.find(p => p.code === codeOrExt || p.external_code === codeOrExt)
+            if (prod) {
+              try {
+                await productsApi.updateProduct(prod.id, { stock: (prod.stock || 0) + qtyToAdd })
                 count++
-                return { ...p, stock: (p.stock || 0) + qtyToAdd }
+              } catch (err) {
+                console.error(err)
               }
-              return p
-            }))
+            }
           }
         }
       }
 
+      queryClient.invalidateQueries({ queryKey: ['products'] })
       toast.success(type === 'new' ? `${count} produtos importados!` : `${count} estoques atualizados!`)
       setIsImportOpen(false)
       setIsStockEntryOpen(false)
@@ -130,7 +152,6 @@ export default function Products() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
@@ -151,18 +172,11 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por código ou descrição..."
-          className="pl-10"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        <Input placeholder="Buscar por código ou descrição..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
 
-      {/* Table */}
       <div className="glass-card overflow-hidden">
         <Table>
           <TableHeader>
@@ -175,7 +189,9 @@ export default function Products() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">Carregando...</TableCell></TableRow>
+            ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                   <FileDown className="h-8 w-8 mx-auto mb-2 opacity-30" />
@@ -187,15 +203,11 @@ export default function Products() {
                 <TableRow key={product.id}>
                   <TableCell className="font-mono text-sm">
                     <div className="text-foreground">{product.code}</div>
-                    {product.external_code && (
-                      <div className="text-xs text-muted-foreground">{product.external_code}</div>
-                    )}
+                    {product.external_code && <div className="text-xs text-muted-foreground">{product.external_code}</div>}
                   </TableCell>
                   <TableCell className="font-medium">{product.description}</TableCell>
                   <TableCell>
-                    {product.group && (
-                      <Badge variant="secondary">{product.group}</Badge>
-                    )}
+                    {product.group_name && <Badge variant="secondary">{product.group_name}</Badge>}
                   </TableCell>
                   <TableCell>
                     <Badge variant={product.stock >= 10 ? 'success' : product.stock >= 3 ? 'warning' : 'destructive'}>
@@ -204,18 +216,10 @@ export default function Products() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => { setEditingProduct(product); setIsDialogOpen(true); }}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(product); setIsDialogOpen(true); }}>
                         <Pencil className="h-4 w-4 text-muted-foreground" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(product.id)}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} disabled={deleteMutation.isPending}>
                         <Trash2 className="h-4 w-4 text-red-400" />
                       </Button>
                     </div>
@@ -227,7 +231,6 @@ export default function Products() {
         </Table>
       </div>
 
-      {/* Product Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingProduct(null); }}>
         <DialogContent>
           <DialogHeader>
@@ -250,8 +253,8 @@ export default function Products() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="group">Grupo</Label>
-                <Input id="group" name="group" defaultValue={editingProduct?.group} />
+                <Label htmlFor="group_name">Grupo</Label>
+                <Input id="group_name" name="group_name" defaultValue={editingProduct?.group_name} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="batch">Lote</Label>
@@ -264,37 +267,27 @@ export default function Products() {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit">Salvar</Button>
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>Salvar</Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Import Dialog */}
       <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Importar Produtos (CSV)</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Importar Produtos (CSV)</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">
-              Formato: Código; Cód. Externo; Descrição; Grupo; Qtd; Lote
-            </p>
+            <p className="text-sm text-muted-foreground">Formato: Código; Cód. Externo; Descrição; Grupo; Qtd; Lote</p>
             <Input type="file" accept=".csv,.txt" onChange={(e) => handleImport(e, 'new')} />
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Stock Entry Dialog */}
       <Dialog open={isStockEntryOpen} onOpenChange={setIsStockEntryOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Entrada de Estoque (CSV)</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Entrada de Estoque (CSV)</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">
-              Formato: Cód (ou Externo); Descrição (ignorada); Qtd a somar
-            </p>
+            <p className="text-sm text-muted-foreground">Formato: Cód (ou Externo); Descrição (ignorada); Qtd a somar</p>
             <Input type="file" accept=".csv,.txt" onChange={(e) => handleImport(e, 'stock')} />
           </div>
         </DialogContent>

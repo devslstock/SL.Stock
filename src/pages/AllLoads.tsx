@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { mockOperations } from '@/data/mockData'
+import { useQuery } from '@tanstack/react-query'
+import { operationsApi } from '@/api/operations'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,7 +34,11 @@ export default function AllLoads() {
   const initialFilter = searchParams.get('status') || 'all'
   const [filter, setFilter] = useState(initialFilter)
   const [search, setSearch] = useState('')
-  const [operations] = useState(mockOperations)
+
+  const { data: operations = [], isLoading } = useQuery({
+    queryKey: ['operations'],
+    queryFn: operationsApi.getOperations,
+  })
 
   const filtered = useMemo(() => {
     return operations.filter(op => {
@@ -47,9 +52,10 @@ export default function AllLoads() {
     })
   }, [operations, filter, search])
 
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando cargas...</div>
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold gradient-text">Cargas</h1>
@@ -64,16 +70,10 @@ export default function AllLoads() {
         </Link>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por número, cliente ou motorista..."
-            className="pl-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <Input placeholder="Buscar por número, cliente ou motorista..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {filterOptions.map((opt) => (
@@ -92,7 +92,6 @@ export default function AllLoads() {
         </div>
       </div>
 
-      {/* Operations List */}
       <div className="space-y-2">
         {filtered.length === 0 ? (
           <div className="glass-card text-center py-16">
@@ -103,16 +102,8 @@ export default function AllLoads() {
           filtered.map((op, index) => {
             const config = statusConfig[op.status]
             return (
-              <Link
-                key={op.id}
-                to={`/conferencia/${op.id}`}
-                className="block group"
-              >
-                <div
-                  className="glass-card glass-card-hover p-4 flex items-center gap-4 slide-up"
-                  style={{ animationDelay: `${index * 60}ms` }}
-                >
-                  {/* Status Icon */}
+              <Link key={op.id} to={`/conferencia/${op.id}`} className="block group">
+                <div className="glass-card glass-card-hover p-4 flex items-center gap-4 slide-up" style={{ animationDelay: `${index * 60}ms` }}>
                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
                     op.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' :
                     op.status === 'in_progress' ? 'bg-violet-500/15 text-violet-400' :
@@ -120,26 +111,19 @@ export default function AllLoads() {
                   }`}>
                     {config && <config.icon className="h-5 w-5" />}
                   </div>
-
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="font-bold text-foreground">{op.load_number}</span>
-                      <Badge variant={config?.variant || 'default'}>
-                        {config?.label || op.status}
-                      </Badge>
+                      <Badge variant={config?.variant || 'default'}>{config?.label || op.status}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{op.client_name}</p>
                     {op.driver_name && (
                       <div className="flex gap-3 mt-1 text-xs text-muted-foreground/60">
-                        <span className="flex items-center gap-1">
-                          <Truck className="h-3 w-3" /> {op.vehicle_plate}
-                        </span>
+                        <span className="flex items-center gap-1"><Truck className="h-3 w-3" /> {op.vehicle_plate}</span>
                         <span>{op.driver_name}</span>
                       </div>
                     )}
                   </div>
-
                   <ChevronRight className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0" />
                 </div>
               </Link>

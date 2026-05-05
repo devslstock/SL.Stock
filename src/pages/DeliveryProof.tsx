@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { mockOperations } from '@/data/mockData'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { operationsApi } from '@/api/operations'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
@@ -9,10 +10,29 @@ import { ArrowLeft, FileSignature, Check, RotateCcw } from 'lucide-react'
 export default function DeliveryProof() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasSignature, setHasSignature] = useState(false)
-  const op = mockOperations.find(o => o.id === id)
+  
+  const { data: op, isLoading } = useQuery({
+    queryKey: ['operation', id],
+    queryFn: () => operationsApi.getOperation(id!),
+    enabled: !!id,
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: () => operationsApi.updateOperationStatus(id!, 'completed', new Date().toISOString()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operations'] })
+      queryClient.invalidateQueries({ queryKey: ['operation', id] })
+      toast.success('Comprovante de entrega registrado e operação finalizada!')
+      setTimeout(() => navigate('/'), 1500)
+    },
+    onError: (e: any) => {
+      toast.error(`Erro ao finalizar operação: ${e.message}`)
+    }
+  })
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -27,7 +47,7 @@ export default function DeliveryProof() {
     ctx.lineJoin = 'round'
     ctx.lineWidth = 2.5
     ctx.strokeStyle = '#818cf8'
-  }, [])
+  }, [isLoading]) // Re-run when canvas mounts
 
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current!
@@ -72,9 +92,10 @@ export default function DeliveryProof() {
 
   const handleConfirm = () => {
     if (!hasSignature) { toast.warning('Assine antes de confirmar'); return }
-    toast.success('Comprovante de entrega registrado!')
-    setTimeout(() => navigate('/'), 1500)
+    updateMutation.mutate()
   }
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando dados...</div>
 
   if (!op) return (
     <div className="text-center py-16 text-muted-foreground">Operação não encontrada</div>
@@ -116,7 +137,7 @@ export default function DeliveryProof() {
             <Button type="button" variant="outline" className="flex-1" onClick={clearCanvas}>
               <RotateCcw className="h-4 w-4 mr-1.5" /> Limpar
             </Button>
-            <Button className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 glow-success" onClick={handleConfirm}>
+            <Button className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 glow-success" onClick={handleConfirm} disabled={updateMutation.isPending}>
               <Check className="h-4 w-4 mr-1.5" /> Confirmar Entrega
             </Button>
           </div>

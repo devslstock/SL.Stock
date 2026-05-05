@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { usersApi } from '@/api/users'
+import type { User, UserRole } from '@/types/database'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,46 +10,77 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/toaster'
 import { ShieldCheck, Plus, Pencil, Trash2, UserCircle } from 'lucide-react'
-import type { User, UserRole } from '@/types/database'
-
-const mockUsers: User[] = [
-  { id: '1', name: 'Admin Master', email: 'admin@confacil.com', role: 'admin', active: true, created_at: '2024-01-01' },
-  { id: '2', name: 'João Silva', email: 'joao@confacil.com', role: 'operator', active: true, created_at: '2024-01-10' },
-  { id: '3', name: 'Maria Oliveira', email: 'maria@confacil.com', role: 'driver', active: true, created_at: '2024-01-15' },
-  { id: '4', name: 'Carlos Souza', email: 'carlos@confacil.com', role: 'operator', active: false, created_at: '2024-01-20' },
-]
 
 const roleLabels: Record<UserRole, string> = { admin: 'Administrador', operator: 'Operador', driver: 'Motorista' }
 const roleVariants: Record<UserRole, 'default' | 'success' | 'warning'> = { admin: 'default', operator: 'success', driver: 'warning' }
 
 export default function AccessControl() {
-  const [users, setUsers] = useState<User[]>(mockUsers)
+  const queryClient = useQueryClient()
   const [isOpen, setIsOpen] = useState(false)
   const [editing, setEditing] = useState<User | null>(null)
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: usersApi.getUsers,
+  })
+
+  const createMutation = useMutation({
+    mutationFn: usersApi.createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('Usuário criado')
+      setIsOpen(false)
+      setEditing(null)
+    },
+    onError: (e: any) => toast.error(`Erro ao criar: ${e.message}`)
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: Partial<User> }) => usersApi.updateUser(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('Usuário atualizado')
+      setIsOpen(false)
+      setEditing(null)
+    },
+    onError: (e: any) => toast.error(`Erro ao atualizar: ${e.message}`)
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: usersApi.deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.info('Usuário removido')
+    }
+  })
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-    const data = { name: fd.get('name') as string, email: fd.get('email') as string, role: fd.get('role') as UserRole }
-    if (editing) {
-      setUsers(prev => prev.map(u => u.id === editing.id ? { ...u, ...data } : u))
-      toast.success('Usuário atualizado')
-    } else {
-      setUsers(prev => [...prev, { id: `u${Date.now()}`, ...data, active: true, created_at: new Date().toISOString() }])
-      toast.success('Usuário criado')
+    const data = { 
+      name: fd.get('name') as string, 
+      email: fd.get('email') as string, 
+      role: fd.get('role') as UserRole 
     }
-    setIsOpen(false)
-    setEditing(null)
+    
+    if (editing) {
+      updateMutation.mutate({ id: editing.id, data })
+    } else {
+      createMutation.mutate({ ...data, active: true })
+    }
   }
 
-  const toggleActive = (id: string) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, active: !u.active } : u))
+  const toggleActive = (id: string, currentActive: boolean) => {
+    updateMutation.mutate({ id, data: { active: !currentActive } })
   }
 
   const deleteUser = (id: string) => {
-    setUsers(prev => prev.filter(u => u.id !== id))
-    toast.info('Usuário removido')
+    if (window.confirm('Tem certeza que deseja remover este usuário?')) {
+      deleteMutation.mutate(id)
+    }
   }
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando usuários...</div>
 
   return (
     <div className="space-y-6">
@@ -76,14 +110,19 @@ export default function AccessControl() {
               </div>
               <div className="flex gap-1 shrink-0">
                 <Button variant="ghost" size="icon" onClick={() => { setEditing(user); setIsOpen(true) }}><Pencil className="h-3.5 w-3.5" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => toggleActive(user.id)}>
+                <Button variant="ghost" size="icon" onClick={() => toggleActive(user.id, user.active)}>
                   <div className={`h-3 w-3 rounded-full ${user.active ? 'bg-emerald-400' : 'bg-muted-foreground'}`} />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => deleteUser(user.id)}><Trash2 className="h-3.5 w-3.5 text-red-400" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => deleteUser(user.id)} disabled={deleteMutation.isPending}><Trash2 className="h-3.5 w-3.5 text-red-400" /></Button>
               </div>
             </CardContent>
           </Card>
         ))}
+        {users.length === 0 && (
+          <div className="col-span-2 text-center py-8 text-muted-foreground glass-card">
+            Nenhum usuário cadastrado.
+          </div>
+        )}
       </div>
 
       <Dialog open={isOpen} onOpenChange={o => { setIsOpen(o); if (!o) setEditing(null) }}>
@@ -102,7 +141,7 @@ export default function AccessControl() {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancelar</Button>
-              <Button type="submit">Salvar</Button>
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>Salvar</Button>
             </div>
           </form>
         </DialogContent>

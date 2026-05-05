@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mockProducts } from '@/data/mockData'
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { operationsApi } from '@/api/operations'
+import { productsApi } from '@/api/products'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +12,7 @@ import { ArrowLeft, Plus, Trash2, ClipboardList, Truck, User, Search } from 'luc
 
 interface NewItem {
   tempId: string
+  product_id: string
   product_code: string
   description: string
   quantity_expected: number
@@ -25,11 +28,27 @@ export default function CreateLoad() {
   const [items, setItems] = useState<NewItem[]>([])
   const [codeSearch, setCodeSearch] = useState('')
 
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: productsApi.getProducts,
+  })
+
+  const createMutation = useMutation({
+    mutationFn: (data: { op: any, items: any }) => operationsApi.createOperation(data.op, data.items),
+    onSuccess: () => {
+      toast.success('Carga criada com sucesso!')
+      navigate('/cargas')
+    },
+    onError: (error: any) => {
+      toast.error(`Erro ao criar carga: ${error.message}`)
+    }
+  })
+
   const addItem = () => {
-    const product = mockProducts.find(p => p.code === codeSearch || p.external_code === codeSearch)
+    const product = products.find(p => p.code === codeSearch || p.external_code === codeSearch)
     if (!product) { toast.error('Produto não encontrado'); return }
     if (items.find(i => i.product_code === product.code)) { toast.warning('Produto já adicionado'); return }
-    setItems(prev => [...prev, { tempId: `t${Date.now()}`, product_code: product.code, description: product.description, quantity_expected: 1 }])
+    setItems(prev => [...prev, { tempId: `t${Date.now()}`, product_id: product.id, product_code: product.code, description: product.description, quantity_expected: 1 }])
     setCodeSearch('')
     toast.success(`${product.description} adicionado`)
   }
@@ -48,8 +67,27 @@ export default function CreateLoad() {
       toast.error('Preencha todos os campos obrigatórios e adicione itens')
       return
     }
-    toast.success('Carga criada com sucesso!')
-    navigate('/cargas')
+
+    const opData = {
+      type: 'LOAD' as const,
+      status: 'pending' as const,
+      load_number: loadNumber,
+      client_name: clientName,
+      driver_name: driverName,
+      vehicle_plate: vehiclePlate,
+      notes,
+    }
+
+    const itemsData = items.map(i => ({
+      product_id: i.product_id,
+      product_code: i.product_code,
+      description: i.description,
+      quantity_expected: i.quantity_expected,
+      quantity_scanned: 0,
+      status: 'pending' as const
+    }))
+
+    createMutation.mutate({ op: opData, items: itemsData })
   }
 
   return (
@@ -116,7 +154,9 @@ export default function CreateLoad() {
           </CardContent>
         </Card>
 
-        <Button type="submit" className="w-full h-12 text-lg">Criar Carga</Button>
+        <Button type="submit" className="w-full h-12 text-lg" disabled={createMutation.isPending}>
+          {createMutation.isPending ? 'Criando...' : 'Criar Carga'}
+        </Button>
       </form>
     </div>
   )

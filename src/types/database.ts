@@ -21,7 +21,7 @@ export interface Product {
   code: string
   external_code?: string
   description: string
-  group?: string
+  group_name?: string
   stock: number
   batch?: string
   unit_weight?: number

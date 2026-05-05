@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { mockOperations, mockOperationItems } from '@/data/mockData'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { operationsApi } from '@/api/operations'
 import type { OperationItem } from '@/types/database'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,12 +14,32 @@ import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check
 export default function Conference() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const scanRef = useRef<HTMLInputElement>(null)
+  
   const [scanInput, setScanInput] = useState('')
   const [activeTab, setActiveTab] = useState('scan')
   const [lastScanned, setLastScanned] = useState<OperationItem | null>(null)
-  const [items, setItems] = useState<OperationItem[]>(() => mockOperationItems.filter(i => i.operation_id === id))
-  const op = mockOperations.find(o => o.id === id)
+
+  const { data: op, isLoading: isOpLoading } = useQuery({
+    queryKey: ['operation', id],
+    queryFn: () => operationsApi.getOperation(id!),
+    enabled: !!id,
+  })
+
+  const { data: items = [], isLoading: isItemsLoading } = useQuery({
+    queryKey: ['operation_items', id],
+    queryFn: () => operationsApi.getOperationItems(id!),
+    enabled: !!id,
+  })
+
+  const updateItemMutation = useMutation({
+    mutationFn: ({ itemId, qty, status }: { itemId: string, qty: number, status: OperationItem['status'] }) => 
+      operationsApi.updateItemQuantity(itemId, qty, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
+    }
+  })
 
   useEffect(() => { if (activeTab === 'scan') scanRef.current?.focus() }, [activeTab])
 
@@ -27,18 +48,40 @@ export default function Conference() {
     if (!scanInput.trim()) return
     const code = scanInput.trim()
     setScanInput('')
+    
     const item = items.find(i => i.product_code === code)
     if (!item) { toast.error(`Produto não encontrado: ${code}`); return }
+    
     const cur = item.quantity_scanned || 0
     if (cur >= item.quantity_expected) { toast.warning(`${item.description}: Já atingido!`); return }
+    
     const nq = cur + 1
     const ns = nq === item.quantity_expected ? 'ok' : 'pending'
+    
     if (ns === 'ok') toast.success(`${item.description}: Conferido! ✓`)
     else toast.info(`${item.description}: +1 (${nq}/${item.quantity_expected})`)
+    
     const updated = { ...item, quantity_scanned: nq, status: ns } as OperationItem
-    setItems(prev => prev.map(i => i.id === item.id ? updated : i))
+    
+    // Optimistic UI update via state is tricky with RQ without setQueryData, 
+    // but we can rely on the fast invalidation or update the cache directly.
+    queryClient.setQueryData(['operation_items', id], (old: OperationItem[]) => 
+      old.map(i => i.id === item.id ? updated : i)
+    )
+    
     setLastScanned(updated)
+    updateItemMutation.mutate({ itemId: item.id, qty: nq, status: ns })
   }
+
+  if (isOpLoading || isItemsLoading) return <div className="p-8 text-center text-muted-foreground">Carregando conferência...</div>
+
+  if (!op) return (
+    <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+      <AlertTriangle className="h-10 w-10 mb-3 opacity-30" />
+      <p>Operação não encontrada</p>
+      <Button variant="outline" className="mt-4" onClick={() => navigate('/cargas')}>Voltar</Button>
+    </div>
+  )
 
   const progress = () => {
     if (!items.length) return 0
@@ -46,6 +89,7 @@ export default function Conference() {
     const s = items.reduce((a, i) => a + (i.quantity_scanned || 0), 0)
     return Math.min(Math.round((s / t) * 100), 100)
   }
+  
   const totalS = items.reduce((a, i) => a + (i.quantity_scanned || 0), 0)
   const totalE = items.reduce((a, i) => a + i.quantity_expected, 0)
 
@@ -57,14 +101,6 @@ export default function Conference() {
     }
     navigate(`/comprovante/${id}`)
   }
-
-  if (!op) return (
-    <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-      <AlertTriangle className="h-10 w-10 mb-3 opacity-30" />
-      <p>Operação não encontrada</p>
-      <Button variant="outline" className="mt-4" onClick={() => navigate('/cargas')}>Voltar</Button>
-    </div>
-  )
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-120px)]">
@@ -106,7 +142,7 @@ export default function Conference() {
                   <ScanLine className="absolute left-3 top-3.5 h-5 w-5 text-primary/50 scan-pulse" />
                   <Input ref={scanRef} value={scanInput} onChange={e => setScanInput(e.target.value)} placeholder="Bipar código..." className="pl-11 h-12 text-lg font-mono" autoFocus />
                 </div>
-                <Button type="submit" size="icon" className="h-12 w-12"><Search className="h-5 w-5" /></Button>
+                <Button type="submit" size="icon" className="h-12 w-12" disabled={updateItemMutation.isPending}><Search className="h-5 w-5" /></Button>
               </form>
               <p className="text-xs text-muted-foreground text-center mt-2">Use câmera ou leitor bluetooth</p>
             </CardContent>
