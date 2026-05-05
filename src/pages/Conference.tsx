@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check, FileSignature, Zap, Truck } from 'lucide-react'
+import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check, FileSignature, Zap, Truck, Plus, Trash2 } from 'lucide-react'
 
 export default function Conference() {
   const { id } = useParams()
@@ -45,11 +46,26 @@ export default function Conference() {
   })
 
   const updateItemMutation = useMutation({
-    mutationFn: ({ itemId, qty, status }: { itemId: string, qty: number, status: OperationItem['status'] }) => 
-      operationsApi.updateItemQuantity(itemId, qty, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
-    }
+    mutationFn: ({ itemId, qty, expected, status }: { itemId: string, qty: number, expected?: number, status: OperationItem['status'] }) => 
+      expected !== undefined 
+        ? Promise.all([operationsApi.updateItemQuantity(itemId, qty, status), operationsApi.updateItemExpectedQty(itemId, expected)])
+        : operationsApi.updateItemQuantity(itemId, qty, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
+  })
+
+  const updateExpectedMutation = useMutation({
+    mutationFn: ({ itemId, qty }: { itemId: string, qty: number }) => operationsApi.updateItemExpectedQty(itemId, qty),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
+  })
+
+  const deleteItemMutation = useMutation({
+    mutationFn: operationsApi.deleteOperationItem,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
+  })
+
+  const addItemMutation = useMutation({
+    mutationFn: (item: Omit<OperationItem, 'id' | 'operation_id'>) => operationsApi.addOperationItem(id!, item),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
   })
 
   const updateOpMutation = useMutation({
@@ -60,6 +76,11 @@ export default function Conference() {
       queryClient.invalidateQueries({ queryKey: ['operations'] })
     }
   })
+
+  // List editing states
+  const [editingItem, setEditingItem] = useState<OperationItem | null>(null)
+  const [editQty, setEditQty] = useState(0)
+  const [addSearchTerm, setAddSearchTerm] = useState('')
 
   useEffect(() => { if (activeTab === 'scan' || activeTab === 'return') scanRef.current?.focus() }, [activeTab])
 
@@ -75,27 +96,51 @@ export default function Conference() {
       (matchedProduct && i.product_id === matchedProduct.id)
     )
     
-    if (!item) { toast.error(`Produto não encontrado na rota: ${code}`); return }
+    if (!item) { 
+      if (!matchedProduct) {
+        toast.error(`Produto não cadastrado no sistema: ${code}`)
+        return
+      }
+      const ok = window.confirm(`${matchedProduct.description} não está na rota. Deseja adicionar?`)
+      if (!ok) return
+      
+      const newItem = {
+        product_id: matchedProduct.id,
+        product_code: matchedProduct.code,
+        description: matchedProduct.description,
+        quantity_expected: 1,
+        quantity_scanned: 1,
+        status: 'ok' as const
+      }
+      addItemMutation.mutate(newItem)
+      toast.success(`${matchedProduct.description} adicionado à rota!`)
+      return 
+    }
     
     const cur = item.quantity_scanned || 0
-    if (cur >= item.quantity_expected) { toast.warning(`${item.description}: Já atingido!`); return }
+    let nextExpected = item.quantity_expected
+    
+    if (cur >= item.quantity_expected) { 
+      nextExpected = cur + 1
+      toast.info(`${item.description}: Quantidade extra adicionada à rota!`)
+    }
     
     const nq = cur + 1
-    const ns = nq === item.quantity_expected ? 'ok' : 'pending'
+    const ns = nq >= nextExpected ? 'ok' : 'pending'
     
-    if (ns === 'ok') toast.success(`${item.description}: Conferido! ✓`)
-    else toast.info(`${item.description}: +1 (${nq}/${item.quantity_expected})`)
+    if (cur < item.quantity_expected) {
+      if (ns === 'ok') toast.success(`${item.description}: Conferido! ✓`)
+      else toast.info(`${item.description}: +1 (${nq}/${nextExpected})`)
+    }
     
-    const updated = { ...item, quantity_scanned: nq, status: ns } as OperationItem
+    const updated = { ...item, quantity_scanned: nq, quantity_expected: nextExpected, status: ns } as OperationItem
     
-    // Optimistic UI update via state is tricky with RQ without setQueryData, 
-    // but we can rely on the fast invalidation or update the cache directly.
     queryClient.setQueryData(['operation_items', id], (old: OperationItem[]) => 
       old.map(i => i.id === item.id ? updated : i)
     )
     
     setLastScanned(updated)
-    updateItemMutation.mutate({ itemId: item.id, qty: nq, status: ns })
+    updateItemMutation.mutate({ itemId: item.id, qty: nq, expected: nextExpected, status: ns })
   }
 
   if (isOpLoading || isItemsLoading) return <div className="p-8 text-center text-muted-foreground">Carregando conferência...</div>
@@ -172,6 +217,48 @@ export default function Conference() {
     updateOpMutation.mutate({ status: 'completed' })
     toast.success('Rota finalizada!')
     navigate('/cargas')
+  }
+
+  const handleSaveEdit = () => {
+    if (!editingItem) return
+    if (editQty <= 0) {
+      handleDeleteItem(editingItem.id)
+      return
+    }
+    updateExpectedMutation.mutate({ itemId: editingItem.id, qty: editQty })
+    setEditingItem(null)
+    toast.success('Quantidade atualizada!')
+  }
+
+  const handleDeleteItem = (itemId: string) => {
+    if (window.confirm('Remover este item da rota?')) {
+      deleteItemMutation.mutate(itemId)
+      setEditingItem(null)
+      toast.info('Item removido')
+    }
+  }
+
+  const handleManualAdd = (productCodeOrName: string) => {
+    const term = productCodeOrName.toLowerCase()
+    const product = allProducts.find(p => p.code.toLowerCase() === term || p.external_code?.toLowerCase() === term || p.description.toLowerCase().includes(term))
+    if (!product) { toast.error('Produto não encontrado'); return }
+    
+    const exists = items.find(i => i.product_id === product.id)
+    if (exists) {
+      updateExpectedMutation.mutate({ itemId: exists.id, qty: exists.quantity_expected + 1 })
+      toast.success('Quantidade do item aumentada em 1')
+    } else {
+      addItemMutation.mutate({
+        product_id: product.id,
+        product_code: product.code,
+        description: product.description,
+        quantity_expected: 1,
+        quantity_scanned: 0,
+        status: 'pending'
+      })
+      toast.success('Produto adicionado à rota')
+    }
+    setAddSearchTerm('')
   }
 
   return (
@@ -294,25 +381,61 @@ export default function Conference() {
         )}
 
         <TabsContent value="list" className="flex-1 mt-4">
-          <div className="space-y-2 pb-20">
-            {items.map((item, i) => {
-              const done = item.quantity_scanned >= item.quantity_expected
-              return (
-                <div key={item.id} className={`glass-card p-3 flex items-center justify-between slide-up ${done ? 'border-emerald-500/20' : ''}`} style={{ animationDelay: `${i * 50}ms` }}>
-                  <div className="min-w-0 flex-1">
-                    <p className={`font-medium truncate ${done ? 'text-emerald-300' : 'text-foreground'}`}>{item.description}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{item.product_code}</p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-right">
-                      <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
-                      <span className="text-muted-foreground text-sm">/{item.quantity_expected}</span>
-                    </div>
-                    {done ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />}
-                  </div>
+          <div className="space-y-4 pb-20">
+            {op.status !== 'dispatched' && op.status !== 'completed' && (
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    value={addSearchTerm} 
+                    onChange={e => setAddSearchTerm(e.target.value)} 
+                    placeholder="Adicionar produto (código ou nome)..." 
+                    className="pl-9"
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleManualAdd(addSearchTerm) } }}
+                  />
                 </div>
-              )
-            })}
+                <Button onClick={() => handleManualAdd(addSearchTerm)}><Plus className="h-4 w-4" /></Button>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {items.map((item, i) => {
+                const done = item.quantity_scanned >= item.quantity_expected
+                const isEditing = editingItem?.id === item.id
+                
+                if (isEditing) {
+                  return (
+                    <div key={item.id} className="glass-card p-3 flex flex-col gap-3 border-primary/30">
+                      <p className="font-medium text-sm">{item.description}</p>
+                      <div className="flex items-center gap-3">
+                        <Label className="text-muted-foreground whitespace-nowrap">Qtd a Levar:</Label>
+                        <Input type="number" value={editQty} onChange={e => setEditQty(Number(e.target.value))} className="w-24 text-center font-bold" autoFocus />
+                        <div className="flex-1"></div>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
+                        <Button variant="ghost" onClick={() => setEditingItem(null)}>Cancelar</Button>
+                        <Button onClick={handleSaveEdit}>Salvar</Button>
+                      </div>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div key={item.id} className={`glass-card p-3 flex items-center justify-between slide-up ${done ? 'border-emerald-500/20' : ''}`} style={{ animationDelay: `${i * 50}ms` }} onClick={() => { if (op.status !== 'dispatched' && op.status !== 'completed') { setEditingItem(item); setEditQty(item.quantity_expected) }}}>
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-medium truncate ${done ? 'text-emerald-300' : 'text-foreground'}`}>{item.description}</p>
+                      <p className="text-xs text-muted-foreground font-mono">{item.product_code}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
+                        <span className="text-muted-foreground text-sm">/{item.quantity_expected}</span>
+                      </div>
+                      {done ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </TabsContent>
       </Tabs>

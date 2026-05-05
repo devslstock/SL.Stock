@@ -56,6 +56,36 @@ export const operationsApi = {
     return data as OperationItem
   },
 
+  async updateItemExpectedQty(itemId: string, quantity_expected: number) {
+    const { data, error } = await supabase
+      .from('operation_items')
+      .update({ quantity_expected })
+      .eq('id', itemId)
+      .select()
+      .single()
+    if (error) throw error
+    return data as OperationItem
+  },
+
+  async deleteOperationItem(itemId: string) {
+    const { error } = await supabase
+      .from('operation_items')
+      .delete()
+      .eq('id', itemId)
+    if (error) throw error
+    return true
+  },
+
+  async addOperationItem(operationId: string, item: Omit<OperationItem, 'id' | 'operation_id'>) {
+    const { data, error } = await supabase
+      .from('operation_items')
+      .insert([{ ...item, operation_id: operationId }])
+      .select()
+      .single()
+    if (error) throw error
+    return data as OperationItem
+  },
+
   async createOperation(operation: Omit<Operation, 'id' | 'created_at'>, items: Omit<OperationItem, 'id' | 'operation_id'>[]) {
     // Start a transaction-like flow
     const { data: opData, error: opError } = await supabase

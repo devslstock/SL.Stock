@@ -46,12 +46,18 @@ export default function CreateLoad() {
   })
 
   const addItem = () => {
-    const product = products.find(p => p.code === codeSearch || p.external_code === codeSearch)
+    const term = codeSearch.trim().toLowerCase()
+    const product = products.find(p => p.code.toLowerCase() === term || p.external_code?.toLowerCase() === term || p.description.toLowerCase().includes(term))
     if (!product) { toast.error('Produto não encontrado'); return }
-    if (items.find(i => i.product_code === product.code)) { toast.warning('Produto já adicionado'); return }
-    setItems(prev => [...prev, { tempId: `t${Date.now()}`, product_id: product.id, product_code: product.code, description: product.description, quantity_expected: 1 }])
+    const exists = items.find(i => i.product_code === product.code)
+    if (exists) {
+      setItems(prev => prev.map(i => i.product_code === product.code ? { ...i, quantity_expected: i.quantity_expected + 1 } : i))
+      toast.success(`Quantidade aumentada para ${product.description}`)
+    } else {
+      setItems(prev => [...prev, { tempId: `t${Date.now()}`, product_id: product.id, product_code: product.code, description: product.description, quantity_expected: 1 }])
+      toast.success(`${product.description} adicionado`)
+    }
     setCodeSearch('')
-    toast.success(`${product.description} adicionado`)
   }
 
   const updateQty = (tempId: string, qty: number) => {
