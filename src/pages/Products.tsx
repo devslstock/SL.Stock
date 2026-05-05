@@ -98,17 +98,19 @@ export default function Products() {
       for (const line of lines) {
         const trimmed = line.trim()
         if (!trimmed) continue
-        let parts = trimmed.split(';')
+        let parts = trimmed.split('\t')
+        if (parts.length < 2) parts = trimmed.split(';')
         if (parts.length < 2) parts = trimmed.split(',')
         if (parts.length < 2) continue
 
         if (type === 'new') {
+          // Expected format from user: EAN 13 (Code) | SKU's (Description) | DUN 14 (External Code)
           const code = parts[0]?.trim()
-          const ext = parts[1]?.trim()
-          const desc = parts[2]?.trim()
-          const group_name = parts[3]?.trim()
+          const desc = parts[1]?.trim()
+          const ext = parts[2]?.trim() || ''
+          const group_name = parts[3]?.trim() || ''
           const qty = parseInt(parts[4]?.trim() || '0')
-          const batch = parts[5]?.trim()
+          const batch = parts[5]?.trim() || ''
 
           if (code && desc) {
             try {
@@ -275,9 +277,9 @@ export default function Products() {
 
       <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Importar Produtos (CSV)</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Importar Produtos (CSV / Excel)</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">Formato: Código; Cód. Externo; Descrição; Grupo; Qtd; Lote</p>
+            <p className="text-sm text-muted-foreground">Cole a sua planilha ou importe o arquivo (.csv, .txt).<br/>Formato esperado: <b>Código (EAN) | Descrição | DUN14 (Opcional)</b></p>
             <Input type="file" accept=".csv,.txt" onChange={(e) => handleImport(e, 'new')} />
           </div>
         </DialogContent>
