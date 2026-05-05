@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
@@ -24,8 +24,25 @@ export default function CreateLoad() {
   const [loadNumber, setLoadNumber] = useState('')
   const [driverName, setDriverName] = useState('')
   const [vehiclePlate, setVehiclePlate] = useState('')
+  const [helperName, setHelperName] = useState('')
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<NewItem[]>([])
+  
+  // Lists for autocomplete
+  const [savedDrivers, setSavedDrivers] = useState<string[]>([])
+  const [savedVehicles, setSavedVehicles] = useState<string[]>([])
+  const [savedHelpers, setSavedHelpers] = useState<string[]>([])
+
+  useEffect(() => {
+    try {
+      const d = JSON.parse(localStorage.getItem('coletor_drivers') || '[]')
+      const v = JSON.parse(localStorage.getItem('coletor_vehicles') || '[]')
+      const h = JSON.parse(localStorage.getItem('coletor_helpers') || '[]')
+      if (Array.isArray(d)) setSavedDrivers(d)
+      if (Array.isArray(v)) setSavedVehicles(v)
+      if (Array.isArray(h)) setSavedHelpers(h)
+    } catch(e) {}
+  }, [])
   const [codeSearch, setCodeSearch] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -162,6 +179,25 @@ export default function CreateLoad() {
       return
     }
 
+    // Save new values to memory
+    if (driverName.trim() && !savedDrivers.includes(driverName.trim())) {
+      const newD = [...savedDrivers, driverName.trim()]
+      setSavedDrivers(newD)
+      localStorage.setItem('coletor_drivers', JSON.stringify(newD))
+    }
+    if (vehiclePlate.trim() && !savedVehicles.includes(vehiclePlate.trim())) {
+      const newV = [...savedVehicles, vehiclePlate.trim()]
+      setSavedVehicles(newV)
+      localStorage.setItem('coletor_vehicles', JSON.stringify(newV))
+    }
+    if (helperName.trim() && !savedHelpers.includes(helperName.trim())) {
+      const newH = [...savedHelpers, helperName.trim()]
+      setSavedHelpers(newH)
+      localStorage.setItem('coletor_helpers', JSON.stringify(newH))
+    }
+
+    const finalNotes = helperName.trim() ? `Ajudante: ${helperName.trim()}\n${notes}` : notes
+
     const opData = {
       type: 'LOAD' as const,
       status: 'pending' as const,
@@ -169,7 +205,7 @@ export default function CreateLoad() {
       client_name: 'Diversos', // Temporary default since we removed client
       driver_name: driverName,
       vehicle_plate: vehiclePlate,
-      notes,
+      notes: finalNotes,
     }
 
     const itemsData = items.map(i => ({
@@ -207,11 +243,36 @@ export default function CreateLoad() {
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Truck className="h-4 w-4 text-primary" />Transporte</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Motorista</Label><Input value={driverName} onChange={e => setDriverName(e.target.value)} placeholder="Nome" /></div>
-              <div className="space-y-2"><Label>Placa</Label><Input value={vehiclePlate} onChange={e => setVehiclePlate(e.target.value)} placeholder="ABC-1D23" /></div>
+            
+            {/* Hidden datalists for autocomplete */}
+            <datalist id="drivers-list">
+              {savedDrivers.map((d, i) => <option key={i} value={d} />)}
+            </datalist>
+            <datalist id="vehicles-list">
+              {savedVehicles.map((v, i) => <option key={i} value={v} />)}
+            </datalist>
+            <datalist id="helpers-list">
+              {savedHelpers.map((h, i) => <option key={i} value={h} />)}
+            </datalist>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Motorista</Label>
+                <Input list="drivers-list" value={driverName} onChange={e => setDriverName(e.target.value)} placeholder="Nome ou selecione" />
+              </div>
+              <div className="space-y-2">
+                <Label>Ajudante (Opcional)</Label>
+                <Input list="helpers-list" value={helperName} onChange={e => setHelperName(e.target.value)} placeholder="Nome ou selecione" />
+              </div>
+              <div className="space-y-2">
+                <Label>Veículo (Placa/Nome)</Label>
+                <Input list="vehicles-list" value={vehiclePlate} onChange={e => setVehiclePlate(e.target.value)} placeholder="ABC-1D23 ou FNM" />
+              </div>
+              <div className="space-y-2">
+                <Label>Observações</Label>
+                <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notas adicionais" />
+              </div>
             </div>
-            <div className="space-y-2"><Label>Observações</Label><Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notas adicionais" /></div>
           </CardContent>
         </Card>
 
