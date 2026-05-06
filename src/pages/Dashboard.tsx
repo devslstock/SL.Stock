@@ -2,10 +2,9 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import {
   Truck,
   PackageCheck,
@@ -13,9 +12,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Plus,
-  TrendingUp,
-  ScanLine,
-  BarChart3,
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -24,22 +20,19 @@ export default function Dashboard() {
     queryFn: operationsApi.getOperations,
   })
 
-  // We should theoretically load items for productivity stats, but for the dashboard
-  // we'll just mock the totalScanned / totalExpected until we have a real analytics endpoint.
-  // Or we can fetch all items if needed. For now, let's keep it static to avoid massive overfetching.
-  const totalScanned = 120
-  const totalExpected = 150
+  })
 
   const stats = useMemo(() => ({
     total: operations.length,
     pending: operations.filter(l => l.status === 'pending').length,
-    in_progress: operations.filter(l => l.status === 'in_progress').length,
+    dispatched: operations.filter(l => l.status === 'dispatched').length,
     completed: operations.filter(l => l.status === 'completed').length,
   }), [operations])
 
   const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success' }> = {
     pending: { label: 'Pendente', variant: 'warning' },
     in_progress: { label: 'Conferindo', variant: 'default' },
+    dispatched: { label: 'Em Rota', variant: 'warning' },
     completed: { label: 'Finalizada', variant: 'success' },
   }
 
@@ -64,39 +57,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatsCard title="Total" value={stats.total} icon={Truck} gradient="from-indigo-500/20 to-purple-500/20" iconColor="text-indigo-400" link="/cargas" />
         <StatsCard title="Pendente" value={stats.pending} icon={Clock} gradient="from-amber-500/20 to-orange-500/20" iconColor="text-amber-400" link="/cargas?status=pending" />
-        <StatsCard title="Em rota" value={stats.in_progress} icon={PackageCheck} gradient="from-violet-500/20 to-fuchsia-500/20" iconColor="text-violet-400" link="/cargas?status=in_progress" />
+        <StatsCard title="Em rota" value={stats.dispatched} icon={PackageCheck} gradient="from-violet-500/20 to-fuchsia-500/20" iconColor="text-violet-400" link="/cargas?status=dispatched" />
         <StatsCard title="Finalizado" value={stats.completed} icon={CheckCircle2} gradient="from-emerald-500/20 to-teal-500/20" iconColor="text-emerald-400" link="/cargas?status=completed" />
       </div>
-
-      <Card>
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              <span className="text-sm font-semibold text-foreground">Produtividade do Dia (Exemplo)</span>
-            </div>
-            <div className="flex items-center gap-1 text-emerald-400 text-sm">
-              <TrendingUp className="h-4 w-4" />
-              <span className="font-medium">+12%</span>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex-1">
-              <div className="flex justify-between text-sm mb-1.5">
-                <span className="text-muted-foreground">Itens bipados hoje</span>
-                <span className="font-bold text-foreground">{totalScanned} / {totalExpected}</span>
-              </div>
-              <Progress value={totalScanned} max={totalExpected} />
-            </div>
-            <div className="flex items-center gap-2 glass-card px-4 py-2">
-              <ScanLine className="h-4 w-4 text-primary" />
-              <span className="text-sm font-mono font-bold text-foreground">
-                {Math.round((totalScanned / Math.max(totalExpected, 1)) * 100)}%
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       <div>
         <div className="flex justify-between items-center mb-4">
