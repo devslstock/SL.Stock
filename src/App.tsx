@@ -27,6 +27,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/cargas" element={<AllLoads />} />
         <Route path="/nova-carga" element={<CreateLoad />} />
+        <Route path="/editar-carga/:id" element={<CreateLoad />} />
         <Route path="/conferencia/:id" element={<Conference />} />
         <Route path="/comprovante/:id" element={<DeliveryProof />} />
         <Route path="/produtos" element={<Products />} />

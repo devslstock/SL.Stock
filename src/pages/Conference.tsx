@@ -297,6 +297,17 @@ export default function Conference() {
             <h1 className="text-lg font-bold text-foreground truncate">{op.load_number}</h1>
             <span className="text-xs text-muted-foreground">{op.status === 'dispatched' ? 'Em Rota' : op.status === 'completed' ? 'Finalizada' : 'Em Separação'}</span>
           </div>
+          {op.status === 'pending' && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-primary hover:text-primary/80 hover:bg-primary/10 shrink-0" 
+              onClick={() => navigate(`/editar-carga/${id}`)}
+              title="Editar Rota"
+            >
+              <Pencil className="h-5 w-5" />
+            </Button>
+          )}
           <Button 
             variant="ghost" 
             size="icon" 

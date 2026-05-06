@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
 import { productsApi } from '@/api/products'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,9 @@ interface NewItem {
 }
 
 export default function CreateLoad() {
+  const { id } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [loadNumber, setLoadNumber] = useState('')
   const [driverName, setDriverName] = useState('')
   const [vehiclePlate, setVehiclePlate] = useState('')
@@ -51,6 +53,47 @@ export default function CreateLoad() {
     queryFn: productsApi.getProducts,
   })
 
+  const { data: existingOp } = useQuery({
+    queryKey: ['operation', id],
+    queryFn: () => operationsApi.getOperation(id!),
+    enabled: !!id,
+  })
+
+  const { data: existingItems = [] } = useQuery({
+    queryKey: ['operation_items', id],
+    queryFn: () => operationsApi.getOperationItems(id!),
+    enabled: !!id,
+  })
+
+  useEffect(() => {
+    if (existingOp) {
+      setLoadNumber(existingOp.load_number || '')
+      setDriverName(existingOp.driver_name || '')
+      setVehiclePlate(existingOp.vehicle_plate || '')
+      let n = existingOp.notes || ''
+      let h = ''
+      if (n.startsWith('Ajudante: ')) {
+        const lines = n.split('\n')
+        h = lines[0].replace('Ajudante: ', '').trim()
+        n = lines.slice(1).join('\n')
+      }
+      setHelperName(h)
+      setNotes(n)
+    }
+  }, [existingOp])
+
+  useEffect(() => {
+    if (existingItems.length > 0 && items.length === 0) {
+      setItems(existingItems.map((i, idx) => ({
+        tempId: `e${idx}`,
+        product_id: i.product_id,
+        product_code: i.product_code,
+        description: i.description,
+        quantity_expected: i.quantity_expected
+      })))
+    }
+  }, [existingItems])
+
   const createMutation = useMutation({
     mutationFn: (data: { op: any, items: any }) => operationsApi.createOperation(data.op, data.items),
     onSuccess: () => {
@@ -59,6 +102,19 @@ export default function CreateLoad() {
     },
     onError: (error: any) => {
       toast.error(`Erro ao criar carga: ${error.message}`)
+    }
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (data: { op: any, items: any }) => operationsApi.updateOperationFull(id!, data.op, data.items),
+    onSuccess: () => {
+      toast.success('Carga atualizada com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['operation', id] })
+      queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
+      navigate(`/conferencia/${id}`)
+    },
+    onError: (error: any) => {
+      toast.error(`Erro ao atualizar carga: ${error.message}`)
     }
   })
 
@@ -217,7 +273,11 @@ export default function CreateLoad() {
       status: 'pending' as const
     }))
 
-    createMutation.mutate({ op: opData, items: itemsData })
+    if (id) {
+      updateMutation.mutate({ op: opData, items: itemsData })
+    } else {
+      createMutation.mutate({ op: opData, items: itemsData })
+    }
   }
 
   return (
@@ -225,8 +285,8 @@ export default function CreateLoad() {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" /></Button>
         <div>
-          <h1 className="text-2xl font-bold gradient-text">Nova Rota</h1>
-          <p className="text-sm text-muted-foreground">Criar operação de expedição</p>
+          <h1 className="text-2xl font-bold gradient-text">{id ? 'Editar Rota' : 'Nova Rota'}</h1>
+          <p className="text-sm text-muted-foreground">{id ? 'Atualizar operação existente' : 'Criar operação de expedição'}</p>
         </div>
       </div>
 
@@ -318,8 +378,8 @@ export default function CreateLoad() {
           </CardContent>
         </Card>
 
-        <Button type="submit" className="w-full h-12 text-lg" disabled={createMutation.isPending}>
-          {createMutation.isPending ? 'Criando...' : 'Criar Rota'}
+        <Button type="submit" className="w-full h-12 text-lg" disabled={createMutation.isPending || updateMutation.isPending}>
+          {(createMutation.isPending || updateMutation.isPending) ? 'Salvando...' : (id ? 'Salvar Alterações' : 'Criar Rota')}
         </Button>
       </form>
     </div>

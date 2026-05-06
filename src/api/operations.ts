@@ -110,6 +110,49 @@ export const operationsApi = {
     return opData as Operation
   },
 
+  async updateOperationFull(id: string, opData: Partial<Operation>, itemsData: Omit<OperationItem, 'id' | 'operation_id'>[]) {
+    const { error: opError } = await supabase
+      .from('operations')
+      .update(opData)
+      .eq('id', id)
+    if (opError) throw opError
+
+    const { data: existingItems, error: existingError } = await supabase
+      .from('operation_items')
+      .select('*')
+      .eq('operation_id', id)
+    if (existingError) throw existingError
+
+    const existingMap = new Map(existingItems.map(i => [i.product_code, i]))
+    const newMap = new Map(itemsData.map(i => [i.product_code, i]))
+
+    // Items to delete
+    const toDelete = existingItems.filter(i => !newMap.has(i.product_code)).map(i => i.id)
+    if (toDelete.length > 0) {
+      await supabase.from('operation_items').delete().in('id', toDelete)
+    }
+
+    // Items to update and insert
+    const toInsert = []
+    for (const newItem of itemsData) {
+      const existing = existingMap.get(newItem.product_code)
+      if (existing) {
+        // Update expected quantity if changed
+        if (existing.quantity_expected !== newItem.quantity_expected) {
+          await supabase.from('operation_items').update({ quantity_expected: newItem.quantity_expected }).eq('id', existing.id)
+        }
+      } else {
+        toInsert.push({ ...newItem, operation_id: id })
+      }
+    }
+
+    if (toInsert.length > 0) {
+      await supabase.from('operation_items').insert(toInsert)
+    }
+
+    return true
+  },
+
   async deleteOperation(id: string) {
     // Excluir os itens primeiro para evitar problemas de constraint de chave estrangeira
     await supabase.from('operation_items').delete().eq('operation_id', id)
