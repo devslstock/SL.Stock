@@ -57,6 +57,21 @@ export default function Products() {
     }
   })
 
+  const deleteAllMutation = useMutation({
+    mutationFn: productsApi.deleteAllProducts,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('Todos os produtos foram removidos.')
+    },
+    onError: (e: any) => {
+      if (e.message?.includes('foreign key') || e.message?.includes('violates')) {
+        toast.error('Existem produtos vinculados a cargas. Exclua as cargas primeiro.')
+      } else {
+        toast.error(`Erro ao remover: ${e.message}`)
+      }
+    }
+  })
+
   const filtered = products.filter(p =>
     p.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -207,6 +222,13 @@ export default function Products() {
           <p className="text-sm text-muted-foreground mt-1">{products.length} produtos cadastrados</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => {
+            if (window.confirm('CUIDADO: Isso irá apagar TODOS os produtos cadastrados. Tem certeza que deseja continuar?')) {
+              deleteAllMutation.mutate()
+            }
+          }}>
+            <Trash2 className="h-4 w-4 mr-1.5" /> Limpar
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
             <Upload className="h-4 w-4 mr-1.5" /> Importar
           </Button>

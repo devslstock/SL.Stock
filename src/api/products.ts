@@ -41,6 +41,15 @@ export const productsApi = {
     return true
   },
 
+  async deleteAllProducts() {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000')
+    if (error) throw error
+    return true
+  },
+
   async incrementStockByCode(code: string, qtyToAdd: number) {
     const { data: prods, error: err1 } = await supabase
       .from('products')
