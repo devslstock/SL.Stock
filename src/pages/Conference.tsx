@@ -379,14 +379,19 @@ export default function Conference() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList>
-          {op.status !== 'dispatched' && op.status !== 'completed' && <TabsTrigger value="scan"><ScanLine className="h-4 w-4 mr-1.5" />Carregamento</TabsTrigger>}
-          {(op.status === 'dispatched' || activeTab === 'return') && <TabsTrigger value="return"><ArrowLeft className="h-4 w-4 mr-1.5" />Retorno</TabsTrigger>}
-          <TabsTrigger value="list"><CheckCircle2 className="h-4 w-4 mr-1.5" />Lista</TabsTrigger>
+          {op.status !== 'dispatched' && op.status !== 'completed' ? (
+             <TabsTrigger value="scan" className="flex-1"><ScanLine className="h-4 w-4 mr-1.5" />Conferência e Lista</TabsTrigger>
+          ) : (
+             <>
+               <TabsTrigger value="return"><ArrowLeft className="h-4 w-4 mr-1.5" />Retorno</TabsTrigger>
+               <TabsTrigger value="list"><CheckCircle2 className="h-4 w-4 mr-1.5" />Lista</TabsTrigger>
+             </>
+          )}
         </TabsList>
 
         {op.status !== 'dispatched' && op.status !== 'completed' && (
         <TabsContent value="scan" className="flex-1 flex flex-col gap-4 mt-4">
-          <Card className="border-primary/20">
+          <Card className="border-primary/20 shrink-0">
             <CardContent className="p-4">
               <form onSubmit={handleScan} className="flex gap-2">
                 <div className="relative flex-1">
@@ -399,8 +404,8 @@ export default function Conference() {
             </CardContent>
           </Card>
 
-          {lastScanned ? (
-            <div className={`glass-card p-4 flex items-center gap-4 slide-up ${lastScanned.status === 'ok' ? 'border-emerald-500/30' : ''}`}>
+          {lastScanned && (
+            <div className={`glass-card p-4 flex items-center gap-4 slide-up shrink-0 ${lastScanned.status === 'ok' ? 'border-emerald-500/30' : ''}`}>
               <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${lastScanned.status === 'ok' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-primary/15 text-primary'}`}>
                 {lastScanned.status === 'ok' ? <Check className="h-6 w-6" /> : <Zap className="h-6 w-6" />}
               </div>
@@ -412,14 +417,66 @@ export default function Conference() {
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/40 glass-card min-h-[200px]">
-              <Camera className="h-14 w-14 mb-3 opacity-30" />
-              <p className="text-sm">Aguardando leitura...</p>
-            </div>
           )}
 
-          <div className="mt-auto pt-4">
+          <div className="flex gap-2 shrink-0">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input 
+                value={addSearchTerm} 
+                onChange={e => setAddSearchTerm(e.target.value)} 
+                placeholder="Adicionar produto manualmente..." 
+                className="pl-9 bg-background/50"
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleManualAdd(addSearchTerm) } }}
+              />
+            </div>
+            <Button onClick={() => handleManualAdd(addSearchTerm)}><Plus className="h-4 w-4" /></Button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-2 pb-4 min-h-[200px]">
+            {regularItems.map((item, i) => {
+              const done = item.quantity_scanned >= item.quantity_expected
+              const isEditing = editingItem?.id === item.id
+              
+              if (isEditing) {
+                return (
+                  <div key={item.id} className="glass-card p-3 flex flex-col gap-3 border-primary/30">
+                    <p className="font-medium text-sm">{item.description}</p>
+                    <div className="flex items-center gap-3">
+                      <Label className="text-muted-foreground whitespace-nowrap">Qtd a Levar:</Label>
+                      <Input type="number" value={editQty} onChange={e => setEditQty(Number(e.target.value))} className="w-24 text-center font-bold" autoFocus />
+                      <div className="flex-1"></div>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
+                      <Button variant="ghost" onClick={() => setEditingItem(null)}>Cancelar</Button>
+                      <Button onClick={handleSaveEdit}>Salvar</Button>
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <div key={item.id} className={`glass-card p-3 flex items-center justify-between slide-up ${done ? 'border-emerald-500/20' : ''}`} style={{ animationDelay: `${i * 10}ms` }}>
+                  <div className="min-w-0 flex-1">
+                    <p className={`font-medium truncate ${done ? 'text-emerald-300' : 'text-foreground'}`}>{item.description}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{item.product_code}</p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
+                      <span className="text-muted-foreground text-sm">/{item.quantity_expected}</span>
+                    </div>
+                    {done ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />}
+                    
+                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingItem(item); setEditQty(item.quantity_expected) }}>
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mt-auto pt-2 shrink-0 pb-4">
             <Button className="w-full h-12 text-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 glow-success" onClick={handleDispatch} disabled={dispatchMutation.isPending}>
               {dispatchMutation.isPending ? 'Despachando...' : <><Truck className="mr-2 h-5 w-5" /> Despachar Rota</>}
             </Button>
@@ -470,23 +527,9 @@ export default function Conference() {
         </TabsContent>
         )}
 
+        {(op.status === 'dispatched' || op.status === 'completed') && (
         <TabsContent value="list" className="flex-1 mt-4">
           <div className="space-y-4 pb-20">
-            {op.status !== 'dispatched' && op.status !== 'completed' && (
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    value={addSearchTerm} 
-                    onChange={e => setAddSearchTerm(e.target.value)} 
-                    placeholder="Adicionar produto (código ou nome)..." 
-                    className="pl-9"
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleManualAdd(addSearchTerm) } }}
-                  />
-                </div>
-                <Button onClick={() => handleManualAdd(addSearchTerm)}><Plus className="h-4 w-4" /></Button>
-              </div>
-            )}
 
             <div className="space-y-2">
               {regularItems.map((item, i) => {
@@ -558,6 +601,7 @@ export default function Conference() {
             </div>
           </div>
         </TabsContent>
+        )}
       </Tabs>
     </div>
   )
