@@ -187,11 +187,11 @@ export default function Products() {
         }
 
         queryClient.invalidateQueries({ queryKey: ['products'] })
-        
+
         if (errors > 0) {
           toast.error(`${errors} itens falharam. Último erro: ${lastError}`)
         }
-        
+
         if (count > 0) {
           toast.success(type === 'new' ? `${count} produtos importados com sucesso!` : `${count} estoques atualizados com sucesso!`)
         } else if (errors === 0) {
@@ -342,11 +342,11 @@ export default function Products() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isImportOpen} onOpenChange={(open) => { setIsImportOpen(open); if(!open) setSelectedFile(null); }}>
+      <Dialog open={isImportOpen} onOpenChange={(open) => { setIsImportOpen(open); if (!open) setSelectedFile(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Importar Produtos (CSV / Excel)</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">Cole a sua planilha ou importe o arquivo (.csv, .txt, .xlsx).<br/>Formato esperado: <b>Cod. | Descrição | Cod Externo (opcional) | Grupo (opcional) | Quantidade (opcional) | Lote (opcional)</b></p>
+            <p className="text-sm text-muted-foreground">Cole a sua planilha ou importe o arquivo (.csv, .txt, .xlsx).<br />Formato esperado: <b>Cod. | Descrição | Cod Externo (opcional) | Grupo (opcional) | Quantidade (opcional) | Lote (opcional)</b></p>
             <Input type="file" accept=".csv,.txt,.xls,.xlsx" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setIsImportOpen(false)}>Cancelar</Button>
@@ -358,7 +358,7 @@ export default function Products() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isStockEntryOpen} onOpenChange={(open) => { setIsStockEntryOpen(open); if(!open) setSelectedFile(null); }}>
+      <Dialog open={isStockEntryOpen} onOpenChange={(open) => { setIsStockEntryOpen(open); if (!open) setSelectedFile(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Entrada de Estoque (CSV)</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
