@@ -123,15 +123,18 @@ export default function Conference() {
 
   useEffect(() => { if (activeTab === 'scan' || activeTab === 'return') scanRef.current?.focus() }, [activeTab])
 
+  // Helper to strip non-alphanumeric characters and uppercase for comparison
+  const normalizeCode = (s: any) => s ? String(s).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
+
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault()
     if (!scanInput.trim()) return
-    const code = scanInput.trim()
-    setScanInput('')
-    
-    const matchedProduct = allProducts.find(p => p.code === code || p.external_code === code)
-    const item = items.find(i => 
-      i.product_code === code || 
+    const raw = scanInput.trim()
+    const code = normalizeCode(raw)
+    setScanInput('')    
+    const matchedProduct = allProducts.find(p => normalizeCode(p.code) === code || (p.external_code && normalizeCode(p.external_code) === code))
+    const item = items.find(i =>
+      normalizeCode(i.product_code) === code ||
       (matchedProduct && i.product_id === matchedProduct.id)
     )
     
@@ -195,15 +198,18 @@ export default function Conference() {
     </div>
   )
 
+  const regularItems = items.filter(i => !i.description.startsWith('🔄'));
+  const returnItemsList = items.filter(i => i.description.startsWith('🔄'));
+
   const progress = () => {
-    if (!items.length) return 0
-    const t = items.reduce((a, i) => a + i.quantity_expected, 0)
-    const s = items.reduce((a, i) => a + (i.quantity_scanned || 0), 0)
+    if (!regularItems.length) return 0
+    const t = regularItems.reduce((a, i) => a + i.quantity_expected, 0)
+    const s = regularItems.reduce((a, i) => a + (i.quantity_scanned || 0), 0)
     return Math.min(Math.round((s / t) * 100), 100)
   }
   
-  const totalS = items.reduce((a, i) => a + (i.quantity_scanned || 0), 0)
-  const totalE = items.reduce((a, i) => a + i.quantity_expected, 0)
+  const totalS = regularItems.reduce((a, i) => a + (i.quantity_scanned || 0), 0)
+  const totalE = regularItems.reduce((a, i) => a + i.quantity_expected, 0)
 
   const handleDispatch = () => {
     const missing = items.filter(i => i.quantity_scanned < i.quantity_expected)
@@ -217,12 +223,14 @@ export default function Conference() {
   const handleReturnScan = (e: React.FormEvent) => {
     e.preventDefault()
     if (!returnScanInput.trim()) return
-    const code = returnScanInput.trim()
+    const raw = returnScanInput.trim()
+    const code = normalizeCode(raw)
     setReturnScanInput('')
     
-    const matchedProduct = allProducts.find(p => p.code === code || p.external_code === code)
-    const item = items.find(i => 
-      i.product_code === code || i.product_id === code ||
+    const matchedProduct = allProducts.find(p => normalizeCode(p.code) === code || (p.external_code && normalizeCode(p.external_code) === code))
+    const item = items.find(i =>
+      normalizeCode(i.product_code) === code ||
+      i.product_id === code ||
       (matchedProduct && i.product_id === matchedProduct.id)
     )
     if (!item) { toast.error(`Produto não fazia parte da rota: ${code}`); return }
@@ -246,6 +254,17 @@ export default function Conference() {
       try {
         for (const [code, qty] of Object.entries(returnedItems)) {
           await productsApi.incrementStockByCode(code, qty)
+          const itemOrig = items.find(i => i.product_code === code)
+          if (itemOrig) {
+            await operationsApi.addOperationItem(id!, {
+              product_id: itemOrig.product_id,
+              product_code: itemOrig.product_code,
+              description: `🔄 Devolução: ${itemOrig.description}`,
+              quantity_expected: 0,
+              quantity_scanned: qty,
+              status: 'ok'
+            })
+          }
         }
         toast.info('Retorno salvo! Estoque atualizado.')
       } catch (err) {
@@ -285,8 +304,13 @@ export default function Conference() {
   }
 
   const handleManualAdd = (productCodeOrName: string) => {
-    const term = productCodeOrName.toLowerCase()
-    const product = allProducts.find(p => p.code.toLowerCase() === term || p.external_code?.toLowerCase() === term || p.description.toLowerCase().includes(term))
+    const raw = productCodeOrName.trim()
+    const term = normalizeCode(raw)
+    const product = allProducts.find(p =>
+      normalizeCode(p.code) === term ||
+      (p.external_code && normalizeCode(p.external_code) === term) ||
+      normalizeCode(p.description).includes(term)
+    )
     if (!product) { toast.error('Produto não encontrado'); return }
     
     const exists = items.find(i => i.product_id === product.id)
@@ -465,7 +489,7 @@ export default function Conference() {
             )}
 
             <div className="space-y-2">
-              {items.map((item, i) => {
+              {regularItems.map((item, i) => {
                 const done = item.quantity_scanned >= item.quantity_expected
                 const isEditing = editingItem?.id === item.id
                 
@@ -507,6 +531,30 @@ export default function Conference() {
                   </div>
                 )
               })}
+
+              {returnItemsList.length > 0 && (
+                <>
+                  <div className="pt-6 pb-2">
+                    <h3 className="text-sm font-bold text-amber-500 flex items-center gap-2">
+                      <ArrowLeft className="h-4 w-4" /> Itens Retornados da Rota
+                    </h3>
+                  </div>
+                  {returnItemsList.map((item, i) => (
+                    <div key={item.id} className="glass-card p-3 flex items-center justify-between slide-up border-amber-500/20 bg-amber-500/5" style={{ animationDelay: `${i * 50}ms` }}>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate text-amber-500">{item.description.replace('🔄 Devolução: ', '')}</p>
+                        <p className="text-xs text-amber-500/70 font-mono">{item.product_code}</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-right">
+                          <span className="text-lg font-bold font-mono text-amber-500">+{item.quantity_scanned}</span>
+                          <span className="text-amber-500/70 text-sm"> devolvidos</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </div>
         </TabsContent>

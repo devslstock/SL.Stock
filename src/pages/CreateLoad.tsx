@@ -118,11 +118,27 @@ export default function CreateLoad() {
     }
   })
 
+  // Helper to strip non-alphanumeric characters and uppercase for comparison
+  const normalizeCode = (s: any) => s ? String(s).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
+
   const addItem = () => {
-    const term = codeSearch.trim().toLowerCase()
-    const product = products.find(p => p.code.toLowerCase() === term || p.external_code?.toLowerCase() === term || p.description.toLowerCase().includes(term))
+    const raw = codeSearch.trim();
+    const term = normalizeCode(raw);
+    const product = products.find(p =>
+      normalizeCode(p.code) === term ||
+      (p.external_code && normalizeCode(p.external_code) === term) ||
+      normalizeCode(p.description).includes(term)
+    )
     if (!product) { toast.error('Produto não encontrado'); return }
+    
     const exists = items.find(i => i.product_code === product.code)
+    const currentQty = exists ? exists.quantity_expected : 0
+    
+    if (currentQty + 1 > product.stock) {
+      toast.error(`Estoque insuficiente para ${product.description}. Disponível: ${product.stock}`)
+      return
+    }
+
     if (exists) {
       setItems(prev => prev.map(i => i.product_code === product.code ? { ...i, quantity_expected: i.quantity_expected + 1 } : i))
       toast.success(`Quantidade aumentada para ${product.description}`)
@@ -134,7 +150,18 @@ export default function CreateLoad() {
   }
 
   const updateQty = (tempId: string, qty: number) => {
-    setItems(prev => prev.map(i => i.tempId === tempId ? { ...i, quantity_expected: Math.max(1, qty) } : i))
+    setItems(prev => prev.map(i => {
+      if (i.tempId === tempId) {
+        const product = products.find(p => p.code === i.product_code)
+        const maxQty = product?.stock || 0
+        if (qty > maxQty) {
+          toast.error(`Estoque insuficiente. Apenas ${maxQty} unidades disponíveis de ${i.description}.`)
+          return { ...i, quantity_expected: maxQty }
+        }
+        return { ...i, quantity_expected: Math.max(1, qty) }
+      }
+      return i
+    }))
   }
 
   const removeItem = (tempId: string) => {
@@ -152,7 +179,8 @@ export default function CreateLoad() {
         const workbook = XLSX.read(bstr, { type: 'binary' })
         const wsname = workbook.SheetNames[0]
         const ws = workbook.Sheets[wsname]
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][]
+        // Use raw:false to get formatted strings (preserving leading zeros)
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false }) as any[][]
 
         let addedCount = 0
         let notFoundCount = 0
@@ -163,8 +191,13 @@ export default function CreateLoad() {
           const row = data[i]
           if (!row || row.length === 0) continue
 
-          // Clean up row and extract non-empty cells
-          let parts = row.map(cell => cell != null ? String(cell).trim() : '').filter(Boolean)
+          // Clean up row and extract non-empty cells preserving text format
+          let parts = row.map(cell => {
+            // If cell is undefined, treat as empty string
+            if (cell === undefined || cell === null) return ''
+            // Ensure we keep leading zeros by converting to string directly
+            return String(cell).trim()
+          }).filter(Boolean)
 
           if (parts.length < 2) continue
 
@@ -182,24 +215,37 @@ export default function CreateLoad() {
         if (rawCode.includes(' - ')) {
           rawCode = rawCode.split(' - ')[0].trim()
         }
-        // Remove brackets or weird characters that might come from pivot tables like [-]
-        const code = rawCode.replace(/[^a-zA-Z0-9]/g, '')
+        // Preserve leading zeros: keep the code as‑is (string)
+        // If the cell was interpreted as a plain number (e.g., "122"), pad it to the expected length (5 digits)
+        let code = rawCode;
+        if (!isNaN(Number(code))) {
+        // Typical product codes in this project have 5 characters; adjust if your data uses another length
+        code = code.padStart(5, '0');
+      }
 
+      const normalizedImportCode = normalizeCode(code);
+      const product = products.find(p => normalizeCode(p.code) === normalizedImportCode || (p.external_code && normalizeCode(p.external_code) === normalizedImportCode));
+        
         // Safely parse formats like "1,00" or "1.00" to integer 1
         const qty = Math.round(parseFloat(qtyPart.replace(',', '.')))
 
         if (code && !isNaN(qty)) {
-          const product = products.find(p => p.code === code || p.external_code === code)
           if (product) {
+            let finalQty = qty
+            if (finalQty > product.stock) {
+              finalQty = product.stock
+              toast.error(`Falta de estoque: ${product.description}. Pedido: ${qty}, Disponível: ${product.stock}. Ajustado automaticamente.`)
+            }
+
             // Check if already in items list (existing)
             const exists = items.some(it => it.product_code === product.code) || newItems.some(it => it.product_code === product.code)
-            if (!exists) {
+            if (!exists && finalQty > 0) {
               newItems.push({
                 tempId: `t${Date.now()}_${addedCount}`,
                 product_id: product.id,
                 product_code: product.code,
                 description: product.description, // User description discarded, fetched from DB
-                quantity_expected: Math.max(1, qty)
+                quantity_expected: Math.max(1, finalQty)
               })
               addedCount++
             }

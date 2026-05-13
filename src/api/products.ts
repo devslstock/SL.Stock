@@ -8,7 +8,13 @@ export const productsApi = {
       .select('*')
       .order('description')
     if (error) throw error
-    return data as Product[]
+    // Ensure codes keep leading zeros by converting to string
+    const normalized = (data ?? []).map(p => ({
+      ...p,
+      code: String(p.code),
+      external_code: p.external_code ? String(p.external_code) : null,
+    })) as Product[]
+    return normalized
   },
 
   async createProduct(product: Omit<Product, 'id' | 'created_at'>) {
@@ -51,6 +57,7 @@ export const productsApi = {
   },
 
   async incrementStockByCode(code: string, qtyToAdd: number) {
+    // Preserve leading zeros by treating code as string
     const { data: prods, error: err1 } = await supabase
       .from('products')
       .select('*')
@@ -60,9 +67,12 @@ export const productsApi = {
     if (!prods || prods.length === 0) return null
     
     const p = prods[0]
+    // Ensure the code fields are strings (leading zeros kept)
+    const currentStock = p.stock || 0
+    const newStock = currentStock + qtyToAdd
     const { data, error } = await supabase
       .from('products')
-      .update({ stock: (p.stock || 0) + qtyToAdd })
+      .update({ stock: newStock })
       .eq('id', p.id)
       .select()
       .single()
