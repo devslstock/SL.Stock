@@ -639,7 +639,6 @@ export default function Conference() {
                 <CheckCircle2 className="mr-2 h-5 w-5" /> Finalizar Rota
               </Button>
             </div>
-          </div>
         </TabsContent>
         )}
       </Tabs>
