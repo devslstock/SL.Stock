@@ -22,6 +22,7 @@ export interface User {
   password_hash: string
   role: UserRole
   active: boolean
+  reset_requested?: boolean
   permissions: UserPermissions
   created_at: string
 }

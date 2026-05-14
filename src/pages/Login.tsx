@@ -12,6 +12,7 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -32,9 +33,38 @@ export default function Login() {
         navigate('/');
       } else {
         toast.error('Usuário ou senha incorretos, ou usuário inativo.');
+        setShowForgotPassword(true);
       }
     } catch (error) {
       toast.error('Erro ao realizar login.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!username) {
+      toast.error('Preencha seu usuário para solicitar o reset.');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // Import missing usersApi at the top: import { usersApi } from '@/api/users';
+      const { usersApi } = await import('@/api/users');
+      const users = await usersApi.getUsers();
+      const user = users.find(u => u.username.toLowerCase() === username.trim().toLowerCase());
+      
+      if (!user) {
+        toast.error('Usuário não encontrado no sistema.');
+        return;
+      }
+      
+      await usersApi.updateUser(user.id, { reset_requested: true });
+      toast.success('Solicitação enviada! Avise seu gestor para liberar seu acesso.');
+      setShowForgotPassword(false);
+    } catch (e) {
+      toast.error('Erro ao solicitar reset.');
     } finally {
       setIsLoading(false);
     }
@@ -96,6 +126,21 @@ export default function Login() {
           >
             {isLoading ? 'Acessando...' : <><LogIn className="mr-2 h-5 w-5" /> Entrar</>}
           </Button>
+
+          {showForgotPassword && (
+            <div className="pt-4 border-t border-border/50 text-center slide-up">
+              <p className="text-sm text-muted-foreground mb-3">Esqueceu sua senha?</p>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                onClick={handleForgotPassword}
+                disabled={isLoading}
+              >
+                Solicitar Reset ao Gestor
+              </Button>
+            </div>
+          )}
         </form>
       </div>
     </div>

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/toaster'
-import { ShieldCheck, Plus, Pencil, Trash2, UserCircle, KeyRound } from 'lucide-react'
+import { ShieldCheck, Plus, Pencil, Trash2, UserCircle, KeyRound, AlertTriangle } from 'lucide-react'
 import { hashPassword, DEFAULT_PASSWORD_HASH } from '@/utils/crypto'
 
 const roleLabels: Record<UserRole, string> = { admin: 'Admin', gestor: 'Gestor', conferente: 'Conferente', motorista: 'Motorista' }
@@ -131,7 +131,7 @@ export default function AccessControl() {
   const handleResetPassword = () => {
     if (!editing) return
     if (window.confirm('Tem certeza que deseja resetar a senha deste usuário para 123456?')) {
-      updateMutation.mutate({ id: editing.id, data: { password_hash: DEFAULT_PASSWORD_HASH } })
+      updateMutation.mutate({ id: editing.id, data: { password_hash: DEFAULT_PASSWORD_HASH, reset_requested: false } })
     }
   }
 
@@ -147,6 +147,8 @@ export default function AccessControl() {
 
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando usuários...</div>
 
+  const usersNeedingReset = users.filter(u => u.reset_requested)
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -159,17 +161,30 @@ export default function AccessControl() {
         <Button onClick={openNew}><Plus className="h-4 w-4 mr-1.5" />Novo Usuário</Button>
       </div>
 
+      {usersNeedingReset.length > 0 && (
+        <div className="glass-card border-amber-500/50 bg-amber-500/10 p-4 flex items-start sm:items-center gap-3 slide-up">
+          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 sm:mt-0 shrink-0" />
+          <div className="flex-1">
+            <h3 className="font-bold text-amber-500">Solicitações de Reset de Senha</h3>
+            <p className="text-sm text-amber-500/80">
+              {usersNeedingReset.length} usuário(s) esqueceu a senha e precisa de reset. Edite o usuário e clique em "Resetar Senha".
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2">
         {users.map((user, i) => (
-          <Card key={user.id}>
+          <Card key={user.id} className={user.reset_requested ? 'border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]' : ''}>
             <CardContent className="p-4 flex items-center gap-4 slide-up" style={{ animationDelay: `${i * 60}ms` }}>
-              <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${user.active ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                <UserCircle className="h-6 w-6" />
+              <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${user.active ? (user.reset_requested ? 'bg-amber-500/20 text-amber-500' : 'bg-primary/15 text-primary') : 'bg-muted text-muted-foreground'}`}>
+                {user.reset_requested ? <AlertTriangle className="h-6 w-6" /> : <UserCircle className="h-6 w-6" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className={`font-semibold text-sm ${user.active ? 'text-foreground' : 'text-muted-foreground line-through'}`}>{user.name}</span>
                   <Badge variant={roleVariants[user.role]}>{roleLabels[user.role]}</Badge>
+                  {user.reset_requested && <Badge variant="warning" className="bg-amber-500 text-white border-none text-[10px] h-5 px-1.5 ml-1">Reset</Badge>}
                 </div>
                 <p className="text-xs text-muted-foreground">@{user.username}</p>
               </div>
