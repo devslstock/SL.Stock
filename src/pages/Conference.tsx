@@ -247,9 +247,14 @@ export default function Conference() {
     if (!item) { toast.error(`Produto não fazia parte da rota: ${code}`); return }
     
     const primaryCode = item.product_code
+    const cur = returnedItems[primaryCode] || 0
+    
+    if (cur >= item.quantity_scanned) {
+      window.alert(`LIMITE ATINGIDO: Não é possível retornar mais de ${item.quantity_scanned} unidades de ${item.description}, pois esta foi a quantidade enviada na rota.`)
+      return
+    }
     
     setReturnedItems(prev => {
-      const cur = prev[primaryCode] || 0
       const next = cur + 1
       setLastReturned({ code: primaryCode, desc: item.description, qty: next })
       return { ...prev, [primaryCode]: next }
