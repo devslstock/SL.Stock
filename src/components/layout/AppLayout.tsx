@@ -32,6 +32,7 @@ export default function AppLayout() {
   const location = useLocation()
   const { theme, setTheme } = useTheme()
   const { user, logout, hasPermission } = useAuth()
+  const isManager = user?.role === 'admin' || user?.role === 'gestor'
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -87,6 +88,8 @@ export default function AppLayout() {
         <nav className="flex-1 p-3 space-y-1 overflow-auto mt-14 md:mt-0">
           {navItems.map((item) => {
             if (!hasPermission(item.permission as any)) return null;
+            if (item.path === '/nova-carga' && !isManager) return null;
+            
             const isActive = location.pathname === item.path
             return (
               <Link

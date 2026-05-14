@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
+import { useAuth } from '@/contexts/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,8 @@ export default function AllLoads() {
   const initialFilter = searchParams.get('status') || 'all'
   const [filter, setFilter] = useState(initialFilter)
   const [search, setSearch] = useState('')
+  const { user } = useAuth()
+  const isManager = user?.role === 'admin' || user?.role === 'gestor'
 
   const { data: operations = [], isLoading } = useQuery({
     queryKey: ['operations'],
@@ -65,11 +68,13 @@ export default function AllLoads() {
             {filtered.length} rotas encontradas
           </p>
         </div>
-        <Link to="/nova-carga">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" /> Nova Rota
-          </Button>
-        </Link>
+        {isManager && (
+          <Link to="/nova-carga">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" /> Nova Rota
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">

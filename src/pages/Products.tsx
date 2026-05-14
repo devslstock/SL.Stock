@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from '@/components/ui/toaster'
 import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Products() {
   const queryClient = useQueryClient()
@@ -21,6 +22,8 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isImporting, setIsImporting] = useState(false)
+  const { user } = useAuth()
+  const isManager = user?.role === 'admin' || user?.role === 'gestor'
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
@@ -156,7 +159,6 @@ export default function Products() {
               }
             }
           } else {
-            // STOCK UPDATE - Robust logic to handle Pivot tables "CODE - DESC \t QTY"
             const firstPart = parts[0].toLowerCase()
             if (firstPart.includes('cod') || firstPart.includes('código') || firstPart.includes('itens') || firstPart.includes('relatório') || firstPart.includes('delicius') || firstPart.includes('quantidade')) {
               continue
@@ -236,7 +238,6 @@ export default function Products() {
       ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
     ].join('\n')
 
-    // Add BOM to ensure Excel reads UTF-8 correctly
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -258,25 +259,30 @@ export default function Products() {
           <p className="text-sm text-muted-foreground mt-1">{products.length} produtos cadastrados</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => {
-            if (window.confirm('CUIDADO: Isso irá apagar TODOS os produtos cadastrados. Tem certeza que deseja continuar?')) {
-              deleteAllMutation.mutate()
-            }
-          }}>
-            <Trash2 className="h-4 w-4 mr-1.5" /> Limpar
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
-            <Upload className="h-4 w-4 mr-1.5" /> Importar
-          </Button>
           <Button variant="outline" size="sm" onClick={exportToCSV}>
             <FileDown className="h-4 w-4 mr-1.5" /> Exportar
           </Button>
-          <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={() => setIsStockEntryOpen(true)}>
-            <Archive className="h-4 w-4 mr-1.5" /> Entrada Estoque
-          </Button>
-          <Button size="sm" onClick={() => { setEditingProduct(null); setIsDialogOpen(true); }}>
-            <Plus className="h-4 w-4 mr-1.5" /> Novo Produto
-          </Button>
+
+          {isManager && (
+            <>
+              <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => {
+                if (window.confirm('CUIDADO: Isso irá apagar TODOS os produtos cadastrados. Tem certeza que deseja continuar?')) {
+                  deleteAllMutation.mutate()
+                }
+              }}>
+                <Trash2 className="h-4 w-4 mr-1.5" /> Limpar
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
+                <Upload className="h-4 w-4 mr-1.5" /> Importar
+              </Button>
+              <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={() => setIsStockEntryOpen(true)}>
+                <Archive className="h-4 w-4 mr-1.5" /> Entrada Estoque
+              </Button>
+              <Button size="sm" onClick={() => { setEditingProduct(null); setIsDialogOpen(true); }}>
+                <Plus className="h-4 w-4 mr-1.5" /> Novo Produto
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -293,15 +299,15 @@ export default function Products() {
               <TableHead>Descrição</TableHead>
               <TableHead>Grupo</TableHead>
               <TableHead>Estoque</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              {isManager && <TableHead className="text-right">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={isManager ? 5 : 4} className="text-center py-12 text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={isManager ? 5 : 4} className="text-center py-12 text-muted-foreground">
                   <FileDown className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   Nenhum produto encontrado
                 </TableCell>
@@ -322,16 +328,18 @@ export default function Products() {
                       {product.stock}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(product); setIsDialogOpen(true); }}>
-                        <Pencil className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} disabled={deleteMutation.isPending}>
-                        <Trash2 className="h-4 w-4 text-red-400" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {isManager && (
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(product); setIsDialogOpen(true); }}>
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} disabled={deleteMutation.isPending}>
+                          <Trash2 className="h-4 w-4 text-red-400" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}

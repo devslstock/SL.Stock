@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
 import { ArrowLeft, Plus, Trash2, ClipboardList, Truck, User, Search, Upload } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { useAuth } from '@/contexts/AuthContext'
+import { Navigate } from 'react-router-dom'
 
 interface NewItem {
   tempId: string
@@ -23,6 +25,8 @@ export default function CreateLoad() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const isManager = user?.role === 'admin' || user?.role === 'gestor'
   const [loadNumber, setLoadNumber] = useState('')
   const [driverName, setDriverName] = useState('')
   const [vehiclePlate, setVehiclePlate] = useState('')
@@ -162,6 +166,10 @@ export default function CreateLoad() {
       }
       return i
     }))
+  }
+
+  if (!isManager) {
+    return <Navigate to="/cargas" replace />
   }
 
   const removeItem = (tempId: string) => {
