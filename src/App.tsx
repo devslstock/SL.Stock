@@ -3,17 +3,19 @@ import AppLayout from './components/layout/AppLayout'
 import Dashboard from './pages/Dashboard'
 import AllLoads from './pages/AllLoads'
 import CreateLoad from './pages/CreateLoad'
-import Conference from './pages/Conference'
 import DeliveryProof from './pages/DeliveryProof'
 import Products from './pages/Products'
 import AccessControl from './pages/AccessControl'
 import Login from './pages/Login'
+import ChangePassword from './pages/ChangePassword'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { DEFAULT_PASSWORD_HASH } from './utils/crypto'
 
 // Protected Route Wrapper
 function ProtectedRoute() {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
   
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen bg-background"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
@@ -21,6 +23,16 @@ function ProtectedRoute() {
   
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Se o usuário estiver com a senha padrão e não estiver na tela de troca de senha, redireciona
+  if (user.password_hash === DEFAULT_PASSWORD_HASH && location.pathname !== '/trocar-senha') {
+    return <Navigate to="/trocar-senha" replace />;
+  }
+  
+  // Se ele já trocou a senha e tenta acessar a tela de troca, joga pro dashboard
+  if (user.password_hash !== DEFAULT_PASSWORD_HASH && location.pathname === '/trocar-senha') {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
@@ -46,6 +58,8 @@ function App() {
         
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/trocar-senha" element={<ChangePassword />} />
+          
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/cargas" element={<AllLoads />} />
