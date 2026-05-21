@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Plus, ScanLine, Search, CheckCircle2, ArrowLeft, Boxes, AlertTriangle, Check, ShieldAlert, Edit2, X } from 'lucide-react'
+import { Plus, ScanLine, Search, CheckCircle2, ArrowLeft, Boxes, AlertTriangle, Check, ShieldAlert, Edit2, X, Trash2 } from 'lucide-react'
 
 export default function InventoryCountPage() {
   const { user } = useAuth()
@@ -67,6 +67,20 @@ export default function InventoryCountPage() {
     }
   })
 
+  const deleteCountMutation = useMutation({
+    mutationFn: async (countId: string) => {
+      const { error } = await supabase.from('inventory_counts').delete().eq('id', countId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory_counts'] })
+      toast.success('Inventário excluído com sucesso')
+    },
+    onError: (error: any) => {
+      toast.error(`Erro ao excluir: ${error.message}`)
+    }
+  })
+
   if (activeCountId) {
     return <ActiveInventoryView 
              countId={activeCountId} 
@@ -110,7 +124,10 @@ export default function InventoryCountPage() {
           </div>
         ) : (
           counts.map(count => (
-            <Card key={count.id} className="overflow-hidden border-amber-500/20 hover:border-amber-500/50 transition-colors glass-card cursor-pointer" onClick={() => setActiveCountId(count.id)}>
+            <Card key={count.id} className="overflow-hidden border-amber-500/20 hover:border-amber-500/50 transition-colors glass-card cursor-pointer" onClick={(e) => {
+              if ((e.target as HTMLElement).closest('.export-btn')) return;
+              setActiveCountId(count.id)
+            }}>
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div className="min-w-0 flex-1">
@@ -129,6 +146,23 @@ export default function InventoryCountPage() {
                     }`}>
                       {count.status === 'adjusted' ? 'Ajustado' : count.status === 'completed' ? 'Aguardando Ajuste' : 'Em andamento'}
                     </span>
+                    {(isManager || count.status === 'in_progress') && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="export-btn h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (window.confirm('Tem certeza que deseja APAGAR este inventário definitivamente?')) {
+                            deleteCountMutation.mutate(count.id)
+                          }
+                        }}
+                        disabled={deleteCountMutation.isPending}
+                        title="Apagar Inventário"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>

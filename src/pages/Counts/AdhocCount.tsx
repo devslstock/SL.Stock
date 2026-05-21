@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Plus, ScanLine, Search, CheckCircle2, ArrowLeft, Download, FileSpreadsheet, ClipboardList } from 'lucide-react'
+import { Plus, ScanLine, Search, CheckCircle2, ArrowLeft, Download, FileSpreadsheet, ClipboardList, Trash2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 export default function AdhocCountPage() {
@@ -65,6 +65,20 @@ export default function AdhocCountPage() {
       } else {
         toast.error(`Erro ao criar: ${error.message}`)
       }
+    }
+  })
+
+  const deleteCountMutation = useMutation({
+    mutationFn: async (countId: string) => {
+      const { error } = await supabase.from('adhoc_counts').delete().eq('id', countId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adhoc_counts'] })
+      toast.success('Contagem excluída com sucesso')
+    },
+    onError: (error: any) => {
+      toast.error(`Erro ao excluir: ${error.message}`)
     }
   })
 
@@ -168,6 +182,21 @@ export default function AdhocCountPage() {
                       title="Exportar para Excel"
                     >
                       <Download className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="export-btn h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (window.confirm('Tem certeza que deseja APAGAR esta contagem definitivamente?')) {
+                          deleteCountMutation.mutate(count.id)
+                        }
+                      }}
+                      disabled={deleteCountMutation.isPending}
+                      title="Apagar Contagem"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
