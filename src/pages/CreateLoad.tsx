@@ -278,6 +278,7 @@ export default function CreateLoad() {
           }
         }
       }
+      }
 
         if (newItems.length > 0) {
           setItems(prev => [...prev, ...newItems])
