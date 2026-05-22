@@ -101,14 +101,14 @@ export default function SignaturePad() {
               <Eraser className="h-3 w-3 mr-1" /> Limpar
             </Button>
           </Label>
-          <div className="border-2 border-dashed border-border rounded-lg bg-card/50 overflow-hidden touch-none">
+          <div className="border-2 border-dashed border-border rounded-lg bg-white overflow-hidden touch-none">
             <SignatureCanvas 
               ref={sigCanvas}
-              penColor="hsl(var(--foreground))"
+              penColor="#000000"
               canvasProps={{
                 className: 'signature-canvas w-full h-48 cursor-crosshair'
               }}
-              backgroundColor="transparent"
+              backgroundColor="#ffffff"
             />
           </div>
         </div>
