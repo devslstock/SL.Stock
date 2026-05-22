@@ -142,75 +142,71 @@ export default function RouteClients() {
             }
           }
 
-          // Check for Products
+          // Check for Products explicitly via columns
           if (currentClientName && clientsMap.has(currentClientName)) {
-             let foundProduct = null
-             let qty = 0
-
-             for (const cell of row) {
-               if (!cell) continue
-               const strCell = String(cell).trim()
-               const normalizedCell = normalizeCode(strCell)
-               
-               // Look for product in DB
-               if (!foundProduct && normalizedCell.length >= 3) {
-                 const isNum = (s: string) => /^\d+$/.test(s)
-                 
-                 let p = products.find(prod => {
-                   const pCode = normalizeCode(prod.code)
-                   const pExt = prod.external_code ? normalizeCode(prod.external_code) : null
-                   
-                   // Exact code match
-                   if (pCode === normalizedCell || pExt === normalizedCell) return true
-                   
-                   // Numeric code match (ignores leading zeros)
-                   if (isNum(pCode) && isNum(normalizedCell) && parseInt(pCode, 10) === parseInt(normalizedCell, 10)) return true
-                   if (pExt && isNum(pExt) && isNum(normalizedCell) && parseInt(pExt, 10) === parseInt(normalizedCell, 10)) return true
-                   
-                   return false
-                 })
-
-                 // Fallback to description match if code is missing or changed
-                 if (!p && normalizedCell.length >= 10) {
-                   p = products.find(prod => {
-                     const pDesc = normalizeCode(prod.description)
-                     if (pDesc === normalizedCell) return true
-                     if (pDesc.length > 10 && (pDesc.includes(normalizedCell) || normalizedCell.includes(pDesc))) return true
-                     return false
-                   })
-                 }
-
-                 if (p) foundProduct = p
-               }
-
-               // Look for quantity
-               if (strCell.toLowerCase().includes('un') || strCell.toLowerCase().includes('cx') || strCell.toLowerCase().includes('kg')) {
-                 const parsed = parseInt(strCell)
-                 if (!isNaN(parsed) && parsed > 0) qty = parsed
-               }
-             }
+             // In this specific Excel format:
+             // Column C (index 2) is always the Code
+             // Column E (index 4) is always the Description
+             // Column L (index 11) or K (index 10) is the Quantity
+             const codeCell = row[2]
              
-             if (foundProduct) {
-               // Fallback quantity search if not found
-               if (qty === 0) {
-                  for (let j = row.length - 1; j >= 0; j--) {
-                     if (row[j]) {
-                        const parsed = parseInt(String(row[j]))
-                        if (!isNaN(parsed) && parsed > 0 && String(row[j]).trim() !== foundProduct.code) {
-                           qty = parsed
-                           break
-                        }
-                     }
-                  }
-               }
-               
-               // Add item
-               clientsMap.get(currentClientName).items.push({
-                 product_id: foundProduct.id,
-                 product_code: foundProduct.code,
-                 description: foundProduct.description,
-                 quantity_expected: qty > 0 ? qty : 1
-               })
+             if (codeCell) {
+                const strCode = String(codeCell).trim()
+                
+                // Ignore the header row
+                if (strCode.toLowerCase() !== 'código' && strCode.toLowerCase() !== 'codigo' && strCode.length > 0) {
+                   const normalizedCode = normalizeCode(strCode)
+                   const isNumStr = /^\d+$/.test(normalizedCode)
+                   
+                   // Try to find the product in DB to get the official ID
+                   let foundProduct = null
+                   if (normalizedCode.length >= 2) {
+                     foundProduct = products.find(prod => {
+                       const pCode = normalizeCode(prod.code)
+                       const pExt = prod.external_code ? normalizeCode(prod.external_code) : null
+                       if (pCode === normalizedCode || pExt === normalizedCode) return true
+                       if (isNumStr && /^\d+$/.test(pCode) && parseInt(pCode, 10) === parseInt(normalizedCode, 10)) return true
+                       if (pExt && isNumStr && /^\d+$/.test(pExt) && parseInt(pExt, 10) === parseInt(normalizedCode, 10)) return true
+                       return false
+                     })
+                   }
+
+                   // Description
+                   const descCell = row[4] || row[5] || row[3]
+                   let finalDesc = foundProduct ? foundProduct.description : (descCell ? String(descCell).trim() : 'Produto sem descrição')
+                   let finalCode = foundProduct ? foundProduct.code : strCode
+
+                   // Quantity (User said column L (11), but sometimes it might shift to K (10))
+                   const qtyCell = row[11] || row[10] || row[9] || row[12]
+                   let qty = 1
+                   if (qtyCell) {
+                      const strQty = String(qtyCell).replace(/[^\d]/g, '') // remove non-digits completely to get the number
+                      const parsed = parseInt(strQty)
+                      if (!isNaN(parsed) && parsed > 0) qty = parsed
+                   } else {
+                      // Fallback: search entire row for "un", "cx", "kg"
+                      for (const cell of row) {
+                         if (!cell) continue
+                         const cstr = String(cell).toLowerCase()
+                         if (cstr.includes('un') || cstr.includes('cx') || cstr.includes('kg')) {
+                            const parsed = parseInt(cstr)
+                            if (!isNaN(parsed) && parsed > 0) { qty = parsed; break; }
+                         }
+                      }
+                   }
+
+                   // Force add item, even if not found in DB! No item left behind.
+                   clientsMap.get(currentClientName).items.push({
+                     product_id: foundProduct ? foundProduct.id : null,
+                     product_code: finalCode,
+                     description: finalDesc,
+                     quantity_expected: qty
+                   })
+                   
+                   if (!foundProduct) {
+                     notFoundCount++
+                   }
+                }
              }
           }
         }
