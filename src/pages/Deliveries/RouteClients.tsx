@@ -150,7 +150,10 @@ export default function RouteClients() {
              // Column L (index 11) or K (index 10) is the Quantity
              const codeCell = row[2]
              
-             if (codeCell) {
+             // We ensure it's a product row if it has a code AND the first column is a number (the '#' column)
+             const hasRowNumber = row[0] && /^\d+$/.test(String(row[0]).trim())
+             
+             if (codeCell && hasRowNumber) {
                 const strCode = String(codeCell).trim()
                 
                 // Ignore the header row
@@ -176,21 +179,27 @@ export default function RouteClients() {
                    let finalDesc = foundProduct ? foundProduct.description : (descCell ? String(descCell).trim() : 'Produto sem descrição')
                    let finalCode = foundProduct ? foundProduct.code : strCode
 
-                   // Quantity (User said column L (11), but sometimes it might shift to K (10))
-                   const qtyCell = row[11] || row[10] || row[9] || row[12]
+                   // Quantity (User said exactly column L, index 11)
+                   const qtyCell = row[11]
                    let qty = 1
                    if (qtyCell) {
-                      const strQty = String(qtyCell).replace(/[^\d]/g, '') // remove non-digits completely to get the number
-                      const parsed = parseInt(strQty)
-                      if (!isNaN(parsed) && parsed > 0) qty = parsed
-                   } else {
+                      const strQty = String(qtyCell).trim()
+                      // If it's a date or looks like one, skip aggressive parsing
+                      if (!strQty.includes('/') && !strQty.includes(':')) {
+                        const digitsOnly = strQty.replace(/[^\d]/g, '') 
+                        const parsed = parseInt(digitsOnly)
+                        if (!isNaN(parsed) && parsed > 0 && parsed < 1000000) qty = parsed
+                      }
+                   } 
+                   
+                   if (qty === 1) {
                       // Fallback: search entire row for "un", "cx", "kg"
                       for (const cell of row) {
                          if (!cell) continue
                          const cstr = String(cell).toLowerCase()
                          if (cstr.includes('un') || cstr.includes('cx') || cstr.includes('kg')) {
-                            const parsed = parseInt(cstr)
-                            if (!isNaN(parsed) && parsed > 0) { qty = parsed; break; }
+                            const parsed = parseInt(cstr.replace(/[^\d]/g, ''))
+                            if (!isNaN(parsed) && parsed > 0 && parsed < 1000000) { qty = parsed; break; }
                          }
                       }
                    }
