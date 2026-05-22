@@ -249,6 +249,9 @@ export default function RouteClients() {
         ) : (
           clients.map((client: any, index: number) => {
             const config = statusConfig[client.status] || statusConfig.pending
+            const totalItems = client.delivery_items?.length || 0
+            const totalVolume = client.delivery_items?.reduce((sum: number, item: any) => sum + item.quantity_expected, 0) || 0
+
             return (
               <Card key={client.id} className="overflow-hidden border-primary/20 hover:border-primary/50 transition-all glass-card slide-up" style={{ animationDelay: `${index * 60}ms` }}>
                 <CardContent className="p-0">
@@ -263,11 +266,16 @@ export default function RouteClients() {
                         <Badge variant={config.variant} className="shrink-0">{config.label}</Badge>
                       </div>
                       {(client.address || client.phone) && (
-                        <div className="flex gap-3 text-sm text-muted-foreground flex-wrap">
+                        <div className="flex gap-3 text-sm text-muted-foreground flex-wrap mb-2">
                           {client.address && <span className="flex items-center gap-1 truncate max-w-[200px]"><MapPin className="h-3 w-3 shrink-0" /> {client.address}</span>}
                           {client.phone && <span>📞 {client.phone}</span>}
                         </div>
                       )}
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 bg-muted/20 w-max px-2 py-1 rounded-md">
+                        <span className="font-medium text-foreground">{totalItems} <span className="font-normal opacity-70">itens</span></span>
+                        <span className="text-muted-foreground/50">•</span>
+                        <span className="font-medium text-foreground">{totalVolume} <span className="font-normal opacity-70">volumes</span></span>
+                      </div>
                       {client.status === 'delivered_with_divergence' && (
                         <div className="text-amber-500 text-xs mt-1 font-bold flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3" /> Divergência reportada

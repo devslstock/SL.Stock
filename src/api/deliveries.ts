@@ -51,11 +51,11 @@ export const deliveriesApi = {
   async getDeliveryClients(routeId: string) {
     const { data, error } = await supabase
       .from('delivery_clients')
-      .select('*')
+      .select('*, delivery_items(*)')
       .eq('delivery_route_id', routeId)
       .order('name')
     if (error) throw error
-    return data as DeliveryClient[]
+    return data as (DeliveryClient & { delivery_items: DeliveryItem[] })[]
   },
 
   async getDeliveryClient(clientId: string) {
