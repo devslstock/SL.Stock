@@ -88,7 +88,6 @@ export default function CreateDelivery() {
                 className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={operationId}
                 onChange={e => setOperationId(e.target.value)}
-                required
               >
                 <option value="">Selecione a carga...</option>
                 {availableOperations.map(op => (
@@ -105,7 +104,6 @@ export default function CreateDelivery() {
                 className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={driverId}
                 onChange={e => setDriverId(e.target.value)}
-                required
               >
                 <option value="">Selecione o motorista...</option>
                 {drivers.map(driver => (
