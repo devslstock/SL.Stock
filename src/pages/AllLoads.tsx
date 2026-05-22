@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
 import { useAuth } from '@/contexts/AuthContext'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +16,7 @@ import {
   Clock,
   PackageCheck,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success'; icon: typeof Clock }> = {
@@ -43,6 +45,19 @@ export default function AllLoads() {
   const { data: operations = [], isLoading } = useQuery({
     queryKey: ['operations'],
     queryFn: operationsApi.getOperations,
+  })
+
+  const queryClient = useQueryClient()
+  
+  const deleteMutation = useMutation({
+    mutationFn: operationsApi.deleteOperation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operations'] })
+      toast.success('Rota excluída com sucesso')
+    },
+    onError: (error: any) => {
+      toast.error(`Erro ao excluir: ${error.message}`)
+    }
   })
 
   const filtered = useMemo(() => {
@@ -131,6 +146,24 @@ export default function AllLoads() {
                       </div>
                     )}
                   </div>
+                  {isManager && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="shrink-0 h-8 w-8 text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 z-10"
+                      onClick={(e) => {
+                        e.preventDefault() // prevent navigating to Link
+                        e.stopPropagation()
+                        if (window.confirm(`Tem certeza que deseja APAGAR definitivamente a rota ${op.load_number}?`)) {
+                          deleteMutation.mutate(op.id)
+                        }
+                      }}
+                      title="Apagar Rota"
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  )}
                   <ChevronRight className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0" />
                 </div>
               </Link>
