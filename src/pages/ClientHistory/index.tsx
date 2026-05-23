@@ -48,14 +48,14 @@ export default function ClientHistory() {
           <FileSignature className="h-8 w-8 text-primary" /> Histórico e Comprovantes
         </h1>
         <p className="text-muted-foreground mt-2">
-          Pesquise pelo nome do cliente ou da rota para ver os comprovantes de entrega assinados.
+          Pesquise pelo nome do cliente, número da rota ou número do pedido para ver os comprovantes de entrega assinados.
         </p>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input 
-          placeholder="Digite o nome do cliente ou rota (ex: VZ 02123)..." 
+          placeholder="Busque por cliente, pedido ou rota (ex: VZ 02123)..." 
           className="pl-10 h-14 text-lg shadow-sm"
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}

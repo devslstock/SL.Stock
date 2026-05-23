@@ -238,7 +238,7 @@ export const deliveriesApi = {
           operation:operations ( load_number )
         )
       `)
-      .ilike('name', q)
+      .or(`name.ilike.${q},order_number.ilike.${q}`)
       .order('created_at', { ascending: false })
       .limit(30)
 
