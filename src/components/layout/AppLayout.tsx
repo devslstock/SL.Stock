@@ -14,7 +14,8 @@ import {
   Moon,
   Sun,
   MapPin,
-  Bell
+  Bell,
+  FileSignature
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
@@ -28,6 +29,7 @@ const navItems = [
   { label: 'Nova Carga', icon: ClipboardList, path: '/nova-carga', permission: 'can_manage_loads' },
   { label: 'Entregas', icon: MapPin, path: '/entregas', permission: 'can_do_delivery' },
   { label: 'Liberações', icon: Bell, path: '/liberacoes', permission: 'can_manage_users' }, // Only managers/admins can see
+  { label: 'Comprovantes', icon: FileSignature, path: '/historico', permission: 'can_manage_users' },
   { label: 'Produtos', icon: Package, path: '/produtos', permission: 'can_manage_products' },
   { label: 'Contagens', icon: ScanLine, path: '/contagens', permission: 'can_do_conference' },
   { label: 'Acesso', icon: ShieldCheck, path: '/acesso', permission: 'can_manage_users' },

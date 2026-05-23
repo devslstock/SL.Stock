@@ -49,6 +49,7 @@ import RouteClients from './pages/Deliveries/RouteClients'
 import ClientConference from './pages/Deliveries/ClientConference'
 import SignaturePad from './pages/Deliveries/SignaturePad'
 import ApprovalsPage from './pages/Approvals'
+import ClientHistory from './pages/ClientHistory'
 
 function App() {
   return (
@@ -81,6 +82,7 @@ function App() {
 
             {/* Approvals Route */}
             <Route path="/liberacoes" element={<ApprovalsPage />} />
+            <Route path="/historico" element={<ClientHistory />} />
 
             <Route path="/acesso" element={<AccessControl />} />
           </Route>

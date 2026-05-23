@@ -216,5 +216,56 @@ export const deliveriesApi = {
       .order('created_at', { ascending: false })
     if (error) throw error
     return data
+  },
+
+  async searchDeliveryProofs(query: string) {
+    // If no query, return empty
+    if (!query || query.trim().length < 2) return []
+
+    const q = `%${query.trim()}%`
+
+    // We do two queries and merge them to handle nested table search easily
+    // 1. Search by client name
+    const { data: clientsByName, error: err1 } = await supabase
+      .from('delivery_clients')
+      .select(`
+        *,
+        delivery_items(*),
+        route:delivery_routes (
+          created_at,
+          driver:users ( name ),
+          operation:operations ( load_number )
+        )
+      `)
+      .ilike('name', q)
+      .order('created_at', { ascending: false })
+      .limit(30)
+
+    if (err1) throw err1
+
+    // 2. Search by load_number (inner join required to filter by operation)
+    const { data: clientsByRoute, error: err2 } = await supabase
+      .from('delivery_clients')
+      .select(`
+        *,
+        delivery_items(*),
+        route:delivery_routes!inner (
+          created_at,
+          driver:users ( name ),
+          operation:operations!inner ( load_number )
+        )
+      `)
+      .ilike('route.operation.load_number', q)
+      .order('created_at', { ascending: false })
+      .limit(30)
+
+    if (err2) throw err2
+
+    // Merge and deduplicate by client ID
+    const merged = [...(clientsByName || []), ...(clientsByRoute || [])]
+    const uniqueClients = Array.from(new Map(merged.map(c => [c.id, c])).values())
+    
+    // Sort by most recent
+    return uniqueClients.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
 }
