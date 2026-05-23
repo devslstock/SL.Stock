@@ -172,8 +172,8 @@ export default function ClientConference() {
     inputRef.current?.focus()
   }
 
-  const { progress, hasDivergence } = useMemo(() => {
-    if (items.length === 0) return { progress: 0, hasDivergence: false }
+  const { progress, hasDivergence, totalExpected, totalItems } = useMemo(() => {
+    if (items.length === 0) return { progress: 0, hasDivergence: false, totalExpected: 0, totalItems: 0 }
     
     let totalExpected = 0
     let totalScanned = 0
@@ -187,7 +187,9 @@ export default function ClientConference() {
 
     return {
       progress: totalExpected > 0 ? Math.round((totalScanned / totalExpected) * 100) : 100,
-      hasDivergence: divergenceFound
+      hasDivergence: divergenceFound,
+      totalExpected,
+      totalItems: items.length
     }
   }, [items])
 
@@ -216,6 +218,11 @@ export default function ClientConference() {
             <div>
               <h1 className="text-xl font-bold gradient-text leading-tight line-clamp-1">{client.name}</h1>
               {client.address && <p className="text-xs text-muted-foreground line-clamp-1">{client.address}</p>}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1.5 bg-muted/30 w-max px-2 py-0.5 rounded-md border border-border/50">
+                <span className="font-medium text-foreground">{totalItems} <span className="opacity-70 font-normal">itens</span></span>
+                <span className="opacity-50">•</span>
+                <span className="font-medium text-foreground">{totalExpected} <span className="opacity-70 font-normal">volumes</span></span>
+              </div>
             </div>
           </div>
           <div className="text-right">

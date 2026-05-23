@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { deliveriesApi } from '@/api/deliveries'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, User, MapPin, Upload, FileSpreadsheet, Trash2, ChevronRight, AlertTriangle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
@@ -28,6 +29,7 @@ export default function RouteClients() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [isImporting, setIsImporting] = useState(false)
+  const [sortBy, setSortBy] = useState<'alphabetical' | 'city' | 'neighborhood'>('alphabetical')
 
   const { data: route, isLoading: isLoadingRoute } = useQuery({
     queryKey: ['delivery_route', id],
@@ -68,6 +70,31 @@ export default function RouteClients() {
     },
     onError: (error: any) => toast.error(`Erro ao remover: ${error.message}`)
   })
+
+  const sortedClients = useMemo(() => {
+    return [...clients].sort((a: any, b: any) => {
+      if (sortBy === 'alphabetical') {
+        return a.name.localeCompare(b.name)
+      } else if (sortBy === 'city') {
+        const getCity = (addr: string) => {
+          if (!addr) return ''
+          const parts = addr.split('- ')
+          if (parts.length > 1) return parts[parts.length - 1].split('/')[0].trim()
+          return addr
+        }
+        return getCity(a.address).localeCompare(getCity(b.address)) || a.name.localeCompare(b.name)
+      } else if (sortBy === 'neighborhood') {
+        const getNeighborhood = (addr: string) => {
+          if (!addr) return ''
+          const match = addr.match(/bairro\s+(.*?)(?=\s*-|\s*,|$)/i)
+          if (match) return match[1].trim()
+          return addr
+        }
+        return getNeighborhood(a.address).localeCompare(getNeighborhood(b.address)) || a.name.localeCompare(b.name)
+      }
+      return 0
+    })
+  }, [clients, sortBy])
 
   // Helper to strip non-alphanumeric characters
   const normalizeCode = (s: any) => s ? String(s).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
@@ -242,12 +269,24 @@ export default function RouteClients() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold gradient-text">{route?.operation?.load_number || 'Rota de Entrega'}</h1>
-            <p className="text-sm text-muted-foreground mt-1">Clientes e Pedidos da Rota</p>
+            <p className="text-sm text-muted-foreground mt-1">Total de {clients.length} clientes na rota</p>
           </div>
         </div>
-        {isManager && (
-          <div>
-            <input type="file" accept=".csv,.txt,.xls,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
+            <SelectTrigger className="w-full sm:w-[180px] bg-background">
+              <SelectValue placeholder="Ordenar por..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alphabetical">Ordem Alfabética</SelectItem>
+              <SelectItem value="city">Por Cidade</SelectItem>
+              <SelectItem value="neighborhood">Por Bairro</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {isManager && (
+            <div>
+              <input type="file" accept=".csv,.txt,.xls,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
             <Button 
               className="gap-2 w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]"
               onClick={() => fileInputRef.current?.click()}
@@ -267,7 +306,7 @@ export default function RouteClients() {
             {isManager && <p className="text-sm text-muted-foreground mt-2">Clique em Importar XLRS para carregar os clientes e seus pedidos.</p>}
           </div>
         ) : (
-          clients.map((client: any, index: number) => {
+          sortedClients.map((client: any, index: number) => {
             const config = statusConfig[client.status] || statusConfig.pending
             const totalItems = client.delivery_items?.length || 0
             const totalVolume = client.delivery_items?.reduce((sum: number, item: any) => sum + item.quantity_expected, 0) || 0
