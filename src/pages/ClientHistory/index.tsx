@@ -97,8 +97,13 @@ export default function ClientHistory() {
                     <Badge variant={config.variant}>{config.label}</Badge>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-2">
+                    {client.order_number && (
+                      <span className="flex items-center gap-1 font-mono bg-primary/10 text-primary font-bold px-2 py-0.5 rounded border border-primary/20">
+                        Pedido: {client.order_number}
+                      </span>
+                    )}
                     <span className="flex items-center gap-1 font-mono bg-muted/50 px-2 py-0.5 rounded">
-                      <Truck className="h-4 w-4 text-primary" /> {client.route?.operation?.load_number || 'Sem rota'}
+                      <Truck className="h-4 w-4 text-muted-foreground" /> {client.route?.operation?.load_number || 'Sem rota'}
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" /> 

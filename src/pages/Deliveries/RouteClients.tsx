@@ -141,6 +141,7 @@ export default function RouteClients() {
                 address: '',
                 phone: '',
                 notes: currentOrderNumber ? `Pedido: ${currentOrderNumber}` : '',
+                order_number: currentOrderNumber || null,
                 items: []
               })
             }
@@ -323,8 +324,9 @@ export default function RouteClients() {
                         <span className="font-bold text-foreground text-base truncate">{client.name}</span>
                         <Badge variant={config.variant} className="shrink-0">{config.label}</Badge>
                       </div>
-                      {(client.address || client.phone) && (
+                      {(client.address || client.phone || client.order_number) && (
                         <div className="flex gap-3 text-sm text-muted-foreground flex-wrap mb-2">
+                          {client.order_number && <span className="font-mono bg-muted/50 px-2 py-0.5 rounded text-primary font-bold">Pedido: {client.order_number}</span>}
                           {client.address && <span className="flex items-center gap-1 truncate max-w-[200px]"><MapPin className="h-3 w-3 shrink-0" /> {client.address}</span>}
                           {client.phone && <span>📞 {client.phone}</span>}
                         </div>

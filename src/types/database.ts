@@ -151,6 +151,7 @@ export interface DeliveryClient {
   id: string
   delivery_route_id: string
   name: string
+  order_number?: string
   address?: string
   phone?: string
   notes?: string
