@@ -148,7 +148,8 @@ export const deliveriesApi = {
           name: c.name,
           address: c.address,
           phone: c.phone,
-          notes: c.notes
+          notes: c.notes,
+          order_number: c.order_number
         }])
         .select()
         .single()
