@@ -26,7 +26,6 @@ import { deliveriesApi } from '@/api/deliveries'
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/', permission: 'can_view_dashboard' },
   { label: 'Cargas', icon: Truck, path: '/cargas', permission: 'can_manage_loads' },
-  { label: 'Nova Carga', icon: ClipboardList, path: '/nova-carga', permission: 'can_manage_loads' },
   { label: 'Entregas', icon: MapPin, path: '/entregas', permission: 'can_do_delivery' },
   { label: 'Liberações', icon: Bell, path: '/liberacoes', permission: 'can_manage_users' }, // Only managers/admins can see
   { label: 'Comprovantes', icon: FileSignature, path: '/historico', permission: 'can_manage_users' },
@@ -58,6 +57,12 @@ export default function AppLayout() {
           <span className="font-bold text-lg gradient-text">Estoque Fácil</span>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            onClick={logout}
+            className="p-2 rounded-lg hover:bg-red-500/10 text-red-500/70 hover:text-red-500 transition-colors cursor-pointer"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground"
@@ -131,42 +136,37 @@ export default function AppLayout() {
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-border flex flex-col gap-3">
-          {/* User Profile */}
-          <div className="glass-card p-3 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <UserIcon className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate text-foreground">{user?.name || 'Usuário'}</p>
-              <p className="text-xs text-muted-foreground capitalize">{user?.role || 'operator'}</p>
-            </div>
-            <button
-              onClick={logout}
-              className="p-2 rounded-lg hover:bg-red-500/10 text-red-500/70 hover:text-red-500 transition-colors"
-              title="Sair"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Theme Toggle */}
-          <div className="flex items-center justify-between glass-card p-3">
-            <span className="text-sm font-medium text-muted-foreground">Aparência</span>
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-1.5 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground bg-background/50"
-            >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
+        </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-screen">
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <main className="flex-1 min-h-screen flex flex-col">
+        {/* Desktop Header */}
+        <header className="hidden md:flex h-16 px-6 border-b border-border bg-card/50 backdrop-blur-md items-center justify-end sticky top-0 z-30">
+          <div className="flex items-center gap-4">
+             <div className="flex items-center gap-3">
+                <div className="text-right">
+                   <p className="text-sm font-bold text-foreground leading-none">{user?.name || 'Usuário'}</p>
+                   <p className="text-xs text-muted-foreground capitalize mt-1">{user?.role || 'operator'}</p>
+                </div>
+                <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center">
+                   <UserIcon className="h-4 w-4 text-primary" />
+                </div>
+             </div>
+             
+             <div className="h-6 w-px bg-border mx-1"></div>
+             
+             <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer" title="Alternar tema">
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+             </button>
+             
+             <button onClick={logout} className="p-2 rounded-lg hover:bg-red-500/10 text-red-500/70 hover:text-red-500 transition-colors cursor-pointer" title="Sair">
+                <LogOut className="h-5 w-5" />
+             </button>
+          </div>
+        </header>
+
+        <div className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
           <Outlet />
         </div>
       </main>
