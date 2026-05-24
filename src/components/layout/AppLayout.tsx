@@ -94,7 +94,7 @@ export default function AppLayout() {
         )}
       >
         {/* Logo */}
-        <div className="p-5 border-b border-border hidden md:flex items-center gap-3">
+        <div className="h-16 px-5 border-b border-border hidden md:flex items-center gap-3 shrink-0">
           <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
             <Boxes className="h-5 w-5 text-white" />
           </div>
