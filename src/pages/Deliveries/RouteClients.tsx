@@ -28,7 +28,7 @@ export default function RouteClients() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [isImporting, setIsImporting] = useState(false)
-  const [sortBy, setSortBy] = useState<'alphabetical' | 'city' | 'neighborhood'>('alphabetical')
+  const [sortBy, setSortBy] = useState<'alphabetical' | 'city' | 'neighborhood' | 'status'>('alphabetical')
 
   const { data: route, isLoading: isLoadingRoute } = useQuery({
     queryKey: ['delivery_route', id],
@@ -90,6 +90,11 @@ export default function RouteClients() {
           return addr
         }
         return getNeighborhood(a.address).localeCompare(getNeighborhood(b.address)) || a.name.localeCompare(b.name)
+      } else if (sortBy === 'status') {
+        const order = { pending: 0, waiting: 1, delivered_with_divergence: 2, delivered: 3, canceled: 4 }
+        const rankA = order[a.status as keyof typeof order] ?? 99
+        const rankB = order[b.status as keyof typeof order] ?? 99
+        return rankA - rankB || a.name.localeCompare(b.name)
       }
       return 0
     })
@@ -269,7 +274,9 @@ export default function RouteClients() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold gradient-text">{route?.operation?.load_number || 'Rota de Entrega'}</h1>
-            <p className="text-sm text-muted-foreground mt-1">Total de {clients.length} clientes na rota</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {clients.length} clientes • {clients.reduce((sum: number, c: any) => sum + (c.delivery_items?.reduce((itemSum: number, i: any) => itemSum + i.quantity_expected, 0) || 0), 0)} volumes
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -281,6 +288,7 @@ export default function RouteClients() {
             <option value="alphabetical">Ordem Alfabética</option>
             <option value="city">Por Cidade</option>
             <option value="neighborhood">Por Bairro</option>
+            <option value="status">Por Status</option>
           </select>
 
           {isManager && (
