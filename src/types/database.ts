@@ -14,6 +14,11 @@ export interface UserPermissions {
   can_manage_products: boolean
   can_manage_users: boolean
   can_do_delivery: boolean
+  
+  // SaaS Master Permissions
+  can_manage_saas_finance?: boolean
+  can_manage_saas_clients?: boolean
+  can_manage_saas_staff?: boolean
 }
 
 export interface Company {
@@ -23,6 +28,25 @@ export interface Company {
   cnpj?: string
   max_users: number
   active: boolean
+  created_at: string
+}
+
+export interface CompanyPayment {
+  id: string
+  company_id: string
+  amount: number
+  status: 'pendente' | 'pago' | 'atrasado'
+  due_date: string
+  paid_at?: string
+  notes?: string
+  created_at: string
+}
+
+export interface SystemNote {
+  id: string
+  author_id: string
+  author_name: string
+  content: string
   created_at: string
 }
 

@@ -1,25 +1,14 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import {
-  LayoutDashboard,
-  Truck,
-  Package,
-  ScanLine,
-  ClipboardList,
-  ShieldCheck,
-  Menu,
-  X,
-  Boxes,
-  Moon,
-  Sun,
-  MapPin,
-  Bell,
-  Palette
+import { 
+  Menu, X, Boxes, LayoutDashboard, Truck, Package, ClipboardList, 
+  Settings, Users, CheckSquare, Palette, Sun, Moon, Search,
+  Clock, History, UserIcon, FileSignature, Box, Building2, Banknote,
+  Megaphone, StickyNote, MapPin, Bell, ShieldCheck, LogOut
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
-import { LogOut, User as UserIcon, Building2 } from 'lucide-react'
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/', permission: 'can_view_dashboard' },
@@ -138,19 +127,79 @@ export default function AppLayout() {
           
           {/* Menu SaaS Exclusivo Master */}
           {isMaster && (
-            <div className="pt-4 mt-4 border-t border-border/50">
+            <div className="pt-4 mt-4 border-t border-border/50 space-y-1">
+              <div className="px-3 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Menu Global
+              </div>
+              
               <Link
                 to="/saas"
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                  location.pathname === '/saas'
+                  location.pathname === '/saas' || location.pathname === '/saas/empresas'
                     ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
                     : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
                 )}
               >
-                <Building2 className={cn("h-4.5 w-4.5", location.pathname === '/saas' && "text-purple-500")} />
-                Gerenciar SaaS
+                <Building2 className={cn("h-4.5 w-4.5", (location.pathname === '/saas' || location.pathname === '/saas/empresas') && "text-purple-500")} />
+                Empresas
+              </Link>
+
+              <Link
+                to="/saas/financeiro"
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  location.pathname === '/saas/financeiro'
+                    ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
+                    : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
+                )}
+              >
+                <Banknote className={cn("h-4.5 w-4.5", location.pathname === '/saas/financeiro' && "text-purple-500")} />
+                Financeiro
+              </Link>
+
+              <Link
+                to="/saas/acessos"
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  location.pathname === '/saas/acessos'
+                    ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
+                    : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
+                )}
+              >
+                <Users className={cn("h-4.5 w-4.5", location.pathname === '/saas/acessos' && "text-purple-500")} />
+                Acessos Globais
+              </Link>
+
+              <Link
+                to="/saas/campanhas"
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  location.pathname === '/saas/campanhas'
+                    ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
+                    : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
+                )}
+              >
+                <Megaphone className={cn("h-4.5 w-4.5", location.pathname === '/saas/campanhas' && "text-purple-500")} />
+                Campanhas
+              </Link>
+
+              <Link
+                to="/saas/anotacoes"
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  location.pathname === '/saas/anotacoes'
+                    ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
+                    : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
+                )}
+              >
+                <StickyNote className={cn("h-4.5 w-4.5", location.pathname === '/saas/anotacoes' && "text-purple-500")} />
+                Mural de Recados
               </Link>
             </div>
           )}

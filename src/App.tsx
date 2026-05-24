@@ -9,6 +9,10 @@ import Products from './pages/Products'
 import AccessControl from './pages/AccessControl'
 import Login from './pages/Login'
 import MasterPanel from './pages/Master'
+import SaaSFinance from './pages/Master/Finance'
+import SaaSTeam from './pages/Master/Team'
+import SaaSCampanhas from './pages/Master/Campaigns'
+import SaaSNotes from './pages/Master/Notes'
 import { ThemeProvider } from './components/ThemeProvider'
 import ChangePassword from './pages/ChangePassword'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -29,7 +33,7 @@ function ProtectedRoute() {
   }
 
   // Se for super admin e não tiver empresa selecionada, força ir pro Painel SaaS
-  if (!company && isMaster && location.pathname !== '/saas') {
+  if (!company && isMaster && !location.pathname.startsWith('/saas')) {
     return <Navigate to="/saas" replace />;
   }
 
@@ -100,7 +104,14 @@ function App() {
             <Route path="/historico" element={<ClientHistory />} />
 
             <Route path="/acesso" element={<AccessControl />} />
+            
+            {/* SaaS Master Routes */}
             <Route path="/saas" element={<MasterPanel />} />
+            <Route path="/saas/empresas" element={<MasterPanel />} />
+            <Route path="/saas/financeiro" element={<SaaSFinance />} />
+            <Route path="/saas/acessos" element={<SaaSTeam />} />
+            <Route path="/saas/campanhas" element={<SaaSCampanhas />} />
+            <Route path="/saas/anotacoes" element={<SaaSNotes />} />
           </Route>
         </Route>
       </Routes>
