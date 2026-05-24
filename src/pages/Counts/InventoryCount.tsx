@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
-import { Plus, ScanLine, Search, CheckCircle2, ArrowLeft, Boxes, AlertTriangle, Check, ShieldAlert, Edit2, X, Trash2 } from 'lucide-react'
+import { Plus, ScanLine, Search, CheckCircle2, ArrowLeft, Boxes, AlertTriangle, Check, ShieldAlert, Edit2, X, Trash2, Camera } from 'lucide-react'
+import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
 
 export default function InventoryCountPage() {
   const { user } = useAuth()
@@ -188,6 +189,7 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
   const [editingItem, setEditingItem] = useState<InventoryCountItem | null>(null)
   const [editQty, setEditQty] = useState(0)
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
   
   // Data Fetching
   const { data: count } = useQuery({
@@ -382,22 +384,23 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
     }
   })
 
-  const handleScan = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!scanInput.trim() || count?.status !== 'in_progress') return
-    
-    const raw = scanInput.trim()
+  const processScannedBarcode = (raw: string) => {
+    if (!raw.trim() || count?.status !== 'in_progress') return
     const code = normalizeCode(raw)
-    setScanInput('')
-    
     const product = allProducts.find(p => normalizeCode(p.code) === code || (p.external_code && normalizeCode(p.external_code) === code))
     if (!product) {
       toast.error('Produto não encontrado')
       if (navigator.vibrate) navigator.vibrate([200, 100, 200])
       return
     }
-    
     addItemMutation.mutate({ product })
+  }
+
+  const handleScan = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!scanInput.trim() || count?.status !== 'in_progress') return
+    processScannedBarcode(scanInput.trim())
+    setScanInput('')
   }
 
   const handleManualAdd = (rawCode: string) => {
@@ -458,6 +461,7 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
                     autoFocus 
                   />
                 </div>
+                <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="outline" className="h-12 w-12 border-amber-500/30 text-amber-500 hover:bg-amber-500/10" title="Usar câmera"><Camera className="h-5 w-5" /></Button>
                 <Button type="submit" size="icon" className="h-12 w-12 bg-amber-600 hover:bg-amber-700" disabled={addItemMutation.isPending}><Search className="h-5 w-5" /></Button>
               </form>
             </CardContent>
@@ -696,6 +700,12 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
             </Button>
          </div>
       )}
+
+      <BarcodeCameraScanner
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onScan={processScannedBarcode}
+      />
     </div>
   )
 }

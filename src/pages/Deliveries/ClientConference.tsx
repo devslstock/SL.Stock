@@ -6,8 +6,9 @@ import { productsApi } from '@/api/products'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, ScanLine, Search, CheckCircle2, AlertTriangle, Save, PenTool } from 'lucide-react'
+import { ArrowLeft, ScanLine, Search, CheckCircle2, AlertTriangle, Save, PenTool, Camera } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
 
 export default function ClientConference() {
   const { clientId } = useParams()
@@ -19,6 +20,7 @@ export default function ClientConference() {
   const [scannedCode, setScannedCode] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
   
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -250,17 +252,20 @@ export default function ClientConference() {
 
         {!isFinished && (
           <div className="space-y-2 relative pb-2">
-            <div className="relative">
-              <ScanLine className="absolute left-3 top-3 h-5 w-5 text-primary animate-pulse" />
-              <Input 
-                ref={inputRef}
-                value={scannedCode}
-                onChange={e => setScannedCode(e.target.value)}
-                onKeyDown={handleScan}
-                placeholder="Bipe o código do produto..."
-                className="pl-10 h-12 text-lg font-mono bg-background border-primary/30 focus-visible:border-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]"
-                autoFocus
-              />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <ScanLine className="absolute left-3 top-3 h-5 w-5 text-primary animate-pulse" />
+                <Input 
+                  ref={inputRef}
+                  value={scannedCode}
+                  onChange={e => setScannedCode(e.target.value)}
+                  onKeyDown={handleScan}
+                  placeholder="Bipe o código do produto..."
+                  className="pl-10 h-12 text-lg font-mono bg-background border-primary/30 focus-visible:border-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]"
+                  autoFocus
+                />
+              </div>
+              <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="outline" className="h-12 w-12 border-primary/30 text-primary hover:bg-primary/10" title="Usar câmera"><Camera className="h-5 w-5" /></Button>
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -386,6 +391,12 @@ export default function ClientConference() {
           </div>
         </div>
       )}
+
+      <BarcodeCameraScanner
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onScan={processBarcode}
+      />
     </div>
   )
 }

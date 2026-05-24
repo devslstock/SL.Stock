@@ -7,6 +7,11 @@ O sistema provê:
 2. **Dashboard de Gestão (Desktop):** Controle em tempo real das rotas, estoque, usuários e aprovações para gestores das empresas clientes.
 3. **App do Operador (Mobile-first):** Interface ultrarrápida de bipagem voltada para coletores de dados e smartphones (Android/iOS) na operação física.
 
+## 📂 Documentação e Planejamento Comercial
+Consulte os novos documentos elaborados para o projeto:
+- [Documentação Detalhada do Sistema (WMS/SaaS)](file:///c:/Users/lucas/OneDrive/Projeto%20IA/coletor/docs/documentacao_sistema.md): Arquitetura de software, modelo de dados (PostgreSQL/Supabase) e mapeamento completo dos fluxos logísticos (Inbound, Outbound, Contagens, Engine de Temas e Travas Duras).
+- [Plano de Vendas e Estratégia Comercial](file:///c:/Users/lucas/OneDrive/Projeto%20IA/coletor/docs/plano_comercial.md): Definição de ICP (Perfil de Cliente Ideal), precificação em Tiers, canais de aquisição ativa e passiva (Outbound/Inbound/Parcerias) e fluxo estruturado de Onboarding de futuros clientes.
+
 ---
 
 ## 🏗️ Arquitetura e Tecnologias

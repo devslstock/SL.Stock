@@ -14,6 +14,7 @@ import { toast } from '@/components/ui/toaster'
 import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check, FileSignature, Zap, Truck, Plus, Trash2, Pencil, Download, PackageCheck } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import * as XLSX from 'xlsx'
+import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
 
 export default function Conference() {
   const { id } = useParams()
@@ -26,6 +27,7 @@ export default function Conference() {
   const [scanInput, setScanInput] = useState('')
   const [activeTab, setActiveTab] = useState('scan')
   const [lastScanned, setLastScanned] = useState<OperationItem | null>(null)
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
   
   // Return state: maps product_code to quantity returned
   const [returnedItems, setReturnedItems] = useState<Record<string, number>>({})
@@ -160,12 +162,8 @@ export default function Conference() {
   // Helper to strip non-alphanumeric characters and uppercase for comparison
   const normalizeCode = (s: any) => s ? String(s).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
 
-  const handleScan = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!scanInput.trim()) return
-    const raw = scanInput.trim()
+  const processConfCode = (raw: string) => {
     const code = normalizeCode(raw)
-    setScanInput('')    
     const matchedProduct = allProducts.find(p => normalizeCode(p.code) === code || (p.external_code && normalizeCode(p.external_code) === code))
     const item = items.find(i =>
       normalizeCode(i.product_code) === code ||
@@ -234,6 +232,13 @@ export default function Conference() {
     updateItemMutation.mutate({ itemId: item.id, qty: nq, expected: nextExpected, status: ns })
   }
 
+  const handleScan = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!scanInput.trim()) return
+    processConfCode(scanInput.trim())
+    setScanInput('')    
+  }
+
   if (isOpLoading || isItemsLoading) return <div className="p-8 text-center text-muted-foreground">Carregando conferência...</div>
 
   if (!op) return (
@@ -281,13 +286,8 @@ export default function Conference() {
     XLSX.writeFile(wb, `Relatorio_Recebimento_${op?.load_number || id}.xlsx`)
   }
 
-  const handleReturnScan = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!returnScanInput.trim()) return
-    const raw = returnScanInput.trim()
+  const processReturnCode = (raw: string) => {
     const code = normalizeCode(raw)
-    setReturnScanInput('')
-    
     const matchedProduct = allProducts.find(p => normalizeCode(p.code) === code || (p.external_code && normalizeCode(p.external_code) === code))
     const item = items.find(i =>
       normalizeCode(i.product_code) === code ||
@@ -310,6 +310,13 @@ export default function Conference() {
       return { ...prev, [primaryCode]: next }
     })
     toast.info(`${item.description}: Retornado +1`)
+  }
+
+  const handleReturnScan = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!returnScanInput.trim()) return
+    processReturnCode(returnScanInput.trim())
+    setReturnScanInput('')
   }
 
   const handleFinishReturn = async () => {
@@ -476,6 +483,7 @@ export default function Conference() {
                   <ScanLine className="absolute left-3 top-3.5 h-5 w-5 text-primary/50 scan-pulse" />
                   <Input ref={scanRef} value={scanInput} onChange={e => setScanInput(e.target.value)} placeholder="Bipar código..." className="pl-11 h-12 text-lg font-mono" autoFocus />
                 </div>
+                <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="outline" className="h-12 w-12 border-primary/30 text-primary hover:bg-primary/10" title="Usar câmera"><Camera className="h-5 w-5" /></Button>
                 <Button type="submit" size="icon" className="h-12 w-12" disabled={updateItemMutation.isPending}><Search className="h-5 w-5" /></Button>
               </form>
               <p className="text-xs text-muted-foreground text-center mt-2">Use câmera ou leitor bluetooth</p>
@@ -622,6 +630,7 @@ export default function Conference() {
                   <ScanLine className="absolute left-3 top-3.5 h-5 w-5 text-amber-500/50 scan-pulse" />
                   <Input ref={scanRef} value={returnScanInput} onChange={e => setReturnScanInput(e.target.value)} placeholder="Bipar mercadoria que retornou..." className="pl-11 h-12 text-lg font-mono border-amber-500/30 focus-visible:ring-amber-500" autoFocus />
                 </div>
+                <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="outline" className="h-12 w-12 border-amber-500/30 text-amber-500 hover:bg-amber-500/10" title="Usar câmera"><Camera className="h-5 w-5" /></Button>
                 <Button type="submit" size="icon" className="h-12 w-12 bg-amber-600 hover:bg-amber-700 text-white"><Search className="h-5 w-5" /></Button>
               </form>
               <p className="text-xs text-muted-foreground text-center mt-2">Bipe os produtos que não foram entregues</p>
@@ -752,6 +761,18 @@ export default function Conference() {
         </TabsContent>
         )}
       </Tabs>
+
+      <BarcodeCameraScanner
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onScan={(code) => {
+          if (activeTab === 'scan') {
+            processConfCode(code);
+          } else if (activeTab === 'return') {
+            processReturnCode(code);
+          }
+        }}
+      />
     </div>
   )
 }
