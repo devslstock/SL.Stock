@@ -402,6 +402,14 @@ export default function Conference() {
     setShowDropdown(false)
   }
 
+  if (isOpLoading || isItemsLoading) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando conferência...</div>
+  }
+
+  if (!op) {
+    return <div className="p-8 text-center text-muted-foreground">Operação não encontrada</div>
+  }
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-120px)]">
       <div className="mb-4">
