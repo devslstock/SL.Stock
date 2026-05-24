@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Banknote, Plus, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Banknote, Plus, CheckCircle2, Clock, AlertCircle, Trash2 } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
 import type { CompanyPayment } from '@/types/database';
 
@@ -59,6 +59,14 @@ export default function SaaSFinance() {
       queryClient.invalidateQueries({ queryKey: ['company_payments'] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       toast.success('Status atualizado');
+    }
+  });
+
+  const deletePaymentMutation = useMutation({
+    mutationFn: saasApi.deletePayment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company_payments'] });
+      toast.success('Cobrança excluída');
     }
   });
 
@@ -139,23 +147,39 @@ export default function SaaSFinance() {
                     {payment.notes && <p className="italic mt-2 text-xs">"{payment.notes}"</p>}
                   </div>
 
-                  {payment.status === 'pendente' && (
-                    <div className="pt-3 border-t flex justify-end gap-2 mt-2">
-                      <Button variant="outline" size="sm" onClick={() => updateStatusMutation.mutate({ id: payment.id, company_id: payment.company_id, status: 'atrasado' })} className="text-red-500 hover:text-red-600">
-                        Marcar Atrasado
-                      </Button>
-                      <Button size="sm" onClick={() => updateStatusMutation.mutate({ id: payment.id, company_id: payment.company_id, status: 'pago' })} className="bg-emerald-500 hover:bg-emerald-600 text-white">
-                        Marcar Pago
-                      </Button>
+                  <div className="pt-3 border-t flex items-center justify-between mt-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        if (confirm('Tem certeza que deseja excluir esta cobrança?')) {
+                          deletePaymentMutation.mutate(payment.id);
+                        }
+                      }} 
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2"
+                      title="Excluir cobrança"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    
+                    <div className="flex gap-2">
+                      {payment.status === 'pendente' && (
+                        <>
+                          <Button variant="outline" size="sm" onClick={() => updateStatusMutation.mutate({ id: payment.id, company_id: payment.company_id, status: 'atrasado' })} className="text-red-500 hover:text-red-600">
+                            Atrasado
+                          </Button>
+                          <Button size="sm" onClick={() => updateStatusMutation.mutate({ id: payment.id, company_id: payment.company_id, status: 'pago' })} className="bg-emerald-500 hover:bg-emerald-600 text-white">
+                            Pago
+                          </Button>
+                        </>
+                      )}
+                      {payment.status === 'atrasado' && (
+                        <Button size="sm" onClick={() => updateStatusMutation.mutate({ id: payment.id, company_id: payment.company_id, status: 'pago' })} className="bg-emerald-500 hover:bg-emerald-600 text-white">
+                          Baixar Pago
+                        </Button>
+                      )}
                     </div>
-                  )}
-                  {payment.status === 'atrasado' && (
-                    <div className="pt-3 border-t flex justify-end gap-2 mt-2">
-                      <Button size="sm" onClick={() => updateStatusMutation.mutate({ id: payment.id, company_id: payment.company_id, status: 'pago' })} className="bg-emerald-500 hover:bg-emerald-600 text-white w-full">
-                        Baixar como Pago
-                      </Button>
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             );

@@ -120,5 +120,14 @@ export const saasApi = {
       
     if (error) throw error
     return data as CompanyPayment
+  },
+
+  async deletePayment(id: string) {
+    const { error } = await supabase
+      .from('company_payments')
+      .delete()
+      .eq('id', id)
+      
+    if (error) throw error
   }
 }
