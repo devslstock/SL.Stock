@@ -233,3 +233,28 @@
     background-position: -200% 0;
   }
 }
+
+  .traditional {
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.5rem;
+
+    --glass-bg: var(--card);
+    --glass-border: var(--border);
+    --glass-shadow: rgba(0, 0, 0, 0.05);
+    --glass-glow: transparent;
+  }
+
+  .traditional .gradient-text {
+    background: none;
+    -webkit-text-fill-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .traditional .glow-primary,
+  .traditional .glow-success,
+  .traditional .glow-warning,
+  .traditional .glow-destructive {
+    box-shadow: none;
+  }

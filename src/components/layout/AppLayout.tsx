@@ -15,7 +15,8 @@ import {
   Sun,
   MapPin,
   Bell,
-  FileSignature
+  FileSignature,
+  Palette
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
@@ -41,6 +42,19 @@ export default function AppLayout() {
   const { user, logout, hasPermission } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
 
+  const isDark = theme.includes('dark');
+  const isTraditional = theme.startsWith('traditional-');
+
+  const toggleDarkLight = () => {
+    const newTheme = (isTraditional ? 'traditional-' : '') + (isDark ? 'light' : 'dark')
+    setTheme(newTheme as any)
+  }
+
+  const toggleStyle = () => {
+    const newTheme = (isTraditional ? '' : 'traditional-') + (isDark ? 'dark' : 'light')
+    setTheme(newTheme as any)
+  }
+
   const { data: pendingApprovals = [] } = useQuery({
     queryKey: ['pending_approvals'],
     queryFn: deliveriesApi.getPendingApprovals,
@@ -64,10 +78,17 @@ export default function AppLayout() {
             <LogOut className="h-5 w-5" />
           </button>
           <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={toggleStyle}
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground"
+            title="Alternar estilo (Moderno / Tradicional)"
+          >
+            <Palette className="h-5 w-5" />
+          </button>
+          <button
+            onClick={toggleDarkLight}
             className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground"
           >
-            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -153,8 +174,11 @@ export default function AppLayout() {
              
              <div className="h-6 w-px bg-border mx-1"></div>
              
-             <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer" title="Alternar tema">
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+             <button onClick={toggleStyle} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer" title="Alternar estilo (Moderno / Tradicional)">
+                <Palette className="h-5 w-5" />
+             </button>
+             <button onClick={toggleDarkLight} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer" title="Alternar tema">
+                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
              </button>
              
              <button onClick={logout} className="p-2 rounded-lg hover:bg-red-500/10 text-red-500/70 hover:text-red-500 transition-colors cursor-pointer" title="Sair">
