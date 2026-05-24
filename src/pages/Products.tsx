@@ -271,18 +271,17 @@ export default function Products() {
                   <Package className="h-4 w-4 mr-1.5" /> Recebimento (Fábrica) <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => {
-                if (window.confirm('CUIDADO: Isso irá apagar TODOS os produtos cadastrados. Tem certeza que deseja continuar?')) {
-                  deleteAllMutation.mutate()
-                }
-              }}>
-                <Trash2 className="h-4 w-4 mr-1.5" /> Limpar
-              </Button>
+              {user?.role === 'admin' && (
+                <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => {
+                  if (window.confirm('CUIDADO: Isso irá apagar TODOS os produtos cadastrados. Tem certeza que deseja continuar?')) {
+                    deleteAllMutation.mutate()
+                  }
+                }}>
+                  <Trash2 className="h-4 w-4 mr-1.5" /> Limpar
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
                 <Upload className="h-4 w-4 mr-1.5" /> Importar
-              </Button>
-              <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={() => setIsStockEntryOpen(true)}>
-                <Archive className="h-4 w-4 mr-1.5" /> Entrada Estoque
               </Button>
               <Button size="sm" onClick={() => { setEditingProduct(null); setIsDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-1.5" /> Novo Produto
