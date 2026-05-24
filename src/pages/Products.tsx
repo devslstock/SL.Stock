@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from '@/components/ui/toaster'
-import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight, ScanLine } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link } from 'react-router-dom'
@@ -269,6 +269,11 @@ export default function Products() {
               <Link to="/recebimentos">
                 <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-[0_0_15px_rgba(5,150,105,0.3)] border-0">
                   <Package className="h-4 w-4 mr-1.5" /> Recebimento (Fábrica) <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+              </Link>
+              <Link to="/contagens">
+                <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] border-0">
+                  <ScanLine className="h-4 w-4 mr-1.5" /> Contagens
                 </Button>
               </Link>
               {user?.role === 'admin' && (
