@@ -40,5 +40,25 @@ export const companiesApi = {
       .single()
     if (error) throw error
     return data as Company
+  },
+
+  async verifyCompanyFinancialStatus(id: string) {
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+    const limitDateStr = fiveDaysAgo.toISOString().split('T')[0];
+
+    const { data } = await supabase
+      .from('company_payments')
+      .select('id')
+      .eq('company_id', id)
+      .neq('status', 'pago')
+      .lt('due_date', limitDateStr);
+
+    if (data && data.length > 0) {
+      // Tem pendência a mais de 5 dias
+      await supabase.from('companies').update({ active: false }).eq('id', id);
+      return false; // Inativada
+    }
+    return true; // OK
   }
 }

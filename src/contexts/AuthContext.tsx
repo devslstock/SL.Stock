@@ -33,7 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const found = users.find(u => u.id === storedUserId && u.active);
         if (found) {
           if (found.company_id) {
-            const comp = await companiesApi.getCompany(found.company_id);
+            let comp = await companiesApi.getCompany(found.company_id);
+            if (comp && comp.active) {
+              const isActive = await companiesApi.verifyCompanyFinancialStatus(comp.id);
+              if (!isActive) {
+                comp.active = false;
+              }
+            }
+
             if (comp && comp.active) {
               currentCompanyId = comp.id;
               localStorage.setItem('auth_company_id', comp.id);
@@ -73,7 +80,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (found) {
         if (found.company_id) {
-          const comp = await companiesApi.getCompany(found.company_id);
+          let comp = await companiesApi.getCompany(found.company_id);
+          if (comp && comp.active) {
+            const isActive = await companiesApi.verifyCompanyFinancialStatus(comp.id);
+            if (!isActive) {
+              comp.active = false;
+            }
+          }
+
           if (comp && comp.active) {
             currentCompanyId = comp.id;
             localStorage.setItem('auth_company_id', comp.id);
@@ -81,6 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setCompany(comp);
             localStorage.setItem('auth_user_id', found.id);
             return true;
+          } else {
+            toast.error('Empresa inativa. Verifique possíveis pendências financeiras.');
+            return false;
           }
         } else if (found.is_super_admin) {
           currentCompanyId = null;
@@ -109,13 +126,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const switchCompany = async (companyId: string) => {
     if (!user?.is_super_admin) return false;
     try {
-      const comp = await companiesApi.getCompany(companyId);
+      let comp = await companiesApi.getCompany(companyId);
+      if (comp && comp.active) {
+        const isActive = await companiesApi.verifyCompanyFinancialStatus(comp.id);
+        if (!isActive) {
+          comp.active = false;
+        }
+      }
+
       if (comp && comp.active) {
         currentCompanyId = comp.id;
         localStorage.setItem('auth_company_id', comp.id);
         setCompany(comp);
         return true;
       }
+      toast.error('Esta empresa está inativa e não pode ser acessada.');
       return false;
     } catch (e) {
       console.error('Error switching company', e);
