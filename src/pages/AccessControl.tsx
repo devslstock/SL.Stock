@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi } from '@/api/users'
+import { useAuth } from '@/contexts/AuthContext'
 import type { User, UserRole, UserPermissions } from '@/types/database'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ const defaultPermissions: Record<UserRole, UserPermissions> = {
 
 export default function AccessControl() {
   const queryClient = useQueryClient()
+  const { company } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [editing, setEditing] = useState<User | null>(null)
 
@@ -156,9 +158,17 @@ export default function AccessControl() {
           <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
             <ShieldCheck className="h-7 w-7 text-primary" /> Controle de Acesso
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">{users.length} usuários cadastrados</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {users.length} {company?.max_users ? `de ${company.max_users}` : ''} usuários cadastrados
+          </p>
         </div>
-        <Button onClick={openNew}><Plus className="h-4 w-4 mr-1.5" />Novo Usuário</Button>
+        <Button 
+          onClick={openNew} 
+          disabled={company?.max_users ? users.length >= company.max_users : false}
+          title={company?.max_users && users.length >= company.max_users ? "Limite de usuários atingido" : ""}
+        >
+          <Plus className="h-4 w-4 mr-1.5" />Novo Usuário
+        </Button>
       </div>
 
       {usersNeedingReset.length > 0 && (

@@ -29,6 +29,16 @@ export const usersApi = {
   async createUser(user: Omit<User, 'id' | 'created_at' | 'company_id'>, forceCompanyId?: string) {
     const targetCompanyId = forceCompanyId || currentCompanyId;
     if (!targetCompanyId) throw new Error('No company context')
+
+    // Verificar limite de usuários
+    const { data: comp } = await supabase.from('companies').select('max_users').eq('id', targetCompanyId).single()
+    if (comp) {
+      const { count } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('company_id', targetCompanyId)
+      if (count !== null && count >= comp.max_users) {
+        throw new Error(`Limite de usuários atingido para esta empresa (${comp.max_users} usuários max).`)
+      }
+    }
+
     const { data, error } = await supabase
       .from('users')
       .insert([{ ...user, company_id: targetCompanyId }])
