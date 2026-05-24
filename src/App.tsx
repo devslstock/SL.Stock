@@ -8,6 +8,8 @@ import DeliveryProof from './pages/DeliveryProof'
 import Products from './pages/Products'
 import AccessControl from './pages/AccessControl'
 import Login from './pages/Login'
+import MasterPanel from './pages/Master'
+import { ThemeProvider } from './components/ThemeProvider'
 import ChangePassword from './pages/ChangePassword'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
@@ -93,6 +95,7 @@ function App() {
             <Route path="/historico" element={<ClientHistory />} />
 
             <Route path="/acesso" element={<AccessControl />} />
+            <Route path="/saas" element={<MasterPanel />} />
           </Route>
         </Route>
       </Routes>

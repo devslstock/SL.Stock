@@ -29,6 +29,7 @@ export interface Company {
 export interface User {
   id: string
   company_id: string
+  is_super_admin?: boolean
   name: string
   username: string
   password_hash: string

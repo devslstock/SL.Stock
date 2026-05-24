@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
-import { LogOut, User as UserIcon } from 'lucide-react'
+import { LogOut, User as UserIcon, Building2 } from 'lucide-react'
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/', permission: 'can_view_dashboard' },
@@ -33,7 +33,7 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
   const { theme, setTheme } = useTheme()
-  const { user, company, logout, hasPermission } = useAuth()
+  const { user, company, logout, hasPermission, isMaster } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
 
   const isDark = theme.includes('dark');
@@ -135,6 +135,25 @@ export default function AppLayout() {
               </Link>
             )
           })}
+          
+          {/* Menu SaaS Exclusivo Master */}
+          {isMaster && (
+            <div className="pt-4 mt-4 border-t border-border/50">
+              <Link
+                to="/saas"
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  location.pathname === '/saas'
+                    ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
+                    : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
+                )}
+              >
+                <Building2 className={cn("h-4.5 w-4.5", location.pathname === '/saas' && "text-purple-500")} />
+                Gerenciar SaaS
+              </Link>
+            </div>
+          )}
         </nav>
       </aside>
 

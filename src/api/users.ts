@@ -26,11 +26,12 @@ export const usersApi = {
     return data as User[]
   },
 
-  async createUser(user: Omit<User, 'id' | 'created_at' | 'company_id'>) {
-    if (!currentCompanyId) throw new Error('No company context')
+  async createUser(user: Omit<User, 'id' | 'created_at' | 'company_id'>, forceCompanyId?: string) {
+    const targetCompanyId = forceCompanyId || currentCompanyId;
+    if (!targetCompanyId) throw new Error('No company context')
     const { data, error } = await supabase
       .from('users')
-      .insert([{ ...user, company_id: currentCompanyId }])
+      .insert([{ ...user, company_id: targetCompanyId }])
       .select()
       .single()
     if (error) throw error

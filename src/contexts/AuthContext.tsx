@@ -6,8 +6,10 @@ import type { User, UserPermissions, Company } from '@/types/database';
 interface AuthContextType {
   user: User | null;
   company: Company | null;
+  isMaster: boolean;
   login: (username: string, password_hash: string) => Promise<boolean>;
   logout: () => void;
+  switchCompany: (companyId: string) => Promise<boolean>;
   isLoading: boolean;
   hasPermission: (permission: keyof UserPermissions) => boolean;
 }
@@ -83,14 +85,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('auth_company_id');
   };
 
+  const switchCompany = async (companyId: string) => {
+    if (!user?.is_super_admin) return false;
+    try {
+      const comp = await companiesApi.getCompany(companyId);
+      if (comp && comp.active) {
+        currentCompanyId = comp.id;
+        localStorage.setItem('auth_company_id', comp.id);
+        setCompany(comp);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('Error switching company', e);
+      return false;
+    }
+  };
+
   const hasPermission = (permission: keyof UserPermissions) => {
     // Admin has all permissions implicitly
     if (user?.role === 'admin') return true;
-    return user?.permissions?.[permission] === true;
+    if (!user || !user.permissions) return false;
+    return user.permissions[permission] === true;
   };
 
+  const isMaster = user?.is_super_admin === true;
+
   return (
-    <AuthContext.Provider value={{ user, company, login, logout, isLoading, hasPermission }}>
+    <AuthContext.Provider value={{ user, company, isMaster, login, logout, switchCompany, isLoading, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );
