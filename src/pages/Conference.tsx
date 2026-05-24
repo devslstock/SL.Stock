@@ -177,12 +177,14 @@ export default function Conference() {
         toast.error(`Produto não cadastrado no sistema: ${code}`)
         return
       }
-      if (!isManager) {
-        window.alert(`ACESSO NEGADO: O produto ${matchedProduct.description} não está na rota. Procure um Gestor.`)
-        return
+      if (op?.type !== 'RECEIPT') {
+        if (!isManager) {
+          window.alert(`ACESSO NEGADO: O produto ${matchedProduct.description} não está na rota. Procure um Gestor.`)
+          return
+        }
+        const ok = window.confirm(`${matchedProduct.description} não está na rota. Deseja adicionar?`)
+        if (!ok) return
       }
-      const ok = window.confirm(`${matchedProduct.description} não está na rota. Deseja adicionar?`)
-      if (!ok) return
       
       const newItem = {
         product_id: matchedProduct.id,
@@ -201,12 +203,14 @@ export default function Conference() {
     let nextExpected = item.quantity_expected
     
     if (cur >= item.quantity_expected) { 
-      if (!isManager) {
-        window.alert(`LIMITE ATINGIDO: A quantidade de ${item.description} já foi alcançada. Procure um Gestor.`)
-        return
+      if (op?.type !== 'RECEIPT') {
+        if (!isManager) {
+          window.alert(`LIMITE ATINGIDO: A quantidade de ${item.description} já foi alcançada. Procure um Gestor.`)
+          return
+        }
+        const ok = window.confirm(`Atenção: A quantidade esperada para ${item.description} já foi atingida (${item.quantity_expected}). Deseja adicionar uma unidade extra à rota?`)
+        if (!ok) return
       }
-      const ok = window.confirm(`Atenção: A quantidade esperada para ${item.description} já foi atingida (${item.quantity_expected}). Deseja adicionar uma unidade extra à rota?`)
-      if (!ok) return
 
       nextExpected = cur + 1
       toast.success(`${item.description}: Quantidade extra (+1) adicionada à rota!`)
