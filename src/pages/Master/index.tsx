@@ -9,9 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Plus, Users, Power, LogIn } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/toaster';
-import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
 
 export default function MasterPanel() {
@@ -163,9 +162,11 @@ export default function MasterPanel() {
 
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <div className="flex items-center gap-2">
-                    <Switch 
+                    <input 
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                       checked={comp.active} 
-                      onCheckedChange={(checked) => toggleStatusMutation.mutate({ id: comp.id, active: checked })}
+                      onChange={(e) => toggleStatusMutation.mutate({ id: comp.id, active: e.target.checked })}
                     />
                     <span className="text-sm font-medium">{comp.active ? 'Ativa' : 'Inativa'}</span>
                   </div>
@@ -237,12 +238,12 @@ export default function MasterPanel() {
               </div>
             </div>
 
-            <DialogFooter className="pt-4">
+            <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Criando...' : 'Criar Empresa'}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

@@ -40,7 +40,7 @@ export default function AccessControl() {
   })
 
   const createMutation = useMutation({
-    mutationFn: usersApi.createUser,
+    mutationFn: (data: Parameters<typeof usersApi.createUser>[0]) => usersApi.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Usuário criado')
