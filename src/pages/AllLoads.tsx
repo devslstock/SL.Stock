@@ -17,6 +17,7 @@ import {
   PackageCheck,
   CheckCircle2,
   Trash2,
+  Factory,
 } from 'lucide-react'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success'; icon: typeof Clock }> = {
@@ -127,17 +128,21 @@ export default function AllLoads() {
               <Link key={op.id} to={`/conferencia/${op.id}`} className="block group">
                 <div className="glass-card glass-card-hover p-4 flex items-center gap-4 slide-up" style={{ animationDelay: `${index * 60}ms` }}>
                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    (op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') ? 'bg-emerald-500/15 text-emerald-500' :
                     op.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' :
                     op.status === 'dispatched' ? 'bg-blue-500/15 text-blue-400' :
                     op.status === 'in_progress' ? 'bg-violet-500/15 text-violet-400' :
                     'bg-amber-500/15 text-amber-400'
                   }`}>
-                    {config && <config.icon className="h-5 w-5" />}
+                    {(op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') ? <Factory className="h-5 w-5" /> : (config && <config.icon className="h-5 w-5" />)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="font-bold text-foreground">{op.load_number}</span>
                       <Badge variant={config?.variant || 'default'}>{config?.label || op.status}</Badge>
+                      {op.type === 'INVENTORY' && <Badge variant="secondary">Inventário</Badge>}
+                      {(op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') && <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-0">Fábrica</Badge>}
+                      {op.type === 'LOAD' && <Badge className="bg-blue-500 hover:bg-blue-600 text-white border-0">Carga</Badge>}
                     </div>
                     {op.driver_name && (
                       <div className="flex gap-3 mt-1 text-xs text-muted-foreground/60">

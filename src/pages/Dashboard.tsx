@@ -132,6 +132,8 @@ export default function Dashboard() {
                         {statusConfig[op.status]?.label || op.status}
                       </Badge>
                       {op.type === 'INVENTORY' && <Badge variant="secondary">Inventário</Badge>}
+                      {(op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') && <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-0">Fábrica</Badge>}
+                      {op.type === 'LOAD' && <Badge className="bg-blue-500 hover:bg-blue-600 text-white border-0">Carga</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{op.client_name}</p>
                     {op.driver_name && (
