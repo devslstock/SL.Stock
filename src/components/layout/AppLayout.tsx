@@ -108,7 +108,6 @@ export default function AppLayout() {
         <nav className="flex-1 p-3 space-y-1 overflow-auto mt-14 md:mt-0">
           {navItems.map((item) => {
             if (!hasPermission(item.permission as any)) return null;
-            if (item.path === '/nova-carga' && !isManager) return null;
             
             const isActive = location.pathname === item.path
             return (
