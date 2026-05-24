@@ -15,7 +15,9 @@ import {
   PackageCheck,
   CheckCircle2,
   Trash2,
-  MapPin
+  MapPin,
+  FileSignature,
+  Bell
 } from 'lucide-react'
 import type { DeliveryRoute } from '@/types/database'
 
@@ -33,6 +35,13 @@ export default function DeliveriesList() {
   const { data: routes = [], isLoading } = useQuery({
     queryKey: ['delivery_routes'],
     queryFn: deliveriesApi.getDeliveryRoutes,
+  })
+
+  const { data: pendingApprovals = [] } = useQuery({
+    queryKey: ['pending_approvals'],
+    queryFn: deliveriesApi.getPendingApprovals,
+    refetchInterval: 10000, // refresh every 10 seconds
+    enabled: isManager,
   })
 
   const deleteMutation = useMutation({
@@ -66,11 +75,28 @@ export default function DeliveriesList() {
           </p>
         </div>
         {isManager && (
-          <Link to="/entregas/nova">
-            <Button className="gap-2 w-full sm:w-auto h-12 sm:h-10 text-lg sm:text-sm">
-              <Plus className="h-5 w-5 sm:h-4 sm:w-4" /> Criar Rota de Entrega
-            </Button>
-          </Link>
+          <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+            <Link to="/historico">
+              <Button variant="outline" className="gap-2 w-full sm:w-auto h-12 sm:h-10 text-lg sm:text-sm">
+                <FileSignature className="h-5 w-5 sm:h-4 sm:w-4" /> Comprovantes
+              </Button>
+            </Link>
+            <Link to="/liberacoes" className="relative">
+              <Button variant="outline" className="gap-2 w-full sm:w-auto h-12 sm:h-10 text-lg sm:text-sm">
+                <Bell className="h-5 w-5 sm:h-4 sm:w-4" /> Liberações
+              </Button>
+              {pendingApprovals.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-lg animate-pulse">
+                  {pendingApprovals.length}
+                </span>
+              )}
+            </Link>
+            <Link to="/entregas/nova">
+              <Button className="gap-2 w-full sm:w-auto h-12 sm:h-10 text-lg sm:text-sm">
+                <Plus className="h-5 w-5 sm:h-4 sm:w-4" /> Criar Rota
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
 
