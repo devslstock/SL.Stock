@@ -1,8 +1,10 @@
 import { supabase } from '@/lib/supabase'
 import type { DeliveryRoute, DeliveryClient, DeliveryItem } from '@/types/database'
+import { currentCompanyId } from '@/contexts/AuthContext'
 
 export const deliveriesApi = {
   async getDeliveryRoutes() {
+    if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('delivery_routes')
       .select(`
@@ -10,12 +12,14 @@ export const deliveriesApi = {
         operation:operations ( load_number ),
         driver:users ( name )
       `)
+      .eq('company_id', currentCompanyId)
       .order('created_at', { ascending: false })
     if (error) throw error
     return data
   },
 
   async getDeliveryRoute(id: string) {
+    if (!currentCompanyId) return null
     const { data, error } = await supabase
       .from('delivery_routes')
       .select(`
@@ -24,15 +28,17 @@ export const deliveriesApi = {
         driver:users ( name )
       `)
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
       .single()
     if (error) throw error
     return data
   },
 
   async createDeliveryRoute(operationId: string, driverId: string) {
+    if (!currentCompanyId) throw new Error('No company context')
     const { data, error } = await supabase
       .from('delivery_routes')
-      .insert([{ operation_id: operationId, driver_id: driverId }])
+      .insert([{ operation_id: operationId, driver_id: driverId, company_id: currentCompanyId }])
       .select()
       .single()
     if (error) throw error
@@ -44,34 +50,40 @@ export const deliveriesApi = {
       .from('delivery_routes')
       .delete()
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
     if (error) throw error
     return true
   },
 
   async getDeliveryClients(routeId: string) {
+    if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('delivery_clients')
       .select('*, delivery_items(*)')
       .eq('delivery_route_id', routeId)
+      .eq('company_id', currentCompanyId)
       .order('name')
     if (error) throw error
     return data as (DeliveryClient & { delivery_items: DeliveryItem[] })[]
   },
 
   async getDeliveryClient(clientId: string) {
+    if (!currentCompanyId) return null
     const { data, error } = await supabase
       .from('delivery_clients')
       .select('*')
       .eq('id', clientId)
+      .eq('company_id', currentCompanyId)
       .single()
     if (error) throw error
     return data as DeliveryClient
   },
 
   async createDeliveryClient(clientData: Partial<DeliveryClient>) {
+    if (!currentCompanyId) throw new Error('No company context')
     const { data, error } = await supabase
       .from('delivery_clients')
-      .insert([clientData])
+      .insert([{ ...clientData, company_id: currentCompanyId }])
       .select()
       .single()
     if (error) throw error
@@ -83,6 +95,7 @@ export const deliveriesApi = {
       .from('delivery_clients')
       .update(updates)
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
       .select()
       .single()
     if (error) throw error
@@ -94,15 +107,18 @@ export const deliveriesApi = {
       .from('delivery_clients')
       .delete()
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
     if (error) throw error
     return true
   },
 
   async getDeliveryItems(clientId: string) {
+    if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('delivery_items')
       .select('*')
       .eq('delivery_client_id', clientId)
+      .eq('company_id', currentCompanyId)
       .order('description')
     if (error) throw error
     return data as DeliveryItem[]
@@ -113,6 +129,7 @@ export const deliveriesApi = {
       .from('delivery_items')
       .update({ quantity_scanned, status })
       .eq('id', itemId)
+      .eq('company_id', currentCompanyId)
       .select()
       .single()
     if (error) throw error
@@ -120,9 +137,10 @@ export const deliveriesApi = {
   },
 
   async addDeliveryItem(clientId: string, item: Partial<DeliveryItem>) {
+    if (!currentCompanyId) throw new Error('No company context')
     const { data, error } = await supabase
       .from('delivery_items')
-      .insert([{ ...item, delivery_client_id: clientId }])
+      .insert([{ ...item, delivery_client_id: clientId, company_id: currentCompanyId }])
       .select()
       .single()
     if (error) throw error
@@ -134,12 +152,13 @@ export const deliveriesApi = {
       .from('delivery_items')
       .delete()
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
     if (error) throw error
     return true
   },
 
   async importDeliveryClients(routeId: string, clientsData: any[]) {
-    // clientsData: [{ name, address, phone, notes, items: [{ product_id, product_code, description, quantity_expected }] }]
+    if (!currentCompanyId) throw new Error('No company context')
     for (const c of clientsData) {
       const { data: client, error: clientErr } = await supabase
         .from('delivery_clients')
@@ -149,7 +168,8 @@ export const deliveriesApi = {
           address: c.address,
           phone: c.phone,
           notes: c.notes,
-          order_number: c.order_number
+          order_number: c.order_number,
+          company_id: currentCompanyId
         }])
         .select()
         .single()
@@ -159,7 +179,8 @@ export const deliveriesApi = {
       if (c.items && c.items.length > 0) {
         const itemsToInsert = c.items.map((i: any) => ({
           ...i,
-          delivery_client_id: client.id
+          delivery_client_id: client.id,
+          company_id: currentCompanyId
         }))
         const { error: itemsErr } = await supabase
           .from('delivery_items')
@@ -175,6 +196,7 @@ export const deliveriesApi = {
       .from('delivery_items')
       .update({ approval_status: 'pending', requested_qty: requestedQty })
       .eq('id', itemId)
+      .eq('company_id', currentCompanyId)
       .select()
       .single()
     if (error) throw error
@@ -194,6 +216,7 @@ export const deliveriesApi = {
       .from('delivery_items')
       .update(updates)
       .eq('id', itemId)
+      .eq('company_id', currentCompanyId)
       .select()
       .single()
     if (error) throw error
@@ -201,6 +224,7 @@ export const deliveriesApi = {
   },
 
   async getPendingApprovals() {
+    if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('delivery_items')
       .select(`
@@ -214,19 +238,18 @@ export const deliveriesApi = {
         )
       `)
       .eq('approval_status', 'pending')
+      .eq('company_id', currentCompanyId)
       .order('created_at', { ascending: false })
     if (error) throw error
     return data
   },
 
   async searchDeliveryProofs(query: string) {
-    // If no query, return empty
+    if (!currentCompanyId) return []
     if (!query || query.trim().length < 2) return []
 
     const q = `%${query.trim()}%`
 
-    // We do two queries and merge them to handle nested table search easily
-    // 1. Search by client name
     const { data: clientsByName, error: err1 } = await supabase
       .from('delivery_clients')
       .select(`
@@ -238,13 +261,13 @@ export const deliveriesApi = {
           operation:operations ( load_number )
         )
       `)
+      .eq('company_id', currentCompanyId)
       .or(`name.ilike.${q},order_number.ilike.${q}`)
       .order('created_at', { ascending: false })
       .limit(30)
 
     if (err1) throw err1
 
-    // 2. Search by load_number (inner join required to filter by operation)
     const { data: clientsByRoute, error: err2 } = await supabase
       .from('delivery_clients')
       .select(`
@@ -256,17 +279,16 @@ export const deliveriesApi = {
           operation:operations!inner ( load_number )
         )
       `)
+      .eq('company_id', currentCompanyId)
       .ilike('route.operation.load_number', q)
       .order('created_at', { ascending: false })
       .limit(30)
 
     if (err2) throw err2
 
-    // Merge and deduplicate by client ID
     const merged = [...(clientsByName || []), ...(clientsByRoute || [])]
     const uniqueClients = Array.from(new Map(merged.map(c => [c.id, c])).values())
     
-    // Sort by most recent
     return uniqueClients.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
 }

@@ -16,8 +16,19 @@ export interface UserPermissions {
   can_do_delivery: boolean
 }
 
+export interface Company {
+  id: string
+  slug: string
+  name: string
+  cnpj?: string
+  max_users: number
+  active: boolean
+  created_at: string
+}
+
 export interface User {
   id: string
+  company_id: string
   name: string
   username: string
   password_hash: string
@@ -30,6 +41,7 @@ export interface User {
 
 export interface Product {
   id: string
+  company_id: string
   code: string
   external_code?: string
   description: string
@@ -51,6 +63,7 @@ export interface RelatedCode {
 
 export interface Operation {
   id: string
+  company_id: string
   type: OperationType
   status: OperationStatus
   load_number?: string
@@ -66,6 +79,7 @@ export interface Operation {
 
 export interface OperationItem {
   id: string
+  company_id: string
   operation_id: string
   product_id: string
   product_code: string
@@ -141,6 +155,7 @@ export interface InventoryCountItem {
 
 export interface DeliveryRoute {
   id: string
+  company_id: string
   operation_id: string
   driver_id: string
   status: 'pending' | 'in_progress' | 'completed'
@@ -149,6 +164,7 @@ export interface DeliveryRoute {
 
 export interface DeliveryClient {
   id: string
+  company_id: string
   delivery_route_id: string
   name: string
   order_number?: string
@@ -165,6 +181,7 @@ export interface DeliveryClient {
 
 export interface DeliveryItem {
   id: string
+  company_id: string
   delivery_client_id: string
   product_id: string
   product_code: string

@@ -1,31 +1,38 @@
 import { supabase } from '@/lib/supabase'
 import type { Operation, OperationItem } from '@/types/database'
+import { currentCompanyId } from '@/contexts/AuthContext'
 
 export const operationsApi = {
   async getOperations() {
+    if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('operations')
       .select('*')
+      .eq('company_id', currentCompanyId)
       .order('created_at', { ascending: false })
     if (error) throw error
     return data as Operation[]
   },
 
   async getOperation(id: string) {
+    if (!currentCompanyId) return null
     const { data, error } = await supabase
       .from('operations')
       .select('*')
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
       .single()
     if (error) throw error
     return data as Operation
   },
 
   async getOperationItems(operationId: string) {
+    if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('operation_items')
       .select('*')
       .eq('operation_id', operationId)
+      .eq('company_id', currentCompanyId)
       .order('description')
     if (error) throw error
     return data as OperationItem[]
@@ -39,6 +46,7 @@ export const operationsApi = {
       .from('operations')
       .update(updates)
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
       .select()
       .single()
     if (error) throw error
@@ -50,6 +58,7 @@ export const operationsApi = {
       .from('operation_items')
       .update({ quantity_scanned, status })
       .eq('id', itemId)
+      .eq('company_id', currentCompanyId)
       .select()
       .single()
     if (error) throw error
@@ -61,6 +70,7 @@ export const operationsApi = {
       .from('operation_items')
       .update({ quantity_expected })
       .eq('id', itemId)
+      .eq('company_id', currentCompanyId)
       .select()
       .single()
     if (error) throw error
@@ -72,55 +82,61 @@ export const operationsApi = {
       .from('operation_items')
       .delete()
       .eq('id', itemId)
+      .eq('company_id', currentCompanyId)
     if (error) throw error
     return true
   },
 
-  async addOperationItem(operationId: string, item: Omit<OperationItem, 'id' | 'operation_id'>) {
+  async addOperationItem(operationId: string, item: Omit<OperationItem, 'id' | 'operation_id' | 'company_id'>) {
     const { data, error } = await supabase
       .from('operation_items')
-      .insert([{ ...item, operation_id: operationId }])
+      .insert([{ ...item, operation_id: operationId, company_id: currentCompanyId }])
       .select()
       .single()
     if (error) throw error
     return data as OperationItem
   },
 
-  async createOperation(operation: Omit<Operation, 'id' | 'created_at'>, items: Omit<OperationItem, 'id' | 'operation_id'>[]) {
-    // Start a transaction-like flow
+  async createOperation(operation: Omit<Operation, 'id' | 'created_at' | 'company_id'>, items: Omit<OperationItem, 'id' | 'operation_id' | 'company_id'>[]) {
+    if (!currentCompanyId) throw new Error('No company context')
     const { data: opData, error: opError } = await supabase
       .from('operations')
-      .insert([operation])
+      .insert([{ ...operation, company_id: currentCompanyId }])
       .select()
       .single()
     
     if (opError) throw opError
 
-    const itemsToInsert = items.map(item => ({
-      ...item,
-      operation_id: opData.id
-    }))
+    if (items.length > 0) {
+      const itemsToInsert = items.map(item => ({
+        ...item,
+        operation_id: opData.id,
+        company_id: currentCompanyId
+      }))
 
-    const { error: itemsError } = await supabase
-      .from('operation_items')
-      .insert(itemsToInsert)
+      const { error: itemsError } = await supabase
+        .from('operation_items')
+        .insert(itemsToInsert)
 
-    if (itemsError) throw itemsError
+      if (itemsError) throw itemsError
+    }
 
     return opData as Operation
   },
 
-  async updateOperationFull(id: string, opData: Partial<Operation>, itemsData: Omit<OperationItem, 'id' | 'operation_id'>[]) {
+  async updateOperationFull(id: string, opData: Partial<Operation>, itemsData: Omit<OperationItem, 'id' | 'operation_id' | 'company_id'>[]) {
     const { error: opError } = await supabase
       .from('operations')
       .update(opData)
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
     if (opError) throw opError
 
     const { data: existingItems, error: existingError } = await supabase
       .from('operation_items')
       .select('*')
       .eq('operation_id', id)
+      .eq('company_id', currentCompanyId)
     if (existingError) throw existingError
 
     const existingMap = new Map(existingItems.map(i => [i.product_code, i]))
@@ -129,7 +145,7 @@ export const operationsApi = {
     // Items to delete
     const toDelete = existingItems.filter(i => !newMap.has(i.product_code)).map(i => i.id)
     if (toDelete.length > 0) {
-      await supabase.from('operation_items').delete().in('id', toDelete)
+      await supabase.from('operation_items').delete().in('id', toDelete).eq('company_id', currentCompanyId)
     }
 
     // Items to update and insert
@@ -139,10 +155,10 @@ export const operationsApi = {
       if (existing) {
         // Update expected quantity if changed
         if (existing.quantity_expected !== newItem.quantity_expected) {
-          await supabase.from('operation_items').update({ quantity_expected: newItem.quantity_expected }).eq('id', existing.id)
+          await supabase.from('operation_items').update({ quantity_expected: newItem.quantity_expected }).eq('id', existing.id).eq('company_id', currentCompanyId)
         }
       } else {
-        toInsert.push({ ...newItem, operation_id: id })
+        toInsert.push({ ...newItem, operation_id: id, company_id: currentCompanyId })
       }
     }
 

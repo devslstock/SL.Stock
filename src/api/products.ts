@@ -1,11 +1,14 @@
 import { supabase } from '@/lib/supabase'
 import type { Product } from '@/types/database'
+import { currentCompanyId } from '@/contexts/AuthContext'
 
 export const productsApi = {
   async getProducts() {
+    if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('products')
       .select('*')
+      .eq('company_id', currentCompanyId)
       .order('description')
     if (error) throw error
     // Ensure codes keep leading zeros by converting to string
@@ -17,14 +20,37 @@ export const productsApi = {
     return normalized
   },
 
-  async createProduct(product: Omit<Product, 'id' | 'created_at'>) {
+  async createProduct(product: Omit<Product, 'id' | 'created_at' | 'company_id'>) {
+    if (!currentCompanyId) throw new Error('No company context')
     const { data, error } = await supabase
       .from('products')
-      .insert([product])
+      .insert([{ ...product, company_id: currentCompanyId }])
       .select()
       .single()
     if (error) throw error
     return data as Product
+  },
+
+  async addRelatedCode(relatedCode: Omit<any, 'id' | 'created_at'>) {
+    if (!currentCompanyId) throw new Error('No company context')
+    const { data, error } = await supabase
+      .from('related_codes')
+      .insert([{ ...relatedCode, company_id: currentCompanyId }])
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  async getRelatedCodes(productId: string) {
+    if (!currentCompanyId) return []
+    const { data, error } = await supabase
+      .from('related_codes')
+      .select('*')
+      .eq('product_id', productId)
+      .eq('company_id', currentCompanyId)
+    if (error) throw error
+    return data
   },
 
   async updateProduct(id: string, updates: Partial<Product>) {
@@ -32,6 +58,7 @@ export const productsApi = {
       .from('products')
       .update(updates)
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
       .select()
       .single()
     if (error) throw error
@@ -43,6 +70,7 @@ export const productsApi = {
       .from('products')
       .delete()
       .eq('id', id)
+      .eq('company_id', currentCompanyId)
     if (error) throw error
     return true
   },

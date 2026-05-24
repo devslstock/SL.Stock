@@ -33,7 +33,7 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
   const { theme, setTheme } = useTheme()
-  const { user, logout, hasPermission } = useAuth()
+  const { user, company, logout, hasPermission } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
 
   const isDark = theme.includes('dark');
@@ -108,7 +108,7 @@ export default function AppLayout() {
           </div>
           <div>
             <h1 className="font-bold text-sm gradient-text">Estoque Fácil</h1>
-            <p className="text-xs text-muted-foreground">Logística Inteligente</p>
+            <p className="text-xs text-muted-foreground">{company?.name || 'Logística Inteligente'}</p>
           </div>
         </div>
 
