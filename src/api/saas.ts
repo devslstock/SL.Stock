@@ -15,9 +15,22 @@ export const saasApi = {
   },
 
   async createSystemUser(user: Omit<User, 'id' | 'created_at' | 'company_id'>) {
+    const normalizedUsername = user.username.trim().toLowerCase();
+
+    // Verificar se o username já existe no sistema
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', normalizedUsername)
+      .maybeSingle()
+
+    if (existingUser) {
+      throw new Error(`O usuário de login '${user.username}' já está em uso no sistema. Escolha outro nome de usuário.`)
+    }
+
     const { data, error } = await supabase
       .from('users')
-      .insert([{ ...user, company_id: null, is_super_admin: true }])
+      .insert([{ ...user, username: normalizedUsername, company_id: null, is_super_admin: true }])
       .select()
       .single()
       
@@ -26,6 +39,23 @@ export const saasApi = {
   },
 
   async updateSystemUser(id: string, updates: Partial<User>) {
+    if (updates.username) {
+      const normalizedUsername = updates.username.trim().toLowerCase();
+
+      // Verificar se outro usuário já usa este username
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', normalizedUsername)
+        .neq('id', id)
+        .maybeSingle()
+
+      if (existingUser) {
+        throw new Error(`O usuário de login '${updates.username}' já está em uso no sistema. Escolha outro nome de usuário.`)
+      }
+      updates.username = normalizedUsername;
+    }
+
     const { data, error } = await supabase
       .from('users')
       .update(updates)

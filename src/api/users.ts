@@ -30,7 +30,20 @@ export const usersApi = {
     const targetCompanyId = forceCompanyId || currentCompanyId;
     if (!targetCompanyId) throw new Error('No company context')
 
-    // Verificar limite de usuários
+    const normalizedUsername = user.username.trim().toLowerCase();
+
+    // 1. Verificar se o username já existe no sistema
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', normalizedUsername)
+      .maybeSingle()
+
+    if (existingUser) {
+      throw new Error(`O usuário de login '${user.username}' já está em uso no sistema. Escolha outro nome de usuário.`)
+    }
+
+    // 2. Verificar limite de usuários da empresa
     const { data: comp } = await supabase.from('companies').select('max_users').eq('id', targetCompanyId).single()
     if (comp) {
       const { count } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('company_id', targetCompanyId)
@@ -41,7 +54,7 @@ export const usersApi = {
 
     const { data, error } = await supabase
       .from('users')
-      .insert([{ ...user, company_id: targetCompanyId }])
+      .insert([{ ...user, username: normalizedUsername, company_id: targetCompanyId }])
       .select()
       .single()
     if (error) throw error
@@ -49,6 +62,23 @@ export const usersApi = {
   },
 
   async updateUser(id: string, updates: Partial<User>) {
+    if (updates.username) {
+      const normalizedUsername = updates.username.trim().toLowerCase();
+
+      // Verificar se outro usuário já usa este username
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', normalizedUsername)
+        .neq('id', id)
+        .maybeSingle()
+
+      if (existingUser) {
+        throw new Error(`O usuário de login '${updates.username}' já está em uso no sistema. Escolha outro nome de usuário.`)
+      }
+      updates.username = normalizedUsername;
+    }
+
     const { data, error } = await supabase
       .from('users')
       .update(updates)
