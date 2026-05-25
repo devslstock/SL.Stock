@@ -170,10 +170,46 @@ export const operationsApi = {
   },
 
   async deleteOperation(id: string) {
-    // Excluir os itens primeiro para evitar problemas de constraint de chave estrangeira
+    // 1. Obter a operação para verificar status e tipo
+    const { data: op } = await supabase
+      .from('operations')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (op && op.type === 'LOAD' && (op.status === 'dispatched' || op.status === 'completed')) {
+      // 2. Obter os itens da rota
+      const { data: items } = await supabase
+        .from('operation_items')
+        .select('*')
+        .eq('operation_id', id)
+
+      if (items) {
+        // 3. Devolver os itens despachados ao estoque
+        for (const item of items) {
+          if (item.quantity_scanned > 0 && item.product_id) {
+            const { data: product } = await supabase
+              .from('products')
+              .select('stock')
+              .eq('id', item.product_id)
+              .single()
+
+            if (product) {
+              const newStock = (product.stock || 0) + item.quantity_scanned
+              await supabase
+                .from('products')
+                .update({ stock: newStock })
+                .eq('id', item.product_id)
+            }
+          }
+        }
+      }
+    }
+
+    // 4. Excluir os itens primeiro para evitar problemas de constraint de chave estrangeira
     await supabase.from('operation_items').delete().eq('operation_id', id)
     
-    // Depois exclui a rota
+    // 5. Depois exclui a rota
     const { error } = await supabase
       .from('operations')
       .delete()
