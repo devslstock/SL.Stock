@@ -299,7 +299,7 @@ export default function ClientConference() {
 
 
       {/* Item List */}
-      <div className="p-4 space-y-3 pb-24">
+      <div className="p-4 space-y-3 pb-4">
         {items.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">Nenhum item na lista deste cliente.</div>
         ) : (
@@ -350,7 +350,7 @@ export default function ClientConference() {
 
       {/* Action Buttons */}
       {!isFinished && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-10 md:absolute md:bottom-0">
+        <div className="p-4 mt-6 border-t border-border pb-8">
           <div className="flex gap-2 max-w-2xl mx-auto">
             <Button 
               variant="outline" 
@@ -374,7 +374,7 @@ export default function ClientConference() {
       )}
 
       {isFinished && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-10 md:absolute md:bottom-0">
+        <div className="p-4 mt-6 border-t border-border pb-8">
           <div className="max-w-2xl mx-auto">
             {client.signature_data ? (
               <div className="glass-card p-4 text-center border-emerald-500/30 text-emerald-500 font-bold flex items-center justify-center gap-2">
