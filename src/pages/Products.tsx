@@ -39,7 +39,14 @@ export default function Products() {
       setIsDialogOpen(false)
       setEditingProduct(null)
     },
-    onError: (e: any) => toast.error(`Erro ao criar: ${e.message}`)
+    onError: (e: any) => {
+      const msg = e.message || ''
+      if (msg.includes('products_company_code_key') || (msg.includes('unique constraint') && msg.includes('code'))) {
+        toast.error('Código já está cadastrado')
+      } else {
+        toast.error(`Erro ao criar: ${e.message}`)
+      }
+    }
   })
 
   const updateMutation = useMutation({
@@ -50,7 +57,14 @@ export default function Products() {
       setIsDialogOpen(false)
       setEditingProduct(null)
     },
-    onError: (e: any) => toast.error(`Erro ao atualizar: ${e.message}`)
+    onError: (e: any) => {
+      const msg = e.message || ''
+      if (msg.includes('products_company_code_key') || (msg.includes('unique constraint') && msg.includes('code'))) {
+        toast.error('Código já está cadastrado')
+      } else {
+        toast.error(`Erro ao atualizar: ${e.message}`)
+      }
+    }
   })
 
   const deleteMutation = useMutation({
@@ -166,7 +180,12 @@ export default function Products() {
               } catch (err: any) {
                 console.error(err)
                 errors++
-                lastError = err.message || JSON.stringify(err)
+                const msg = err.message || ''
+                if (msg.includes('products_company_code_key') || (msg.includes('unique constraint') && msg.includes('code'))) {
+                  lastError = 'Código já está cadastrado'
+                } else {
+                  lastError = err.message || JSON.stringify(err)
+                }
               }
             }
           } else {
