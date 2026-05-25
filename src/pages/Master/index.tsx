@@ -66,8 +66,34 @@ export default function MasterPanel() {
       toast.success('Empresa excluída com sucesso!');
       setIsEditModalOpen(false);
     },
-    onError: () => toast.error('Erro ao excluir empresa.')
+    onError: (e: any) => toast.error(`Erro ao excluir empresa: ${e.message || e}`)
   });
+
+  const handleBackup = async (id: string, name: string) => {
+    try {
+      toast.info('Gerando backup dos dados...');
+      const data = await companiesApi.backupCompanyData(id);
+      const backupObj = {
+        exported_at: new Date().toISOString(),
+        company: { id, name },
+        ...data
+      };
+      const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const sanitizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `backup_coletor_${sanitizedName}_${dateStr}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Backup baixado com sucesso!');
+    } catch (error: any) {
+      toast.error('Erro ao gerar backup: ' + error.message);
+    }
+  };
 
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -406,8 +432,12 @@ export default function MasterPanel() {
                 <Button 
                   type="button" 
                   variant="ghost" 
-                  onClick={() => {
+                  onClick={async () => {
                     if (confirm('Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita e todos os dados serão perdidos.')) {
+                      const wantsBackup = confirm('Deseja fazer backup dos dados da empresa ("estoque", "rotas", "pedidos"...) antes de excluir?');
+                      if (wantsBackup) {
+                        await handleBackup(editingCompany.id, editingCompany.name);
+                      }
                       deleteCompanyMutation.mutate(editingCompany.id);
                     }
                   }} 

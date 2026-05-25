@@ -62,7 +62,62 @@ export const companiesApi = {
     return true; // OK
   },
 
+  async backupCompanyData(companyId: string) {
+    const { data: products } = await supabase.from('products').select('*').eq('company_id', companyId);
+    const { data: routes } = await supabase.from('delivery_routes').select('*').eq('company_id', companyId);
+    const { data: clients } = await supabase.from('delivery_clients').select('*').eq('company_id', companyId);
+    const { data: deliveryItems } = await supabase.from('delivery_items').select('*').eq('company_id', companyId);
+    const { data: operations } = await supabase.from('operations').select('*').eq('company_id', companyId);
+    const { data: operationItems } = await supabase.from('operation_items').select('*').eq('company_id', companyId);
+    const { data: users } = await supabase.from('users').select('id, name, username, role, active, created_at').eq('company_id', companyId);
+
+    return {
+      products: products || [],
+      delivery_routes: routes || [],
+      delivery_clients: clients || [],
+      delivery_items: deliveryItems || [],
+      operations: operations || [],
+      operation_items: operationItems || [],
+      users: users || []
+    };
+  },
+
   async deleteCompany(id: string) {
+    // 1. Delete delivery items
+    await supabase.from('delivery_items').delete().eq('company_id', id);
+
+    // 2. Delete delivery clients
+    await supabase.from('delivery_clients').delete().eq('company_id', id);
+
+    // 3. Delete delivery routes
+    await supabase.from('delivery_routes').delete().eq('company_id', id);
+
+    // 4. Delete operation items
+    await supabase.from('operation_items').delete().eq('company_id', id);
+
+    // 5. Delete operations
+    await supabase.from('operations').delete().eq('company_id', id);
+
+    // 6. Delete related codes
+    await supabase.from('related_codes').delete().eq('company_id', id);
+
+    // 7. Delete products
+    await supabase.from('products').delete().eq('company_id', id);
+
+    // 8. Delete company payments
+    await supabase.from('company_payments').delete().eq('company_id', id);
+
+    // 9. Delete system notes
+    const { data: users } = await supabase.from('users').select('id').eq('company_id', id);
+    if (users && users.length > 0) {
+      const userIds = users.map(u => u.id);
+      await supabase.from('system_notes').delete().in('author_id', userIds);
+    }
+
+    // 10. Delete users
+    await supabase.from('users').delete().eq('company_id', id);
+
+    // 11. Delete company itself
     const { error } = await supabase
       .from('companies')
       .delete()
