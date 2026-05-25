@@ -117,6 +117,18 @@ export const saasApi = {
     if (error) throw error
   },
 
+  async updateNote(id: string, updates: Partial<SystemNote>) {
+    const { data, error } = await supabase
+      .from('system_notes')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+      
+    if (error) throw error
+    return data as SystemNote
+  },
+
   // --- Payments ---
   async getPayments() {
     const { data, error } = await supabase

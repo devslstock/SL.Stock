@@ -4,8 +4,9 @@ import { saasApi } from '@/api/saas';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { StickyNote, Plus, Trash2 } from 'lucide-react';
+import { StickyNote, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
+import { cn } from '@/lib/utils';
 
 export default function SaaSNotes() {
   const { isMaster, user } = useAuth();
@@ -34,6 +35,14 @@ export default function SaaSNotes() {
       queryClient.invalidateQueries({ queryKey: ['system_notes'] });
       toast.success('Recado apagado');
     }
+  });
+
+  const toggleCheckMutation = useMutation({
+    mutationFn: ({ id, checked }: { id: string, checked: boolean }) => saasApi.updateNote(id, { checked }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system_notes'] });
+    },
+    onError: () => toast.error('Erro ao atualizar status do recado')
   });
 
   if (!isMaster) return null;
@@ -76,11 +85,44 @@ export default function SaaSNotes() {
           </div>
         ) : (
           notes.map((note) => (
-            <Card key={note.id} className="relative group bg-[#FFF9C4] dark:bg-amber-900/30 border-amber-200 dark:border-amber-700/50 hover:shadow-md transition-all">
+            <Card 
+              key={note.id} 
+              className={cn(
+                "relative group hover:shadow-md transition-all",
+                note.checked 
+                  ? "bg-[#E8F5E9] dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/40" 
+                  : "bg-[#FFF9C4] dark:bg-amber-900/30 border-amber-200 dark:border-amber-700/50"
+              )}
+            >
               <CardContent className="p-5 flex flex-col h-full justify-between gap-4">
-                <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
+                <div className="relative pr-8">
+                  <p className={cn(
+                    "text-sm text-foreground whitespace-pre-wrap",
+                    note.checked && "text-foreground/50 line-through decoration-emerald-600/30"
+                  )}>
+                    {note.content}
+                  </p>
+                  
+                  <button 
+                    onClick={() => toggleCheckMutation.mutate({ id: note.id, checked: !note.checked })}
+                    className={cn(
+                      "absolute top-0 right-0 p-1 rounded-full transition-colors cursor-pointer",
+                      note.checked 
+                        ? "text-emerald-600 hover:bg-emerald-200/50 dark:text-emerald-400 dark:hover:bg-emerald-900/30" 
+                        : "text-amber-600/40 hover:text-amber-600 hover:bg-amber-200/40 dark:text-amber-500/30 dark:hover:bg-amber-800/20"
+                    )}
+                    title={note.checked ? "Marcar como pendente" : "Marcar como feito"}
+                  >
+                    <CheckCircle2 className="h-5 w-5" />
+                  </button>
+                </div>
                 
-                <div className="flex items-end justify-between mt-4 text-xs text-muted-foreground pt-3 border-t border-amber-200/50 dark:border-amber-700/50">
+                <div className={cn(
+                  "flex items-end justify-between mt-4 text-xs text-muted-foreground pt-3 border-t",
+                  note.checked 
+                    ? "border-emerald-200/50 dark:border-emerald-800/40" 
+                    : "border-amber-200/50 dark:border-amber-700/50"
+                )}>
                   <div>
                     <span className="font-semibold text-foreground/80">{note.author_name}</span>
                     <br />

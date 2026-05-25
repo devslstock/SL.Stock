@@ -49,6 +49,7 @@ export interface SystemNote {
   author_id: string
   author_name: string
   content: string
+  checked?: boolean
   created_at: string
 }
 
