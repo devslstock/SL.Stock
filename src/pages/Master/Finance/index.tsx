@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { saasApi } from '@/api/saas';
 import { companiesApi } from '@/api/companies';
@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Banknote, Plus, CheckCircle2, Clock, AlertCircle, Trash2 } from 'lucide-react';
+import { Banknote, Plus, CheckCircle2, Clock, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
+import { cn } from '@/lib/utils';
 import type { CompanyPayment } from '@/types/database';
 
 export default function SaaSFinance() {
@@ -21,6 +22,7 @@ export default function SaaSFinance() {
   const [amount, setAmount] = useState<number>(0);
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
@@ -34,77 +36,77 @@ export default function SaaSFinance() {
     enabled: isMaster
   });
 
-  useEffect(() => {
-    if (isMaster && companies.length > 0 && payments.length >= 0) {
-      const runAutoGeneration = async () => {
-        try {
-          let count = 0;
-          const today = new Date();
-          today.setHours(12, 0, 0, 0); // Normalizar hora para evitar desvios de fuso horário
-
-          for (const comp of companies) {
-            // Ignora se não estiver ativa, se não tiver valor ou dia de vencimento cadastrados
-            if (!comp.active || !comp.monthly_fee || comp.monthly_fee <= 0 || !comp.billing_day) {
-              continue;
-            }
-
-            const createdDate = new Date(comp.created_at);
-            createdDate.setHours(12, 0, 0, 0);
-
-            const currentYear = today.getFullYear();
-            const currentMonth = today.getMonth();
-
-            // Mapeia os 3 meses candidatos (anterior, atual e próximo)
-            const candidateMonths = [
-              { y: currentMonth === 0 ? currentYear - 1 : currentYear, m: currentMonth === 0 ? 11 : currentMonth - 1 },
-              { y: currentYear, m: currentMonth },
-              { y: currentMonth === 11 ? currentYear + 1 : currentYear, m: currentMonth === 11 ? 0 : currentMonth + 1 }
-            ];
-
-            for (const monthInfo of candidateMonths) {
-              const lastDay = new Date(monthInfo.y, monthInfo.m + 1, 0).getDate();
-              const day = Math.min(comp.billing_day, lastDay);
-              const dueDate = new Date(monthInfo.y, monthInfo.m, day, 12, 0, 0, 0);
-
-              // Não gera cobrança para datas anteriores ao cadastro da empresa
-              if (dueDate < createdDate) continue;
-
-              const timeDiff = dueDate.getTime() - today.getTime();
-              const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-              // Se a data de vencimento for daqui a 7 dias ou menos (ou já tiver passado)
-              if (daysRemaining <= 7) {
-                const dateStr = dueDate.toISOString().split('T')[0];
-                const alreadyExists = payments.some(
-                  p => p.company_id === comp.id && p.due_date === dateStr
-                );
-
-                if (!alreadyExists) {
-                  await saasApi.createPayment({
-                    company_id: comp.id,
-                    amount: comp.monthly_fee,
-                    due_date: dateStr,
-                    status: 'pendente',
-                    notes: 'Gerado automaticamente pelo sistema (Mensalidade)'
-                  });
-                  count++;
-                }
-              }
-            }
-          }
-
-          if (count > 0) {
-            queryClient.invalidateQueries({ queryKey: ['company_payments'] });
-            toast.success(`${count} mensalidade(s) gerada(s) automaticamente!`);
-          }
-        } catch (err) {
-          console.error('Erro ao gerar mensalidades automáticas:', err);
-        }
-      };
-
-      runAutoGeneration();
+  const handleSyncPayments = async () => {
+    if (companies.length === 0) {
+      toast.error('Nenhuma empresa carregada.');
+      return;
     }
-  }, [isMaster, companies, payments, queryClient]);
+    setIsSyncing(true);
+    try {
+      let count = 0;
+      const today = new Date();
+      today.setHours(12, 0, 0, 0); // Normalizar hora para evitar desvios de fuso horário
+
+      for (const comp of companies) {
+        if (!comp.active || !comp.monthly_fee || comp.monthly_fee <= 0 || !comp.billing_day) {
+          continue;
+        }
+
+        const createdDate = new Date(comp.created_at);
+        createdDate.setHours(12, 0, 0, 0);
+
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+
+        const candidateMonths = [
+          { y: currentMonth === 0 ? currentYear - 1 : currentYear, m: currentMonth === 0 ? 11 : currentMonth - 1 },
+          { y: currentYear, m: currentMonth },
+          { y: currentMonth === 11 ? currentYear + 1 : currentYear, m: currentMonth === 11 ? 0 : currentMonth + 1 }
+        ];
+
+        for (const monthInfo of candidateMonths) {
+          const lastDay = new Date(monthInfo.y, monthInfo.m + 1, 0).getDate();
+          const day = Math.min(comp.billing_day, lastDay);
+          const dueDate = new Date(monthInfo.y, monthInfo.m, day, 12, 0, 0, 0);
+
+          if (dueDate < createdDate) continue;
+
+          const timeDiff = dueDate.getTime() - today.getTime();
+          const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+          if (daysRemaining <= 7) {
+            const dateStr = dueDate.toISOString().split('T')[0];
+            const alreadyExists = payments.some(
+              p => p.company_id === comp.id && p.due_date === dateStr
+            );
+
+            if (!alreadyExists) {
+              await saasApi.createPayment({
+                company_id: comp.id,
+                amount: comp.monthly_fee,
+                due_date: dateStr,
+                status: 'pendente',
+                notes: 'Gerado automaticamente pelo sistema (Mensalidade)'
+              });
+              count++;
+            }
+          }
+        }
+      }
+
+      if (count > 0) {
+        queryClient.invalidateQueries({ queryKey: ['company_payments'] });
+        toast.success(`${count} mensalidade(s) gerada(s) com sucesso!`);
+      } else {
+        toast.info('Nenhuma nova mensalidade pendente de lançamento.');
+      }
+    } catch (err) {
+      console.error('Erro ao sincronizar mensalidades:', err);
+      toast.error('Erro ao sincronizar mensalidades.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const createPaymentMutation = useMutation({
     mutationFn: saasApi.createPayment,
@@ -179,15 +181,26 @@ export default function SaaSFinance() {
           </h1>
           <p className="text-muted-foreground">Controle de mensalidades e pagamentos dos clientes.</p>
         </div>
-        <Button onClick={() => {
-          setCompanyId('');
-          setAmount(0);
-          setDueDate('');
-          setNotes('');
-          setIsOpen(true);
-        }} className="gap-2">
-          <Plus className="h-4 w-4" /> Lançar Mensalidade
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button 
+            variant="outline" 
+            onClick={handleSyncPayments} 
+            disabled={isSyncing}
+            className="gap-2"
+          >
+            <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
+            Verificar e Atualizar
+          </Button>
+          <Button onClick={() => {
+            setCompanyId('');
+            setAmount(0);
+            setDueDate('');
+            setNotes('');
+            setIsOpen(true);
+          }} className="gap-2">
+            <Plus className="h-4 w-4" /> Lançar Mensalidade
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
