@@ -153,33 +153,6 @@ export const deliveriesApi = {
       .single()
     if (err1) throw err1
 
-    const { data: items, error: err2 } = await supabase
-      .from('delivery_items')
-      .select('*')
-      .eq('delivery_client_id', clientId)
-      .eq('company_id', currentCompanyId)
-    if (err2) throw err2
-
-    if (items) {
-      for (const item of items) {
-        if (item.quantity_expected > 0 && item.product_id) {
-          const { data: product } = await supabase
-            .from('products')
-            .select('stock')
-            .eq('id', item.product_id)
-            .single()
-
-          if (product) {
-            const newStock = (product.stock || 0) + item.quantity_expected
-            await supabase
-              .from('products')
-              .update({ stock: newStock })
-              .eq('id', item.product_id)
-          }
-        }
-      }
-    }
-
     if (client) {
       await this.recalculateRouteStatus(client.delivery_route_id)
     }

@@ -84,7 +84,7 @@ export default function ClientConference() {
     mutationFn: () => deliveriesApi.returnDeliveryClient(clientId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery_client', clientId] })
-      toast.success('Pedido retornado e estoque atualizado!')
+      toast.success('Pedido retornado com sucesso!')
       navigate(`/entregas/${client?.delivery_route_id || ''}`)
     },
     onError: (error: any) => {
@@ -238,7 +238,7 @@ export default function ClientConference() {
   }
 
   const handleReturnOrder = () => {
-    if (window.confirm("Deseja marcar este pedido como retornado e devolver todos os itens ao estoque?")) {
+    if (window.confirm("Deseja marcar este pedido como retornado?")) {
       returnClientMutation.mutate()
     }
   }
@@ -407,7 +407,7 @@ export default function ClientConference() {
             {client.status === 'returned' ? (
               <div className="glass-card p-4 text-center border-red-500/30 text-red-500 font-bold flex items-center justify-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
-                Pedido Retornado (Estoque Devolvido)
+                Pedido Retornado
               </div>
             ) : client.signature_data ? (
               <div className="glass-card p-4 text-center border-emerald-500/30 text-emerald-500 font-bold flex items-center justify-center gap-2">
