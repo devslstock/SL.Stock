@@ -229,9 +229,9 @@ export default function ClientConference() {
   const isFinished = client.status === 'delivered' || client.status === 'delivered_with_divergence' || client.status === 'canceled'
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] slide-in max-w-2xl mx-auto">
+    <div className="flex flex-col min-h-[calc(100vh-120px)] slide-in max-w-2xl mx-auto">
       {/* Header */}
-      <div className="flex-none p-4 pb-2 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-10">
+      <div className="p-4 pb-2 border-b border-border bg-card/50 backdrop-blur-md">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="-ml-2"><ArrowLeft className="h-5 w-5" /></Button>
@@ -249,9 +249,10 @@ export default function ClientConference() {
             <span className="text-2xl font-black gradient-text">{progress}%</span>
           </div>
         </div>
+      </div>
 
         {!isFinished && (
-          <div className="space-y-2 relative pb-2">
+          <div className="sticky top-[53px] md:top-[64px] z-20 p-4 bg-card/95 backdrop-blur-md border-b border-border shadow-sm space-y-2">
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <ScanLine className="absolute left-3 top-3 h-5 w-5 text-primary animate-pulse" />
@@ -295,10 +296,10 @@ export default function ClientConference() {
             </div>
           </div>
         )}
-      </div>
+
 
       {/* Item List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
+      <div className="p-4 space-y-3 pb-24">
         {items.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">Nenhum item na lista deste cliente.</div>
         ) : (
