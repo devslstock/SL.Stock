@@ -35,6 +35,10 @@ export default function MasterPanel() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
 
+  // Custom Delete & Backup State
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<{ id: string; name: string } | null>(null);
+
   const { data: companies, isLoading } = useQuery({
     queryKey: ['companies'],
     queryFn: companiesApi.getCompanies,
@@ -432,14 +436,9 @@ export default function MasterPanel() {
                 <Button 
                   type="button" 
                   variant="ghost" 
-                  onClick={async () => {
-                    if (confirm('Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita e todos os dados serão perdidos.')) {
-                      const wantsBackup = confirm('Deseja fazer backup dos dados da empresa ("estoque", "rotas", "pedidos"...) antes de excluir?');
-                      if (wantsBackup) {
-                        await handleBackup(editingCompany.id, editingCompany.name);
-                      }
-                      deleteCompanyMutation.mutate(editingCompany.id);
-                    }
+                  onClick={() => {
+                    setCompanyToDelete({ id: editingCompany.id, name: editingCompany.name });
+                    setIsBackupModalOpen(true);
                   }} 
                   className="text-red-500 hover:text-red-600 hover:bg-red-50 gap-2"
                   title="Excluir Empresa"
@@ -455,6 +454,65 @@ export default function MasterPanel() {
               </div>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBackupModalOpen} onOpenChange={setIsBackupModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <Trash2 className="h-5 w-5" /> Excluir Empresa
+            </DialogTitle>
+            <DialogDescription>
+              Você está prestes a excluir permanentemente a empresa <strong className="text-foreground">{companyToDelete?.name}</strong> e todos os seus dados associados (estoque, rotas, pedidos, usuários). Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 border-y my-4 space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">
+              Deseja fazer o backup dos dados da empresa antes de excluí-la?
+            </p>
+            <p className="text-xs text-muted-foreground">
+              O backup gerará um arquivo contendo todas as informações de estoque, rotas e pedidos cadastrados.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              className="w-full bg-violet-600 hover:bg-violet-700 text-white gap-2"
+              onClick={async () => {
+                if (companyToDelete) {
+                  await handleBackup(companyToDelete.id, companyToDelete.name);
+                  deleteCompanyMutation.mutate(companyToDelete.id);
+                  setIsBackupModalOpen(false);
+                }
+              }}
+            >
+              Sim, Fazer Backup e Excluir
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={() => {
+                if (companyToDelete) {
+                  deleteCompanyMutation.mutate(companyToDelete.id);
+                  setIsBackupModalOpen(false);
+                }
+              }}
+            >
+              Não, Apenas Excluir
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full mt-2"
+              onClick={() => setIsBackupModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
