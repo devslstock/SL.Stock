@@ -44,6 +44,12 @@ export default function ApprovalsPage() {
     refetchInterval: 10000 // poll every 10s
   })
 
+  const { data: operationAlerts = [], isLoading: isLoadingAlerts } = useQuery({
+    queryKey: ['pending_operation_alerts'],
+    queryFn: () => operationsApi.getPendingOperationAlerts(),
+    refetchInterval: 10000 // poll every 10s
+  })
+
   const { data: allProducts = [] } = useQuery({
     queryKey: ['products'],
     queryFn: productsApi.getProducts
@@ -83,7 +89,29 @@ export default function ApprovalsPage() {
     }
   })
 
-  const isLoading = isLoadingApprovals || isLoadingStock
+  const resolveAlertMutation = useMutation({
+    mutationFn: (alertId: string) => operationsApi.resolveOperationAlert(alertId),
+    onSuccess: () => {
+      toast.success('Alerta marcado como lido!')
+      queryClient.invalidateQueries({ queryKey: ['pending_operation_alerts'] })
+    },
+    onError: (e: any) => {
+      toast.error(`Erro ao resolver alerta: ${e.message}`)
+    }
+  })
+
+  const resolveAllAlertsMutation = useMutation({
+    mutationFn: () => operationsApi.resolveAllOperationAlerts(),
+    onSuccess: () => {
+      toast.success('Todos os alertas foram arquivados!')
+      queryClient.invalidateQueries({ queryKey: ['pending_operation_alerts'] })
+    },
+    onError: (e: any) => {
+      toast.error(`Erro ao arquivar alertas: ${e.message}`)
+    }
+  })
+
+  const isLoading = isLoadingApprovals || isLoadingStock || isLoadingAlerts
 
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando solicitações...</div>
 
@@ -97,17 +125,25 @@ export default function ApprovalsPage() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold gradient-text">Liberações e Ajustes</h1>
-          <p className="text-muted-foreground mt-2">Aprove liberações de motoristas em rota ou ajuste divergências físicas de estoque identificadas na separação.</p>
+          <p className="text-muted-foreground mt-2">Aprove liberações de motoristas, ajuste divergências de estoque ou tome ciência de cortes no despacho.</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md mb-6">
+        <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6">
           <TabsTrigger value="stock_adjustments" className="relative">
             Ajustes de Cargas
             {stockAdjustments.length > 0 && (
               <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">
                 {stockAdjustments.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="load_shortages" className="relative">
+            Faltas de Cargas
+            {operationAlerts.length > 0 && (
+              <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                {operationAlerts.length}
               </span>
             )}
           </TabsTrigger>
@@ -207,6 +243,92 @@ export default function ApprovalsPage() {
                   </Card>
                 )
               })}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="load_shortages" className="space-y-4 mt-0">
+          {isManager && operationAlerts.length > 0 && (
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                className="text-red-500 hover:text-red-600 border-red-500/30 hover:bg-red-500/10 font-medium text-xs"
+                onClick={() => {
+                  if (window.confirm('Deseja marcar todos os alertas de corte de carga como lidos/arquivados?')) {
+                    resolveAllAlertsMutation.mutate()
+                  }
+                }}
+                disabled={resolveAllAlertsMutation.isPending}
+              >
+                Limpar Todos os Alertas
+              </Button>
+            </div>
+          )}
+
+          {operationAlerts.length === 0 ? (
+            <div className="glass-card text-center py-16 px-4">
+              <Check className="h-12 w-12 mx-auto text-emerald-500/50 mb-4" />
+              <h2 className="text-xl font-bold text-foreground mb-2">Tudo em ordem!</h2>
+              <p className="text-muted-foreground">Nenhum alerta de item faltante em despacho de carga no momento.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {operationAlerts.map((item: any) => (
+                <Card key={item.id} className="glass-card border-red-500/20 overflow-hidden">
+                  <div className="bg-red-500/10 px-4 py-2 border-b border-red-500/20 flex items-center justify-between">
+                    <span className="text-xs font-bold text-red-400 uppercase flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Falta no Despacho
+                    </span>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      Carga #{item.operation?.load_number || '---'}
+                    </span>
+                  </div>
+                  
+                  <CardContent className="p-4 space-y-4">
+                    <div>
+                      <h3 className="font-bold text-foreground text-lg leading-tight">{item.description}</h3>
+                      <p className="text-sm font-mono text-muted-foreground mt-1">Cód: {item.product_code}</p>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs bg-background/50 rounded-lg p-3 font-mono border border-border/50">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block uppercase mb-1">Esperado</span>
+                        <span className="text-base font-bold text-foreground">{item.quantity_expected}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block uppercase mb-1">Carregado</span>
+                        <span className="text-base font-bold text-foreground">{item.quantity_scanned}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-red-400 block uppercase mb-1">Falta/Corte</span>
+                        <span className="text-base font-bold text-red-500">-{item.quantity_missing}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 text-sm text-muted-foreground bg-muted/20 p-3 rounded-lg">
+                      <p className="flex items-start gap-2">
+                        <Truck className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                        <span>
+                          <span className="font-semibold text-foreground">Conferente:</span> {item.operation?.driver_name || '---'}
+                        </span>
+                      </p>
+                      <span className="text-[11px] text-muted-foreground opacity-80 block">
+                        Registrado em: {new Date(item.created_at).toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-semibold"
+                        onClick={() => resolveAlertMutation.mutate(item.id)}
+                        disabled={resolveAlertMutation.isPending}
+                      >
+                        <Check className="h-4 w-4 mr-2" /> Marcar como Lido
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </TabsContent>

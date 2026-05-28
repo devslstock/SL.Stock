@@ -121,6 +121,24 @@ export interface OperationItem {
   divergence_resolved?: boolean
 }
 
+export interface OperationAlert {
+  id: string
+  company_id: string
+  operation_id: string
+  product_id?: string
+  product_code: string
+  description: string
+  quantity_expected: number
+  quantity_scanned: number
+  quantity_missing: number
+  resolved: boolean
+  created_at: string
+  operation?: {
+    load_number?: string
+    driver_name?: string
+  }
+}
+
 export interface ScanLog {
   id: string
   operation_id: string

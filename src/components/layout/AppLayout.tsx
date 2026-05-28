@@ -46,7 +46,15 @@ export default function AppLayout() {
     enabled: !!user && isManager
   })
 
-  const totalPendingApprovals = pendingApprovals.length + (isManager ? pendingStockAdjustments.length : 0)
+  const { data: pendingOperationAlerts = [] } = useQuery({
+    queryKey: ['pending_operation_alerts'],
+    queryFn: () => operationsApi.getPendingOperationAlerts(),
+    refetchInterval: 10000,
+    enabled: !!user && isManager
+  })
+
+  const totalPendingApprovals = pendingApprovals.length + 
+    (isManager ? (pendingStockAdjustments.length + pendingOperationAlerts.length) : 0)
 
   const toggleDarkLight = () => {
     const newTheme = (isClassic ? 'classic-' : '') + (isDark ? 'light' : 'dark')

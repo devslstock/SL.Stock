@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Operation, OperationItem } from '@/types/database'
+import type { Operation, OperationItem, OperationAlert } from '@/types/database'
 import { currentCompanyId } from '@/contexts/AuthContext'
 
 export const operationsApi = {
@@ -274,6 +274,64 @@ export const operationsApi = {
       .eq('divergence_resolved', false)
       .eq('company_id', currentCompanyId)
       .order('description')
+    if (error) throw error
+    return data
+  },
+
+  async createOperationAlerts(alerts: Omit<OperationAlert, 'id' | 'created_at' | 'resolved' | 'company_id'>[]) {
+    if (!currentCompanyId) throw new Error('No company context')
+    const alertsToInsert = alerts.map(a => ({
+      ...a,
+      company_id: currentCompanyId,
+      resolved: false
+    }))
+    const { data, error } = await supabase
+      .from('operation_alerts')
+      .insert(alertsToInsert)
+      .select()
+    if (error) throw error
+    return data
+  },
+
+  async getPendingOperationAlerts() {
+    if (!currentCompanyId) return []
+    const { data, error } = await supabase
+      .from('operation_alerts')
+      .select(`
+        *,
+        operation:operations (
+          load_number,
+          driver_name
+        )
+      `)
+      .eq('resolved', false)
+      .eq('company_id', currentCompanyId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data
+  },
+
+  async resolveOperationAlert(alertId: string) {
+    if (!currentCompanyId) throw new Error('No company context')
+    const { data, error } = await supabase
+      .from('operation_alerts')
+      .update({ resolved: true })
+      .eq('id', alertId)
+      .eq('company_id', currentCompanyId)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  async resolveAllOperationAlerts() {
+    if (!currentCompanyId) throw new Error('No company context')
+    const { data, error } = await supabase
+      .from('operation_alerts')
+      .update({ resolved: true })
+      .eq('resolved', false)
+      .eq('company_id', currentCompanyId)
+      .select()
     if (error) throw error
     return data
   }

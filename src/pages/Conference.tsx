@@ -98,20 +98,40 @@ export default function Conference() {
 
   const dispatchMutation = useMutation({
     mutationFn: async () => {
-      // 1. Deduct stock for all scanned items
+      // 1. Deduct stock for all scanned items & identify shortages
+      const shortageAlerts = []
       for (const item of items) {
         if (item.quantity_scanned > 0) {
           await productsApi.incrementStockByCode(item.product_code, -item.quantity_scanned)
         }
+
+        // Check if there's a shortage (exclude devoluções starting with 🔄)
+        if (item.quantity_scanned < item.quantity_expected && !item.description.startsWith('🔄')) {
+          shortageAlerts.push({
+            operation_id: id!,
+            product_id: item.product_id,
+            product_code: item.product_code,
+            description: item.description,
+            quantity_expected: item.quantity_expected,
+            quantity_scanned: item.quantity_scanned,
+            quantity_missing: item.quantity_expected - item.quantity_scanned
+          })
+        }
       }
-      // 2. Update operation status
+
+      // 2. Save alerts if any shortages exist
+      if (shortageAlerts.length > 0) {
+        await operationsApi.createOperationAlerts(shortageAlerts)
+      }
+
+      // 3. Update operation status
       return operationsApi.updateOperationStatus(id!, 'dispatched')
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operation', id] })
       queryClient.invalidateQueries({ queryKey: ['operations'] })
       queryClient.invalidateQueries({ queryKey: ['products'] })
-      toast.success('Rota despachada e estoque deduzido!')
+      toast.success('Rota despachada, estoque deduzido e alertas gerados!')
       navigate('/entregas/nova')
     },
     onError: (e: any) => {
