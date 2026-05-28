@@ -16,8 +16,10 @@ CREATE TABLE IF NOT EXISTS public.operation_alerts (
 -- Enable Row Level Security
 ALTER TABLE public.operation_alerts ENABLE ROW LEVEL SECURITY;
 
--- Create policy to allow all actions for authenticated users (consistent with other tables in this app)
+-- Create policy to allow all actions for all users (consistent with other tables accessed anonymously)
 DROP POLICY IF EXISTS "Allow all actions for authenticated users on operation_alerts" ON public.operation_alerts;
-CREATE POLICY "Allow all actions for authenticated users on operation_alerts"
+DROP POLICY IF EXISTS "Allow all actions for all users on operation_alerts" ON public.operation_alerts;
+CREATE POLICY "Allow all actions for all users on operation_alerts"
 ON public.operation_alerts
-FOR ALL TO authenticated USING (true) WITH CHECK (true);
+FOR ALL USING (true) WITH CHECK (true);
+
