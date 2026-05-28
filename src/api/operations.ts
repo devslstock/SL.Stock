@@ -53,10 +53,19 @@ export const operationsApi = {
     return data as Operation
   },
 
-  async updateItemQuantity(itemId: string, quantity_scanned: number, status: OperationItem['status']) {
+  async updateItemQuantity(
+    itemId: string, 
+    quantity_scanned: number, 
+    status: OperationItem['status'],
+    extraUpdates?: Partial<Pick<OperationItem, 'physical_verification' | 'physical_divergence_found' | 'divergence_resolved'>>
+  ) {
     const { data, error } = await supabase
       .from('operation_items')
-      .update({ quantity_scanned, status })
+      .update({ 
+        quantity_scanned, 
+        status,
+        ...extraUpdates
+      })
       .eq('id', itemId)
       .eq('company_id', currentCompanyId)
       .select()

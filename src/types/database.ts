@@ -115,6 +115,10 @@ export interface OperationItem {
   quantity_expected: number
   quantity_scanned: number
   status: ItemStatus
+  system_stock_at_load?: number
+  physical_verification?: 'pending' | 'really_zero' | 'found'
+  physical_divergence_found?: boolean
+  divergence_resolved?: boolean
 }
 
 export interface ScanLog {

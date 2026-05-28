@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
 import { productsApi } from '@/api/products'
+import { supabase } from '@/lib/supabase'
 import type { OperationItem } from '@/types/database'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -52,15 +53,21 @@ export default function Conference() {
   })
 
   const updateItemMutation = useMutation({
-    mutationFn: async ({ itemId, qty, expected, status }: { itemId: string, qty: number, expected?: number, status: OperationItem['status'] }) => {
+    mutationFn: async ({ itemId, qty, expected, status, extraUpdates }: { 
+      itemId: string, 
+      qty: number, 
+      expected?: number, 
+      status: OperationItem['status'],
+      extraUpdates?: any
+    }) => {
       if (expected !== undefined) {
         const [res] = await Promise.all([
-          operationsApi.updateItemQuantity(itemId, qty, status), 
+          operationsApi.updateItemQuantity(itemId, qty, status, extraUpdates), 
           operationsApi.updateItemExpectedQty(itemId, expected)
         ])
         return res
       }
-      return operationsApi.updateItemQuantity(itemId, qty, status)
+      return operationsApi.updateItemQuantity(itemId, qty, status, extraUpdates)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
   })
@@ -132,6 +139,59 @@ export default function Conference() {
       navigate('/cargas')
     },
     onError: (e: any) => toast.error(`Erro ao excluir rota: ${e.message}`)
+  })
+
+  const verifyItemMutation = useMutation({
+    mutationFn: async ({ 
+      itemId, 
+      verification, 
+      scannedQty, 
+      status 
+    }: { 
+      itemId: string, 
+      verification: 'pending' | 'really_zero' | 'found', 
+      scannedQty: number, 
+      status: OperationItem['status'] 
+    }) => {
+      const item = items.find(i => i.id === itemId)
+      const systemStock = item?.system_stock_at_load !== undefined && item?.system_stock_at_load !== null 
+        ? item.system_stock_at_load 
+        : 0
+      
+      const isDivergent = verification === 'found' && ((systemStock <= 0 && scannedQty > 0) || (systemStock > 0 && scannedQty > systemStock))
+      
+      return operationsApi.updateItemQuantity(itemId, scannedQty, status, {
+        physical_verification: verification,
+        physical_divergence_found: isDivergent
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
+      toast.success('Confirmação física registrada!')
+    },
+    onError: (e: any) => {
+      toast.error(`Erro ao salvar confirmação: ${e.message}`)
+    }
+  })
+
+  const adjustStockMutation = useMutation({
+    mutationFn: async ({ productId, itemId, qty }: { productId: string, itemId: string, qty: number }) => {
+      await productsApi.updateProduct(productId, { stock: qty })
+      const { data, error } = await supabase
+        .from('operation_items')
+        .update({ divergence_resolved: true })
+        .eq('id', itemId)
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('Estoque atualizado e divergência corrigida!')
+    },
+    onError: (e: any) => {
+      toast.error(`Erro ao ajustar estoque: ${e.message}`)
+    }
   })
 
   // List editing states
@@ -222,14 +282,38 @@ export default function Conference() {
     const nq = cur + 1
     const ns = nq >= nextExpected ? 'ok' : 'pending'
     
-    const updated = { ...item, quantity_scanned: nq, quantity_expected: nextExpected, status: ns } as OperationItem
+    // Check stock alerts and physical divergence
+    const systemStock = item.system_stock_at_load !== undefined && item.system_stock_at_load !== null 
+      ? item.system_stock_at_load 
+      : (matchedProduct ? matchedProduct.stock : 0)
+    const isStockAlert = op?.type === 'LOAD' && (systemStock <= 0 || systemStock < nextExpected)
+    const isDivergent = isStockAlert && ((systemStock <= 0 && nq > 0) || (systemStock > 0 && nq > systemStock))
+    
+    const extraUpdates = isStockAlert ? {
+      physical_verification: 'found' as const,
+      physical_divergence_found: isDivergent
+    } : {}
+
+    const updated = { 
+      ...item, 
+      quantity_scanned: nq, 
+      quantity_expected: nextExpected, 
+      status: ns,
+      ...extraUpdates
+    } as OperationItem
     
     queryClient.setQueryData(['operation_items', id], (old: OperationItem[]) => 
       old.map(i => i.id === item.id ? updated : i)
     )
     
     setLastScanned(updated)
-    updateItemMutation.mutate({ itemId: item.id, qty: nq, expected: nextExpected, status: ns })
+    updateItemMutation.mutate({ 
+      itemId: item.id, 
+      qty: nq, 
+      expected: nextExpected, 
+      status: ns,
+      extraUpdates: isStockAlert ? extraUpdates : undefined
+    })
   }
 
   const handleScan = (e: React.FormEvent) => {
@@ -237,6 +321,20 @@ export default function Conference() {
     if (!scanInput.trim()) return
     processConfCode(scanInput.trim())
     setScanInput('')    
+  }
+
+  const getSystemStock = (item: OperationItem) => {
+    if (item.system_stock_at_load !== undefined && item.system_stock_at_load !== null) {
+      return item.system_stock_at_load
+    }
+    const prod = allProducts.find(p => p.id === item.product_id || normalizeCode(p.code) === normalizeCode(item.product_code))
+    return prod ? prod.stock : 0
+  }
+
+  const hasStockAlert = (item: OperationItem) => {
+    if (op?.type !== 'LOAD') return false
+    const stock = getSystemStock(item)
+    return stock <= 0 || stock < item.quantity_expected
   }
 
   if (isOpLoading || isItemsLoading) return <div className="p-8 text-center text-muted-foreground">Carregando conferência...</div>
@@ -272,18 +370,31 @@ export default function Conference() {
   }
 
   const handleExportExcel = () => {
-    const data = items.map(i => ({
-      'Código': i.product_code,
-      'Descrição': i.description,
-      'Qtd Esperada': i.quantity_expected,
-      'Qtd Recebida': i.quantity_scanned,
-      'Status': i.status === 'ok' ? 'OK' : (i.status === 'divergent' ? 'Divergente' : 'Pendente'),
-      'Diferença': i.quantity_scanned - i.quantity_expected
-    }))
+    const isLoad = op?.type === 'LOAD'
+    const data = items.map(i => {
+      if (isLoad) {
+        return {
+          'Código': i.product_code,
+          'Descrição': i.description,
+          'Qtd Esperada (Pedido)': i.quantity_expected,
+          'Qtd Carregada (Físico)': i.quantity_scanned,
+          'Status': i.status === 'ok' ? 'OK' : (i.status === 'divergent' ? 'Divergente' : 'Pendente'),
+          'Diferença (Corte)': i.quantity_scanned - i.quantity_expected
+        }
+      }
+      return {
+        'Código': i.product_code,
+        'Descrição': i.description,
+        'Qtd Esperada': i.quantity_expected,
+        'Qtd Recebida': i.quantity_scanned,
+        'Status': i.status === 'ok' ? 'OK' : (i.status === 'divergent' ? 'Divergente' : 'Pendente'),
+        'Diferença': i.quantity_scanned - i.quantity_expected
+      }
+    })
     const ws = XLSX.utils.json_to_sheet(data)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Relatório')
-    XLSX.writeFile(wb, `Relatorio_Recebimento_${op?.load_number || id}.xlsx`)
+    XLSX.writeFile(wb, `Relatorio_${isLoad ? 'Cortes_Carga' : 'Recebimento'}_${op?.load_number || id}.xlsx`)
   }
 
   const processReturnCode = (raw: string) => {
@@ -472,6 +583,12 @@ export default function Conference() {
           ) : (
              <TabsTrigger value="return" className="flex-1"><ArrowLeft className="h-4 w-4 mr-1.5" />Retorno e Lista</TabsTrigger>
           )}
+          {op.type === 'LOAD' && (
+             <TabsTrigger value="divergences" className="flex-1 text-amber-500 font-medium">
+               <AlertTriangle className="h-4 w-4 mr-1.5 text-amber-500" />
+               Divergências ({items.filter(i => i.physical_divergence_found).length})
+             </TabsTrigger>
+          )}
         </TabsList>
 
         {op.status !== 'dispatched' && op.status !== 'completed' && (
@@ -573,34 +690,109 @@ export default function Conference() {
                 )
               }
 
+              const hasAlert = hasStockAlert(item)
               return (
-                <div key={item.id} className={`glass-card p-3 flex items-center justify-between slide-up ${done ? 'border-emerald-500/20' : ''}`} style={{ animationDelay: `${i * 10}ms` }}>
-                  <div className="min-w-0 flex-1">
-                    <p className={`font-medium truncate ${done ? 'text-emerald-300' : 'text-foreground'}`}>{item.description}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{item.product_code}</p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-right">
-                      <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
-                      <span className="text-muted-foreground text-sm">/{item.quantity_expected}</span>
+                <div key={item.id} className={`glass-card p-3 flex flex-col gap-2 slide-up transition-all ${done ? 'border-emerald-500/20' : hasAlert ? 'border-amber-500/30 bg-amber-500/5' : ''}`} style={{ animationDelay: `${i * 10}ms` }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-medium truncate ${done ? 'text-emerald-300' : 'text-foreground'}`}>{item.description}</p>
+                      <p className="text-xs text-muted-foreground font-mono">{item.product_code}</p>
                     </div>
-                    {done ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />}
-                    
-                    {isManager && (
-                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingItem(item); setEditQty(item.quantity_expected) }}>
-                        <Pencil className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
+                        <span className="text-muted-foreground text-sm">/{item.quantity_expected}</span>
+                      </div>
+                      {done ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />}
+                      
+                      {isManager && (
+                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingItem(item); setEditQty(item.quantity_expected) }}>
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
+
+                  {hasAlert && (
+                    <div className="flex flex-col gap-2 mt-1">
+                      <div className="flex items-start gap-1.5 text-xs text-amber-500 bg-amber-500/10 p-2 rounded border border-amber-500/20">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        <span>Estoque no sistema menor que o previsto. Confirmar no físico durante a conferência. <span className="font-semibold">(Sistema: {getSystemStock(item)})</span></span>
+                      </div>
+
+                      {op.status !== 'dispatched' && op.status !== 'completed' && (
+                        <div className="flex items-center gap-2 mt-1">
+                          {item.physical_verification === 'really_zero' ? (
+                            <div className="flex items-center justify-between w-full bg-red-500/10 border border-red-500/20 rounded p-1.5 px-2.5">
+                              <span className="text-xs text-red-400 font-semibold flex items-center gap-1">
+                                🛑 Confirmado: Zerado no Físico
+                              </span>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => verifyItemMutation.mutate({ itemId: item.id, verification: 'pending', scannedQty: 0, status: 'pending' })}
+                                disabled={verifyItemMutation.isPending}
+                              >
+                                Desfazer
+                              </Button>
+                            </div>
+                          ) : item.physical_verification === 'found' ? (
+                            <div className="flex items-center justify-between w-full bg-emerald-500/10 border border-emerald-500/20 rounded p-1.5 px-2.5">
+                              <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                                🟢 Confirmado: Encontrado no Físico
+                              </span>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => verifyItemMutation.mutate({ itemId: item.id, verification: 'pending', scannedQty: 0, status: 'pending' })}
+                                disabled={verifyItemMutation.isPending}
+                              >
+                                Desfazer
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2 w-full">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="flex-1 h-8 text-[11px] font-bold border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                                onClick={() => verifyItemMutation.mutate({ itemId: item.id, verification: 'really_zero', scannedQty: 0, status: 'ok' })}
+                                disabled={verifyItemMutation.isPending}
+                              >
+                                Não Encontrado
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="flex-1 h-8 text-[11px] font-bold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
+                                onClick={() => verifyItemMutation.mutate({ itemId: item.id, verification: 'found', scannedQty: item.quantity_expected, status: 'ok' })}
+                                disabled={verifyItemMutation.isPending}
+                              >
+                                Encontrado (Qtd Total)
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {item.physical_divergence_found && (
+                    <div className="flex items-center gap-1.5 text-xs text-blue-400 bg-blue-500/10 p-1.5 rounded border border-blue-500/20 w-fit font-semibold mt-1">
+                      <Check className="h-3.5 w-3.5" /> Divergência física encontrada (confirmado no físico)
+                    </div>
+                  )}
                 </div>
               )
             })}
           </div>
 
           <div className="mt-auto pt-2 shrink-0 pb-4 space-y-2">
-            {op.type === 'RECEIPT' && (
-               <Button variant="outline" className="w-full text-emerald-600 hover:text-emerald-700" onClick={handleExportExcel}>
-                 <Download className="mr-2 h-4 w-4" /> Baixar Relatório (Excel)
+            {(op.type === 'RECEIPT' || op.type === 'LOAD') && (
+               <Button variant="outline" className="w-full text-amber-600 hover:text-amber-700 border-amber-500/30 hover:bg-amber-500/10" onClick={handleExportExcel}>
+                 <Download className="mr-2 h-4 w-4" /> Baixar Relatório de Cortes (Excel)
                </Button>
             )}
             
@@ -760,6 +952,95 @@ export default function Conference() {
                 <CheckCircle2 className="mr-2 h-5 w-5" /> Finalizar Rota
               </Button>
             </div>
+        </TabsContent>
+        )}
+
+        {op.type === 'LOAD' && (
+        <TabsContent value="divergences" className="flex-1 flex flex-col gap-4 mt-4">
+          <Card className="border-amber-500/20">
+            <CardContent className="p-4">
+              <h2 className="text-lg font-bold text-amber-500 flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-5 w-5" /> Relatório de Divergências de Estoque
+              </h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                Produtos que apresentaram falta de estoque no sistema, mas foram localizados e carregados fisicamente.
+              </p>
+
+              {items.filter(i => i.physical_divergence_found).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground bg-muted/10 rounded-lg border border-dashed">
+                  Nenhuma divergência de estoque física registrada nesta carga.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {items.filter(i => i.physical_divergence_found).map(item => {
+                    const systemStock = item.system_stock_at_load ?? 0
+                    const actualProduct = allProducts.find(p => p.id === item.product_id || normalizeCode(p.code) === normalizeCode(item.product_code))
+                    const currentStock = actualProduct ? actualProduct.stock : 0
+                    const isResolved = item.divergence_resolved
+                    
+                    return (
+                      <div key={item.id} className={`glass-card p-4 flex flex-col gap-3 border-l-4 ${isResolved ? 'border-l-emerald-500 border-emerald-500/20' : 'border-l-amber-500 border-amber-500/20 bg-amber-500/5'}`}>
+                        <div className="flex justify-between items-start">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-foreground text-sm leading-tight">{item.description}</h4>
+                            <p className="text-xs text-muted-foreground font-mono mt-1">Cód: {item.product_code}</p>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 ${isResolved ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-500'}`}>
+                            {isResolved ? 'Ajustado' : 'Pendente de Ajuste'}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs bg-background/50 rounded-lg p-2.5 font-mono border border-border/50">
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block uppercase">Estoque Inicial</span>
+                            <span className="font-bold">{systemStock}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-amber-500 block uppercase">Encontrado Físico</span>
+                            <span className="font-bold text-amber-500">{item.quantity_scanned}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block uppercase">Estoque Atual</span>
+                            <span className="font-bold">{currentStock}</span>
+                          </div>
+                        </div>
+
+                        {!isResolved && (
+                          <div className="flex items-center justify-between gap-4 mt-1">
+                            <div className="text-xs text-muted-foreground">
+                              {isManager ? 'Divergência física identificada. Ajuste o saldo no sistema.' : 'Apenas gestores podem realizar o ajuste.'}
+                            </div>
+                            {isManager ? (
+                              <Button 
+                                size="sm" 
+                                className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shrink-0"
+                                onClick={() => {
+                                  if (window.confirm(`Deseja atualizar o estoque atual do produto "${item.description}" no sistema para ${item.quantity_scanned}?`)) {
+                                    adjustStockMutation.mutate({ 
+                                      productId: item.product_id, 
+                                      itemId: item.id, 
+                                      qty: item.quantity_scanned 
+                                    })
+                                  }
+                                }}
+                                disabled={adjustStockMutation.isPending}
+                              >
+                                Corrigir Estoque
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline" className="text-xs shrink-0" disabled title="Apenas gestores/administradores">
+                                Bloqueado
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
         )}
       </Tabs>

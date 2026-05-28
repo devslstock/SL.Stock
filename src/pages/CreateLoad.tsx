@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, Plus, Trash2, ClipboardList, Truck, User, Search, Upload } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ClipboardList, Truck, User, Search, Upload, AlertTriangle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
@@ -161,14 +161,18 @@ export default function CreateLoad() {
   const addSelectedProduct = (product: any) => {
     const exists = items.find(i => i.product_code === product.code)
     const currentQty = exists ? exists.quantity_expected : 0
+    const targetQty = currentQty + 1
     
-    if (currentQty + 1 > product.stock) {
-      toast.error(`Estoque insuficiente para ${product.description}. Disponível: ${product.stock}`)
-      return
+    if (targetQty > product.stock) {
+      if (product.stock <= 0) {
+        toast.warning(`Produto com estoque zerado no sistema: ${product.description}. Confirmar no físico durante a conferência.`)
+      } else {
+        toast.warning(`Estoque no sistema menor que o previsto para ${product.description}. Pedido: ${targetQty}, Disponível: ${product.stock}. Confirmar no físico durante a conferência.`)
+      }
     }
 
     if (exists) {
-      setItems(prev => prev.map(i => i.product_code === product.code ? { ...i, quantity_expected: i.quantity_expected + 1 } : i))
+      setItems(prev => prev.map(i => i.product_code === product.code ? { ...i, quantity_expected: targetQty } : i))
       toast.success(`Quantidade aumentada para ${product.description}`)
     } else {
       setItems(prev => [...prev, { tempId: `t${Date.now()}`, product_id: product.id, product_code: product.code, description: product.description, quantity_expected: 1 }])
@@ -183,11 +187,15 @@ export default function CreateLoad() {
       if (i.tempId === tempId) {
         const product = products.find(p => p.code === i.product_code)
         const maxQty = product?.stock || 0
-        if (qty > maxQty) {
-          toast.error(`Estoque insuficiente. Apenas ${maxQty} unidades disponíveis de ${i.description}.`)
-          return { ...i, quantity_expected: maxQty }
+        const targetQty = Math.max(1, qty)
+        if (targetQty > maxQty) {
+          if (maxQty <= 0) {
+            toast.warning(`Produto com estoque zerado no sistema: ${i.description}. Confirmar no físico durante a conferência.`)
+          } else {
+            toast.warning(`Estoque no sistema menor que o previsto para ${i.description}. Pedido: ${targetQty}, Disponível: ${maxQty}. Confirmar no físico durante a conferência.`)
+          }
         }
-        return { ...i, quantity_expected: Math.max(1, qty) }
+        return { ...i, quantity_expected: targetQty }
       }
       return i
     }))
@@ -257,8 +265,11 @@ export default function CreateLoad() {
           if (product) {
             let finalQty = qty
             if (finalQty > product.stock) {
-              finalQty = product.stock
-              toast.error(`Falta de estoque: ${product.description}. Pedido: ${qty}, Disponível: ${product.stock}. Ajustado automaticamente.`)
+              if (product.stock <= 0) {
+                toast.warning(`Falta de estoque (estoque zerado): ${product.description}. Pedido: ${qty}. Confirmar no físico durante a conferência.`)
+              } else {
+                toast.warning(`Estoque no sistema menor que o previsto para ${product.description}. Pedido: ${qty}, Disponível: ${product.stock}. Confirmar no físico durante a conferência.`)
+              }
             }
 
             // Check if already in items list (existing)
@@ -335,14 +346,22 @@ export default function CreateLoad() {
       notes: finalNotes,
     }
 
-    const itemsData = items.map(i => ({
-      product_id: i.product_id,
-      product_code: i.product_code,
-      description: i.description,
-      quantity_expected: i.quantity_expected,
-      quantity_scanned: 0,
-      status: 'pending' as const
-    }))
+    const itemsData = items.map(i => {
+      const product = products.find(p => p.code === i.product_code)
+      const systemStock = product ? product.stock : 0
+      return {
+        product_id: i.product_id,
+        product_code: i.product_code,
+        description: i.description,
+        quantity_expected: i.quantity_expected,
+        quantity_scanned: 0,
+        status: 'pending' as const,
+        system_stock_at_load: systemStock,
+        physical_verification: 'pending' as const,
+        physical_divergence_found: false,
+        divergence_resolved: false
+      }
+    })
 
     if (id) {
       updateMutation.mutate({ op: opData, items: itemsData })
@@ -433,18 +452,34 @@ export default function CreateLoad() {
               <div className="glass-card text-center py-8"><p className="text-muted-foreground text-sm">Nenhum item adicionado</p></div>
             ) : (
               <div className="space-y-2">
-                {items.map(item => (
-                  <div key={item.tempId} className="glass-card p-3 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{item.description}</p>
-                      <p className="text-xs text-muted-foreground font-mono">{item.product_code}</p>
+                {items.map(item => {
+                  const product = products.find(p => p.code === item.product_code)
+                  const stock = product ? product.stock : 0
+                  const hasAlert = stock <= 0 || stock < item.quantity_expected
+                  return (
+                    <div key={item.tempId} className={`glass-card p-3 flex flex-col gap-2 transition-all ${hasAlert ? 'border-amber-500/30 bg-amber-500/5' : ''}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{item.description}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{item.product_code}</p>
+                        </div>
+                        <Input type="number" className="w-20 text-center font-mono" value={item.quantity_expected} onChange={e => updateQty(item.tempId, Number(e.target.value))} min={1} />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(item.tempId)}>
+                          <Trash2 className="h-4 w-4 text-red-400" />
+                        </Button>
+                      </div>
+                      {hasAlert && (
+                        <div className="flex items-start gap-1.5 text-xs text-amber-500 bg-amber-500/10 p-2 rounded border border-amber-500/20 slide-up">
+                          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                          <span>
+                            Estoque no sistema menor que o previsto. Confirmar no físico durante a conferência. 
+                            <span className="font-semibold ml-1">(Disponível: {stock})</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <Input type="number" className="w-20 text-center" value={item.quantity_expected} onChange={e => updateQty(item.tempId, Number(e.target.value))} min={1} />
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(item.tempId)}>
-                      <Trash2 className="h-4 w-4 text-red-400" />
-                    </Button>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>
