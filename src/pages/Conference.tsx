@@ -176,7 +176,16 @@ export default function Conference() {
 
   const adjustStockMutation = useMutation({
     mutationFn: async ({ productId, itemId, qty }: { productId: string, itemId: string, qty: number }) => {
-      await productsApi.updateProduct(productId, { stock: qty })
+      const item = items.find(i => i.id === itemId)
+      if (!item) throw new Error('Item não encontrado na rota')
+      
+      const systemStockAtLoad = item.system_stock_at_load ?? 0
+      const discrepancy = qty - systemStockAtLoad
+      
+      if (discrepancy !== 0) {
+        await productsApi.incrementStockByCode(item.product_code, discrepancy)
+      }
+      
       const { data, error } = await supabase
         .from('operation_items')
         .update({ divergence_resolved: true })
@@ -187,7 +196,7 @@ export default function Conference() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
       queryClient.invalidateQueries({ queryKey: ['products'] })
-      toast.success('Estoque atualizado e divergência corrigida!')
+      toast.success('Estoque ajustado e divergência corrigida!')
     },
     onError: (e: any) => {
       toast.error(`Erro ao ajustar estoque: ${e.message}`)
