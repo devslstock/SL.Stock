@@ -174,34 +174,6 @@ export default function Conference() {
     }
   })
 
-  const adjustStockMutation = useMutation({
-    mutationFn: async ({ productId, itemId, qty }: { productId: string, itemId: string, qty: number }) => {
-      const item = items.find(i => i.id === itemId)
-      if (!item) throw new Error('Item não encontrado na rota')
-      
-      const systemStockAtLoad = item.system_stock_at_load ?? 0
-      const discrepancy = qty - systemStockAtLoad
-      
-      if (discrepancy !== 0) {
-        await productsApi.incrementStockByCode(item.product_code, discrepancy)
-      }
-      
-      const { data, error } = await supabase
-        .from('operation_items')
-        .update({ divergence_resolved: true })
-        .eq('id', itemId)
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
-      queryClient.invalidateQueries({ queryKey: ['products'] })
-      toast.success('Estoque ajustado e divergência corrigida!')
-    },
-    onError: (e: any) => {
-      toast.error(`Erro ao ajustar estoque: ${e.message}`)
-    }
-  })
 
   // List editing states
   const [editingItem, setEditingItem] = useState<OperationItem | null>(null)
@@ -1016,31 +988,9 @@ export default function Conference() {
 
                         {!isResolved && (
                           <div className="flex items-center justify-between gap-4 mt-1">
-                            <div className="text-xs text-muted-foreground">
-                              {isManager ? 'Divergência física identificada. Ajuste o saldo no sistema.' : 'Apenas gestores podem realizar o ajuste.'}
+                            <div className="text-xs text-amber-500 font-medium">
+                              Aguardando liberação de ajuste de estoque em "Liberações" por um Administrador/Gestor.
                             </div>
-                            {isManager ? (
-                              <Button 
-                                size="sm" 
-                                className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shrink-0"
-                                onClick={() => {
-                                  if (window.confirm(`Deseja atualizar o estoque atual do produto "${item.description}" no sistema para ${item.quantity_scanned}?`)) {
-                                    adjustStockMutation.mutate({ 
-                                      productId: item.product_id, 
-                                      itemId: item.id, 
-                                      qty: item.quantity_scanned 
-                                    })
-                                  }
-                                }}
-                                disabled={adjustStockMutation.isPending}
-                              >
-                                Corrigir Estoque
-                              </Button>
-                            ) : (
-                              <Button size="sm" variant="outline" className="text-xs shrink-0" disabled title="Apenas gestores/administradores">
-                                Bloqueado
-                              </Button>
-                            )}
                           </div>
                         )}
                       </div>

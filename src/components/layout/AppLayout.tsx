@@ -9,6 +9,10 @@ import {
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
+import { useQuery } from '@tanstack/react-query'
+import { deliveriesApi } from '@/api/deliveries'
+import { operationsApi } from '@/api/operations'
+
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/', permission: 'can_view_dashboard' },
@@ -27,6 +31,22 @@ export default function AppLayout() {
 
   const isDark = theme.includes('dark');
   const isClassic = theme.startsWith('classic-');
+
+  const { data: pendingApprovals = [] } = useQuery({
+    queryKey: ['pending_approvals'],
+    queryFn: deliveriesApi.getPendingApprovals,
+    refetchInterval: 10000,
+    enabled: !!user
+  })
+
+  const { data: pendingStockAdjustments = [] } = useQuery({
+    queryKey: ['pending_stock_adjustments'],
+    queryFn: () => operationsApi.getPendingStockAdjustments(),
+    refetchInterval: 10000,
+    enabled: !!user && isManager
+  })
+
+  const totalPendingApprovals = pendingApprovals.length + (isManager ? pendingStockAdjustments.length : 0)
 
   const toggleDarkLight = () => {
     const newTheme = (isClassic ? 'classic-' : '') + (isDark ? 'light' : 'dark')
@@ -53,6 +73,18 @@ export default function AppLayout() {
           >
             <LogOut className="h-5 w-5" />
           </button>
+          <Link
+            to="/liberacoes"
+            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground relative"
+            title="Liberações"
+          >
+            <Bell className="h-5 w-5" />
+            {totalPendingApprovals > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+                {totalPendingApprovals}
+              </span>
+            )}
+          </Link>
           <button
             onClick={toggleStyle}
             className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground"
@@ -222,6 +254,19 @@ export default function AppLayout() {
              </div>
              
              <div className="h-6 w-px bg-border mx-1"></div>
+             
+             <Link
+                to="/liberacoes"
+                className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer relative"
+                title="Liberações"
+             >
+                <Bell className="h-5 w-5" />
+                {totalPendingApprovals > 0 && (
+                   <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+                      {totalPendingApprovals}
+                   </span>
+                )}
+             </Link>
              
              <button onClick={toggleStyle} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer" title="Alternar tema (Padrão / Clássico)">
                 <Palette className="h-5 w-5" />

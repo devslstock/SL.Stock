@@ -81,16 +81,6 @@ export default function DeliveriesList() {
                 <FileSignature className="h-5 w-5 sm:h-4 sm:w-4" /> Comprovantes
               </Button>
             </Link>
-            <Link to="/liberacoes" className="relative">
-              <Button variant="outline" className="gap-2 w-full sm:w-auto h-12 sm:h-10 text-lg sm:text-sm">
-                <Bell className="h-5 w-5 sm:h-4 sm:w-4" /> Liberações
-              </Button>
-              {pendingApprovals.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-lg animate-pulse">
-                  {pendingApprovals.length}
-                </span>
-              )}
-            </Link>
             <Link to="/entregas/nova">
               <Button className="gap-2 w-full sm:w-auto h-12 sm:h-10 text-lg sm:text-sm">
                 <Plus className="h-5 w-5 sm:h-4 sm:w-4" /> Criar Rota

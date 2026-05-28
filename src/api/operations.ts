@@ -256,5 +256,25 @@ export const operationsApi = {
     }
     
     return true
+  },
+
+  async getPendingStockAdjustments() {
+    if (!currentCompanyId) return []
+    const { data, error } = await supabase
+      .from('operation_items')
+      .select(`
+        *,
+        operation:operations (
+          load_number,
+          driver_name,
+          status
+        )
+      `)
+      .eq('physical_divergence_found', true)
+      .eq('divergence_resolved', false)
+      .eq('company_id', currentCompanyId)
+      .order('description')
+    if (error) throw error
+    return data
   }
 }
