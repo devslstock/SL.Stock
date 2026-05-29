@@ -754,24 +754,15 @@ export default function Conference() {
                               </Button>
                             </div>
                           ) : (
-                            <div className="flex gap-2 w-full">
+                            <div className="flex w-full">
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="flex-1 h-8 text-[11px] font-bold border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                                className="w-full h-8 text-[11px] font-bold border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
                                 onClick={() => verifyItemMutation.mutate({ itemId: item.id, verification: 'really_zero', scannedQty: 0, status: 'ok' })}
                                 disabled={verifyItemMutation.isPending}
                               >
                                 Não Encontrado
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="flex-1 h-8 text-[11px] font-bold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
-                                onClick={() => verifyItemMutation.mutate({ itemId: item.id, verification: 'found', scannedQty: item.quantity_expected, status: 'ok' })}
-                                disabled={verifyItemMutation.isPending}
-                              >
-                                Encontrado (Qtd Total)
                               </Button>
                             </div>
                           )}
