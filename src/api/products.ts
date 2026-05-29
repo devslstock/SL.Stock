@@ -85,6 +85,16 @@ export const productsApi = {
     return true
   },
 
+  async setAllStockTo100() {
+    if (!currentCompanyId) throw new Error('No company context')
+    const { error } = await supabase
+      .from('products')
+      .update({ stock: 100 })
+      .eq('company_id', currentCompanyId)
+    if (error) throw error
+    return true
+  },
+
   async incrementStockByCode(code: string, qtyToAdd: number) {
     // Preserve leading zeros by treating code as string
     const { data: prods, error: err1 } = await supabase

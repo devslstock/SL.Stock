@@ -90,6 +90,17 @@ export default function Products() {
     }
   })
 
+  const setAllStockTo100Mutation = useMutation({
+    mutationFn: productsApi.setAllStockTo100,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('Todo o estoque foi ajustado para 100 itens!')
+    },
+    onError: (e: any) => {
+      toast.error(`Erro ao ajustar estoque: ${e.message}`)
+    }
+  })
+
   const filtered = products.filter(p =>
     p.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -322,6 +333,19 @@ export default function Products() {
                   <Trash2 className="h-4 w-4 mr-1.5" /> Limpar
                 </Button>
               )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10" 
+                onClick={() => {
+                  if (window.confirm('Deseja realmente ajustar o estoque de TODOS os produtos para 100 itens?')) {
+                    setAllStockTo100Mutation.mutate()
+                  }
+                }}
+                disabled={setAllStockTo100Mutation.isPending}
+              >
+                <Package className="h-4 w-4 mr-1.5" /> Ajustar para 100
+              </Button>
               <Button size="sm" onClick={() => { setEditingProduct(null); setIsDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-1.5" /> Novo Produto
               </Button>
