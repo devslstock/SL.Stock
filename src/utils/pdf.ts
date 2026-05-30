@@ -43,6 +43,11 @@ export async function generateDeliveryProofPDF(client: any, company: any): Promi
   doc.setTextColor(15, 23, 42) // Slate-900
   doc.text('COMPROVANTE DE ENTREGA', 195, y, { align: 'right' })
 
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(10)
+  doc.setTextColor(71, 85, 105) // Slate-600
+  doc.text(`Pedido: ${client.order_number || 'Sem número'}`, 195, y + 5, { align: 'right' })
+
   let cnpjY = y + (compNameLines.length * 5)
   if (company?.cnpj) {
     doc.setFont('helvetica', 'normal')
@@ -52,18 +57,18 @@ export async function generateDeliveryProofPDF(client: any, company: any): Promi
     cnpjY += 5
   }
 
-  y = Math.max(cnpjY, y + 8)
+  y = Math.max(cnpjY, y + 10)
   doc.setDrawColor(226, 232, 240) // border-slate-200
   doc.setLineWidth(0.5)
   doc.line(15, y, 195, y)
 
   y += 8
 
-  // 1. DADOS DO CLIENTE
+  // DADOS DO CLIENTE
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
   doc.setTextColor(100, 116, 139)
-  doc.text('1. DADOS DO CLIENTE', 15, y)
+  doc.text('DADOS DO CLIENTE', 15, y)
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
@@ -85,32 +90,6 @@ export async function generateDeliveryProofPDF(client: any, company: any): Promi
   doc.setLineWidth(0.2)
   doc.line(15, y, 195, y)
   y += 8
-
-  // 2. DADOS DO PEDIDO / ENTREGA (BELOW CLIENT DETAILS)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
-  doc.setTextColor(100, 116, 139)
-  doc.text('2. DADOS DO PEDIDO / ENTREGA', 15, y)
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(11)
-  doc.setTextColor(15, 23, 42)
-  doc.text(`Pedido: ${client.order_number || 'Sem número'}`, 15, y + 6)
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9.5)
-  doc.setTextColor(71, 85, 105)
-  doc.text(`Carga/Rota: ${client.route?.operation?.load_number || 'Sem rota'}`, 15, y + 12)
-  doc.text(`Data de Emissão: ${formatDateOnly(client.created_at)}`, 15, y + 17)
-  if (client.route?.driver?.name) {
-    doc.text(`Motorista: ${client.route.driver.name}`, 15, y + 22)
-    y += 27
-  } else {
-    y += 22
-  }
-
-  doc.line(15, y, 195, y)
-  y += 10
 
   // Items Table Header
   doc.setFont('helvetica', 'bold')
