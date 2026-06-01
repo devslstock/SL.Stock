@@ -185,6 +185,7 @@ export const saasApi = {
 
   // --- Leads ---
   async getLeads() {
+    let dbLeads: any[] = []
     try {
       const { data, error } = await supabase
         .from('system_leads')
@@ -192,15 +193,44 @@ export const saasApi = {
         .order('created_at', { ascending: false })
       
       if (!error && data) {
-        return data as any[]
+        dbLeads = data
       }
     } catch (e) {
-      console.warn('Supabase system_leads table not available, falling back to localStorage:', e)
+      console.warn('Supabase system_leads table not available:', e)
     }
     
-    // Fallback
-    const localLeads = localStorage.getItem('estoque_facil_leads')
-    return localLeads ? JSON.parse(localLeads) : []
+    let localLeads: any[] = []
+    try {
+      const stored = localStorage.getItem('estoque_facil_leads')
+      localLeads = stored ? JSON.parse(stored) : []
+      if (!Array.isArray(localLeads)) localLeads = []
+    } catch (e) {
+      console.error('Error reading local leads:', e)
+    }
+    
+    // Merge database and local storage leads, deduplicating by ID
+    const mergedMap = new Map<string, any>()
+    
+    // Process database leads first
+    dbLeads.forEach(lead => {
+      if (lead && lead.id) {
+        mergedMap.set(lead.id, lead)
+      }
+    })
+    
+    // Process local leads
+    localLeads.forEach(lead => {
+      if (lead && lead.id) {
+        if (!mergedMap.has(lead.id)) {
+          mergedMap.set(lead.id, lead)
+        }
+      }
+    })
+    
+    // Convert back to array and sort by created_at descending
+    return Array.from(mergedMap.values()).sort((a, b) => {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
   },
 
   async createLead(lead: { name: string; email: string; phone: string; message: string }) {
@@ -210,6 +240,18 @@ export const saasApi = {
       ...lead
     }
 
+    // Always save to local storage first as a local backup
+    try {
+      const stored = localStorage.getItem('estoque_facil_leads')
+      let list = stored ? JSON.parse(stored) : []
+      if (!Array.isArray(list)) list = []
+      list.unshift(newLead)
+      localStorage.setItem('estoque_facil_leads', JSON.stringify(list))
+    } catch (e) {
+      console.error('Error saving lead to local storage:', e)
+    }
+
+    // Then attempt to write to Supabase
     try {
       const { data, error } = await supabase
         .from('system_leads')
@@ -221,34 +263,39 @@ export const saasApi = {
         return data as any
       }
     } catch (e) {
-      console.warn('Supabase system_leads insert failed, falling back to localStorage:', e)
+      console.warn('Supabase system_leads insert failed:', e)
     }
 
-    // Fallback
-    const localLeads = localStorage.getItem('estoque_facil_leads')
-    const list = localLeads ? JSON.parse(localLeads) : []
-    list.unshift(newLead)
-    localStorage.setItem('estoque_facil_leads', JSON.stringify(list))
     return newLead
   },
 
   async deleteLead(id: string) {
+    // 1. Delete from Supabase
     try {
       const { error } = await supabase
         .from('system_leads')
         .delete()
         .eq('id', id)
       
-      if (!error) return
+      if (error) {
+        console.warn('Supabase system_leads delete error:', error)
+      }
     } catch (e) {
-      console.warn('Supabase system_leads delete failed, falling back to localStorage:', e)
+      console.warn('Supabase system_leads delete failed:', e)
     }
 
-    // Fallback
-    const localLeads = localStorage.getItem('estoque_facil_leads')
-    if (localLeads) {
-      const list = JSON.parse(localLeads).filter((item: any) => item.id !== id)
-      localStorage.setItem('estoque_facil_leads', JSON.stringify(list))
+    // 2. Always delete from localStorage as well
+    try {
+      const stored = localStorage.getItem('estoque_facil_leads')
+      if (stored) {
+        let list = JSON.parse(stored)
+        if (Array.isArray(list)) {
+          list = list.filter((item: any) => item.id !== id)
+          localStorage.setItem('estoque_facil_leads', JSON.stringify(list))
+        }
+      }
+    } catch (e) {
+      console.error('Error deleting lead from local storage:', e)
     }
   }
 }
