@@ -181,5 +181,74 @@ export const saasApi = {
       .eq('id', id)
       
     if (error) throw error
+  },
+
+  // --- Leads ---
+  async getLeads() {
+    try {
+      const { data, error } = await supabase
+        .from('system_leads')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (!error && data) {
+        return data as any[]
+      }
+    } catch (e) {
+      console.warn('Supabase system_leads table not available, falling back to localStorage:', e)
+    }
+    
+    // Fallback
+    const localLeads = localStorage.getItem('estoque_facil_leads')
+    return localLeads ? JSON.parse(localLeads) : []
+  },
+
+  async createLead(lead: { name: string; email: string; phone: string; message: string }) {
+    const newLead = {
+      id: Math.random().toString(36).substring(2, 9),
+      created_at: new Date().toISOString(),
+      ...lead
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('system_leads')
+        .insert([newLead])
+        .select()
+        .single()
+      
+      if (!error && data) {
+        return data as any
+      }
+    } catch (e) {
+      console.warn('Supabase system_leads insert failed, falling back to localStorage:', e)
+    }
+
+    // Fallback
+    const localLeads = localStorage.getItem('estoque_facil_leads')
+    const list = localLeads ? JSON.parse(localLeads) : []
+    list.unshift(newLead)
+    localStorage.setItem('estoque_facil_leads', JSON.stringify(list))
+    return newLead
+  },
+
+  async deleteLead(id: string) {
+    try {
+      const { error } = await supabase
+        .from('system_leads')
+        .delete()
+        .eq('id', id)
+      
+      if (!error) return
+    } catch (e) {
+      console.warn('Supabase system_leads delete failed, falling back to localStorage:', e)
+    }
+
+    // Fallback
+    const localLeads = localStorage.getItem('estoque_facil_leads')
+    if (localLeads) {
+      const list = JSON.parse(localLeads).filter((item: any) => item.id !== id)
+      localStorage.setItem('estoque_facil_leads', JSON.stringify(list))
+    }
   }
 }

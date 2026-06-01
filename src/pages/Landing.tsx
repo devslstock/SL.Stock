@@ -6,12 +6,21 @@ import {
   BarChart3, Phone, Mail, MapPin, Menu, X, ExternalLink, ArrowUpRight 
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { saasApi } from '@/api/saas'
+import { toast } from '@/components/ui/toaster'
 
 export default function Landing() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+
+  // Form State for Leads
+  const [leadName, setLeadName] = useState('')
+  const [leadEmail, setLeadEmail] = useState('')
+  const [leadPhone, setLeadPhone] = useState('')
+  const [leadMessage, setLeadMessage] = useState('')
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false)
 
   // Efeito para adicionar fundo no cabeçalho ao rolar a página
   useEffect(() => {
@@ -32,6 +41,33 @@ export default function Landing() {
       navigate('/dashboard')
     } else {
       navigate('/login')
+    }
+  }
+
+  const handleSubmitLead = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!leadName || !leadEmail || !leadPhone) {
+      toast.error('Preencha todos os campos obrigatórios (Nome, E-mail e Telefone).')
+      return
+    }
+
+    setIsSubmittingLead(true)
+    try {
+      await saasApi.createLead({
+        name: leadName,
+        email: leadEmail,
+        phone: leadPhone,
+        message: leadMessage
+      })
+      toast.success('Solicitação enviada com sucesso! Entraremos em contato em breve.')
+      setLeadName('')
+      setLeadEmail('')
+      setLeadPhone('')
+      setLeadMessage('')
+    } catch (err: any) {
+      toast.error('Erro ao registrar solicitação: ' + err.message)
+    } finally {
+      setIsSubmittingLead(false)
     }
   }
 
@@ -510,33 +546,39 @@ export default function Landing() {
             {/* Contact Form */}
             <div className="lg:col-span-7 bg-white lg:bg-transparent border lg:border-none border-slate-100 rounded-3xl p-6 lg:p-0 shadow-lg lg:shadow-none">
               <h3 className="text-xl font-bold text-slate-900 mb-6">Envie uma mensagem</h3>
-              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Demonstração solicitada! Em breve entraremos em contato.'); }}>
+              <form className="space-y-4" onSubmit={handleSubmitLead}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nome Completo</label>
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nome Completo *</label>
                     <input 
                       type="text" 
                       required
                       placeholder="Ex: João Silva" 
+                      value={leadName}
+                      onChange={e => setLeadName(e.target.value)}
                       className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Telefone</label>
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Telefone *</label>
                     <input 
                       type="tel" 
                       required
-                      placeholder="Ex: (11) 99999-9999" 
+                      placeholder="Ex: (31) 98623-0171" 
+                      value={leadPhone}
+                      onChange={e => setLeadPhone(e.target.value)}
                       className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">E-mail Corporativo</label>
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">E-mail Corporativo *</label>
                   <input 
                     type="email" 
                     required
                     placeholder="Ex: joao@suaempresa.com" 
+                    value={leadEmail}
+                    onChange={e => setLeadEmail(e.target.value)}
                     className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                   />
                 </div>
@@ -545,14 +587,17 @@ export default function Landing() {
                   <textarea 
                     rows={4}
                     placeholder="Conte-nos um pouco sobre a sua operação logística..." 
+                    value={leadMessage}
+                    onChange={e => setLeadMessage(e.target.value)}
                     className="w-full p-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm resize-none"
                   />
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-100"
+                  disabled={isSubmittingLead}
+                  className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-100 cursor-pointer"
                 >
-                  Enviar Solicitação
+                  {isSubmittingLead ? 'Enviando...' : 'Enviar Solicitação'}
                 </Button>
               </form>
             </div>
