@@ -18,6 +18,8 @@ import ChangePassword from './pages/ChangePassword'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { DEFAULT_PASSWORD_HASH } from './utils/crypto'
+import Landing from './pages/Landing'
+
 
 // Protected Route Wrapper
 function ProtectedRoute() {
@@ -44,7 +46,7 @@ function ProtectedRoute() {
   
   // Se ele já trocou a senha e tenta acessar a tela de troca, joga pro dashboard
   if (user.password_hash !== DEFAULT_PASSWORD_HASH && location.pathname === '/trocar-senha') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;
@@ -69,6 +71,7 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         
         {/* Protected Routes */}
@@ -76,7 +79,7 @@ function App() {
           <Route path="/trocar-senha" element={<ChangePassword />} />
           
           <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/cargas" element={<AllLoads />} />
             <Route path="/nova-carga" element={<CreateLoad />} />
             <Route path="/editar-carga/:id" element={<CreateLoad />} />

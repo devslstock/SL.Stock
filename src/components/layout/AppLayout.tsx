@@ -15,7 +15,7 @@ import { operationsApi } from '@/api/operations'
 
 
 const navItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/', permission: 'can_view_dashboard' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', permission: 'can_view_dashboard' },
   { label: 'Cargas', icon: Truck, path: '/cargas', permission: 'can_manage_loads' },
   { label: 'Entregas', icon: MapPin, path: '/entregas', permission: 'can_do_delivery' },
   { label: 'Estoque', icon: Package, path: '/produtos', permission: 'can_manage_products' },
@@ -70,7 +70,7 @@ export default function AppLayout() {
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-40">
-        <Link to="/" className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity">
+        <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity">
           <Boxes className="h-6 w-6 text-primary" />
           <span className="font-bold text-lg gradient-text">Estoque Fácil</span>
         </Link>
@@ -131,7 +131,7 @@ export default function AppLayout() {
         )}
       >
         {/* Logo */}
-        <Link to="/" className="h-16 px-5 border-b border-border hidden md:flex items-center gap-3 shrink-0 cursor-pointer hover:bg-muted/30 transition-colors">
+        <Link to="/dashboard" className="h-16 px-5 border-b border-border hidden md:flex items-center gap-3 shrink-0 cursor-pointer hover:bg-muted/30 transition-colors">
           <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
             <Boxes className="h-5 w-5 text-white" />
           </div>

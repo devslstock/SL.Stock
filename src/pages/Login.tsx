@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { hashPassword } from '@/utils/crypto';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,14 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +36,7 @@ export default function Login() {
       
       if (success) {
         toast.success('Login realizado com sucesso!');
-        navigate('/');
+        navigate('/dashboard');
       } else {
         toast.error('Usuário ou senha incorretos, ou usuário inativo.');
         setShowForgotPassword(true);
