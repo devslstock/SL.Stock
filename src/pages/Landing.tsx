@@ -493,13 +493,11 @@ export default function Landing() {
       {/* CTA / Contact Section */}
       <section id="contato" className="py-20 bg-white border-t border-slate-200 relative overflow-hidden">
         {/* Decorative grids */}
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-slate-50/50 border-l border-slate-100 hidden lg:block" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
             {/* Contact Info */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="space-y-6">
               <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Contato Comercial</h2>
               <p className="text-3xl font-extrabold text-slate-900">
                 Pronto para transformar sua gestão de estoque?
@@ -546,7 +544,7 @@ export default function Landing() {
             </div>
 
             {/* Contact Form */}
-            <div className="lg:col-span-7 bg-white lg:bg-transparent border lg:border-none border-slate-100 rounded-3xl p-6 lg:p-0 shadow-lg lg:shadow-none">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-xl shadow-slate-100/50">
               <h3 className="text-xl font-bold text-slate-900 mb-6">Envie uma mensagem</h3>
               <form className="space-y-4" onSubmit={handleSubmitLead}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
