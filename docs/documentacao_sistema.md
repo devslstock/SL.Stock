@@ -1,6 +1,6 @@
 # 📦 Coletor IA (Estoque Fácil) - Documentação do Sistema
 
-O **Coletor IA** (também denominado *Estoque Fácil*) é uma plataforma ERP/WMS SaaS Multitenant completa, projetada para gerenciar operações em Centros de Distribuição (CD), armazéns e logística de última milha (Last-Mile). O sistema se destaca por sua renderização dupla de interface (Modo Moderno vs. Modo Tradicional Windows 2000) e mecanismos eficientes de travas duras e liberação remota em tempo real.
+O **Coletor IA** (também denominado *Estoque Fácil*) é uma plataforma ERP/WMS SaaS Multitenant completa, projetada para gerenciar operações em Centros de Distribuição (CD), armazéns e logística de última milha (Last-Mile). O sistema se destaca por sua renderização dupla de interface (Modo Moderno vs. Modo Tradicional Windows 2000), mecanismos eficientes de travas duras, liberação remota em tempo real e compilação híbrida nativa para dispositivos móveis.
 
 ---
 
@@ -9,18 +9,27 @@ O **Coletor IA** (também denominado *Estoque Fácil*) é uma plataforma ERP/WMS
 A plataforma foi desenvolvida utilizando tecnologias modernas que garantem velocidade, baixo consumo de banda e excelente performance em dispositivos robustos e móveis.
 
 ### Core Stack
-*   **Frontend**: React 18 + TypeScript + Vite (alta velocidade de compilação e carregamento).
+*   **Frontend**: React 19 + TypeScript + Vite (alta velocidade de compilação e carregamento).
 *   **Banco de Dados & Backend BaaS**: Supabase (PostgreSQL).
 *   **Estilização**: Tailwind CSS (design responsivo e otimizado).
-*   **Roteamento**: React Router DOM v6 com proteção de rotas integrada ao contexto de autenticação.
+*   **Roteamento**: React Router DOM v7 com proteção de rotas integrada ao contexto de autenticação.
 *   **Estado & Cache**: React Query (`@tanstack/react-query`) para cache dinâmico e sincronização de dados em tempo real.
-*   **Leitura/Geração de Arquivos**: Biblioteca `xlsx` para importação e exportação de dados via planilhas nativas.
+*   **Leitura/Geração de Arquivos**: Biblioteca `xlsx` para importação e exportação de dados de planilhas.
+*   **Exportação de Relatórios**: Biblioteca `jspdf` para compilação e renderização de comprovantes vetoriais em PDF.
+
+### Integração Mobile (Capacitor)
+Para rodar nativamente em smartphones e coletores móveis dedicados (Android/iOS):
+*   **Wrapper Híbrido**: Capacitor v8 (com os pacotes `@capacitor/core`, `@capacitor/cli`, `@capacitor/app`, `@capacitor/share` e `@capacitor/filesystem`).
+*   **Ajuste de Safes Areas**: A interface possui suporte a `viewport-fit=cover` e padding dinâmico via variáveis CSS (`env(safe-area-inset-top/bottom)`) para evitar obstruções sob reentrâncias de câmera (notches) e barras nativas do sistema operacional.
+*   **Permissões de Hardware**:
+    *   **Android**: Configuração de permissões de Câmera (`android.permission.CAMERA`) para leitura de código de barras em tempo real e Vibração (`android.permission.VIBRATE`) para feedback tátil durante bipe de mercadorias.
+    *   **iOS**: Inserção de chaves de permissão explicativa no arquivo `Info.plist` (`NSCameraUsageDescription`) para autorizar o acesso à câmera pela página web rodando no WebView nativo do iOS.
 
 ### Segurança e Criptografia
 Para mitigar os riscos de segurança sem a necessidade de manter sessões complexas de infraestrutura, o sistema adota:
 *   **Criptografia no Cliente**: As senhas dos usuários são transformadas em hash SHA-256 usando a API nativa do navegador (`crypto.subtle`) antes de trafegarem pela rede e serem gravadas/validadas no banco de dados.
-*   **Isolamento de Dados (Multitenant)**: Embora a base do PostgreSQL seja unificada, a segurança lógica e a separação entre empresas (tenants) são impostas na camada de aplicação através da amarração do `company_id` em todas as operações e consultas API. O RLS do Supabase é mantido desativado para chaves anônimas (`anon_key`) conforme regras em [fix_rls.sql](file:///c:/Users/lucas/OneDrive/Projeto%20IA/coletor/fix_rls.sql), garantindo que as mutations no cliente comandem a lógica de gravação rápida.
-*   **Troca de Senha Obrigatória**: Usuários recém-criados possuem a senha padrão `123456`. Ao fazer o primeiro login, a rota protegida detecta a senha padrão e força o redirecionamento para a tela `/trocar-senha`, impedindo o uso do dashboard antes da atualização.
+*   **Isolamento de Dados (Multitenant)**: Embora a base do PostgreSQL seja unificada, a segurança lógica e a separação entre empresas (tenants) são impostas na camada de aplicação através da amarração do `company_id` em todas as operações e consultas API.
+*   **Troca de Senha Obrigatória**: Usuários recém-criados possuem a senha padrão `123456`. Ao fazer o primeiro login, a rota protegida detecta a senha padrão e força o redirecionamento para a tela `/trocar-senha` (e posteriormente `/dashboard`), impedindo o uso do dashboard antes da atualização.
 
 ---
 
@@ -59,6 +68,16 @@ Notas internas de comunicação compartilhadas entre a equipe do painel Master.
 *   `content` (TEXT, Not Null)
 *   `created_at` (TIMESTAMP)
 
+#### `system_leads` (Solicitações de Contato / Leads)
+Contatos comerciais de vendas recebidos através da Landing Page.
+*   `id` (TEXT, PK)
+*   `name` (TEXT, Not Null) - Nome do solicitante.
+*   `email` (TEXT, Not Null) - E-mail para contato.
+*   `phone` (TEXT, Not Null) - Telefone/WhatsApp do lead.
+*   `message` (TEXT, Nullable) - Detalhes/Observações sobre a operação.
+*   `viewed` (BOOLEAN, Default: false) - Status de leitura do administrador Master.
+*   `created_at` (TIMESTAMP)
+
 ---
 
 ### B. Camada Tenant Local (Operações Logísticas)
@@ -85,6 +104,7 @@ Controle de acessos locais e globais (Master).
 *   `description` (TEXT, Not Null)
 *   `group_name` (TEXT, Nullable) - Categoria/Grupo de produto.
 *   `stock` (NUMERIC, Not Null, Default: 0) - Estoque atual.
+*   `min_stock_alert` (INTEGER, Default: 0) - Limite de estoque para alerta visual.
 *   `batch` (TEXT, Nullable) - Lote.
 *   `unit_weight` (NUMERIC, Nullable) - Peso unitário.
 *   `box_quantity` (NUMERIC, Nullable) - Multiplicador de embalagem (Ex: caixa com 12).
@@ -143,32 +163,36 @@ Uma das maiores inovações de usabilidade do **Coletor IA** é o sistema de ren
 ## 📦 4. Mapeamento de Funcionalidades por Módulo
 
 ### 🏢 A. Painel Master (Administração SaaS)
-Acessado exclusivamente pela URL `/saas` por usuários com a flag `is_super_admin = true`.
-1.  **Gestão de Inquilinos (Empresas)**: Cadastro completo de empresas, definição do slug de login, CNPJ, data de adesão e limite máximo de contas de usuários (`max_users`).
-2.  **Impersonate (Acesso Direto)**: Botão "Acessar" que permite ao administrador Master entrar diretamente no painel corporativo do cliente para prestar suporte, configurar dados ou auditar divergências sem precisar da senha do cliente.
-3.  **Financeiro SaaS**: Lançamento de cobranças. O sistema monitora a data de vencimento (`due_date`). Se uma fatura permanecer pendente por mais de 5 dias após o vencimento, o sistema **bloqueia o login** de todos os usuários da empresa, redirecionando-os para um alerta de cobrança.
-4.  **Controle Granular da Equipe Master**: Criação de colaboradores internos do SaaS com permissões específicas:
-    *   `can_manage_saas_clients` (Cadastro e modificação de empresas).
-    *   `can_manage_saas_finance` (Gestão de mensalidades e recebíveis).
-    *   `can_manage_saas_staff` (Cadastro e remoção de outros super-admins).
-5.  **Mural Compartilhado**: Bloco de notas persistente no banco de dados para troca de informações operacionais internas da equipe SaaS.
+Acessado pela URL `/saas` por usuários com a flag `is_super_admin = true`.
+1.  **Gestão de Inquilinos (Empresas)**: Cadastro de empresas, definição do slug de login, CNPJ, dia de vencimento, mensalidade e limite de contas de usuários (`max_users`).
+2.  **Impersonate (Acesso Direto)**: Botão "Acessar" para entrar diretamente no painel interno do inquilino para dar suporte técnico e visualizar operações locais, redirecionando-o de forma segura para o `/dashboard`.
+3.  **Financeiro SaaS**: Controle de faturamento mensal e recebíveis. Se uma fatura permanecer pendente por mais de 5 dias após o vencimento, o sistema bloqueia temporariamente o login operacional da empresa.
+4.  **Mural Compartilhado**: Bloco de notas persistente no banco de dados para troca de informações operacionais internas da equipe SaaS.
+5.  **Módulo de Leads**:
+    *   Exibe no cabeçalho superior do painel (exclusivo para Master) um badge com ícone de usuários e selo roxo pulsante indicando novas solicitações de contato pendentes de visualização.
+    *   Listagem completa de contatos, destacando novos leads com a etiqueta `"Novo"`.
+    *   Ao carregar a tela de leads por 1.5s, o sistema automaticamente marca os novos contatos como lidos e atualiza o badge superior.
+    *   Possui atalhos para resposta por e-mail e abertura direta de chat no WhatsApp do cliente comercial.
 
 ### 🏭 B. Módulo de Recebimento de Mercadorias (Inbound)
 Focado no recebimento físico de fornecedores na doca de entrada.
 1.  **Criação de expectativa**: O gestor cria um documento de recebimento inserindo os códigos e quantidades esperadas ou importando uma planilha do ERP.
-2.  **Bipagem às Cegas (Blind Receipt)**: No fluxo de entrada do aplicativo móvel, o conferente tem liberdade operacional. Caso chegue um produto não listado na expectativa ou uma quantidade maior que a planejada, o sistema **não bloqueia a operação** — o excesso é gravado de imediato como "divergência aceita" para não congestionar a área de descarga.
+2.  **Bipagem às Cegas (Blind Receipt)**: No fluxo de entrada do aplicativo móvel, o conferente tem liberdade operacional. Caso chegue um produto não listado na expectativa ou uma quantidade maior que a planejada, o excesso é gravado como "divergência aceita" para não paralisar o recebimento físico.
 
 ### 🚛 C. Módulo de Expedição e Entregas Last-Mile (Outbound)
 Responsável pela triagem de saída de cargas e controle das rotas dos motoristas.
-1.  **Conferência de Expedição (Travas Duras)**: Ao bipar as mercadorias que estão subindo no caminhão, o aplicativo móvel aplica **travas duras**. O operador é impedido de bipar produtos fora da lista ou em quantidades maiores que o pedido.
+1.  **Conferência de Expedição (Travas Duras)**: Ao bipar as mercadorias que estão subindo no caminhão, o operador é impedido de bipar produtos fora da lista ou em quantidades maiores que o pedido.
 2.  **Solicitação de Liberação**: Caso o conferente ou motorista precise carregar um produto excedente, o app bloqueia a tela e permite enviar uma solicitação com a quantidade excedente desejada.
 3.  **Liberações Remotas (Alçadas de Gestão)**: O gestor administrativo visualiza em tempo real um painel de alertas com as solicitações pendentes (`/liberacoes`). Ele pode aprovar ou rejeitar à distância. Se aprovado, a tela do operador no celular destrava instantaneamente para concluir o carregamento.
 4.  **App do Motorista (Entregas)**:
     *   O motorista acessa sua conta e visualiza sua rota ativa no celular.
-    *   O sistema lista os clientes na ordem sequencial de paradas planejada.
     *   O motorista clica na parada do cliente, bipa os produtos que estão sendo descarregados na porta e confirma as quantidades.
-    *   **POD (Proof of Delivery)**: Para finalizar a entrega, o motorista colhe a assinatura do cliente na tela do celular (usando canvas de desenho digital), preenche o nome e documento do recebedor e finaliza a entrega.
-5.  **Histórico e Comprovantes**: O painel administrativo permite pesquisar rotas, números de pedidos ou nomes de clientes para visualizar o relatório completo e a assinatura digital colhida no ato da entrega.
+    *   **POD (Proof of Delivery)**: O motorista colhe a assinatura do cliente na tela do celular (usando canvas de desenho digital), preenche o nome e documento do recebedor e finaliza a entrega.
+5.  **Comprovante de Entrega em PDF (jspdf)**:
+    *   Permite a exportação e compartilhamento de um PDF estruturado de alta qualidade contendo dados do cliente, itens da entrega (previsto/conferido), dados do recebedor e imagem vetorial da assinatura digital colhida no ato.
+    *   **Cabeçalho Otimizado**: Exibe o nome do emitente (empresa conectada), o CNPJ e o número do pedido no cabeçalho superior do arquivo, eliminando seções repetitivas no corpo para economizar espaço de impressão.
+    *   Tratamento para quebras de linhas de descrições e nomes de clientes muito longos para evitar sobreposições de layout.
+    *   Aciona o compartilhamento nativo em smartphones e downloads em desktops.
 
 ### 👥 D. Controle de Acessos da Empresa (RBAC Local)
 Dentro de cada empresa (tenant), o administrador define permissões granulares:
@@ -183,13 +207,11 @@ Dentro de cada empresa (tenant), o administrador define permissões granulares:
 
 ### 📊 E. Módulo de Contagens (Auditoria de Estoque)
 Oferece ferramentas para manter a precisão do estoque.
-1.  **Contagem Avulsa (Auditoria Rápida)**:
-    *   O operador bipa produtos em uma determinada prateleira ou setor sem necessidade de um documento pré-existente.
-    *   Ao terminar, ele gera um relatório comparativo em Excel.
-    *   **Característica técnica**: Não altera os saldos de estoque do sistema. É uma ferramenta puramente analítica.
-2.  **Contagem de Inventário (Oficial)**:
-    *   Abertura de uma sessão oficial de inventário (global ou por setor).
-    *   Os operadores bipam as mercadorias físicas.
-    *   O sistema calcula a diferença: `Quantidade Contada - Quantidade em Sistema`.
-    *   O gestor visualiza a tabela de sobras (excess) ou faltas (missing).
-    *   **Ajuste de Estoque**: Apenas usuários com permissão de Gestão/Admin podem clicar em "Ajustar Estoque", o que reescreve os saldos da tabela `products` para corresponder à contagem física realizada, registrando o log da operação.
+1.  **Contagem Avulsa (Auditoria Rápida)**: O operador bipa produtos em uma determinada prateleira ou setor sem necessidade de um documento pré-existente. Gera um relatório comparativo em Excel e não altera os saldos de estoque do sistema.
+2.  **Contagem de Inventário (Oficial)**: Abertura de uma sessão oficial de inventário (global ou por setor). Os operadores bipam as mercadorias físicas, o sistema calcula a diferença e apenas administradores podem clicar em "Ajustar Estoque", reescrevendo os saldos da tabela `products` para corresponder à contagem física.
+
+### ⚠️ F. Controle de Alertas de Estoque Mínimo
+Garante que a reposição de produtos seja sinalizada antes do desabastecimento.
+1.  **Limite de Alerta Individual**: Durante o cadastro ou edição de produtos, o gestor define a quantidade limite ("Mínimo para Alerta").
+2.  **Destaque no Estoque**: Na tabela de listagem de estoque, produtos que operam abaixo do mínimo definido são marcados em vermelho com o Badge `destructive` e mostram o limite configurado (ex: `Mín: 5`).
+3.  **Aviso no Dashboard**: O Dashboard principal calcula em tempo real o volume de produtos operando abaixo do limite definido por empresa e apresenta um card de aviso pulsante destacado no topo da tela com acesso direto para auditoria rápida.
