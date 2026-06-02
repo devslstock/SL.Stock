@@ -157,6 +157,7 @@ export default function Products() {
       external_code: formData.get('external_code') as string,
       description: formData.get('description') as string,
       stock: Number(formData.get('stock')),
+      min_stock_alert: Number(formData.get('min_stock_alert')),
       group_name: formData.get('group_name') as string,
       batch: formData.get('batch') as string,
     }
@@ -213,6 +214,7 @@ export default function Products() {
             const group_name = parts[3]?.trim() || ''
             const qty = parseInt(parts[4]?.trim() || '0')
             const batch = parts[5]?.trim() || ''
+            const min_qty = parseInt(parts[6]?.trim() || '0')
 
             if (code && desc) {
               if (qty < 0) {
@@ -228,6 +230,7 @@ export default function Products() {
                   group_name,
                   stock: qty,
                   batch,
+                  min_stock_alert: isNaN(min_qty) ? 0 : min_qty,
                 })
                 count++
               } catch (err: any) {
@@ -307,7 +310,7 @@ export default function Products() {
       return
     }
 
-    const headers = ['ID', 'Código', 'Código Externo', 'Descrição', 'Grupo', 'Estoque', 'Lote', 'Peso Unit.', 'Qtd. Caixa', 'Data Criação']
+    const headers = ['ID', 'Código', 'Código Externo', 'Descrição', 'Grupo', 'Estoque', 'Estoque Mínimo Alerta', 'Lote', 'Peso Unit.', 'Qtd. Caixa', 'Data Criação']
     
     const rows = products.map(p => [
       p.id,
@@ -316,6 +319,7 @@ export default function Products() {
       p.description || '',
       p.group_name || '',
       p.stock || 0,
+      p.min_stock_alert || 0,
       p.batch || '',
       p.unit_weight || '',
       p.box_quantity || '',
@@ -456,9 +460,20 @@ export default function Products() {
                     {product.group_name && <Badge variant="secondary">{product.group_name}</Badge>}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={product.stock >= 10 ? 'success' : product.stock >= 3 ? 'warning' : 'destructive'}>
-                      {product.stock}
-                    </Badge>
+                    <div className="flex flex-col gap-1 items-start">
+                      <Badge variant={
+                        product.min_stock_alert !== undefined && product.min_stock_alert > 0
+                          ? (product.stock < product.min_stock_alert ? 'destructive' : (product.stock < product.min_stock_alert * 1.5 ? 'warning' : 'success'))
+                          : (product.stock >= 10 ? 'success' : product.stock >= 3 ? 'warning' : 'destructive')
+                      }>
+                        {product.stock}
+                      </Badge>
+                      {product.min_stock_alert !== undefined && product.min_stock_alert > 0 && (
+                        <span className="text-[10px] text-muted-foreground font-semibold">
+                          Mín: {product.min_stock_alert}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   {isManager && (
                     <TableCell className="text-right">
@@ -509,9 +524,15 @@ export default function Products() {
                 <Input id="batch" name="batch" defaultValue={editingProduct?.batch} />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="stock">Estoque Atual</Label>
-              <Input type="number" id="stock" name="stock" min={0} defaultValue={editingProduct?.stock || 0} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="stock">Estoque Atual</Label>
+                <Input type="number" id="stock" name="stock" min={0} defaultValue={editingProduct?.stock || 0} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="min_stock_alert">Mínimo para Alerta</Label>
+                <Input type="number" id="min_stock_alert" name="min_stock_alert" min={0} defaultValue={editingProduct?.min_stock_alert ?? 0} />
+              </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>

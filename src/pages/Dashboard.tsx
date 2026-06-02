@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
+import { productsApi } from '@/api/products'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import {
   Plus,
   MapPin,
   ChevronDown,
+  Package,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { deliveriesApi } from '@/api/deliveries'
@@ -41,6 +43,16 @@ export default function Dashboard() {
     queryFn: deliveriesApi.getDeliveryRoutes,
     enabled: showDeliveries,
   })
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: productsApi.getProducts,
+    enabled: isManager,
+  })
+
+  const lowStockProducts = useMemo(() => {
+    return products.filter(p => p.min_stock_alert !== undefined && p.min_stock_alert > 0 && p.stock < p.min_stock_alert)
+  }, [products])
 
   const loadStats = useMemo(() => {
     return {
@@ -85,6 +97,23 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground mt-1">Visão geral das operações logísticas</p>
         </div>
       </div>
+
+      {isManager && lowStockProducts.length > 0 && (
+        <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl p-4 flex items-center justify-between gap-4 animate-pulse">
+          <div className="flex items-center gap-3">
+            <Package className="h-6 w-6 shrink-0" />
+            <div>
+              <p className="font-bold text-sm">Alerta de Estoque Baixo!</p>
+              <p className="text-xs opacity-90 font-medium">Há {lowStockProducts.length} produto(s) abaixo do limite mínimo definido.</p>
+            </div>
+          </div>
+          <Link to="/produtos">
+            <Button size="sm" variant="destructive" className="h-8 text-xs font-semibold shrink-0 cursor-pointer">
+              Ver Estoque
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* EXPEDIÇÃO / CARGAS SECTION */}
       {showLoads && (

@@ -75,6 +75,7 @@ export interface Product {
   description: string
   group_name?: string
   stock: number
+  min_stock_alert?: number
   batch?: string
   unit_weight?: number
   box_quantity?: number
