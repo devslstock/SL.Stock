@@ -23,7 +23,7 @@ export default function DeliveryProof() {
       queryClient.invalidateQueries({ queryKey: ['operations'] })
       queryClient.invalidateQueries({ queryKey: ['operation', id] })
       toast.success('Comprovante de entrega registrado e operação finalizada!')
-      setTimeout(() => navigate('/'), 1500)
+      setTimeout(() => navigate('/dashboard'), 1500)
     },
     onError: (e: any) => {
       toast.error(`Erro ao finalizar operação: ${e.message}`)

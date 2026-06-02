@@ -176,7 +176,7 @@ export default function MasterPanel() {
       toast.success(`Contexto alterado para ${name}`);
       // Invalidate all queries to fetch new company data
       queryClient.clear();
-      navigate('/');
+      navigate('/dashboard');
     } else {
       toast.error('Erro ao mudar de empresa');
     }

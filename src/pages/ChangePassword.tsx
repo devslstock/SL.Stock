@@ -47,7 +47,7 @@ export default function ChangePassword() {
       await login(user.username, hashed);
       
       toast.success('Senha atualizada com sucesso!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
       toast.error('Erro ao atualizar a senha.');
     } finally {
