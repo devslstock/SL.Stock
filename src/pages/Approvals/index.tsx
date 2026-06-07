@@ -143,8 +143,8 @@ export default function ApprovalsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6">
-          <TabsTrigger value="stock_adjustments" className="relative">
+        <TabsList className="flex flex-col sm:grid sm:grid-cols-3 w-full max-w-xl mb-6 h-auto gap-2 bg-transparent sm:bg-muted p-0 sm:p-1">
+          <TabsTrigger value="stock_adjustments" className="relative w-full sm:w-auto bg-muted sm:bg-transparent shadow-sm sm:shadow-none border sm:border-none border-border">
             Ajustes de Cargas
             {stockAdjustments.length > 0 && (
               <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">
@@ -152,7 +152,7 @@ export default function ApprovalsPage() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="load_shortages" className="relative">
+          <TabsTrigger value="load_shortages" className="relative w-full sm:w-auto bg-muted sm:bg-transparent shadow-sm sm:shadow-none border sm:border-none border-border">
             Faltas de Cargas
             {operationAlerts.length > 0 && (
               <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
@@ -160,7 +160,7 @@ export default function ApprovalsPage() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="transit_approvals" className="relative">
+          <TabsTrigger value="transit_approvals" className="relative w-full sm:w-auto bg-muted sm:bg-transparent shadow-sm sm:shadow-none border sm:border-none border-border">
             Entregas em Trânsito
             {approvals.length > 0 && (
               <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-purple-500 text-white rounded-full">
