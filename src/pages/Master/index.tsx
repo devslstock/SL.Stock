@@ -25,7 +25,6 @@ export default function MasterPanel() {
   
   // New Company State
   const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
   const [cnpj, setCnpj] = useState('');
   const [maxUsers, setMaxUsers] = useState(5);
   const [billingDay, setBillingDay] = useState(10);
@@ -130,7 +129,7 @@ export default function MasterPanel() {
 
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !slug || !adminName || !adminUsername) {
+    if (!name || !cnpj || !adminName || !adminUsername) {
       toast.error('Preencha os campos obrigatórios');
       return;
     }
@@ -140,7 +139,7 @@ export default function MasterPanel() {
       // 1. Criar empresa
       const newCompany = await companiesApi.createCompany({
         name,
-        slug: slug.toLowerCase().replace(/\s+/g, '-'),
+        slug: cnpj.replace(/\D/g, ''),
         cnpj,
         max_users: maxUsers,
         active: true,
@@ -220,7 +219,7 @@ export default function MasterPanel() {
   };
 
   const resetForm = () => {
-    setName(''); setSlug(''); setCnpj(''); setMaxUsers(5);
+    setName(''); setCnpj(''); setMaxUsers(5);
     setBillingDay(10); setMonthlyFee(0); setPlan('ouro');
     setAdminName(''); setAdminUsername('');
   };
@@ -354,11 +353,11 @@ export default function MasterPanel() {
                 <Label>Nome Fantasia/Razão Social *</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Logística XYZ" required />
               </div>
+              <div className="space-y-2">
+                <Label>CNPJ ou CPF *</Label>
+                <Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" required />
+              </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Slug (Login) *</Label>
-                  <Input value={slug} onChange={e => setSlug(e.target.value)} placeholder="Ex: log-xyz" required />
-                </div>
                 <div className="space-y-2">
                   <Label>Plano de Assinatura *</Label>
                   <select 
@@ -375,10 +374,6 @@ export default function MasterPanel() {
                   <Label>Limite de Usuários</Label>
                   <Input type="number" min={1} value={maxUsers} onChange={e => setMaxUsers(Number(e.target.value))} required />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>CNPJ</Label>
-                <Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="Opcional" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -431,15 +426,16 @@ export default function MasterPanel() {
                   required 
                 />
               </div>
+              <div className="space-y-2">
+                <Label>CNPJ ou CPF *</Label>
+                <Input 
+                  value={editingCompany.cnpj || ''} 
+                  onChange={e => setEditingCompany({...editingCompany, cnpj: e.target.value})} 
+                  placeholder="00.000.000/0000-00"
+                  required 
+                />
+              </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Slug (Login) *</Label>
-                  <Input 
-                    value={editingCompany.slug} 
-                    onChange={e => setEditingCompany({...editingCompany, slug: e.target.value})} 
-                    required 
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label>Plano de Assinatura *</Label>
                   <select 
@@ -462,13 +458,6 @@ export default function MasterPanel() {
                     required 
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>CNPJ</Label>
-                <Input 
-                  value={editingCompany.cnpj || ''} 
-                  onChange={e => setEditingCompany({...editingCompany, cnpj: e.target.value})} 
-                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
