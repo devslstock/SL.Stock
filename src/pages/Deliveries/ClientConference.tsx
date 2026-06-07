@@ -6,15 +6,16 @@ import { productsApi } from '@/api/products'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, ScanLine, Search, CheckCircle2, AlertTriangle, Save, PenTool, Camera, Trash2, MapPin } from 'lucide-react'
+import { ArrowLeft, ScanLine, Search, CheckCircle2, AlertTriangle, Save, PenTool, Camera, Trash2, MapPin, FileDown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
+import { generateDeliveryProofPDF } from '@/utils/pdf'
 
 export default function ClientConference() {
   const { clientId } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
+  const { user, company } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
   
   const [searchInput, setSearchInput] = useState('')
@@ -314,8 +315,25 @@ export default function ClientConference() {
               </div>
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right flex flex-col items-end gap-2">
             <span className="text-2xl font-black gradient-text">{progress}%</span>
+            {isManager && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  try {
+                    generateDeliveryProofPDF({ ...client, delivery_items: items }, company);
+                    toast.success('Comprovante gerado com sucesso!');
+                  } catch(e) {
+                    toast.error('Erro ao gerar comprovante');
+                  }
+                }}
+              >
+                <FileDown className="h-4 w-4 md:mr-1.5" />
+                <span className="hidden md:inline">Comprovante</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
