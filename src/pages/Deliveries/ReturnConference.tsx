@@ -86,7 +86,7 @@ export default function ReturnConference() {
       toast.success('Retorno finalizado e estoque atualizado!')
       queryClient.invalidateQueries({ queryKey: ['delivery_route', id] })
       queryClient.invalidateQueries({ queryKey: ['delivery_clients', id] })
-      navigate(`/entregas/${id}`)
+      navigate(`/cargas`)
     },
     onError: (e: any) => {
       toast.error(`Erro ao finalizar retorno: ${e.message}`)

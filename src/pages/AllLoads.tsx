@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
 import { useAuth } from '@/contexts/AuthContext'
@@ -45,6 +45,16 @@ export default function AllLoads() {
   const [search, setSearch] = useState('')
   const { user } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
+  const navigate = useNavigate()
+  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
+  const [selectedRouteId, setSelectedRouteId] = useState('')
+
+  const { data: deliveryRoutes = [], isLoading: isRoutesLoading } = useQuery({
+    queryKey: ['delivery_routes'],
+    queryFn: deliveriesApi.getDeliveryRoutes,
+    enabled: isReturnDialogOpen
+  })
+  const completedRoutes = deliveryRoutes.filter((r: any) => r.status === 'completed' || r.status === 'in_progress')
 
   const { data: operations = [], isLoading } = useQuery({
     queryKey: ['operations'],
@@ -185,6 +195,48 @@ export default function AllLoads() {
           })
         )}
       </div>
+
+      <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Conferência de Retorno Físico</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <p className="text-sm text-muted-foreground">
+              Selecione uma rota para realizar a conferência dos itens físicos que retornaram ao galpão.
+            </p>
+            
+            {isRoutesLoading ? (
+              <p className="text-sm text-center py-4">Carregando rotas...</p>
+            ) : completedRoutes.length === 0 ? (
+              <p className="text-sm text-center py-4 text-amber-500">Nenhuma rota elegível encontrada.</p>
+            ) : (
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={selectedRouteId}
+                onChange={e => setSelectedRouteId(e.target.value)}
+              >
+                <option value="">Selecione uma rota...</option>
+                {completedRoutes.map((r: any) => (
+                  <option key={r.id} value={r.id}>
+                    {r.operation?.load_number} - Motorista: {r.driver?.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <Button 
+              className="w-full mt-4" 
+              onClick={() => {
+                if (selectedRouteId) navigate(`/entregas/${selectedRouteId}/retorno`)
+              }} 
+              disabled={!selectedRouteId}
+            >
+              Acessar Conferência de Retorno
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
