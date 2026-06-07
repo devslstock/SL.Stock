@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 
 interface PlanGuardProps {
   children: React.ReactNode
-  requiredPlan: 'basico' | 'profissional' | 'enterprise'
+  requiredPlan: 'bronze' | 'prata' | 'ouro'
 }
 
 export function PlanGuard({ children, requiredPlan }: PlanGuardProps) {
@@ -13,11 +13,11 @@ export function PlanGuard({ children, requiredPlan }: PlanGuardProps) {
   
   if (!company) return null
 
-  const plan = company.plan || 'enterprise'
+  const plan = company.plan || 'ouro'
 
   let isAllowed = true
-  if (requiredPlan === 'profissional' && plan === 'basico') isAllowed = false
-  if (requiredPlan === 'enterprise' && plan !== 'enterprise') isAllowed = false
+  if (requiredPlan === 'prata' && plan === 'bronze') isAllowed = false
+  if (requiredPlan === 'ouro' && plan !== 'ouro') isAllowed = false
 
   if (!isAllowed) {
     return (
@@ -30,21 +30,21 @@ export function PlanGuard({ children, requiredPlan }: PlanGuardProps) {
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-foreground">Recurso Premium</h2>
             <p className="text-muted-foreground">
-              Esta funcionalidade é exclusiva para assinantes do plano <strong>{requiredPlan === 'enterprise' ? 'Enterprise' : 'Profissional'}</strong>.
+              Esta funcionalidade é exclusiva para assinantes do plano <strong>{requiredPlan === 'ouro' ? 'Ouro' : 'Prata'}</strong>.
             </p>
           </div>
 
           <div className="bg-muted/50 p-4 rounded-lg text-sm text-left">
             <h3 className="font-semibold mb-2">Por que fazer o upgrade?</h3>
             <ul className="space-y-2 text-muted-foreground list-disc list-inside">
-              {requiredPlan === 'profissional' && (
+              {requiredPlan === 'prata' && (
                 <>
                   <li>Módulo completo de Expedição e Cargas</li>
                   <li>Controle de conferência na saída</li>
                   <li>Montagem de Romaneios avançados</li>
                 </>
               )}
-              {requiredPlan === 'enterprise' && (
+              {requiredPlan === 'ouro' && (
                 <>
                   <li>Aplicativo exclusivo para Motoristas</li>
                   <li>Assinatura digital na tela do celular</li>
