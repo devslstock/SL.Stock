@@ -91,18 +91,20 @@ export default function AppLayout() {
           >
             <LogOut className="h-5 w-5" />
           </button>
-          <Link
-            to="/liberacoes"
-            className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground relative"
-            title="Liberações"
-          >
-            <Bell className="h-5 w-5" />
-            {totalPendingApprovals > 0 && (
-              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
-                {totalPendingApprovals}
-              </span>
-            )}
-          </Link>
+          {isManager && (
+            <Link
+              to="/liberacoes"
+              className="p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-muted-foreground relative"
+              title="Liberações"
+            >
+              <Bell className="h-5 w-5" />
+              {totalPendingApprovals > 0 && (
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+                  {totalPendingApprovals}
+                </span>
+              )}
+            </Link>
+          )}
           {isMaster && (
             <Link
               to="/saas/leads"
@@ -304,18 +306,20 @@ export default function AppLayout() {
              
              <div className="h-6 w-px bg-border mx-1"></div>
              
-             <Link
-                to="/liberacoes"
-                className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer relative"
-                title="Liberações"
-             >
-                <Bell className="h-5 w-5" />
-                {totalPendingApprovals > 0 && (
-                   <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
-                      {totalPendingApprovals}
-                   </span>
-                )}
-             </Link>
+             {isManager && (
+               <Link
+                  to="/liberacoes"
+                  className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer relative"
+                  title="Liberações"
+               >
+                  <Bell className="h-5 w-5" />
+                  {totalPendingApprovals > 0 && (
+                     <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+                        {totalPendingApprovals}
+                     </span>
+                  )}
+               </Link>
+             )}
              
              {isMaster && (
                 <Link

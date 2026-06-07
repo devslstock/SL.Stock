@@ -113,6 +113,19 @@ export default function ApprovalsPage() {
 
   const isLoading = isLoadingApprovals || isLoadingStock || isLoadingAlerts
 
+  if (!isManager) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 slide-in">
+        <AlertTriangle className="h-16 w-16 text-amber-500 opacity-80" />
+        <h2 className="text-2xl font-bold text-foreground">Acesso Restrito</h2>
+        <p className="text-muted-foreground text-center max-w-md">Apenas gestores e administradores têm permissão para acessar o painel de liberações.</p>
+        <Link to="/dashboard">
+          <Button variant="outline" className="mt-4">Voltar ao Início</Button>
+        </Link>
+      </div>
+    )
+  }
+
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando solicitações...</div>
 
   return (
