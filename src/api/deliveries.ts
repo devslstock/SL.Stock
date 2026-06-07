@@ -178,10 +178,23 @@ export const deliveriesApi = {
       newStatus = 'in_progress'
     }
 
+    const { data: routeData } = await supabase
+      .from('delivery_routes')
+      .select('operation_id')
+      .eq('id', routeId)
+      .single()
+
     await supabase
       .from('delivery_routes')
       .update({ status: newStatus })
       .eq('id', routeId)
+
+    if (routeData?.operation_id) {
+      await supabase
+        .from('operations')
+        .update({ status: newStatus === 'completed' ? 'completed' : 'dispatched' })
+        .eq('id', routeData.operation_id)
+    }
   },
 
   async confirmRouteReturn(routeId: string, scannedItems: any[], hasDivergence: boolean) {

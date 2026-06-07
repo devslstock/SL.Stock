@@ -485,6 +485,26 @@ export default function Conference() {
     });
   const returnItemsList = items.filter(i => i.description.startsWith('🔄'));
 
+  const returnedClientsItems = useMemo(() => {
+    const list: any[] = []
+    clients.forEach((c: any) => {
+      c.delivery_items?.forEach((item: any) => {
+        if (item.returned_to_stock) {
+          let returnQty = c.status === 'returned' ? item.quantity_expected : Math.max(0, item.quantity_expected - item.quantity_scanned)
+          if (returnQty > 0) {
+            const existing = list.find(i => i.product_code === item.product_code)
+            if (existing) {
+              existing.quantity_returned += returnQty
+            } else {
+              list.push({ id: `ret_${item.id}`, product_code: item.product_code, description: item.description, quantity_returned: returnQty })
+            }
+          }
+        }
+      })
+    })
+    return list
+  }, [clients])
+
   const progress = () => {
     if (!regularItems.length) return 0
     const t = regularItems.reduce((a, i) => a + i.quantity_expected, 0)
@@ -1087,6 +1107,30 @@ export default function Conference() {
                         <div className="text-right">
                           <span className="text-lg font-bold font-mono text-amber-500">+{item.quantity_scanned}</span>
                           <span className="text-amber-500/70 text-sm"> devolvidos</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {returnedClientsItems.length > 0 && (
+                <>
+                  <div className="pt-6 pb-2">
+                    <h3 className="text-sm font-bold text-amber-500 flex items-center gap-2">
+                      <Undo2 className="h-4 w-4" /> Devolvidos ao Estoque Físico
+                    </h3>
+                  </div>
+                  {returnedClientsItems.map((item, i) => (
+                    <div key={item.id} className="glass-card p-3 flex items-center justify-between slide-up border-amber-500/20 bg-amber-500/5" style={{ animationDelay: `${i * 50}ms` }}>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate text-amber-500">{item.description}</p>
+                        <p className="text-xs text-amber-500/70 font-mono">{item.product_code}</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-right">
+                          <span className="text-lg font-bold font-mono text-amber-500">+{item.quantity_returned}</span>
+                          <span className="text-amber-500/70 text-sm"> retornado</span>
                         </div>
                       </div>
                     </div>
