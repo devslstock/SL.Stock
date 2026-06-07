@@ -73,6 +73,31 @@ export default function MasterPanel() {
     });
   };
 
+  const handleMaxUsersChange = (newMaxUsers: number) => {
+    setMaxUsers(newMaxUsers);
+    const planDefaults = saasPlans.find(p => p.id === plan);
+    if (planDefaults) {
+      let fee = planDefaults.base_price;
+      if (newMaxUsers > planDefaults.base_users) {
+        fee += (newMaxUsers - planDefaults.base_users) * planDefaults.extra_user_price;
+      }
+      setMonthlyFee(fee);
+    }
+  };
+
+  const handleEditMaxUsersChange = (newMaxUsers: number) => {
+    if (!editingCompany) return;
+    const planDefaults = saasPlans.find(p => p.id === editingCompany.plan);
+    let fee = editingCompany.monthly_fee || 0;
+    if (planDefaults) {
+      fee = planDefaults.base_price;
+      if (newMaxUsers > planDefaults.base_users) {
+        fee += (newMaxUsers - planDefaults.base_users) * planDefaults.extra_user_price;
+      }
+    }
+    setEditingCompany({ ...editingCompany, max_users: newMaxUsers, monthly_fee: fee });
+  };
+
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id, active }: { id: string, active: boolean }) => companiesApi.updateCompany(id, { active }),
     onSuccess: () => {
@@ -372,7 +397,7 @@ export default function MasterPanel() {
                 </div>
                 <div className="space-y-2">
                   <Label>Limite de Usuários</Label>
-                  <Input type="number" min={1} value={maxUsers} onChange={e => setMaxUsers(Number(e.target.value))} required />
+                  <Input type="number" min={1} value={maxUsers} onChange={e => handleMaxUsersChange(Number(e.target.value))} required />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -454,7 +479,7 @@ export default function MasterPanel() {
                     type="number" 
                     min={1} 
                     value={editingCompany.max_users} 
-                    onChange={e => setEditingCompany({...editingCompany, max_users: Number(e.target.value)})} 
+                    onChange={e => handleEditMaxUsersChange(Number(e.target.value))} 
                     required 
                   />
                 </div>
