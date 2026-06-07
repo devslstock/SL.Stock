@@ -334,5 +334,97 @@ export const operationsApi = {
       .select()
     if (error) throw error
     return data
+  },
+
+  async createReturnOperationFromRoute(routeId: string) {
+    if (!currentCompanyId) throw new Error('No company context')
+    
+    // 1. Fetch route details
+    const { data: route, error: routeError } = await supabase
+      .from('delivery_routes')
+      .select('*, driver:users(name), operation:operations(load_number)')
+      .eq('id', routeId)
+      .eq('company_id', currentCompanyId)
+      .single()
+    if (routeError) throw routeError
+
+    // 2. Fetch clients and items
+    const { data: clients, error: clientsError } = await supabase
+      .from('delivery_clients')
+      .select('*, delivery_items(*)')
+      .eq('delivery_route_id', routeId)
+      .eq('company_id', currentCompanyId)
+    if (clientsError) throw clientsError
+
+    // 3. Calculate returns
+    const itemsMap = new Map<string, { product_id: string | null, product_code: string, description: string, quantity_expected: number }>()
+
+    for (const client of clients) {
+      const isClientReturned = client.status === 'returned'
+      for (const item of client.delivery_items) {
+        let returnQty = 0
+        if (isClientReturned) {
+          returnQty = item.quantity_expected // order entirely returned
+        } else {
+          returnQty = Math.max(0, item.quantity_expected - item.quantity_scanned) // missing items
+        }
+        
+        if (returnQty > 0) {
+          const existing = itemsMap.get(item.product_code)
+          if (existing) {
+            existing.quantity_expected += returnQty
+          } else {
+            itemsMap.set(item.product_code, {
+              product_id: item.product_id,
+              product_code: item.product_code,
+              description: item.description,
+              quantity_expected: returnQty
+            })
+          }
+        }
+      }
+    }
+
+    const returnItems = Array.from(itemsMap.values())
+
+    if (returnItems.length === 0) {
+      throw new Error('Não há itens para retornar nesta rota.')
+    }
+
+    // 4. Create new operation
+    const opData: Omit<Operation, 'id' | 'created_at' | 'company_id'> = {
+      type: 'RETURN',
+      status: 'pending',
+      load_number: `RET-${route.operation?.load_number || routeId.substring(0, 5)}`,
+      driver_name: route.driver?.name || 'Desconhecido',
+      notes: `Retorno gerado automaticamente da Rota: ${route.operation?.load_number || routeId}`,
+    }
+
+    const { data: opCreated, error: opError } = await supabase
+      .from('operations')
+      .insert([{ ...opData, company_id: currentCompanyId }])
+      .select()
+      .single()
+    if (opError) throw opError
+
+    // 5. Create operation items
+    const itemsToInsert = returnItems.map(item => ({
+      ...item,
+      quantity_scanned: 0,
+      status: 'pending',
+      operation_id: opCreated.id,
+      company_id: currentCompanyId,
+      system_stock_at_load: 0,
+      physical_verification: 'pending',
+      physical_divergence_found: false,
+      divergence_resolved: false
+    }))
+
+    const { error: itemsError } = await supabase
+      .from('operation_items')
+      .insert(itemsToInsert)
+    if (itemsError) throw itemsError
+
+    return opCreated as Operation
   }
 }

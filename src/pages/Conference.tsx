@@ -151,6 +151,49 @@ export default function Conference() {
     onError: (e: any) => toast.error(`Erro ao finalizar recebimento: ${e.message}`)
   })
 
+  const finalizeReturnMutation = useMutation({
+    mutationFn: async () => {
+      const returnAlerts = []
+      for (const item of items) {
+        if (item.quantity_scanned !== item.quantity_expected) {
+          const isMissing = item.quantity_scanned < item.quantity_expected
+          returnAlerts.push({
+            operation_id: id!,
+            product_id: item.product_id,
+            product_code: item.product_code,
+            description: item.description,
+            quantity_expected: item.quantity_expected,
+            quantity_scanned: item.quantity_scanned,
+            quantity_missing: isMissing ? item.quantity_expected - item.quantity_scanned : 0
+          })
+        }
+      }
+
+      if (returnAlerts.length > 0) {
+        await operationsApi.createOperationAlerts(returnAlerts)
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          const userName = session.user.user_metadata?.name || 'Sistema'
+          await supabase.from('system_notes').insert([{
+            author_id: session.user.id,
+            author_name: userName,
+            content: `Divergência na Carga de Retorno ${op?.load_number}: ${returnAlerts.length} item(s) com diferença.`,
+          }])
+        }
+      }
+
+      return operationsApi.finalizeReceiptAndUpdateStock(id!)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operation', id] })
+      queryClient.invalidateQueries({ queryKey: ['operations'] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('Retorno finalizado e estoque atualizado!')
+      navigate('/recebimentos')
+    },
+    onError: (e: any) => toast.error(`Erro ao finalizar retorno: ${e.message}`)
+  })
+
   const deleteOpMutation = useMutation({
     mutationFn: () => operationsApi.deleteOperation(id!),
     onSuccess: () => {
@@ -869,7 +912,7 @@ export default function Conference() {
           </div>
 
           <div className="mt-auto pt-2 shrink-0 pb-4 space-y-2">
-            {(op.type === 'RECEIPT' || op.type === 'LOAD') && (
+            {(op.type === 'RECEIPT' || op.type === 'LOAD' || op.type === 'RETURN') && (
                <Button variant="outline" className="w-full text-amber-600 hover:text-amber-700 border-amber-500/30 hover:bg-amber-500/10" onClick={handleExportExcel}>
                  <Download className="mr-2 h-4 w-4" /> Baixar Relatório de Cortes (Excel)
                </Button>
@@ -882,6 +925,14 @@ export default function Conference() {
                 }
               }} disabled={finalizeReceiptMutation.isPending}>
                 {finalizeReceiptMutation.isPending ? 'Finalizando...' : <><PackageCheck className="mr-2 h-5 w-5" /> Finalizar e Atualizar Estoque</>}
+              </Button>
+            ) : op.type === 'RETURN' ? (
+              <Button className="w-full h-12 text-lg bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 glow-success" onClick={() => {
+                if (window.confirm('Atenção: Isso vai finalizar a conferência de retorno e retornar os itens bipados ao estoque. Deseja finalizar?')) {
+                  finalizeReturnMutation.mutate()
+                }
+              }} disabled={finalizeReturnMutation.isPending}>
+                {finalizeReturnMutation.isPending ? 'Finalizando...' : <><PackageCheck className="mr-2 h-5 w-5" /> Finalizar Retorno</>}
               </Button>
             ) : (
               <Button className="w-full h-12 text-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 glow-success" onClick={handleDispatch} disabled={dispatchMutation.isPending}>

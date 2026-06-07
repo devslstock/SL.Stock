@@ -7,6 +7,11 @@ import { toast } from '@/components/ui/toaster'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { deliveriesApi } from '@/api/deliveries'
+import {
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Truck,
   Search,
@@ -18,6 +23,7 @@ import {
   CheckCircle2,
   Trash2,
   Factory,
+  Undo2
 } from 'lucide-react'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success'; icon: typeof Clock }> = {
@@ -42,6 +48,8 @@ export default function AllLoads() {
   const [search, setSearch] = useState('')
   const { user } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
+  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
+  const [selectedRouteId, setSelectedRouteId] = useState('')
 
   const { data: operations = [], isLoading } = useQuery({
     queryKey: ['operations'],
@@ -60,6 +68,31 @@ export default function AllLoads() {
       toast.error(`Erro ao excluir: ${error.message}`)
     }
   })
+
+  const { data: deliveryRoutes = [], isLoading: isRoutesLoading } = useQuery({
+    queryKey: ['delivery_routes'],
+    queryFn: deliveriesApi.getDeliveryRoutes,
+    enabled: isReturnDialogOpen
+  })
+
+  const createReturnMutation = useMutation({
+    mutationFn: (routeId: string) => operationsApi.createReturnOperationFromRoute(routeId),
+    onSuccess: () => {
+      toast.success('Carga de retorno gerada com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['operations'] })
+      setIsReturnDialogOpen(false)
+    },
+    onError: (error: any) => {
+      toast.error(`Erro ao gerar retorno: ${error.message}`)
+    }
+  })
+
+  const handleCreateReturn = () => {
+    if (!selectedRouteId) return toast.warning('Selecione uma rota')
+    createReturnMutation.mutate(selectedRouteId)
+  }
+
+  const completedRoutes = deliveryRoutes.filter((r: any) => r.status === 'completed' || r.status === 'in_progress')
 
   const filtered = useMemo(() => {
     return operations.filter(op => {
@@ -85,11 +118,16 @@ export default function AllLoads() {
           </p>
         </div>
         {isManager && (
-          <Link to="/nova-carga">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" /> Nova Rota
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2 border-amber-500/50 text-amber-500 hover:bg-amber-500/10" onClick={() => setIsReturnDialogOpen(true)}>
+              <Undo2 className="h-4 w-4" /> Novo Retorno
             </Button>
-          </Link>
+            <Link to="/nova-carga">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" /> Nova Rota
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
 
@@ -128,19 +166,21 @@ export default function AllLoads() {
               <Link key={op.id} to={`/conferencia/${op.id}`} className="block group">
                 <div className="glass-card glass-card-hover p-4 flex items-center gap-4 slide-up" style={{ animationDelay: `${index * 60}ms` }}>
                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    op.type === 'RETURN' ? 'bg-rose-500/15 text-rose-500' :
                     (op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') ? 'bg-emerald-500/15 text-emerald-500' :
                     op.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' :
                     op.status === 'dispatched' ? 'bg-blue-500/15 text-blue-400' :
                     op.status === 'in_progress' ? 'bg-violet-500/15 text-violet-400' :
                     'bg-amber-500/15 text-amber-400'
                   }`}>
-                    {(op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') ? <Factory className="h-5 w-5" /> : (config && <config.icon className="h-5 w-5" />)}
+                    {op.type === 'RETURN' ? <Undo2 className="h-5 w-5" /> : (op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') ? <Factory className="h-5 w-5" /> : (config && <config.icon className="h-5 w-5" />)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="font-bold text-foreground">{op.load_number}</span>
                       <Badge variant={config?.variant || 'default'}>{config?.label || op.status}</Badge>
                       {op.type === 'INVENTORY' && <Badge variant="secondary">Inventário</Badge>}
+                      {op.type === 'RETURN' && <Badge className="bg-rose-500 hover:bg-rose-600 text-white border-0">Retorno</Badge>}
                       {(op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') && <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-0">Fábrica</Badge>}
                       {op.type === 'LOAD' && <Badge className="bg-blue-500 hover:bg-blue-600 text-white border-0">Carga</Badge>}
                     </div>
@@ -176,6 +216,46 @@ export default function AllLoads() {
           })
         )}
       </div>
+
+      <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerar Carga de Retorno</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <p className="text-sm text-muted-foreground">
+              Selecione uma rota de entrega para gerar a conferência de retorno baseada nas divergências apontadas pelo motorista.
+            </p>
+            
+            {isRoutesLoading ? (
+              <p className="text-sm text-center py-4">Carregando rotas...</p>
+            ) : completedRoutes.length === 0 ? (
+              <p className="text-sm text-center py-4 text-amber-500">Nenhuma rota elegível encontrada.</p>
+            ) : (
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={selectedRouteId}
+                onChange={e => setSelectedRouteId(e.target.value)}
+              >
+                <option value="">Selecione uma rota finalizada...</option>
+                {completedRoutes.map((r: any) => (
+                  <option key={r.id} value={r.id}>
+                    {r.operation?.load_number} - Motorista: {r.driver?.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <Button 
+              className="w-full mt-4" 
+              onClick={handleCreateReturn} 
+              disabled={!selectedRouteId || createReturnMutation.isPending}
+            >
+              {createReturnMutation.isPending ? 'Gerando...' : 'Gerar Conferência de Retorno'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
