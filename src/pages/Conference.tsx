@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
+import { deliveriesApi } from '@/api/deliveries'
 import { productsApi } from '@/api/products'
 import { supabase } from '@/lib/supabase'
 import type { OperationItem } from '@/types/database'
@@ -12,7 +13,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check, FileSignature, Zap, Truck, Plus, Trash2, Pencil, Download, PackageCheck } from 'lucide-react'
+import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check, FileSignature, Zap, Truck, Plus, Trash2, Pencil, Download, PackageCheck, Undo2, PenTool } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import * as XLSX from 'xlsx'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
@@ -51,6 +52,38 @@ export default function Conference() {
     queryKey: ['products'],
     queryFn: productsApi.getProducts,
   })
+
+  // Fetch Delivery Route if it's a LOAD operation
+  const { data: route } = useQuery({
+    queryKey: ['delivery_route_by_op', id],
+    queryFn: () => deliveriesApi.getDeliveryRouteByOperationId(id!),
+    enabled: !!id && op?.type === 'LOAD',
+  })
+
+  // Fetch Delivery Clients if route exists
+  const { data: clients = [] } = useQuery({
+    queryKey: ['delivery_clients', route?.id],
+    queryFn: () => deliveriesApi.getDeliveryClients(route!.id),
+    enabled: !!route?.id,
+  })
+
+  const pendingReturnsCount = useMemo(() => {
+    let count = 0
+    clients.forEach((c: any) => {
+      const isClientReturned = c.status === 'returned'
+      c.delivery_items?.forEach((item: any) => {
+        if (item.returned_to_stock) return
+        let returnQty = 0
+        if (isClientReturned) {
+          returnQty = item.quantity_expected
+        } else {
+          returnQty = Math.max(0, item.quantity_expected - item.quantity_scanned)
+        }
+        if (returnQty > 0) count += returnQty
+      })
+    })
+    return count
+  }, [clients])
 
   const updateItemMutation = useMutation({
     mutationFn: async ({ itemId, qty, expected, status, extraUpdates }: { 
@@ -945,64 +978,31 @@ export default function Conference() {
 
         {(op.status === 'dispatched' || activeTab === 'return') && (
         <TabsContent value="return" className="flex-1 flex flex-col gap-4 mt-4">
-          <Card className="border-amber-500/20 sticky top-[53px] md:top-[64px] z-20 bg-card/95 backdrop-blur-md shadow-sm">
-            <CardContent className="p-4">
-              <form onSubmit={handleReturnScan} className="flex gap-2">
-                <div className="relative flex-1">
-                  <ScanLine className="absolute left-3 top-3.5 h-5 w-5 text-amber-500/50 scan-pulse" />
-                  <Input ref={scanRef} value={returnScanInput} onChange={e => setReturnScanInput(e.target.value)} placeholder="Bipar mercadoria que retornou..." className="pl-11 h-12 text-lg font-mono border-amber-500/30 focus-visible:ring-amber-500" autoFocus />
-                </div>
-                <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="outline" className="h-12 w-12 border-amber-500/30 text-amber-500 hover:bg-amber-500/10" title="Usar câmera"><Camera className="h-5 w-5" /></Button>
-                <Button type="submit" size="icon" className="h-12 w-12 bg-amber-600 hover:bg-amber-700 text-white"><Search className="h-5 w-5" /></Button>
-              </form>
-              <p className="text-xs text-muted-foreground text-center mt-2">Bipe os produtos que não foram entregues</p>
-            </CardContent>
-          </Card>
-
-          {lastReturned && (
-            <div className="glass-card p-4 flex items-center gap-4 slide-up border-amber-500/30 shrink-0">
-              <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/15 text-amber-500">
-                <ArrowLeft className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-foreground truncate">{lastReturned.desc}</p>
-                <div className="flex justify-between mt-1">
-                  <span className="text-xs text-muted-foreground font-mono">{lastReturned.code}</span>
-                  <span className="font-mono font-bold text-lg text-amber-500">Voltou: {lastReturned.qty}</span>
-                </div>
-              </div>
+          <div className="glass-card p-6 border-amber-500/30 bg-amber-500/5 flex flex-col items-center text-center gap-4 mt-4">
+            <div className="h-16 w-16 bg-amber-500/10 rounded-full flex items-center justify-center">
+              <Undo2 className="h-8 w-8 text-amber-500" />
             </div>
-          )}
-
-
-            {Object.keys(returnedItems).length > 0 ? (
-            <div className="flex-1 overflow-y-auto space-y-2 pb-4 min-h-[200px]">
-              <div className="pt-2 pb-1">
-                <h3 className="text-sm font-bold text-amber-500">Itens Bipados Agora ({Object.values(returnedItems).reduce((a,b)=>a+b,0)} un)</h3>
-              </div>
-              {Object.entries(returnedItems).map(([code, qty], i) => {
-                const itemDesc = items.find(it => it.product_code === code)?.description || allProducts.find(p => p.code === code)?.description || 'Produto'
-                return (
-                  <div key={code} className="glass-card p-3 flex items-center justify-between slide-up border-amber-500/20 bg-amber-500/5" style={{ animationDelay: `${i * 10}ms` }}>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate text-amber-500">{itemDesc}</p>
-                      <p className="text-xs text-amber-500/70 font-mono">{code}</p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right">
-                        <span className="text-lg font-bold font-mono text-amber-500">+{qty}</span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+            <div>
+              <h3 className="font-bold text-foreground text-lg mb-1">Aguardando Retorno Físico</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {pendingReturnsCount > 0 
+                  ? `Esta rota possui ${pendingReturnsCount} volumes que precisam retornar ao estoque.` 
+                  : "Nenhuma pendência de retorno para esta rota, ou a rota ainda não possui itens configurados."}
+              </p>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center text-muted-foreground/40 glass-card py-6">
-              <Truck className="h-10 w-10 mb-2 opacity-30" />
-              <p className="text-sm">Aguardando devoluções...</p>
-            </div>
-          )}
+            
+            <Button 
+              className="w-full sm:w-auto h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
+              onClick={() => {
+                if (route?.id) navigate(`/entregas/${route.id}/retorno`)
+              }}
+              disabled={!route?.id}
+            >
+              <PenTool className="mr-2 h-5 w-5" />
+              Conferir Retornos da Rota
+            </Button>
+          </div>
+
 
           <div className="space-y-2 mt-6">
             <div className="pt-2 pb-1">

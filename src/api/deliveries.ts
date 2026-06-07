@@ -34,6 +34,18 @@ export const deliveriesApi = {
     return data
   },
 
+  async getDeliveryRouteByOperationId(operationId: string) {
+    if (!currentCompanyId) return null
+    const { data, error } = await supabase
+      .from('delivery_routes')
+      .select('*, driver:users ( name )')
+      .eq('operation_id', operationId)
+      .eq('company_id', currentCompanyId)
+      .maybeSingle()
+    if (error) throw error
+    return data
+  },
+
   async createDeliveryRoute(operationId: string, driverId: string) {
     if (!currentCompanyId) throw new Error('No company context')
     const { data, error } = await supabase

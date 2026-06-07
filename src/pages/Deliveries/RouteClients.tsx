@@ -326,26 +326,6 @@ export default function RouteClients() {
         </div>
       </div>
 
-      {pendingReturnsCount > 0 && (
-        <div className="glass-card p-4 border-amber-500/30 bg-amber-500/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="h-8 w-8 text-amber-500 shrink-0" />
-            <div>
-              <h3 className="font-bold text-foreground">Aguardando Retorno Físico</h3>
-              <p className="text-sm text-muted-foreground">Esta rota possui {pendingReturnsCount} volumes que precisam retornar ao estoque.</p>
-            </div>
-          </div>
-          {canDoConference && (
-            <Button 
-              className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap"
-              onClick={() => navigate(`/entregas/${id}/retorno`)}
-            >
-              Conferir Retornos da Rota
-            </Button>
-          )}
-        </div>
-      )}
-
       <div className="space-y-3">
         {clients.length === 0 ? (
           <div className="glass-card text-center py-12">
