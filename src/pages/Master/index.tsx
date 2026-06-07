@@ -28,6 +28,7 @@ export default function MasterPanel() {
   const [maxUsers, setMaxUsers] = useState(5);
   const [billingDay, setBillingDay] = useState(10);
   const [monthlyFee, setMonthlyFee] = useState(0);
+  const [plan, setPlan] = useState<'basico' | 'profissional' | 'enterprise'>('enterprise');
   const [adminName, setAdminName] = useState('');
   const [adminUsername, setAdminUsername] = useState('');
 
@@ -116,7 +117,8 @@ export default function MasterPanel() {
         max_users: maxUsers,
         active: true,
         billing_day: billingDay,
-        monthly_fee: monthlyFee
+        monthly_fee: monthlyFee,
+        plan
       });
 
       // 2. Criar usuário admin para a empresa
@@ -165,7 +167,8 @@ export default function MasterPanel() {
         cnpj: editingCompany.cnpj,
         max_users: editingCompany.max_users,
         billing_day: editingCompany.billing_day,
-        monthly_fee: editingCompany.monthly_fee
+        monthly_fee: editingCompany.monthly_fee,
+        plan: editingCompany.plan
       }
     });
   };
@@ -190,7 +193,7 @@ export default function MasterPanel() {
 
   const resetForm = () => {
     setName(''); setSlug(''); setCnpj(''); setMaxUsers(5);
-    setBillingDay(10); setMonthlyFee(0);
+    setBillingDay(10); setMonthlyFee(0); setPlan('enterprise');
     setAdminName(''); setAdminUsername('');
   };
 
@@ -231,7 +234,10 @@ export default function MasterPanel() {
                     {comp.id === currentCompany?.id && (
                       <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full font-medium">Atual</span>
                     )}
-                    <Button variant="ghost" size="icon" onClick={() => handleEditCompany(comp)} className="h-8 w-8">
+                    <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs px-2 py-1 rounded-full font-medium uppercase">
+                      {comp.plan || 'enterprise'}
+                    </span>
+                    <Button variant="ghost" size="icon" onClick={() => handleEditCompany(comp)} className="h-8 w-8 mt-1">
                       <Edit2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -321,6 +327,18 @@ export default function MasterPanel() {
                   <Input value={slug} onChange={e => setSlug(e.target.value)} placeholder="Ex: log-xyz" required />
                 </div>
                 <div className="space-y-2">
+                  <Label>Plano de Assinatura *</Label>
+                  <select 
+                    value={plan} 
+                    onChange={e => setPlan(e.target.value as any)} 
+                    className="flex h-10 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+                  >
+                    <option value="basico">Básico (Apenas Estoque)</option>
+                    <option value="profissional">Profissional (+ Expedição)</option>
+                    <option value="enterprise">Enterprise (+ Entregas e Motoristas)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
                   <Label>Limite de Usuários</Label>
                   <Input type="number" min={1} value={maxUsers} onChange={e => setMaxUsers(Number(e.target.value))} required />
                 </div>
@@ -388,6 +406,18 @@ export default function MasterPanel() {
                     onChange={e => setEditingCompany({...editingCompany, slug: e.target.value})} 
                     required 
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Plano de Assinatura *</Label>
+                  <select 
+                    value={editingCompany.plan || 'enterprise'} 
+                    onChange={e => setEditingCompany({...editingCompany, plan: e.target.value as any})} 
+                    className="flex h-10 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+                  >
+                    <option value="basico">Básico (Apenas Estoque)</option>
+                    <option value="profissional">Profissional (+ Expedição)</option>
+                    <option value="enterprise">Enterprise (+ Entregas e Motoristas)</option>
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <Label>Limite de Usuários</Label>
