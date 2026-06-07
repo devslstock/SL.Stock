@@ -83,11 +83,11 @@ function App() {
           
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/cargas" element={<PlanGuard requiredPlan="profissional"><AllLoads /></PlanGuard>} />
-            <Route path="/nova-carga" element={<PlanGuard requiredPlan="profissional"><CreateLoad /></PlanGuard>} />
-            <Route path="/editar-carga/:id" element={<PlanGuard requiredPlan="profissional"><CreateLoad /></PlanGuard>} />
-            <Route path="/conferencia/:id" element={<PlanGuard requiredPlan="profissional"><Conference /></PlanGuard>} />
-            <Route path="/comprovante/:id" element={<PlanGuard requiredPlan="enterprise"><DeliveryProof /></PlanGuard>} />
+            <Route path="/cargas" element={<PlanGuard requiredPlan="prata"><AllLoads /></PlanGuard>} />
+            <Route path="/nova-carga" element={<PlanGuard requiredPlan="prata"><CreateLoad /></PlanGuard>} />
+            <Route path="/editar-carga/:id" element={<PlanGuard requiredPlan="prata"><CreateLoad /></PlanGuard>} />
+            <Route path="/conferencia/:id" element={<PlanGuard requiredPlan="prata"><Conference /></PlanGuard>} />
+            <Route path="/comprovante/:id" element={<PlanGuard requiredPlan="ouro"><DeliveryProof /></PlanGuard>} />
             <Route path="/produtos" element={<Products />} />
             <Route path="/contagens" element={<CountsMenu />} />
             <Route path="/contagens/avulsa" element={<AdhocCount />} />
@@ -99,16 +99,16 @@ function App() {
             <Route path="/recebimentos/editar/:id" element={<CreateReceipt />} />
             
             {/* Deliveries Routes */}
-            <Route path="/entregas" element={<PlanGuard requiredPlan="enterprise"><DeliveriesList /></PlanGuard>} />
-            <Route path="/entregas/nova" element={<PlanGuard requiredPlan="enterprise"><CreateDelivery /></PlanGuard>} />
-            <Route path="/entregas/:id" element={<PlanGuard requiredPlan="enterprise"><RouteClients /></PlanGuard>} />
-            <Route path="/entregas/:id/retorno" element={<PlanGuard requiredPlan="enterprise"><ReturnConference /></PlanGuard>} />
-            <Route path="/entregas/cliente/:clientId" element={<PlanGuard requiredPlan="enterprise"><ClientConference /></PlanGuard>} />
-            <Route path="/entregas/cliente/:clientId/assinatura" element={<PlanGuard requiredPlan="enterprise"><SignaturePad /></PlanGuard>} />
+            <Route path="/entregas" element={<PlanGuard requiredPlan="ouro"><DeliveriesList /></PlanGuard>} />
+            <Route path="/entregas/nova" element={<PlanGuard requiredPlan="ouro"><CreateDelivery /></PlanGuard>} />
+            <Route path="/entregas/:id" element={<PlanGuard requiredPlan="ouro"><RouteClients /></PlanGuard>} />
+            <Route path="/entregas/:id/retorno" element={<PlanGuard requiredPlan="ouro"><ReturnConference /></PlanGuard>} />
+            <Route path="/entregas/cliente/:clientId" element={<PlanGuard requiredPlan="ouro"><ClientConference /></PlanGuard>} />
+            <Route path="/entregas/cliente/:clientId/assinatura" element={<PlanGuard requiredPlan="ouro"><SignaturePad /></PlanGuard>} />
 
             {/* Approvals Route */}
             <Route path="/liberacoes" element={<ApprovalsPage />} />
-            <Route path="/historico" element={<PlanGuard requiredPlan="enterprise"><ClientHistory /></PlanGuard>} />
+            <Route path="/historico" element={<PlanGuard requiredPlan="ouro"><ClientHistory /></PlanGuard>} />
 
             <Route path="/acesso" element={<AccessControl />} />
             
