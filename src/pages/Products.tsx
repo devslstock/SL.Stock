@@ -352,6 +352,16 @@ export default function Products() {
           <p className="text-sm text-muted-foreground mt-1">{products.length} produtos no estoque</p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
+          <Link to="/contagens">
+            <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] border-0">
+              <ScanLine className="h-4 w-4 mr-1.5" /> Contagens
+            </Button>
+          </Link>
+          <Link to="/recebimentos">
+            <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-[0_0_15px_rgba(5,150,105,0.3)] border-0">
+              <Package className="h-4 w-4 mr-1.5" /> Recebimento (Fábrica) <ArrowRight className="h-4 w-4 ml-1.5" />
+            </Button>
+          </Link>
           {isManager && (
             <>
               <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
@@ -360,16 +370,6 @@ export default function Products() {
               <Button variant="outline" size="sm" onClick={exportToCSV}>
                 <FileDown className="h-4 w-4 mr-1.5" /> Exportar
               </Button>
-              <Link to="/contagens">
-                <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] border-0">
-                  <ScanLine className="h-4 w-4 mr-1.5" /> Contagens
-                </Button>
-              </Link>
-              <Link to="/recebimentos">
-                <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-[0_0_15px_rgba(5,150,105,0.3)] border-0">
-                  <Package className="h-4 w-4 mr-1.5" /> Recebimento (Fábrica) <ArrowRight className="h-4 w-4 ml-1.5" />
-                </Button>
-              </Link>
               {isMaster && (
                 <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => {
                   if (window.confirm('CUIDADO: Isso irá apagar TODOS os produtos cadastrados. Tem certeza que deseja continuar?')) {

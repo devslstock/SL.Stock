@@ -169,7 +169,10 @@ export default function AppLayout() {
         <nav className="flex-1 p-3 space-y-1 overflow-auto mt-14 md:mt-0">
           {/* Navigation Items - Only show if user has an active company context */}
           {company && navItems.map((item) => {
-            if (!hasPermission(item.permission as any)) return null
+            let requiredPerm = item.permission as any;
+            if (item.path === '/produtos') requiredPerm = 'can_do_conference';
+
+            if (!hasPermission(requiredPerm)) return null
             const isActive = location.pathname === item.path
             return (
               <Link
