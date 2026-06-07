@@ -229,7 +229,7 @@ export default function AccessControl() {
                   <option value="admin">Administrador Geral</option>
                   <option value="gestor">Gestor</option>
                   <option value="conferente">Conferente</option>
-                  <option value="motorista">Motorista</option>
+                  {(!company?.plan || company.plan === 'enterprise') && <option value="motorista">Motorista</option>}
                 </select>
               </div>
 
@@ -241,14 +241,18 @@ export default function AccessControl() {
                     <input type="checkbox" checked={perms.can_view_dashboard} onChange={() => togglePerm('can_view_dashboard')} className="w-4 h-4 accent-primary" />
                     <span className="text-sm">Visão Geral (Dashboard)</span>
                   </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" checked={perms.can_manage_loads} onChange={() => togglePerm('can_manage_loads')} className="w-4 h-4 accent-primary" />
-                    <span className="text-sm">Gerenciar Cargas/Rotas</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" checked={perms.can_do_delivery} onChange={() => togglePerm('can_do_delivery')} className="w-4 h-4 accent-primary" />
-                    <span className="text-sm">Acessar Módulo Entregas</span>
-                  </label>
+                  {(!company?.plan || company.plan !== 'basico') && (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" checked={perms.can_manage_loads} onChange={() => togglePerm('can_manage_loads')} className="w-4 h-4 accent-primary" />
+                      <span className="text-sm">Gerenciar Cargas/Rotas</span>
+                    </label>
+                  )}
+                  {(!company?.plan || company.plan === 'enterprise') && (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" checked={perms.can_do_delivery} onChange={() => togglePerm('can_do_delivery')} className="w-4 h-4 accent-primary" />
+                      <span className="text-sm">Acessar Módulo Entregas</span>
+                    </label>
+                  )}
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" checked={perms.can_do_conference} onChange={() => togglePerm('can_do_conference')} className="w-4 h-4 accent-primary" />
                     <span className="text-sm">Operar Conferência (Bipar itens)</span>

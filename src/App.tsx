@@ -68,6 +68,7 @@ import ReturnConference from './pages/Deliveries/ReturnConference'
 import SignaturePad from './pages/Deliveries/SignaturePad'
 import ApprovalsPage from './pages/Approvals'
 import ClientHistory from './pages/ClientHistory'
+import { PlanGuard } from './components/PlanGuard'
 
 function App() {
   return (
@@ -82,11 +83,11 @@ function App() {
           
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/cargas" element={<AllLoads />} />
-            <Route path="/nova-carga" element={<CreateLoad />} />
-            <Route path="/editar-carga/:id" element={<CreateLoad />} />
-            <Route path="/conferencia/:id" element={<Conference />} />
-            <Route path="/comprovante/:id" element={<DeliveryProof />} />
+            <Route path="/cargas" element={<PlanGuard requiredPlan="profissional"><AllLoads /></PlanGuard>} />
+            <Route path="/nova-carga" element={<PlanGuard requiredPlan="profissional"><CreateLoad /></PlanGuard>} />
+            <Route path="/editar-carga/:id" element={<PlanGuard requiredPlan="profissional"><CreateLoad /></PlanGuard>} />
+            <Route path="/conferencia/:id" element={<PlanGuard requiredPlan="profissional"><Conference /></PlanGuard>} />
+            <Route path="/comprovante/:id" element={<PlanGuard requiredPlan="enterprise"><DeliveryProof /></PlanGuard>} />
             <Route path="/produtos" element={<Products />} />
             <Route path="/contagens" element={<CountsMenu />} />
             <Route path="/contagens/avulsa" element={<AdhocCount />} />
@@ -98,16 +99,16 @@ function App() {
             <Route path="/recebimentos/editar/:id" element={<CreateReceipt />} />
             
             {/* Deliveries Routes */}
-            <Route path="/entregas" element={<DeliveriesList />} />
-            <Route path="/entregas/nova" element={<CreateDelivery />} />
-            <Route path="/entregas/:id" element={<RouteClients />} />
-            <Route path="/entregas/:id/retorno" element={<ReturnConference />} />
-            <Route path="/entregas/cliente/:clientId" element={<ClientConference />} />
-            <Route path="/entregas/cliente/:clientId/assinatura" element={<SignaturePad />} />
+            <Route path="/entregas" element={<PlanGuard requiredPlan="enterprise"><DeliveriesList /></PlanGuard>} />
+            <Route path="/entregas/nova" element={<PlanGuard requiredPlan="enterprise"><CreateDelivery /></PlanGuard>} />
+            <Route path="/entregas/:id" element={<PlanGuard requiredPlan="enterprise"><RouteClients /></PlanGuard>} />
+            <Route path="/entregas/:id/retorno" element={<PlanGuard requiredPlan="enterprise"><ReturnConference /></PlanGuard>} />
+            <Route path="/entregas/cliente/:clientId" element={<PlanGuard requiredPlan="enterprise"><ClientConference /></PlanGuard>} />
+            <Route path="/entregas/cliente/:clientId/assinatura" element={<PlanGuard requiredPlan="enterprise"><SignaturePad /></PlanGuard>} />
 
             {/* Approvals Route */}
             <Route path="/liberacoes" element={<ApprovalsPage />} />
-            <Route path="/historico" element={<ClientHistory />} />
+            <Route path="/historico" element={<PlanGuard requiredPlan="enterprise"><ClientHistory /></PlanGuard>} />
 
             <Route path="/acesso" element={<AccessControl />} />
             

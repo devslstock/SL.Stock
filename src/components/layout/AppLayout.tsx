@@ -5,7 +5,7 @@ import {
   Menu, X, Boxes, LayoutDashboard, Truck, Package, ClipboardList, 
   Settings, Users, CheckSquare, Palette, Sun, Moon, Search,
   Clock, History, UserIcon, FileSignature, Box, Building2, Banknote,
-  Megaphone, StickyNote, MapPin, Bell, ShieldCheck, LogOut
+  Megaphone, StickyNote, MapPin, Bell, ShieldCheck, LogOut, Lock
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query'
 import { deliveriesApi } from '@/api/deliveries'
 import { operationsApi } from '@/api/operations'
 import { saasApi } from '@/api/saas'
+import { toast } from '@/components/ui/toaster'
 
 
 const navItems = [
@@ -74,6 +75,31 @@ export default function AppLayout() {
   const toggleStyle = () => {
     const newTheme = (isClassic ? '' : 'classic-') + (isDark ? 'dark' : 'light')
     setTheme(newTheme as any)
+  }
+
+  const getPlanRequirement = (path: string) => {
+    if (path === '/cargas') return 'profissional'
+    if (path === '/entregas') return 'enterprise'
+    return 'basico'
+  }
+
+  const isFeatureLocked = (path: string) => {
+    const plan = company?.plan || 'enterprise' // default to enterprise if not set
+    const requirement = getPlanRequirement(path)
+    
+    if (requirement === 'basico') return false
+    if (requirement === 'profissional' && plan === 'basico') return true
+    if (requirement === 'enterprise' && plan !== 'enterprise') return true
+    return false
+  }
+
+  const handleNavClick = (e: React.MouseEvent, path: string, isLocked: boolean) => {
+    if (isLocked) {
+      e.preventDefault()
+      toast.error('Recurso indisponível no seu plano atual. Faça o upgrade para acessar!')
+    } else {
+      setSidebarOpen(false)
+    }
   }
 
   return (
@@ -176,20 +202,23 @@ export default function AppLayout() {
 
             if (!hasPermission(requiredPerm)) return null
             const isActive = location.pathname === item.path
+            const isLocked = isFeatureLocked(item.path)
+
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={() => setSidebarOpen(false)}
+                onClick={(e) => handleNavClick(e, item.path, isLocked)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative group",
                   isActive
                     ? "bg-primary/15 text-primary border border-primary/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    : isLocked ? "opacity-60 grayscale cursor-not-allowed hover:bg-muted/50 text-muted-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
                 <item.icon className={cn("h-4.5 w-4.5", isActive && "text-primary")} />
                 {item.label}
+                {isLocked && <Lock className="h-3.5 w-3.5 ml-auto text-muted-foreground opacity-70 group-hover:text-red-400 group-hover:opacity-100 transition-colors" />}
               </Link>
             )
           })}
