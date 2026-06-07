@@ -130,8 +130,37 @@ export const deliveriesApi = {
       c.status === 'returned'
     )
 
-    let newStatus: 'pending' | 'in_progress' | 'completed' = 'pending'
+    let hasPendingReturns = false
     if (allFinished) {
+      const { data: clientsWithItems } = await supabase
+        .from('delivery_clients')
+        .select('status, delivery_items(quantity_expected, quantity_scanned, approval_status)')
+        .eq('delivery_route_id', routeId)
+      
+      if (clientsWithItems) {
+        for (const c of clientsWithItems) {
+          const isClientReturned = c.status === 'returned'
+          for (const item of c.delivery_items) {
+            if (item.approval_status === 'approved') continue;
+            
+            let returnQty = 0
+            if (isClientReturned) {
+              returnQty = item.quantity_expected
+            } else {
+              returnQty = Math.max(0, item.quantity_expected - item.quantity_scanned)
+            }
+            if (returnQty > 0) {
+              hasPendingReturns = true
+              break
+            }
+          }
+          if (hasPendingReturns) break
+        }
+      }
+    }
+
+    let newStatus: 'pending' | 'in_progress' | 'completed' = 'pending'
+    if (allFinished && !hasPendingReturns) {
       newStatus = 'completed'
     } else if (anyFinished) {
       newStatus = 'in_progress'
@@ -141,6 +170,63 @@ export const deliveriesApi = {
       .from('delivery_routes')
       .update({ status: newStatus })
       .eq('id', routeId)
+  },
+
+  async confirmRouteReturn(routeId: string, scannedItems: any[], hasDivergence: boolean) {
+    if (!currentCompanyId) throw new Error('No company context')
+
+    const { data: route } = await supabase
+      .from('delivery_routes')
+      .select('operation:operations(load_number)')
+      .eq('id', routeId)
+      .single()
+
+    // Atualizar estoque e marcar itens como approved
+    for (const item of scannedItems) {
+      if (item.scannedQty > 0) {
+        // Voltar pro estoque
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock')
+          .eq('id', item.product_id)
+          .single()
+          
+        if (product) {
+          await supabase
+            .from('products')
+            .update({ stock: product.stock + item.scannedQty })
+            .eq('id', item.product_id)
+        }
+      }
+
+      // Se havia itens faltando na devolução, podemos criar alerta individual
+      // Aqui, marcamos todos os itens dessa rota que tinham pendência como "approved" 
+      // para não pedir retorno novamente.
+      if (item.items_ids && item.items_ids.length > 0) {
+        for (const i_id of item.items_ids) {
+          await supabase
+            .from('delivery_items')
+            .update({ approval_status: 'approved' })
+            .eq('id', i_id)
+        }
+      }
+    }
+
+    // Criar alerta geral da rota para o gestor informando o retorno
+    const r = route as any;
+    const alertMsg = hasDivergence 
+      ? `Retorno da Rota ${r?.operation?.load_number || routeId} finalizado COM DIVERGÊNCIA na quantidade de itens devolvidos.`
+      : `Retorno da Rota ${r?.operation?.load_number || routeId} finalizado com sucesso. Todos os itens esperados voltaram pro estoque.`
+      
+    await supabase.from('system_notes').insert({
+      author_id: 'system',
+      author_name: 'Sistema',
+      content: alertMsg,
+      company_id: currentCompanyId
+    })
+
+    await this.recalculateRouteStatus(routeId)
+    return true
   },
 
   async returnDeliveryClient(clientId: string) {

@@ -24,8 +24,9 @@ export default function RouteClients() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
+  const canDoConference = hasPermission('can_do_conference') || isManager
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [isImporting, setIsImporting] = useState(false)
@@ -100,6 +101,24 @@ export default function RouteClients() {
       return 0
     })
   }, [clients, sortBy])
+
+  const pendingReturnsCount = useMemo(() => {
+    let count = 0
+    clients.forEach((c: any) => {
+      const isClientReturned = c.status === 'returned'
+      c.delivery_items?.forEach((item: any) => {
+        if (item.approval_status === 'approved') return
+        let returnQty = 0
+        if (isClientReturned) {
+          returnQty = item.quantity_expected
+        } else {
+          returnQty = Math.max(0, item.quantity_expected - item.quantity_scanned)
+        }
+        if (returnQty > 0) count += returnQty
+      })
+    })
+    return count
+  }, [clients])
 
   // Helper to strip non-alphanumeric characters
   const normalizeCode = (s: any) => s ? String(s).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
@@ -295,17 +314,37 @@ export default function RouteClients() {
           {isManager && (
             <div>
               <input type="file" accept=".csv,.txt,.xls,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-            <Button 
-              className="gap-2 w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isImporting}
-            >
-              {isImporting ? 'Importando...' : <><FileSpreadsheet className="h-5 w-5" /> Importar XLRS</>}
-            </Button>
+              <Button 
+                className="gap-2 w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting}
+              >
+                {isImporting ? 'Importando...' : <><FileSpreadsheet className="h-5 w-5" /> Importar XLRS</>}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {pendingReturnsCount > 0 && (
+        <div className="glass-card p-4 border-amber-500/30 bg-amber-500/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-8 w-8 text-amber-500 shrink-0" />
+            <div>
+              <h3 className="font-bold text-foreground">Aguardando Retorno Físico</h3>
+              <p className="text-sm text-muted-foreground">Esta rota possui {pendingReturnsCount} volumes que precisam retornar ao estoque.</p>
+            </div>
           </div>
-        )}
-      </div>
-      </div>
+          {canDoConference && (
+            <Button 
+              className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap"
+              onClick={() => navigate(`/entregas/${id}/retorno`)}
+            >
+              Conferir Retornos da Rota
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className="space-y-3">
         {clients.length === 0 ? (

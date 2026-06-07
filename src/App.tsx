@@ -64,6 +64,7 @@ import DeliveriesList from './pages/Deliveries/index'
 import CreateDelivery from './pages/Deliveries/CreateDelivery'
 import RouteClients from './pages/Deliveries/RouteClients'
 import ClientConference from './pages/Deliveries/ClientConference'
+import ReturnConference from './pages/Deliveries/ReturnConference'
 import SignaturePad from './pages/Deliveries/SignaturePad'
 import ApprovalsPage from './pages/Approvals'
 import ClientHistory from './pages/ClientHistory'
@@ -100,6 +101,7 @@ function App() {
             <Route path="/entregas" element={<DeliveriesList />} />
             <Route path="/entregas/nova" element={<CreateDelivery />} />
             <Route path="/entregas/:id" element={<RouteClients />} />
+            <Route path="/entregas/:id/retorno" element={<ReturnConference />} />
             <Route path="/entregas/cliente/:clientId" element={<ClientConference />} />
             <Route path="/entregas/cliente/:clientId/assinatura" element={<SignaturePad />} />
 

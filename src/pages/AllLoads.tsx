@@ -45,8 +45,6 @@ export default function AllLoads() {
   const [search, setSearch] = useState('')
   const { user } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
-  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
-  const [selectedRouteId, setSelectedRouteId] = useState('')
 
   const { data: operations = [], isLoading } = useQuery({
     queryKey: ['operations'],
@@ -66,30 +64,7 @@ export default function AllLoads() {
     }
   })
 
-  const { data: deliveryRoutes = [], isLoading: isRoutesLoading } = useQuery({
-    queryKey: ['delivery_routes'],
-    queryFn: deliveriesApi.getDeliveryRoutes,
-    enabled: isReturnDialogOpen
-  })
 
-  const createReturnMutation = useMutation({
-    mutationFn: (routeId: string) => operationsApi.createReturnOperationFromRoute(routeId),
-    onSuccess: () => {
-      toast.success('Carga de retorno gerada com sucesso!')
-      queryClient.invalidateQueries({ queryKey: ['operations'] })
-      setIsReturnDialogOpen(false)
-    },
-    onError: (error: any) => {
-      toast.error(`Erro ao gerar retorno: ${error.message}`)
-    }
-  })
-
-  const handleCreateReturn = () => {
-    if (!selectedRouteId) return toast.warning('Selecione uma rota')
-    createReturnMutation.mutate(selectedRouteId)
-  }
-
-  const completedRoutes = deliveryRoutes.filter((r: any) => r.status === 'completed' || r.status === 'in_progress')
 
   const filtered = useMemo(() => {
     return operations.filter(op => {
@@ -116,9 +91,6 @@ export default function AllLoads() {
         </div>
         {isManager && (
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2 border-amber-500/50 text-amber-500 hover:bg-amber-500/10" onClick={() => setIsReturnDialogOpen(true)}>
-              <Undo2 className="h-4 w-4" /> Novo Retorno
-            </Button>
             <Link to="/nova-carga">
               <Button className="gap-2">
                 <Plus className="h-4 w-4" /> Nova Rota
@@ -213,46 +185,6 @@ export default function AllLoads() {
           })
         )}
       </div>
-
-      <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Gerar Carga de Retorno</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <p className="text-sm text-muted-foreground">
-              Selecione uma rota de entrega para gerar a conferência de retorno baseada nas divergências apontadas pelo motorista.
-            </p>
-            
-            {isRoutesLoading ? (
-              <p className="text-sm text-center py-4">Carregando rotas...</p>
-            ) : completedRoutes.length === 0 ? (
-              <p className="text-sm text-center py-4 text-amber-500">Nenhuma rota elegível encontrada.</p>
-            ) : (
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={selectedRouteId}
-                onChange={e => setSelectedRouteId(e.target.value)}
-              >
-                <option value="">Selecione uma rota finalizada...</option>
-                {completedRoutes.map((r: any) => (
-                  <option key={r.id} value={r.id}>
-                    {r.operation?.load_number} - Motorista: {r.driver?.name}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            <Button 
-              className="w-full mt-4" 
-              onClick={handleCreateReturn} 
-              disabled={!selectedRouteId || createReturnMutation.isPending}
-            >
-              {createReturnMutation.isPending ? 'Gerando...' : 'Gerar Conferência de Retorno'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
