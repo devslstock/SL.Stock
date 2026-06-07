@@ -241,6 +241,7 @@ export interface DeliveryItem {
   quantity_scanned: number
   status: 'pending' | 'ok' | 'divergent'
   approval_status?: 'approved' | 'pending' | 'rejected'
+  returned_to_stock?: boolean
   requested_qty?: number
   created_at: string
 }

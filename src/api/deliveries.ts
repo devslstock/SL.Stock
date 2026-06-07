@@ -134,14 +134,14 @@ export const deliveriesApi = {
     if (allFinished) {
       const { data: clientsWithItems } = await supabase
         .from('delivery_clients')
-        .select('status, delivery_items(quantity_expected, quantity_scanned, approval_status)')
+        .select('status, delivery_items(quantity_expected, quantity_scanned, returned_to_stock)')
         .eq('delivery_route_id', routeId)
       
       if (clientsWithItems) {
         for (const c of clientsWithItems) {
           const isClientReturned = c.status === 'returned'
           for (const item of c.delivery_items) {
-            if (item.approval_status === 'approved') continue;
+            if (item.returned_to_stock) continue;
             
             let returnQty = 0
             if (isClientReturned) {
@@ -200,13 +200,12 @@ export const deliveriesApi = {
       }
 
       // Se havia itens faltando na devolução, podemos criar alerta individual
-      // Aqui, marcamos todos os itens dessa rota que tinham pendência como "approved" 
       // para não pedir retorno novamente.
       if (item.items_ids && item.items_ids.length > 0) {
         for (const i_id of item.items_ids) {
           await supabase
             .from('delivery_items')
-            .update({ approval_status: 'approved' })
+            .update({ returned_to_stock: true })
             .eq('id', i_id)
         }
       }
