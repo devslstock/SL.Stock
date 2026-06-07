@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companiesApi } from '@/api/companies';
 import { usersApi } from '@/api/users';
+import { saasApi } from '@/api/saas';
 import { useAuth } from '@/contexts/AuthContext';
 import { DEFAULT_PASSWORD_HASH } from '@/utils/crypto';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -45,6 +46,32 @@ export default function MasterPanel() {
     queryFn: companiesApi.getCompanies,
     enabled: isMaster
   });
+
+  const { data: saasPlans = [] } = useQuery({
+    queryKey: ['saas_plans'],
+    queryFn: saasApi.getPlans,
+    enabled: isMaster
+  });
+
+  const handlePlanChange = (selectedPlan: 'basico' | 'profissional' | 'enterprise') => {
+    setPlan(selectedPlan);
+    const planDefaults = saasPlans.find(p => p.id === selectedPlan);
+    if (planDefaults) {
+      setMaxUsers(planDefaults.base_users);
+      setMonthlyFee(planDefaults.base_price);
+    }
+  };
+
+  const handleEditPlanChange = (selectedPlan: 'basico' | 'profissional' | 'enterprise') => {
+    if (!editingCompany) return;
+    const planDefaults = saasPlans.find(p => p.id === selectedPlan);
+    
+    setEditingCompany({
+      ...editingCompany,
+      plan: selectedPlan,
+      ...(planDefaults ? { max_users: planDefaults.base_users, monthly_fee: planDefaults.base_price } : {})
+    });
+  };
 
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id, active }: { id: string, active: boolean }) => companiesApi.updateCompany(id, { active }),
@@ -330,7 +357,7 @@ export default function MasterPanel() {
                   <Label>Plano de Assinatura *</Label>
                   <select 
                     value={plan} 
-                    onChange={e => setPlan(e.target.value as any)} 
+                    onChange={e => handlePlanChange(e.target.value as any)} 
                     className="flex h-10 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
                   >
                     <option value="basico">Básico (Apenas Estoque)</option>
@@ -411,7 +438,7 @@ export default function MasterPanel() {
                   <Label>Plano de Assinatura *</Label>
                   <select 
                     value={editingCompany.plan || 'enterprise'} 
-                    onChange={e => setEditingCompany({...editingCompany, plan: e.target.value as any})} 
+                    onChange={e => handleEditPlanChange(e.target.value as any)} 
                     className="flex h-10 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
                   >
                     <option value="basico">Básico (Apenas Estoque)</option>

@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Banknote, Plus, CheckCircle2, Clock, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
+import { Banknote, Plus, CheckCircle2, Clock, AlertCircle, Trash2, RefreshCw, Edit2, Shield, Settings2, Users } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
-import type { CompanyPayment } from '@/types/database';
+import type { CompanyPayment, SaaSPlan } from '@/types/database';
 
 export default function SaaSFinance() {
   const { isMaster } = useAuth();
@@ -34,6 +34,26 @@ export default function SaaSFinance() {
     queryKey: ['company_payments'],
     queryFn: saasApi.getPayments,
     enabled: isMaster
+  });
+
+  const { data: saasPlans = [], isLoading: isLoadingPlans } = useQuery({
+    queryKey: ['saas_plans'],
+    queryFn: saasApi.getPlans,
+    enabled: isMaster
+  });
+
+  // Edit Plan State
+  const [isEditPlanOpen, setIsEditPlanOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<SaaSPlan | null>(null);
+
+  const updatePlanMutation = useMutation({
+    mutationFn: (args: {id: string, updates: Partial<SaaSPlan>}) => saasApi.updatePlan(args.id, args.updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saas_plans'] });
+      toast.success('Plano atualizado com sucesso!');
+      setIsEditPlanOpen(false);
+    },
+    onError: () => toast.error('Erro ao atualizar plano')
   });
 
   const handleSyncPayments = async () => {
@@ -162,6 +182,20 @@ export default function SaaSFinance() {
     });
   };
 
+  const handleSavePlan = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlan) return;
+    updatePlanMutation.mutate({
+      id: editingPlan.id,
+      updates: {
+        name: editingPlan.name,
+        base_price: editingPlan.base_price,
+        base_users: editingPlan.base_users,
+        extra_user_price: editingPlan.extra_user_price
+      }
+    });
+  };
+
   const getCompanyDetails = (id: string) => companies.find(c => c.id === id);
 
   const getStatusBadge = (status: CompanyPayment['status']) => {
@@ -200,6 +234,66 @@ export default function SaaSFinance() {
           }} className="gap-2">
             <Plus className="h-4 w-4" /> Lançar Mensalidade
           </Button>
+        </div>
+      </div>
+
+      {/* Tabela de Preços */}
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-border bg-muted/20 flex items-center gap-2">
+          <Settings2 className="h-5 w-5 text-primary" />
+          <h2 className="font-semibold">Tabela de Preços Padrão</h2>
+        </div>
+        <div className="p-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {isLoadingPlans ? (
+              <div className="col-span-full py-4 text-center text-muted-foreground">Carregando planos...</div>
+            ) : saasPlans.map((plan) => (
+              <Card key={plan.id} className="relative overflow-hidden group">
+                <CardContent className="p-5">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-bold text-lg uppercase tracking-wider text-foreground">{plan.name}</h3>
+                      <p className="text-sm text-muted-foreground">Base Padrão</p>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => {
+                        setEditingPlan(plan);
+                        setIsEditPlanOpen(true);
+                      }}
+                      className="opacity-50 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center pb-2 border-b border-border/50">
+                      <span className="text-sm text-muted-foreground">Mensalidade</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        R$ {plan.base_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pb-2 border-b border-border/50">
+                      <span className="text-sm text-muted-foreground flex items-center gap-1"><Users className="h-4 w-4"/> Limite de Usuários</span>
+                      <span className="font-bold">{plan.base_users}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground text-xs">Usuário Adicional</span>
+                      <span className="font-medium text-xs">
+                        + R$ {plan.extra_user_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-4 italic flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Alterações nesta tabela não afetam os clientes atuais, apenas as novas empresas cadastradas ou as que tiverem seus planos alterados.
+          </p>
         </div>
       </div>
 
@@ -313,6 +407,60 @@ export default function SaaSFinance() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditPlanOpen} onOpenChange={setIsEditPlanOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Editar Plano: {editingPlan?.name}</DialogTitle></DialogHeader>
+          {editingPlan && (
+            <form onSubmit={handleSavePlan} className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <Label>Nome de Exibição</Label>
+                <Input 
+                  value={editingPlan.name} 
+                  onChange={e => setEditingPlan({...editingPlan, name: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Mensalidade Base (R$)</Label>
+                  <Input 
+                    type="number" step="0.01" min="0" 
+                    value={editingPlan.base_price} 
+                    onChange={e => setEditingPlan({...editingPlan, base_price: Number(e.target.value)})} 
+                    required 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Limite de Usuários</Label>
+                  <Input 
+                    type="number" min="1" 
+                    value={editingPlan.base_users} 
+                    onChange={e => setEditingPlan({...editingPlan, base_users: Number(e.target.value)})} 
+                    required 
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Valor por Usuário Adicional (R$)</Label>
+                <Input 
+                  type="number" step="0.01" min="0" 
+                  value={editingPlan.extra_user_price} 
+                  onChange={e => setEditingPlan({...editingPlan, extra_user_price: Number(e.target.value)})} 
+                  required 
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button type="button" variant="ghost" onClick={() => setIsEditPlanOpen(false)}>Cancelar</Button>
+                <Button type="submit" disabled={updatePlanMutation.isPending}>
+                  {updatePlanMutation.isPending ? 'Salvando...' : 'Salvar Tabela'}
+                </Button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>

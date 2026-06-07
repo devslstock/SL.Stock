@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { SystemNote, CompanyPayment, User } from '@/types/database'
+import type { SystemNote, CompanyPayment, User, SaaSPlan } from '@/types/database'
 
 export const saasApi = {
   // --- System Users (Staff) ---
@@ -181,6 +181,29 @@ export const saasApi = {
       .eq('id', id)
       
     if (error) throw error
+  },
+
+  // --- Plans ---
+  async getPlans() {
+    const { data, error } = await supabase
+      .from('saas_plans')
+      .select('*')
+      .order('base_price', { ascending: true })
+      
+    if (error) throw error
+    return data as SaaSPlan[]
+  },
+
+  async updatePlan(id: string, updates: Partial<SaaSPlan>) {
+    const { data, error } = await supabase
+      .from('saas_plans')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+      
+    if (error) throw error
+    return data as SaaSPlan
   },
 
   // --- Leads ---

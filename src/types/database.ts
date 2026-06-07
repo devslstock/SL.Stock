@@ -45,6 +45,15 @@ export interface CompanyPayment {
   created_at: string
 }
 
+export interface SaaSPlan {
+  id: string
+  name: string
+  base_price: number
+  base_users: number
+  extra_user_price: number
+  created_at: string
+}
+
 export interface SystemNote {
   id: string
   author_id: string
