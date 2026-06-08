@@ -34,7 +34,7 @@ export default function CreateDelivery() {
   })
   
   const drivers = usersList.filter(u => u.role === 'motorista' && u.active)
-  const helpers = usersList.filter(u => u.role === 'ajudante' && u.active)
+  const helpers = usersList.filter(u => ['ajudante', 'motorista', 'conferente'].includes(u.role) && u.active)
   
   // Only show operations that are not completely cancelled. Usually you deliver something that is dispatched or completed in the warehouse.
   const availableOperations = operations.filter(o => o.status !== 'cancelled')

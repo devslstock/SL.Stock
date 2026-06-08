@@ -63,7 +63,7 @@ export default function DeliveriesList() {
   })
   
   const drivers = usersList.filter((u: any) => u.role === 'motorista' && u.active)
-  const helpers = usersList.filter((u: any) => u.role === 'ajudante' && u.active)
+  const helpers = usersList.filter((u: any) => ['ajudante', 'motorista', 'conferente'].includes(u.role) && u.active)
 
   const deleteMutation = useMutation({
     mutationFn: deliveriesApi.deleteDeliveryRoute,
