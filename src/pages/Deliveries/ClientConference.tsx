@@ -134,6 +134,24 @@ export default function ClientConference() {
     }
   })
 
+  const reopenClientMutation = useMutation({
+    mutationFn: () => deliveriesApi.updateDeliveryClient(clientId!, { 
+      status: 'pending', 
+      signature_data: null, 
+      receiver_name: null, 
+      receiver_doc: null, 
+      return_reason: null, 
+      signed_at: null 
+    } as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['delivery_client', clientId] })
+      toast.success('Pedido reaberto com sucesso!')
+    },
+    onError: (error: any) => {
+      toast.error(`Erro ao reabrir pedido: ${error.message}`)
+    }
+  })
+
   const isFinished = client ? (client.status === 'delivered' || client.status === 'delivered_with_divergence' || client.status === 'canceled' || client.status === 'returned') : false
 
   // Play beep sound
@@ -327,6 +345,21 @@ export default function ClientConference() {
           </div>
           <div className="text-right flex flex-col items-end gap-2">
             <span className="text-2xl font-black gradient-text">{progress}%</span>
+            {isManager && isFinished && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  if (window.confirm('Deseja reabrir este pedido para edição? As assinaturas ou retornos atuais serão apagados.')) {
+                    reopenClientMutation.mutate()
+                  }
+                }}
+                disabled={reopenClientMutation.isPending}
+                className="text-amber-600 border-amber-600/30 hover:bg-amber-600/10 dark:text-amber-400"
+              >
+                Reabrir Pedido
+              </Button>
+            )}
             {isManager && (
               <Button 
                 variant="outline" 
