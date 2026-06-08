@@ -401,7 +401,7 @@ export default function RouteClients() {
                         <span className="font-medium text-foreground">{totalVolume} <span className="font-normal opacity-70">volumes</span></span>
                       </div>
                       {client.status === 'delivered_with_divergence' && (
-                        <div className="text-amber-500 text-xs mt-1 font-bold flex items-center gap-1">
+                        <div className="text-amber-600 dark:text-amber-600 dark:text-amber-400 text-xs mt-1 font-bold flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3" /> Divergência reportada
                         </div>
                       )}

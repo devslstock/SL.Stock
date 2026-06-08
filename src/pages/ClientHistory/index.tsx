@@ -182,7 +182,7 @@ export default function ClientHistory() {
                               </div>
                               <div className="text-right shrink-0">
                                 <div className="font-bold font-mono">
-                                  <span className={isOk ? 'text-emerald-500' : isExcess ? 'text-amber-500' : 'text-blue-500'}>
+                                  <span className={isOk ? 'text-emerald-600 dark:text-emerald-600 dark:text-emerald-400' : isExcess ? 'text-amber-600 dark:text-amber-600 dark:text-amber-400' : 'text-blue-500'}>
                                     {item.quantity_scanned}
                                   </span>
                                   <span className="text-muted-foreground text-xs">/{item.quantity_expected}</span>
@@ -198,7 +198,7 @@ export default function ClientHistory() {
                     <div className="bg-muted/10 p-4 rounded-lg border border-border/50">
                       <div className="flex justify-between items-center mb-4 gap-2">
                         <h4 className="font-bold text-sm uppercase text-muted-foreground flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Comprovante de Entrega
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" /> Comprovante de Entrega
                         </h4>
                         {client.status !== 'pending' && client.status !== 'waiting' && client.status !== 'canceled' && (
                           <Button
@@ -226,8 +226,8 @@ export default function ClientHistory() {
                         </div>
                       ) : !client.signature_data ? (
                         <div className="text-center p-6 bg-amber-500/5 rounded-lg border border-dashed border-amber-500/20">
-                          <AlertTriangle className="h-8 w-8 mx-auto text-amber-500/50 mb-2" />
-                          <p className="text-sm text-amber-500 font-bold">Sem Assinatura</p>
+                          <AlertTriangle className="h-8 w-8 mx-auto text-amber-600 dark:text-amber-600 dark:text-amber-400/50 mb-2" />
+                          <p className="text-sm text-amber-600 dark:text-amber-600 dark:text-amber-400 font-bold">Sem Assinatura</p>
                           <p className="text-xs text-muted-foreground mt-1">A entrega foi finalizada mas o motorista não coletou assinatura.</p>
                         </div>
                       ) : (

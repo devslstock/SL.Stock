@@ -297,7 +297,7 @@ export function BarcodeCameraScanner({ isOpen, onClose, onScan }: BarcodeCameraS
               onClick={toggleTorch}
               className={`flex items-center gap-2 h-11 px-4 border-zinc-800 rounded-xl ${
                 isTorchOn 
-                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 hover:bg-amber-500/30' 
+                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30' 
                   : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
               }`}
             >

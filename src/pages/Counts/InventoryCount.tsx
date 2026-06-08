@@ -118,7 +118,7 @@ export default function InventoryCountPage() {
 
       <div className="space-y-3">
         <h2 className="font-semibold text-lg flex items-center gap-2">
-          <Boxes className="h-5 w-5 text-amber-500" /> Histórico de Inventários
+          <Boxes className="h-5 w-5 text-amber-600 dark:text-amber-600 dark:text-amber-400" /> Histórico de Inventários
         </h2>
         {counts.length === 0 ? (
           <div className="glass-card text-center py-10">
@@ -134,7 +134,7 @@ export default function InventoryCountPage() {
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-base truncate pr-2 text-amber-500">{count.count_number}</h3>
+                    <h3 className="font-bold text-base truncate pr-2 text-amber-600 dark:text-amber-600 dark:text-amber-400">{count.count_number}</h3>
                     <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
                       <span>👤 {count.user_name}</span>
                       <span>•</span>
@@ -144,8 +144,8 @@ export default function InventoryCountPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                       count.status === 'adjusted' ? 'bg-blue-500/15 text-blue-500' :
-                      count.status === 'completed' ? 'bg-emerald-500/15 text-emerald-500' : 
-                      'bg-amber-500/15 text-amber-500'
+                      count.status === 'completed' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400' : 
+                      'bg-amber-500/15 text-amber-600 dark:text-amber-600 dark:text-amber-400'
                     }`}>
                       {count.status === 'adjusted' ? 'Ajustado' : count.status === 'completed' ? 'Aguardando Ajuste' : 'Em andamento'}
                     </span>
@@ -442,7 +442,7 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
           <p className="text-sm text-muted-foreground truncate">{new Date(count.created_at).toLocaleDateString('pt-BR')} • {count.user_name}</p>
         </div>
         {isAdjusted && <span className="bg-blue-500/15 text-blue-500 px-3 py-1 rounded-full text-xs font-bold shrink-0">Ajustado</span>}
-        {isCompleted && <span className="bg-emerald-500/15 text-emerald-500 px-3 py-1 rounded-full text-xs font-bold shrink-0">Aguardando Ajuste</span>}
+        {isCompleted && <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-xs font-bold shrink-0">Aguardando Ajuste</span>}
       </div>
 
       {!isFinished && (
@@ -451,7 +451,7 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
             <CardContent className="p-4">
               <form onSubmit={handleScan} className="flex gap-2">
                 <div className="relative flex-1">
-                  <ScanLine className="absolute left-3 top-3.5 h-5 w-5 text-amber-500/50 scan-pulse" />
+                  <ScanLine className="absolute left-3 top-3.5 h-5 w-5 text-amber-600 dark:text-amber-600 dark:text-amber-400/50 scan-pulse" />
                   <Input 
                     ref={scanRef} 
                     value={scanInput} 
@@ -461,7 +461,7 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
                     autoFocus 
                   />
                 </div>
-                <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="outline" className="h-12 w-12 border-amber-500/30 text-amber-500 hover:bg-amber-500/10" title="Usar câmera"><Camera className="h-5 w-5" /></Button>
+                <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="outline" className="h-12 w-12 border-amber-500/30 text-amber-600 dark:text-amber-600 dark:text-amber-400 hover:bg-amber-500/10" title="Usar câmera"><Camera className="h-5 w-5" /></Button>
                 <Button type="submit" size="icon" className="h-12 w-12 bg-amber-600 hover:bg-amber-700" disabled={addItemMutation.isPending}><Search className="h-5 w-5" /></Button>
               </form>
             </CardContent>
@@ -510,7 +510,7 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex justify-between items-end mb-2 px-1">
             <h3 className="font-bold text-sm text-muted-foreground">Itens Bipados ({items.length})</h3>
-            <span className="font-mono text-sm font-bold text-amber-500">Total: {totalItems} un</span>
+            <span className="font-mono text-sm font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400">Total: {totalItems} un</span>
           </div>
           
           {items.length === 0 ? (
@@ -530,7 +530,7 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
                     {editingItem?.id !== item.id && (
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
-                          <span className="text-lg font-bold font-mono text-amber-500">+{item.quantity_counted}</span>
+                          <span className="text-lg font-bold font-mono text-amber-600 dark:text-amber-600 dark:text-amber-400">+{item.quantity_counted}</span>
                         </div>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setEditingItem(item); setEditQty(item.quantity_counted); }}>
                           <Edit2 className="h-4 w-4" />
@@ -587,9 +587,9 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
                       </div>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 ${
                         isMissing ? 'bg-red-500/20 text-red-500' :
-                        isDivergent ? 'bg-amber-500/20 text-amber-500' :
+                        isDivergent ? 'bg-amber-500/20 text-amber-600 dark:text-amber-600 dark:text-amber-400' :
                         isExcess ? 'bg-purple-500/20 text-purple-400' :
-                        'bg-emerald-500/20 text-emerald-500'
+                        'bg-emerald-500/20 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400'
                       }`}>
                         {isMissing ? 'Faltante' : isDivergent ? 'Divergente' : isExcess ? 'Excedente' : 'OK'}
                       </span>
@@ -603,14 +603,14 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
                       <div className="flex-1 text-center border-r border-border/50">
                         <span className="text-xs text-muted-foreground block">Contado</span>
                         <span className={`font-mono font-bold ${
-                          r.quantity_counted === r.quantity_system ? 'text-emerald-500' : 
-                          r.quantity_counted > r.quantity_system ? 'text-purple-400' : 'text-amber-500'
+                          r.quantity_counted === r.quantity_system ? 'text-emerald-600 dark:text-emerald-600 dark:text-emerald-400' : 
+                          r.quantity_counted > r.quantity_system ? 'text-purple-400' : 'text-amber-600 dark:text-amber-600 dark:text-amber-400'
                         }`}>{r.quantity_counted}</span>
                       </div>
                       <div className="flex-1 text-center">
                         <span className="text-xs text-muted-foreground block">Diferença</span>
                         <span className={`font-mono font-bold ${
-                          r.quantity_counted - r.quantity_system === 0 ? 'text-emerald-500' :
+                          r.quantity_counted - r.quantity_system === 0 ? 'text-emerald-600 dark:text-emerald-600 dark:text-emerald-400' :
                           r.quantity_counted - r.quantity_system > 0 ? 'text-purple-400' : 'text-red-500'
                         }`}>
                           {r.quantity_counted - r.quantity_system > 0 ? '+' : ''}{r.quantity_counted - r.quantity_system}
@@ -656,7 +656,7 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-md border-t border-border z-10 md:sticky md:bottom-0 md:bg-transparent md:border-none md:p-0 md:pt-4 flex flex-col md:flex-row gap-2">
           <Button 
             variant="outline"
-            className="flex-1 h-12 text-lg border-amber-500/50 text-amber-500 hover:bg-amber-500/10" 
+            className="flex-1 h-12 text-lg border-amber-500/50 text-amber-600 dark:text-amber-600 dark:text-amber-400 hover:bg-amber-500/10" 
             onClick={() => {
               if (window.confirm('Deseja reabrir este inventário para continuar contando?')) {
                 updateStatusMutation.mutate('in_progress')
@@ -682,13 +682,13 @@ function ActiveInventoryView({ countId, allProducts, onBack, user, isManager }: 
       
       {isCompleted && !isManager && (
          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-md border-t border-border z-10 md:sticky md:bottom-0 md:bg-transparent md:border-none md:p-0 md:pt-4 space-y-2">
-            <div className="glass-card p-4 text-center border-amber-500/30 text-amber-500 text-sm font-bold flex items-center justify-center gap-2">
+            <div className="glass-card p-4 text-center border-amber-500/30 text-amber-600 dark:text-amber-600 dark:text-amber-400 text-sm font-bold flex items-center justify-center gap-2">
               <AlertTriangle className="h-5 w-5" />
               Aguardando Gestor autorizar o ajuste.
             </div>
             <Button 
               variant="outline"
-              className="w-full h-12 text-lg border-amber-500/50 text-amber-500 hover:bg-amber-500/10" 
+              className="w-full h-12 text-lg border-amber-500/50 text-amber-600 dark:text-amber-600 dark:text-amber-400 hover:bg-amber-500/10" 
               onClick={() => {
                 if (window.confirm('Deseja reabrir este inventário para continuar contando?')) {
                   updateStatusMutation.mutate('in_progress')

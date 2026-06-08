@@ -318,7 +318,7 @@ export default function CreateReceipt() {
             </CardTitle>
             <div className="flex items-center gap-2">
               <input type="file" accept=".csv,.txt,.xls,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="text-amber-500 hover:text-amber-600 hover:bg-amber-50">
+              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="text-amber-600 dark:text-amber-600 dark:text-amber-400 hover:text-amber-600 hover:bg-amber-50">
                 <Upload className="h-4 w-4 mr-2" /> Importar Excel
               </Button>
             </div>

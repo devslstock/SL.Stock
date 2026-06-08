@@ -440,14 +440,14 @@ export default function ClientConference() {
                       ) : (
                         <>
                           <div className="flex items-baseline gap-1">
-                            <span className={`text-lg font-bold font-mono ${isOk ? 'text-emerald-500' : isExcess ? 'text-amber-500' : 'text-blue-500'}`}>
+                            <span className={`text-lg font-bold font-mono ${isOk ? 'text-emerald-600 dark:text-emerald-600 dark:text-emerald-400' : isExcess ? 'text-amber-600 dark:text-amber-600 dark:text-amber-400' : 'text-blue-500'}`}>
                               {item.quantity_scanned}
                             </span>
                             <span className="text-xs text-muted-foreground font-mono">/ {item.quantity_expected}</span>
                           </div>
                           {item.approval_status === 'rejected' && <span className="text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded mt-1">Rejeitado</span>}
-                          {isExcess && item.approval_status !== 'rejected' && <span className="text-[10px] uppercase font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded mt-1">Excedente</span>}
-                          {isOk && <span className="text-[10px] uppercase font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded mt-1">OK</span>}
+                          {isExcess && item.approval_status !== 'rejected' && <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded mt-1">Excedente</span>}
+                          {isOk && <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded mt-1">OK</span>}
                         </>
                       )}
                     </div>
@@ -460,7 +460,7 @@ export default function ClientConference() {
                         title={isOk ? "Desmarcar item" : "Marcar como conferido"}
                       >
                         {isOk ? (
-                          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         ) : (
                           <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 hover:border-emerald-500/50" />
                         )}
@@ -518,7 +518,7 @@ export default function ClientConference() {
                 Pedido Retornado
               </div>
             ) : client.signature_data ? (
-              <div className="glass-card p-4 text-center border-emerald-500/30 text-emerald-500 font-bold flex items-center justify-center gap-2">
+              <div className="glass-card p-4 text-center border-emerald-500/30 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center gap-2">
                 <CheckCircle2 className="h-5 w-5" />
                 Entrega Concluída e Assinada
               </div>

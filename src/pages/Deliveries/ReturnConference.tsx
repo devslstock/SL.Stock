@@ -242,7 +242,7 @@ export default function ReturnConference() {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="-ml-2"><ArrowLeft className="h-5 w-5" /></Button>
             <div>
               <h1 className="text-xl font-bold gradient-text leading-tight flex items-center gap-2">
-                <Undo2 className="h-5 w-5 text-amber-500" /> Retorno da Rota
+                <Undo2 className="h-5 w-5 text-amber-600 dark:text-amber-600 dark:text-amber-400" /> Retorno da Rota
               </h1>
               <p className="text-xs text-muted-foreground mt-0.5">{route?.operation?.load_number}</p>
             </div>
@@ -325,13 +325,13 @@ export default function ReturnConference() {
                   <div className="text-right shrink-0 flex items-center gap-3">
                     <div className="flex flex-col items-end">
                       <div className="flex items-baseline gap-1">
-                        <span className={`text-lg font-bold font-mono ${isOk ? 'text-emerald-500' : isExcess ? 'text-amber-500' : 'text-blue-500'}`}>
+                        <span className={`text-lg font-bold font-mono ${isOk ? 'text-emerald-600 dark:text-emerald-600 dark:text-emerald-400' : isExcess ? 'text-amber-600 dark:text-amber-600 dark:text-amber-400' : 'text-blue-500'}`}>
                           {scanned}
                         </span>
                         <span className="text-xs text-muted-foreground font-mono">/ {expected}</span>
                       </div>
-                      {isExcess && <span className="text-[10px] uppercase font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded mt-1">Excedente</span>}
-                      {isOk && <span className="text-[10px] uppercase font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded mt-1">OK</span>}
+                      {isExcess && <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded mt-1">Excedente</span>}
+                      {isOk && <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded mt-1">OK</span>}
                     </div>
                   </div>
                 </div>

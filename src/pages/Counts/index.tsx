@@ -44,7 +44,7 @@ export default function CountsMenu() {
           <CardContent className="p-0">
             <div className="p-6 md:p-8 flex flex-col h-full">
               <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Boxes className="h-7 w-7 text-amber-500" />
+                <Boxes className="h-7 w-7 text-amber-600 dark:text-amber-600 dark:text-amber-400" />
               </div>
               <h2 className="text-xl font-bold mb-2">Inventário de Estoque</h2>
               <p className="text-muted-foreground text-sm mb-8 flex-1">

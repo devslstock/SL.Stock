@@ -9,10 +9,10 @@ function Badge({ className, variant = 'default', ...props }: BadgeProps) {
   const variants: Record<string, string> = {
     default: "bg-primary/20 text-primary border-primary/30",
     secondary: "bg-muted text-muted-foreground border-muted",
-    destructive: "bg-destructive/20 text-red-400 border-destructive/30",
+    destructive: "bg-destructive/20 text-red-600 dark:text-red-400 border-destructive/30",
     outline: "text-foreground border-border",
-    success: "bg-success/20 text-emerald-400 border-success/30",
-    warning: "bg-warning/20 text-amber-400 border-warning/30",
+    success: "bg-success/20 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 border-success/30",
+    warning: "bg-warning/20 text-amber-600 dark:text-amber-600 dark:text-amber-400 border-warning/30",
   }
 
   return (

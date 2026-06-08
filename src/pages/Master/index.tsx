@@ -318,7 +318,7 @@ export default function MasterPanel() {
                   </div>
                   <div className="bg-muted/50 p-2 rounded-lg">
                     <span className="text-muted-foreground block text-xs">Mensalidade</span>
-                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                    <span className="font-medium text-emerald-600 dark:text-emerald-600 dark:text-emerald-400">
                       R$ {(comp.monthly_fee || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>

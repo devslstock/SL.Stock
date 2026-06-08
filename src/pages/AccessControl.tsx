@@ -168,10 +168,10 @@ export default function AccessControl() {
 
       {usersNeedingReset.length > 0 && (
         <div className="glass-card border-amber-500/50 bg-amber-500/10 p-4 flex items-start sm:items-center gap-3 slide-up">
-          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 sm:mt-0 shrink-0" />
+          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-600 dark:text-amber-400 mt-0.5 sm:mt-0 shrink-0" />
           <div className="flex-1">
-            <h3 className="font-bold text-amber-500">Solicitações de Reset de Senha</h3>
-            <p className="text-sm text-amber-500/80">
+            <h3 className="font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400">Solicitações de Reset de Senha</h3>
+            <p className="text-sm text-amber-600 dark:text-amber-600 dark:text-amber-400/80">
               {usersNeedingReset.length} usuário(s) esqueceu a senha e precisa de reset. Edite o usuário e clique em "Resetar Senha".
             </p>
           </div>
@@ -182,7 +182,7 @@ export default function AccessControl() {
         {sortedUsers.map((user, i) => (
           <Card key={user.id} className={user.reset_requested ? 'border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]' : ''}>
             <CardContent className="p-4 flex items-center gap-4 slide-up" style={{ animationDelay: `${i * 60}ms` }}>
-              <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${user.active ? (user.reset_requested ? 'bg-amber-500/20 text-amber-500' : 'bg-primary/15 text-primary') : 'bg-muted text-muted-foreground'}`}>
+              <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${user.active ? (user.reset_requested ? 'bg-amber-500/20 text-amber-600 dark:text-amber-600 dark:text-amber-400' : 'bg-primary/15 text-primary') : 'bg-muted text-muted-foreground'}`}>
                 {user.reset_requested ? <AlertTriangle className="h-6 w-6" /> : <UserCircle className="h-6 w-6" />}
               </div>
               <div className="flex-1 min-w-0">
@@ -279,7 +279,7 @@ export default function AccessControl() {
 
             <div className="flex justify-between items-center pt-4">
               {editing ? (
-                <Button type="button" variant="outline" className="text-amber-500 border-amber-500/50 hover:bg-amber-500/10" onClick={handleResetPassword}>
+                <Button type="button" variant="outline" className="text-amber-600 dark:text-amber-600 dark:text-amber-400 border-amber-500/50 hover:bg-amber-500/10" onClick={handleResetPassword}>
                   <KeyRound className="h-4 w-4 mr-2" /> Resetar Senha
                 </Button>
               ) : <div></div>}

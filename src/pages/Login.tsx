@@ -139,7 +139,7 @@ export default function Login() {
               <Button 
                 type="button" 
                 variant="outline" 
-                className="w-full border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                className="w-full border-amber-500/50 text-amber-600 dark:text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
                 onClick={handleForgotPassword}
                 disabled={isLoading}
               >

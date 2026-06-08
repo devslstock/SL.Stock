@@ -123,9 +123,9 @@ export default function Dashboard() {
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatsCard title="Total Cargas" value={loadStats.total} icon={Truck} gradient="from-indigo-500/20 to-purple-500/20" iconColor="text-indigo-400" link="/cargas" />
-            <StatsCard title="Pendentes" value={loadStats.pending} icon={Clock} gradient="from-amber-500/20 to-orange-500/20" iconColor="text-amber-400" link="/cargas?status=pending" />
+            <StatsCard title="Pendentes" value={loadStats.pending} icon={Clock} gradient="from-amber-500/20 to-orange-500/20" iconColor="text-amber-600 dark:text-amber-400" link="/cargas?status=pending" />
             <StatsCard title="Conferindo / Em Rota" value={loadStats.dispatched} icon={PackageCheck} gradient="from-violet-500/20 to-fuchsia-500/20" iconColor="text-violet-400" link="/cargas?status=dispatched" />
-            <StatsCard title="Finalizadas" value={loadStats.completed} icon={CheckCircle2} gradient="from-emerald-500/20 to-teal-500/20" iconColor="text-emerald-400" link="/cargas?status=completed" />
+            <StatsCard title="Finalizadas" value={loadStats.completed} icon={CheckCircle2} gradient="from-emerald-500/20 to-teal-500/20" iconColor="text-emerald-600 dark:text-emerald-400" link="/cargas?status=completed" />
           </div>
 
           <div>
@@ -189,9 +189,9 @@ export default function Dashboard() {
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatsCard title="Total Entregas" value={deliveryStats.total} icon={Truck} gradient="from-indigo-500/20 to-purple-500/20" iconColor="text-indigo-400" link="/entregas" />
-            <StatsCard title="Pendentes" value={deliveryStats.pending} icon={Clock} gradient="from-amber-500/20 to-orange-500/20" iconColor="text-amber-400" link="/entregas" />
+            <StatsCard title="Pendentes" value={deliveryStats.pending} icon={Clock} gradient="from-amber-500/20 to-orange-500/20" iconColor="text-amber-600 dark:text-amber-400" link="/entregas" />
             <StatsCard title="Em trânsito" value={deliveryStats.dispatched} icon={PackageCheck} gradient="from-violet-500/20 to-fuchsia-500/20" iconColor="text-violet-400" link="/entregas" />
-            <StatsCard title="Concluídas" value={deliveryStats.completed} icon={CheckCircle2} gradient="from-emerald-500/20 to-teal-500/20" iconColor="text-emerald-400" link="/entregas" />
+            <StatsCard title="Concluídas" value={deliveryStats.completed} icon={CheckCircle2} gradient="from-emerald-500/20 to-teal-500/20" iconColor="text-emerald-600 dark:text-emerald-400" link="/entregas" />
           </div>
 
           <div>

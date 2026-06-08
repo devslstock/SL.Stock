@@ -768,8 +768,8 @@ export default function Conference() {
              <TabsTrigger value="return" className="flex-1"><ArrowLeft className="h-4 w-4 mr-1.5" />Retorno e Lista</TabsTrigger>
           )}
           {op.type === 'LOAD' && (
-             <TabsTrigger value="divergences" className="flex-1 text-amber-500 font-medium">
-               <AlertTriangle className="h-4 w-4 mr-1.5 text-amber-500" />
+             <TabsTrigger value="divergences" className="flex-1 text-amber-600 dark:text-amber-600 dark:text-amber-400 font-medium">
+               <AlertTriangle className="h-4 w-4 mr-1.5 text-amber-600 dark:text-amber-600 dark:text-amber-400" />
                Divergências ({items.filter(i => i.physical_divergence_found).length})
              </TabsTrigger>
           )}
@@ -793,7 +793,7 @@ export default function Conference() {
 
           {lastScanned && (
             <div className={`glass-card p-4 flex items-center gap-4 slide-up shrink-0 ${lastScanned.status === 'ok' ? 'border-emerald-500/30' : ''}`}>
-              <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${lastScanned.status === 'ok' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-primary/15 text-primary'}`}>
+              <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${lastScanned.status === 'ok' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-primary/15 text-primary'}`}>
                 {lastScanned.status === 'ok' ? <Check className="h-6 w-6" /> : <Zap className="h-6 w-6" />}
               </div>
               <div className="flex-1 min-w-0">
@@ -883,7 +883,7 @@ export default function Conference() {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`font-medium truncate ${done ? 'text-emerald-300' : 'text-foreground'}`}>{item.description}</p>
+                        <p className={`font-medium truncate ${done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.description}</p>
                         {groupName && (
                           <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">
                             {groupName}
@@ -894,7 +894,7 @@ export default function Conference() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
-                        <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
+                        <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
                         <span className="text-muted-foreground text-sm">/{item.quantity_expected}</span>
                       </div>
                       {op.status !== 'dispatched' && op.status !== 'completed' ? (
@@ -905,14 +905,14 @@ export default function Conference() {
                           title={done ? "Desmarcar item" : "Marcar como conferido"}
                         >
                           {done ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                           ) : (
                             <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 hover:border-emerald-500/50" />
                           )}
                         </button>
                       ) : (
                         done ? (
-                          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         ) : (
                           <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
                         )
@@ -928,7 +928,7 @@ export default function Conference() {
 
                   {hasAlert && (
                     <div className="flex flex-col gap-2 mt-1">
-                      <div className="flex items-start gap-1.5 text-xs text-amber-500 bg-amber-500/10 p-2 rounded border border-amber-500/20">
+                      <div className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-600 dark:text-amber-400 bg-amber-500/10 p-2 rounded border border-amber-500/20">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                         <span>Estoque no sistema menor que o previsto. Confirmar no físico durante a conferência. <span className="font-semibold">(Sistema: {getSystemStock(item)})</span></span>
                       </div>
@@ -952,7 +952,7 @@ export default function Conference() {
                             </div>
                           ) : item.physical_verification === 'found' ? (
                             <div className="flex items-center justify-between w-full bg-emerald-500/10 border border-emerald-500/20 rounded p-1.5 px-2.5">
-                              <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                                 🟢 Confirmado: Encontrado no Físico
                               </span>
                               <Button 
@@ -1029,7 +1029,7 @@ export default function Conference() {
         <TabsContent value="return" className="flex-1 flex flex-col gap-4 mt-4">
           <div className="glass-card p-6 border-amber-500/30 bg-amber-500/5 flex flex-col items-center text-center gap-4 mt-4">
             <div className="h-16 w-16 bg-amber-500/10 rounded-full flex items-center justify-center">
-              <Undo2 className="h-8 w-8 text-amber-500" />
+              <Undo2 className="h-8 w-8 text-amber-600 dark:text-amber-600 dark:text-amber-400" />
             </div>
             <div>
               <h3 className="font-bold text-foreground text-lg mb-1">Aguardando Retorno Físico</h3>
@@ -1080,12 +1080,12 @@ export default function Conference() {
                 return (
                   <div key={item.id} className={`glass-card p-3 flex items-center justify-between slide-up ${done ? 'border-emerald-500/20' : ''}`} style={{ animationDelay: `${i * 50}ms` }}>
                     <div className="min-w-0 flex-1">
-                      <p className={`font-medium truncate ${done ? 'text-emerald-300' : 'text-foreground'}`}>{item.description}</p>
+                      <p className={`font-medium truncate ${done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.description}</p>
                       <p className="text-xs text-muted-foreground font-mono">{item.product_code}</p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
-                        <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
+                        <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
                         <span className="text-muted-foreground text-sm">/{item.quantity_expected}</span>
                       </div>
                       {op.status !== 'dispatched' && op.status !== 'completed' ? (
@@ -1096,14 +1096,14 @@ export default function Conference() {
                           title={done ? "Desmarcar item" : "Marcar como conferido"}
                         >
                           {done ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                           ) : (
                             <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 hover:border-emerald-500/50" />
                           )}
                         </button>
                       ) : (
                         done ? (
-                          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         ) : (
                           <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
                         )
@@ -1122,20 +1122,20 @@ export default function Conference() {
               {returnItemsList.length > 0 && (
                 <>
                   <div className="pt-6 pb-2">
-                    <h3 className="text-sm font-bold text-amber-500 flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400 flex items-center gap-2">
                       <ArrowLeft className="h-4 w-4" /> Devoluções Anteriores
                     </h3>
                   </div>
                   {returnItemsList.map((item, i) => (
                     <div key={item.id} className="glass-card p-3 flex items-center justify-between slide-up border-amber-500/20 bg-amber-500/5" style={{ animationDelay: `${i * 50}ms` }}>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate text-amber-500">{item.description.replace('🔄 Devolução: ', '')}</p>
-                        <p className="text-xs text-amber-500/70 font-mono">{item.product_code}</p>
+                        <p className="font-medium truncate text-amber-600 dark:text-amber-600 dark:text-amber-400">{item.description.replace('🔄 Devolução: ', '')}</p>
+                        <p className="text-xs text-amber-600 dark:text-amber-600 dark:text-amber-400/70 font-mono">{item.product_code}</p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
-                          <span className="text-lg font-bold font-mono text-amber-500">+{item.quantity_scanned}</span>
-                          <span className="text-amber-500/70 text-sm"> devolvidos</span>
+                          <span className="text-lg font-bold font-mono text-amber-600 dark:text-amber-600 dark:text-amber-400">+{item.quantity_scanned}</span>
+                          <span className="text-amber-600 dark:text-amber-600 dark:text-amber-400/70 text-sm"> devolvidos</span>
                         </div>
                       </div>
                     </div>
@@ -1146,20 +1146,20 @@ export default function Conference() {
               {returnedClientsItems.length > 0 && (
                 <>
                   <div className="pt-6 pb-2">
-                    <h3 className="text-sm font-bold text-amber-500 flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400 flex items-center gap-2">
                       <Undo2 className="h-4 w-4" /> Devolvidos ao Estoque Físico
                     </h3>
                   </div>
                   {returnedClientsItems.map((item, i) => (
                     <div key={item.id} className="glass-card p-3 flex items-center justify-between slide-up border-amber-500/20 bg-amber-500/5" style={{ animationDelay: `${i * 50}ms` }}>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate text-amber-500">{item.description}</p>
-                        <p className="text-xs text-amber-500/70 font-mono">{item.product_code}</p>
+                        <p className="font-medium truncate text-amber-600 dark:text-amber-600 dark:text-amber-400">{item.description}</p>
+                        <p className="text-xs text-amber-600 dark:text-amber-600 dark:text-amber-400/70 font-mono">{item.product_code}</p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
-                          <span className="text-lg font-bold font-mono text-amber-500">+{item.quantity_returned}</span>
-                          <span className="text-amber-500/70 text-sm"> retornado</span>
+                          <span className="text-lg font-bold font-mono text-amber-600 dark:text-amber-600 dark:text-amber-400">+{item.quantity_returned}</span>
+                          <span className="text-amber-600 dark:text-amber-600 dark:text-amber-400/70 text-sm"> retornado</span>
                         </div>
                       </div>
                     </div>
@@ -1181,7 +1181,7 @@ export default function Conference() {
         <TabsContent value="divergences" className="flex-1 flex flex-col gap-4 mt-4">
           <Card className="border-amber-500/20">
             <CardContent className="p-4">
-              <h2 className="text-lg font-bold text-amber-500 flex items-center gap-2 mb-2">
+              <h2 className="text-lg font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400 flex items-center gap-2 mb-2">
                 <AlertTriangle className="h-5 w-5" /> Relatório de Divergências de Estoque
               </h2>
               <p className="text-xs text-muted-foreground mb-4">
@@ -1207,7 +1207,7 @@ export default function Conference() {
                             <h4 className="font-bold text-foreground text-sm leading-tight">{item.description}</h4>
                             <p className="text-xs text-muted-foreground font-mono mt-1">Cód: {item.product_code}</p>
                           </div>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 ${isResolved ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-500'}`}>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 ${isResolved ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600 dark:text-amber-600 dark:text-amber-400'}`}>
                             {isResolved ? 'Ajustado' : 'Pendente de Ajuste'}
                           </span>
                         </div>
@@ -1218,8 +1218,8 @@ export default function Conference() {
                             <span className="font-bold">{systemStock}</span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-amber-500 block uppercase">Encontrado Físico</span>
-                            <span className="font-bold text-amber-500">{item.quantity_scanned}</span>
+                            <span className="text-[10px] text-amber-600 dark:text-amber-600 dark:text-amber-400 block uppercase">Encontrado Físico</span>
+                            <span className="font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400">{item.quantity_scanned}</span>
                           </div>
                           <div>
                             <span className="text-[10px] text-muted-foreground block uppercase">Estoque Atual</span>
@@ -1229,7 +1229,7 @@ export default function Conference() {
 
                         {!isResolved && (
                           <div className="flex items-center justify-between gap-4 mt-1">
-                            <div className="text-xs text-amber-500 font-medium">
+                            <div className="text-xs text-amber-600 dark:text-amber-600 dark:text-amber-400 font-medium">
                               Aguardando liberação de ajuste de estoque em "Liberações" por um Administrador/Gestor.
                             </div>
                           </div>

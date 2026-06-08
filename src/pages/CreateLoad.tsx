@@ -627,7 +627,7 @@ export default function CreateLoad() {
             </div>
 
             {importedClients.length > 0 && (
-              <div className="flex items-start gap-2 text-xs text-amber-500 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20 slide-up mt-2">
+              <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-600 dark:text-amber-400 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20 slide-up mt-2">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>
                   <strong>✨ Planilha com {importedClients.length} clientes vinculada!</strong> Ao salvar esta carga, o sistema criará automaticamente a carga e a rota de entrega correspondente vinculada ao motorista selecionado.
@@ -716,7 +716,7 @@ export default function CreateLoad() {
                         </Button>
                       </div>
                       {hasAlert && (
-                        <div className="flex items-start gap-1.5 text-xs text-amber-500 bg-amber-500/10 p-2 rounded border border-amber-500/20 slide-up">
+                        <div className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-600 dark:text-amber-400 bg-amber-500/10 p-2 rounded border border-amber-500/20 slide-up">
                           <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                           <span>
                             Estoque no sistema menor que o previsto. Confirmar no físico durante a conferência. 

@@ -175,13 +175,13 @@ export default function AdhocCountPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${count.status === 'completed' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-primary/15 text-primary'}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${count.status === 'completed' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400' : 'bg-primary/15 text-primary'}`}>
                       {count.status === 'completed' ? 'Finalizado' : 'Em andamento'}
                     </span>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="export-btn h-8 w-8 text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
+                      className="export-btn h-8 w-8 text-muted-foreground hover:text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
                       onClick={(e) => { e.stopPropagation(); exportToExcel(count) }}
                       title="Exportar para Excel"
                     >
@@ -373,7 +373,7 @@ function ActiveCountView({ countId, allProducts, onBack, user }: { countId: stri
           <p className="text-sm text-muted-foreground truncate">{new Date(count.created_at).toLocaleDateString('pt-BR')} • {count.user_name}</p>
         </div>
         {isCompleted && (
-          <span className="bg-emerald-500/15 text-emerald-500 px-3 py-1 rounded-full text-xs font-bold shrink-0">
+          <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-xs font-bold shrink-0">
             Finalizado
           </span>
         )}

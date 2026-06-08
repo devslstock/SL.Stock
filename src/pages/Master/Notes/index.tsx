@@ -108,8 +108,8 @@ export default function SaaSNotes() {
                     className={cn(
                       "absolute top-0 right-0 p-1 rounded-full transition-colors cursor-pointer",
                       note.checked 
-                        ? "text-emerald-600 hover:bg-emerald-200/50 dark:text-emerald-400 dark:hover:bg-emerald-900/30" 
-                        : "text-amber-600/40 hover:text-amber-600 hover:bg-amber-200/40 dark:text-amber-500/30 dark:hover:bg-amber-800/20"
+                        ? "text-emerald-600 hover:bg-emerald-200/50 dark:text-emerald-600 dark:text-emerald-400 dark:hover:bg-emerald-900/30" 
+                        : "text-amber-600/40 hover:text-amber-600 hover:bg-amber-200/40 dark:text-amber-600 dark:text-amber-600 dark:text-amber-400/30 dark:hover:bg-amber-800/20"
                     )}
                     title={note.checked ? "Marcar como pendente" : "Marcar como feito"}
                   >

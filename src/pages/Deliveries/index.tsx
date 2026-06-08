@@ -104,9 +104,9 @@ export default function DeliveriesList() {
                 <Card className="overflow-hidden border-primary/20 hover:border-primary/50 transition-all glass-card cursor-pointer slide-up" style={{ animationDelay: `${index * 60}ms` }}>
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${
-                      route.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' :
+                      route.status === 'completed' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
                       route.status === 'in_progress' ? 'bg-violet-500/15 text-violet-400' :
-                      'bg-amber-500/15 text-amber-400'
+                      'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                     }`}>
                       {config && <config.icon className="h-6 w-6" />}
                     </div>

@@ -383,7 +383,7 @@ export default function Products() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10" 
+                  className="border-amber-500/30 text-amber-600 dark:text-amber-600 dark:text-amber-400 hover:bg-amber-500/10" 
                   onClick={() => {
                     if (window.confirm('Deseja realmente ajustar o estoque de TODOS os produtos para 100 itens?')) {
                       setAllStockTo100Mutation.mutate()

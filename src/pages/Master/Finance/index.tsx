@@ -279,7 +279,7 @@ export default function SaaSFinance() {
                           )}>{plan.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                      <td className="px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-600 dark:text-emerald-400">
                         R$ {plan.base_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-4 py-3 text-center font-medium">

@@ -62,7 +62,7 @@ export default function ChangePassword() {
       
       <div className="w-full max-w-md glass-card p-8 relative z-10 slide-up border-amber-500/20">
         <div className="flex flex-col items-center mb-8">
-          <div className="h-16 w-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-4 text-amber-500">
+          <div className="h-16 w-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-4 text-amber-600 dark:text-amber-600 dark:text-amber-400">
             <ShieldAlert className="h-8 w-8" />
           </div>
           <h1 className="text-2xl font-bold gradient-text text-center">Troca Obrigatória</h1>

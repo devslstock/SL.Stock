@@ -116,7 +116,7 @@ export default function ApprovalsPage() {
   if (!isManager) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 slide-in">
-        <AlertTriangle className="h-16 w-16 text-amber-500 opacity-80" />
+        <AlertTriangle className="h-16 w-16 text-amber-600 dark:text-amber-600 dark:text-amber-400 opacity-80" />
         <h2 className="text-2xl font-bold text-foreground">Acesso Restrito</h2>
         <p className="text-muted-foreground text-center max-w-md">Apenas gestores e administradores têm permissão para acessar o painel de liberações.</p>
         <Link to="/dashboard">
@@ -173,7 +173,7 @@ export default function ApprovalsPage() {
         <TabsContent value="stock_adjustments" className="space-y-4 mt-0">
           {stockAdjustments.length === 0 ? (
             <div className="glass-card text-center py-16 px-4">
-              <Check className="h-12 w-12 mx-auto text-emerald-500/50 mb-4" />
+              <Check className="h-12 w-12 mx-auto text-emerald-600 dark:text-emerald-600 dark:text-emerald-400/50 mb-4" />
               <h2 className="text-xl font-bold text-foreground mb-2">Tudo em ordem!</h2>
               <p className="text-muted-foreground">Não há nenhuma divergência de estoque física aguardando ajuste no momento.</p>
             </div>
@@ -187,7 +187,7 @@ export default function ApprovalsPage() {
                 return (
                   <Card key={item.id} className="glass-card border-amber-500/20 overflow-hidden">
                     <div className="bg-amber-500/10 px-4 py-2 border-b border-amber-500/20 flex items-center justify-between">
-                      <span className="text-xs font-bold text-amber-400 uppercase flex items-center gap-1">
+                      <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1">
                         <Clock className="h-3 w-3" /> Pendente de Ajuste
                       </span>
                       <span className="text-xs text-muted-foreground font-mono">
@@ -207,8 +207,8 @@ export default function ApprovalsPage() {
                           <span className="text-base font-bold text-foreground">{item.system_stock_at_load ?? 0}</span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-amber-400 block uppercase mb-1">Físico</span>
-                          <span className="text-base font-bold text-amber-500">{item.quantity_scanned}</span>
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400 block uppercase mb-1">Físico</span>
+                          <span className="text-base font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400">{item.quantity_scanned}</span>
                         </div>
                         <div>
                           <span className="text-[10px] text-muted-foreground block uppercase mb-1">Atual</span>
@@ -223,7 +223,7 @@ export default function ApprovalsPage() {
                             <span className="font-semibold text-foreground">Conferente:</span> {item.operation?.driver_name || '---'}
                           </span>
                         </p>
-                        <p className="text-xs text-amber-400 font-semibold">
+                        <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
                           Correção: adicionar +{discrepancy} un no estoque.
                         </p>
                       </div>
@@ -280,7 +280,7 @@ export default function ApprovalsPage() {
 
           {operationAlerts.length === 0 ? (
             <div className="glass-card text-center py-16 px-4">
-              <Check className="h-12 w-12 mx-auto text-emerald-500/50 mb-4" />
+              <Check className="h-12 w-12 mx-auto text-emerald-600 dark:text-emerald-600 dark:text-emerald-400/50 mb-4" />
               <h2 className="text-xl font-bold text-foreground mb-2">Tudo em ordem!</h2>
               <p className="text-muted-foreground">Nenhum alerta de item faltante em despacho de carga no momento.</p>
             </div>
@@ -394,7 +394,7 @@ export default function ApprovalsPage() {
                         </span>
                       </p>
                       <p className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
+                        <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-600 dark:text-amber-400" />
                         <span>
                           <span className="font-semibold text-foreground">Cliente:</span> {item.client?.name || '---'}
                         </span>

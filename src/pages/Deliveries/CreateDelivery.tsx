@@ -115,7 +115,7 @@ export default function CreateDelivery() {
                 ))}
               </select>
               {drivers.length === 0 && (
-                <p className="text-xs text-amber-500 mt-1">Nenhum motorista cadastrado no sistema.</p>
+                <p className="text-xs text-amber-600 dark:text-amber-600 dark:text-amber-400 mt-1">Nenhum motorista cadastrado no sistema.</p>
               )}
             </div>
 

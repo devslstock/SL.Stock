@@ -286,10 +286,10 @@ export default function Landing() {
                 <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl p-4 text-white space-y-3 shadow-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                      <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       <span className="text-[10px] uppercase font-bold tracking-wider text-slate-300">Conferência Inteligente</span>
                     </div>
-                    <span className="text-[10px] font-mono text-emerald-400 font-bold">100% OK</span>
+                    <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">100% OK</span>
                   </div>
                   <p className="text-xs text-slate-200 font-medium leading-relaxed">
                     "O bipador móvel de código de barras identificou e registrou 24 volumes de detergente sem nenhuma divergência."
@@ -329,15 +329,15 @@ export default function Landing() {
               </p>
               <ul className="space-y-2.5 pt-2">
                 <li className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" />
                   Bipe de volumes e caixas fechadas
                 </li>
                 <li className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" />
                   Alerta visual e sonoro de divergências
                 </li>
                 <li className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" />
                   Validação de lotes e datas de validade
                 </li>
               </ul>
@@ -354,15 +354,15 @@ export default function Landing() {
               </p>
               <ul className="space-y-2.5 pt-2">
                 <li className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" />
                   Coleta de assinatura digital na tela
                 </li>
                 <li className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" />
                   Exportação de PDF no WhatsApp ou Email
                 </li>
                 <li className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" />
                   Compartilhamento móvel nativo integrado
                 </li>
               </ul>
@@ -379,15 +379,15 @@ export default function Landing() {
               </p>
               <ul className="space-y-2.5 pt-2">
                 <li className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" />
                   Contagem rotativa ou total por coletor
                 </li>
                 <li className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" />
                   Ordenação e filtros avançados no estoque
                 </li>
                 <li className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400" />
                   Histórico detalhado de movimentações e logs
                 </li>
               </ul>
@@ -412,21 +412,21 @@ export default function Landing() {
 
                 <div className="space-y-4 border-t border-indigo-800/80 pt-6">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 shrink-0 text-sm font-bold">✓</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0 text-sm font-bold">✓</span>
                     <div>
                       <p className="text-xs font-bold text-slate-200">Redução de Reclamações</p>
                       <p className="text-[11px] text-slate-400">Eliminação de faltas e mercadorias trocadas nas cargas.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 shrink-0 text-sm font-bold">✓</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0 text-sm font-bold">✓</span>
                     <div>
                       <p className="text-xs font-bold text-slate-200">Digitalização Completa</p>
                       <p className="text-[11px] text-slate-400">Fim do arquivamento físico de canhotos de notas fiscais.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 shrink-0 text-sm font-bold">✓</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0 text-sm font-bold">✓</span>
                     <div>
                       <p className="text-xs font-bold text-slate-200">Aprovador de Divergências</p>
                       <p className="text-[11px] text-slate-400">Liberações de estoque controladas por senha gerencial.</p>

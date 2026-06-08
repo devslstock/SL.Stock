@@ -146,11 +146,11 @@ export default function AllLoads() {
                 <div className="glass-card glass-card-hover p-4 flex items-center gap-4 slide-up" style={{ animationDelay: `${index * 60}ms` }}>
                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
                     op.type === 'RETURN' ? 'bg-rose-500/15 text-rose-500' :
-                    (op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') ? 'bg-emerald-500/15 text-emerald-500' :
-                    op.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' :
+                    (op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400' :
+                    op.status === 'completed' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
                     op.status === 'dispatched' ? 'bg-blue-500/15 text-blue-400' :
                     op.status === 'in_progress' ? 'bg-violet-500/15 text-violet-400' :
-                    'bg-amber-500/15 text-amber-400'
+                    'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                   }`}>
                     {op.type === 'RETURN' ? <Undo2 className="h-5 w-5" /> : (op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') ? <Factory className="h-5 w-5" /> : (config && <config.icon className="h-5 w-5" />)}
                   </div>
@@ -209,7 +209,7 @@ export default function AllLoads() {
             {isRoutesLoading ? (
               <p className="text-sm text-center py-4">Carregando rotas...</p>
             ) : completedRoutes.length === 0 ? (
-              <p className="text-sm text-center py-4 text-amber-500">Nenhuma rota elegível encontrada.</p>
+              <p className="text-sm text-center py-4 text-amber-600 dark:text-amber-600 dark:text-amber-400">Nenhuma rota elegível encontrada.</p>
             ) : (
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"

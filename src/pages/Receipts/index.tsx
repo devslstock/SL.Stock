@@ -129,9 +129,9 @@ export default function ReceiptsList() {
               <Link key={op.id} to={`/conferencia/${op.id}`} className="block group">
                 <div className="glass-card glass-card-hover p-4 flex items-center gap-4 slide-up" style={{ animationDelay: `${index * 60}ms` }}>
                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
-                    op.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' :
+                    op.status === 'completed' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
                     op.status === 'in_progress' ? 'bg-violet-500/15 text-violet-400' :
-                    'bg-amber-500/15 text-amber-400'
+                    'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                   }`}>
                     {config && <config.icon className="h-5 w-5" />}
                   </div>

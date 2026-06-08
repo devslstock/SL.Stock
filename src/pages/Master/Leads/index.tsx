@@ -106,7 +106,7 @@ export default function SaaSLeads() {
 
         <Card className="glass-card">
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-600 dark:text-emerald-400">
               <Calendar className="h-5 w-5" />
             </div>
             <div>
@@ -197,10 +197,10 @@ export default function SaaSLeads() {
                         href={getWhatsAppLink(lead.phone)} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="hover:underline hover:text-emerald-500 flex items-center gap-1 font-mono font-bold"
+                        className="hover:underline hover:text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono font-bold"
                       >
                         {lead.phone}
-                        <span className="text-[9px] bg-emerald-500/10 text-emerald-500 px-1 rounded font-sans uppercase font-normal">WhatsApp</span>
+                        <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 px-1 rounded font-sans uppercase font-normal">WhatsApp</span>
                       </a>
                     </div>
 
