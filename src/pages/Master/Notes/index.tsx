@@ -19,6 +19,15 @@ export default function SaaSNotes() {
     enabled: isMaster
   });
 
+  const sortedNotes = React.useMemo(() => {
+    return [...notes].sort((a, b) => {
+      if (a.checked === b.checked) {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      return a.checked ? 1 : -1;
+    });
+  }, [notes]);
+
   const createNoteMutation = useMutation({
     mutationFn: () => saasApi.createNote(user!.id, user!.name, content),
     onSuccess: () => {
@@ -79,12 +88,12 @@ export default function SaaSNotes() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading ? (
           <div className="col-span-full py-10 text-center text-muted-foreground">Carregando mural...</div>
-        ) : notes.length === 0 ? (
+        ) : sortedNotes.length === 0 ? (
           <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-xl">
             Nenhum recado postado ainda.
           </div>
         ) : (
-          notes.map((note) => (
+          sortedNotes.map((note) => (
             <Card 
               key={note.id} 
               className={cn(
