@@ -194,7 +194,12 @@ export default function ClientConference() {
     if (!normalized) return
 
     // Verifica se pertence ao cliente
-    const existingItem = items.find(i => normalizeCode(i.product_code) === normalized)
+    const existingItem = items.find(i => {
+      if (normalizeCode(i.product_code) === normalized) return true
+      const prod = allProducts.find((p: any) => p.id === i.product_id)
+      if (prod && prod.external_code && normalizeCode(prod.external_code) === normalized) return true
+      return false
+    })
 
     if (existingItem) {
       if (existingItem.approval_status === 'pending') {

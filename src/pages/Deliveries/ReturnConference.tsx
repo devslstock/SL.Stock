@@ -119,10 +119,16 @@ export default function ReturnConference() {
     const normalized = normalizeCode(barcode)
     if (!normalized) return
 
-    const existingItem = expectedReturnItems.find(i => normalizeCode(i.product_code) === normalized)
+    const existingItem = expectedReturnItems.find(i => {
+      if (normalizeCode(i.product_code) === normalized) return true
+      const prod = allProducts.find((p: any) => p.id === i.product_id)
+      if (prod && prod.external_code && normalizeCode(prod.external_code) === normalized) return true
+      return false
+    })
 
     if (existingItem) {
-      const currentScanned = scannedItemsState[normalized] || 0
+      const itemCodeKey = normalizeCode(existingItem.product_code)
+      const currentScanned = scannedItemsState[itemCodeKey] || 0
       const newQty = currentScanned + 1
       
       if (newQty > existingItem.quantity_expected) {
@@ -134,7 +140,7 @@ export default function ReturnConference() {
       
       setScannedItemsState(prev => ({
         ...prev,
-        [normalized]: newQty
+        [itemCodeKey]: newQty
       }))
     } else {
       const prod = allProducts.find(p => normalizeCode(p.code) === normalized || (p.external_code && normalizeCode(p.external_code) === normalized))
