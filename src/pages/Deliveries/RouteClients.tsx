@@ -373,9 +373,9 @@ export default function RouteClients() {
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-foreground text-base truncate">{client.name}</span>
-                        <Badge variant={config.variant} className="shrink-0">{config.label}</Badge>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <span className="font-bold text-foreground text-sm leading-tight">{client.name}</span>
+                        <Badge variant={config.variant} className="shrink-0 mt-0.5">{config.label}</Badge>
                       </div>
                       {(client.address || client.phone || client.order_number) && (
                         <div className="flex gap-3 text-sm text-muted-foreground flex-wrap mb-2">
