@@ -309,7 +309,12 @@ export default function RouteClients() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold gradient-text">{route?.operation?.load_number || 'Rota de Entrega'}</h1>
+            <h1 className="text-2xl font-bold gradient-text">{route?.title || route?.operation?.load_number || 'Rota de Entrega'}</h1>
+            {route?.scheduled_date && (
+              <p className="text-xs font-semibold text-primary/80 uppercase tracking-wide mt-0.5">
+                Previsão: {new Date(route.scheduled_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground mt-1">
               {clients.length} clientes • {clients.reduce((sum: number, c: any) => sum + (c.delivery_items?.reduce((itemSum: number, i: any) => itemSum + i.quantity_expected, 0) || 0), 0)} volumes
             </p>

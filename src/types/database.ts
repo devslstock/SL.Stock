@@ -220,6 +220,8 @@ export interface DeliveryRoute {
   operation_id: string
   driver_id: string
   helper_id?: string
+  title?: string
+  scheduled_date?: string
   status: 'pending' | 'in_progress' | 'completed'
   created_at: string
 }

@@ -62,6 +62,19 @@ export const deliveriesApi = {
     return data as DeliveryRoute
   },
 
+  async updateDeliveryRoute(id: string, updates: Partial<DeliveryRoute>) {
+    if (!currentCompanyId) throw new Error('No company context')
+    const { data, error } = await supabase
+      .from('delivery_routes')
+      .update(updates)
+      .eq('id', id)
+      .eq('company_id', currentCompanyId)
+      .select()
+      .single()
+    if (error) throw error
+    return data as DeliveryRoute
+  },
+
   async deleteDeliveryRoute(id: string) {
     const { error } = await supabase
       .from('delivery_routes')
