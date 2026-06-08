@@ -140,6 +140,12 @@ export default function AccessControl() {
 
   const usersNeedingReset = users.filter(u => u.reset_requested)
 
+  const roleWeight: Record<UserRole, number> = { admin: 1, gestor: 2, conferente: 3, motorista: 4, ajudante: 5 }
+  const sortedUsers = [...users].sort((a, b) => {
+    if (roleWeight[a.role] !== roleWeight[b.role]) return roleWeight[a.role] - roleWeight[b.role]
+    return a.name.localeCompare(b.name)
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -173,7 +179,7 @@ export default function AccessControl() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {users.map((user, i) => (
+        {sortedUsers.map((user, i) => (
           <Card key={user.id} className={user.reset_requested ? 'border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]' : ''}>
             <CardContent className="p-4 flex items-center gap-4 slide-up" style={{ animationDelay: `${i * 60}ms` }}>
               <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${user.active ? (user.reset_requested ? 'bg-amber-500/20 text-amber-500' : 'bg-primary/15 text-primary') : 'bg-muted text-muted-foreground'}`}>
