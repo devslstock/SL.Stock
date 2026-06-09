@@ -174,7 +174,7 @@ export default function RouteClientForm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery_clients', routeId] })
       toast.success('Cliente adicionado com sucesso!')
-      navigate(`/entregas/${routeId}`)
+      navigate(`/entregas/${routeId}`, { replace: true })
     },
     onError: (error: any) => {
       toast.error(`Erro ao salvar cliente: ${error.message}`)
@@ -220,7 +220,7 @@ export default function RouteClientForm() {
       queryClient.invalidateQueries({ queryKey: ['delivery_client', clientId] })
       queryClient.invalidateQueries({ queryKey: ['delivery_items', clientId] })
       toast.success('Pedido do cliente atualizado!')
-      navigate(`/entregas/cliente/${clientId}`)
+      navigate(`/entregas/cliente/${clientId}`, { replace: true })
     },
     onError: (error: any) => {
       toast.error(`Erro ao atualizar cliente: ${error.message}`)
