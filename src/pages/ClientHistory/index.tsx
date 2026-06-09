@@ -155,7 +155,6 @@ export default function ClientHistory() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  {client.status !== 'pending' && client.status !== 'waiting' && client.status !== 'canceled' && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -169,7 +168,6 @@ export default function ClientHistory() {
                       <FileDown className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">{isExporting === client.id ? 'Gerando...' : 'Exportar PDF'}</span>
                     </Button>
-                  )}
                   <div className="text-muted-foreground">
                     {isExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
                   </div>
