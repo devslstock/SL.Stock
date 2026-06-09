@@ -187,7 +187,7 @@ export default function RouteClientForm() {
         name: name.trim(),
         address: address.trim() || '',
         phone: phone.trim() || '',
-        order_number: orderNumber.trim() || null,
+        order_number: orderNumber.trim() || undefined,
         notes: notes.trim() || ''
       })
 
@@ -245,7 +245,7 @@ export default function RouteClientForm() {
         name: name.trim(),
         address: address.trim() || '',
         phone: phone.trim() || '',
-        order_number: orderNumber.trim() || null,
+        order_number: orderNumber.trim() || undefined,
         notes: notes.trim() || '',
         items: items.map(i => ({
           product_id: i.product_id,
