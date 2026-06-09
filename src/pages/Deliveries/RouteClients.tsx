@@ -319,15 +319,15 @@ export default function RouteClients() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-20 slide-in">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+      <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate('/entregas')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold gradient-text">{route?.title || route?.operation?.load_number || 'Rota de Entrega'}</h1>
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold gradient-text">{route?.title || route?.operation?.load_number || 'Rota de Entrega'}</h1>
             {route?.scheduled_date && (
-              <p className="text-xs font-semibold text-primary/80 uppercase tracking-wide mt-0.5">
+              <p className="text-xs font-semibold text-primary/80 uppercase tracking-wide mt-1">
                 Previsão: {new Date(route.scheduled_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
               </p>
             )}
@@ -336,8 +336,9 @@ export default function RouteClients() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-          <div className="relative w-full sm:w-[300px]">
+        
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3 w-full">
+          <div className="relative w-full lg:flex-1 lg:max-w-md">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Buscar cliente, pedido ou produto..." 
@@ -346,36 +347,38 @@ export default function RouteClients() {
               className="pl-9 w-full bg-background/50"
             />
           </div>
-          <select 
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="flex h-10 w-full sm:w-[180px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="alphabetical">Ordem Alfabética</option>
-            <option value="city">Por Cidade</option>
-            <option value="neighborhood">Por Bairro</option>
-            <option value="status">Por Status</option>
-          </select>
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto lg:ml-auto">
+            <select 
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="flex h-10 w-full sm:w-[180px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="alphabetical">Ordem Alfabética</option>
+              <option value="city">Por Cidade</option>
+              <option value="neighborhood">Por Bairro</option>
+              <option value="status">Por Status</option>
+            </select>
 
-          {isManager && (
-            <div className="flex gap-2 w-full sm:w-auto">
-              <input type="file" accept=".csv,.txt,.xls,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-              <Button 
-                variant="outline"
-                className="gap-2 flex-1 sm:flex-none border-primary text-primary hover:bg-primary/10"
-                onClick={() => navigate(`/entregas/${id}/novo-cliente`)}
-              >
-                <Plus className="h-5 w-5" /> Adicionar Cliente
-              </Button>
-              <Button 
-                className="gap-2 flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isImporting}
-              >
-                {isImporting ? 'Importando...' : <><FileSpreadsheet className="h-5 w-5" /> Importar XLRS</>}
-              </Button>
-            </div>
-          )}
+            {isManager && (
+              <div className="flex gap-2 w-full sm:w-auto">
+                <input type="file" accept=".csv,.txt,.xls,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+                <Button 
+                  variant="outline"
+                  className="gap-2 flex-1 sm:flex-none border-primary text-primary hover:bg-primary/10"
+                  onClick={() => navigate(`/entregas/${id}/novo-cliente`)}
+                >
+                  <Plus className="h-5 w-5" /> Adicionar Cliente
+                </Button>
+                <Button 
+                  className="gap-2 flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isImporting}
+                >
+                  {isImporting ? 'Importando...' : <><FileSpreadsheet className="h-5 w-5" /> Importar XLRS</>}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
