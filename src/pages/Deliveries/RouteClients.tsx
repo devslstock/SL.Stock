@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, User, MapPin, Upload, FileSpreadsheet, Trash2, ChevronRight, AlertTriangle, Search } from 'lucide-react'
+import { ArrowLeft, User, MapPin, Upload, FileSpreadsheet, Trash2, ChevronRight, AlertTriangle, Search, Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import * as XLSX from 'xlsx'
 
@@ -357,10 +357,17 @@ export default function RouteClients() {
           </select>
 
           {isManager && (
-            <div>
+            <div className="flex gap-2 w-full sm:w-auto">
               <input type="file" accept=".csv,.txt,.xls,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
               <Button 
-                className="gap-2 w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]"
+                variant="outline"
+                className="gap-2 flex-1 sm:flex-none border-primary text-primary hover:bg-primary/10"
+                onClick={() => navigate(`/entregas/${id}/novo-cliente`)}
+              >
+                <Plus className="h-5 w-5" /> Adicionar Cliente
+              </Button>
+              <Button 
+                className="gap-2 flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isImporting}
               >

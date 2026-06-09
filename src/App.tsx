@@ -64,6 +64,7 @@ import DeliveriesList from './pages/Deliveries/index'
 import CreateDelivery from './pages/Deliveries/CreateDelivery'
 import RouteClients from './pages/Deliveries/RouteClients'
 import ClientConference from './pages/Deliveries/ClientConference'
+import AddRouteClient from './pages/Deliveries/AddRouteClient'
 import ReturnConference from './pages/Deliveries/ReturnConference'
 import SignaturePad from './pages/Deliveries/SignaturePad'
 import ApprovalsPage from './pages/Approvals'
@@ -102,6 +103,7 @@ function App() {
             <Route path="/entregas" element={<PlanGuard requiredPlan="ouro"><DeliveriesList /></PlanGuard>} />
             <Route path="/entregas/nova" element={<PlanGuard requiredPlan="ouro"><CreateDelivery /></PlanGuard>} />
             <Route path="/entregas/:id" element={<PlanGuard requiredPlan="ouro"><RouteClients /></PlanGuard>} />
+            <Route path="/entregas/:id/novo-cliente" element={<PlanGuard requiredPlan="ouro"><AddRouteClient /></PlanGuard>} />
             <Route path="/entregas/:id/retorno" element={<PlanGuard requiredPlan="ouro"><ReturnConference /></PlanGuard>} />
             <Route path="/entregas/cliente/:clientId" element={<PlanGuard requiredPlan="ouro"><ClientConference /></PlanGuard>} />
             <Route path="/entregas/cliente/:clientId/assinatura" element={<PlanGuard requiredPlan="ouro"><SignaturePad /></PlanGuard>} />
