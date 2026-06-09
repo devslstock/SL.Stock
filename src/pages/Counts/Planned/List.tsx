@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { ArrowLeft, Plus, Map, LayoutGrid, CheckCircle2, Trash2, ArrowRight } from 'lucide-react'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Dialog,
   DialogContent,
@@ -141,34 +140,34 @@ export default function PlannedInventoriesList() {
 
             <div className="space-y-3">
               <Label className="font-bold text-blue-500">Permissão de coleta (Bipagem)</Label>
-              <RadioGroup value={collectionRule} onValueChange={(v: any) => setCollectionRule(v)}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="any" id="c-any" />
-                  <Label htmlFor="c-any" className="font-normal cursor-pointer">Permitir coletar qualquer código</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="registered_only" id="c-reg" />
-                  <Label htmlFor="c-reg" className="font-normal cursor-pointer">Permitir coletar somente cadastrados</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="confirm_unknown" id="c-conf" />
-                  <Label htmlFor="c-conf" className="font-normal cursor-pointer">Pedir confirmação para desconhecidos</Label>
-                </div>
-              </RadioGroup>
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" name="collection" value="any" checked={collectionRule === 'any'} onChange={(e: any) => setCollectionRule(e.target.value)} />
+                  <span className="text-sm">Permitir coletar qualquer código</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" name="collection" value="registered_only" checked={collectionRule === 'registered_only'} onChange={(e: any) => setCollectionRule(e.target.value)} />
+                  <span className="text-sm">Permitir coletar somente cadastrados</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" name="collection" value="confirm_unknown" checked={collectionRule === 'confirm_unknown'} onChange={(e: any) => setCollectionRule(e.target.value)} />
+                  <span className="text-sm">Pedir confirmação para desconhecidos</span>
+                </label>
+              </div>
             </div>
 
             <div className="space-y-3">
               <Label className="font-bold text-purple-500">Conferência de itens (Saldo final)</Label>
-              <RadioGroup value={divergenceRule} onValueChange={(v: any) => setDivergenceRule(v)}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="ignore_uncollected" id="d-ign" />
-                  <Label htmlFor="d-ign" className="font-normal cursor-pointer">Ignorar códigos não coletados</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="zero_uncollected" id="d-zero" />
-                  <Label htmlFor="d-zero" className="font-normal cursor-pointer">Considerar todos os códigos (Zerar saldos faltantes)</Label>
-                </div>
-              </RadioGroup>
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" name="divergence" value="ignore_uncollected" checked={divergenceRule === 'ignore_uncollected'} onChange={(e: any) => setDivergenceRule(e.target.value)} />
+                  <span className="text-sm">Ignorar códigos não coletados</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" name="divergence" value="zero_uncollected" checked={divergenceRule === 'zero_uncollected'} onChange={(e: any) => setDivergenceRule(e.target.value)} />
+                  <span className="text-sm">Considerar todos os códigos (Zerar saldos faltantes)</span>
+                </label>
+              </div>
             </div>
 
           </div>
