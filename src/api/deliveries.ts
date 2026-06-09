@@ -464,25 +464,64 @@ export const deliveriesApi = {
       .order('created_at', { ascending: false })
       .limit(30)
 
-    if (err1) throw err1
+    if (err1) {
+      console.error('Error searching clients by name/order:', err1)
+      // Se der erro aqui (ex: order_number ser numerico), tenta buscar apenas por nome
+      const { data: fallback } = await supabase
+        .from('delivery_clients')
+        .select(`
+          *,
+          delivery_items(*),
+          route:delivery_routes (
+            created_at,
+            driver:users ( name ),
+            operation:operations ( load_number )
+          )
+        `)
+        .eq('company_id', currentCompanyId)
+        .ilike('name', q)
+        .order('created_at', { ascending: false })
+        .limit(30)
+        
+      if (fallback) clientsByName = fallback
+    }
 
-    const { data: clientsByRoute, error: err2 } = await supabase
-      .from('delivery_clients')
-      .select(`
-        *,
-        delivery_items(*),
-        route:delivery_routes!inner (
-          created_at,
-          driver:users ( name ),
-          operation:operations!inner ( load_number )
-        )
-      `)
+    // Busca operations matching the query
+    const { data: ops } = await supabase
+      .from('operations')
+      .select('id')
       .eq('company_id', currentCompanyId)
-      .ilike('route.operation.load_number', q)
-      .order('created_at', { ascending: false })
-      .limit(30)
+      .ilike('load_number', q)
+      .limit(10)
 
-    if (err2) throw err2
+    let clientsByRoute: any[] = []
+    if (ops && ops.length > 0) {
+      const opIds = ops.map(o => o.id)
+      const { data: routes } = await supabase
+        .from('delivery_routes')
+        .select('id')
+        .in('operation_id', opIds)
+
+      if (routes && routes.length > 0) {
+        const routeIds = routes.map(r => r.id)
+        const { data: clients } = await supabase
+          .from('delivery_clients')
+          .select(`
+            *,
+            delivery_items(*),
+            route:delivery_routes (
+              created_at,
+              driver:users ( name ),
+              operation:operations ( load_number )
+            )
+          `)
+          .in('delivery_route_id', routeIds)
+          .order('created_at', { ascending: false })
+          .limit(30)
+          
+        clientsByRoute = clients || []
+      }
+    }
 
     const merged = [...(clientsByName || []), ...(clientsByRoute || [])]
     const uniqueClients = Array.from(new Map(merged.map(c => [c.id, c])).values())
