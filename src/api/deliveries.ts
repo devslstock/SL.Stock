@@ -448,7 +448,7 @@ export const deliveriesApi = {
 
     const q = `%${query.trim()}%`
 
-    const { data: clientsByName, error: err1 } = await supabase
+    let { data: clientsByName, error: err1 } = await supabase
       .from('delivery_clients')
       .select(`
         *,
