@@ -179,8 +179,6 @@ export default function CreateReceipt() {
                const pCode = normalizeCode(prod.code)
                const pExt = prod.external_code ? normalizeCode(prod.external_code) : null
                if (pCode === normalizedCode || pExt === normalizedCode) return true
-               if (isNumStr && /^\d+$/.test(pCode) && parseInt(pCode, 10) === parseInt(normalizedCode, 10)) return true
-               if (pExt && isNumStr && /^\d+$/.test(pExt) && parseInt(pExt, 10) === parseInt(normalizedCode, 10)) return true
                return false
              })
           }
