@@ -154,8 +154,25 @@ export default function ClientHistory() {
                     </span>
                   </div>
                 </div>
-                <div className="shrink-0 text-muted-foreground">
-                  {isExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
+                <div className="flex items-center gap-3 shrink-0">
+                  {client.status !== 'pending' && client.status !== 'waiting' && client.status !== 'canceled' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleExportPDF(client)
+                      }}
+                      disabled={isExporting !== null}
+                      className="h-8 border-primary/30 text-primary hover:bg-primary/5 flex items-center gap-1.5 shadow-sm text-xs"
+                    >
+                      <FileDown className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">{isExporting === client.id ? 'Gerando...' : 'Exportar PDF'}</span>
+                    </Button>
+                  )}
+                  <div className="text-muted-foreground">
+                    {isExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
+                  </div>
                 </div>
               </div>
 
