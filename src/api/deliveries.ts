@@ -444,77 +444,68 @@ export const deliveriesApi = {
 
   async searchDeliveryProofs(query: string) {
     if (!currentCompanyId) return []
-    if (!query || query.trim().length < 2) return []
+    const cleanQuery = query?.trim() || ''
+    if (cleanQuery.length < 2) return []
 
-    const q = `%${query.trim()}%`
+    const q = `%${cleanQuery}%`
+    
+    const selectFields = `
+      *,
+      delivery_items(*),
+      route:delivery_routes (
+        created_at,
+        driver:users ( name ),
+        operation:operations ( load_number )
+      )
+    `
 
-    let { data: clientsByName, error: err1 } = await supabase
-      .from('delivery_clients')
-      .select(`
-        *,
-        delivery_items(*),
-        route:delivery_routes (
-          created_at,
-          driver:users ( name ),
-          operation:operations ( load_number )
-        )
-      `)
-      .eq('company_id', currentCompanyId)
-      .or(`name.ilike.${q},order_number.ilike.${q}`)
-      .order('created_at', { ascending: false })
-      .limit(30)
-
-    if (err1) {
-      console.error('Error searching clients by name/order:', err1)
-      // Se der erro aqui (ex: order_number ser numerico), tenta buscar apenas por nome
-      const { data: fallback } = await supabase
-        .from('delivery_clients')
-        .select(`
-          *,
-          delivery_items(*),
-          route:delivery_routes (
-            created_at,
-            driver:users ( name ),
-            operation:operations ( load_number )
-          )
-        `)
+    // Realiza buscas paralelas para evitar falhas em cascata se alguma coluna tiver tipo incompatível (ex: order_number numérico x ilike)
+    const [resName, resOrderLike, resOrderEq, opsRes] = await Promise.all([
+      // 1. Busca por nome do cliente
+      supabase.from('delivery_clients')
+        .select(selectFields)
         .eq('company_id', currentCompanyId)
         .ilike('name', q)
         .order('created_at', { ascending: false })
-        .limit(30)
+        .limit(30),
         
-      if (fallback) clientsByName = fallback
-    }
-
-    // Busca operations matching the query
-    const { data: ops } = await supabase
-      .from('operations')
-      .select('id')
-      .eq('company_id', currentCompanyId)
-      .ilike('load_number', q)
-      .limit(10)
+      // 2. Busca por número do pedido (parcial, se for texto)
+      supabase.from('delivery_clients')
+        .select(selectFields)
+        .eq('company_id', currentCompanyId)
+        .ilike('order_number', q)
+        .order('created_at', { ascending: false })
+        .limit(30),
+        
+      // 3. Busca por número do pedido (exato, funciona se for texto ou número)
+      supabase.from('delivery_clients')
+        .select(selectFields)
+        .eq('company_id', currentCompanyId)
+        .eq('order_number', cleanQuery)
+        .order('created_at', { ascending: false })
+        .limit(30),
+        
+      // 4. Busca por carga (operações)
+      supabase.from('operations')
+        .select('id')
+        .eq('company_id', currentCompanyId)
+        .ilike('load_number', q)
+        .limit(10)
+    ])
 
     let clientsByRoute: any[] = []
-    if (ops && ops.length > 0) {
-      const opIds = ops.map(o => o.id)
+    if (opsRes.data && opsRes.data.length > 0) {
+      const opIds = opsRes.data.map((o: any) => o.id)
       const { data: routes } = await supabase
         .from('delivery_routes')
         .select('id')
         .in('operation_id', opIds)
 
       if (routes && routes.length > 0) {
-        const routeIds = routes.map(r => r.id)
+        const routeIds = routes.map((r: any) => r.id)
         const { data: clients } = await supabase
           .from('delivery_clients')
-          .select(`
-            *,
-            delivery_items(*),
-            route:delivery_routes (
-              created_at,
-              driver:users ( name ),
-              operation:operations ( load_number )
-            )
-          `)
+          .select(selectFields)
           .in('delivery_route_id', routeIds)
           .order('created_at', { ascending: false })
           .limit(30)
@@ -523,9 +514,18 @@ export const deliveriesApi = {
       }
     }
 
-    const merged = [...(clientsByName || []), ...(clientsByRoute || [])]
+    // Mescla todos os resultados bem sucedidos
+    const merged = [
+      ...(resName.data || []),
+      ...(resOrderLike.data || []),
+      ...(resOrderEq.data || []),
+      ...clientsByRoute
+    ]
+    
+    // Remove duplicatas pelo ID
     const uniqueClients = Array.from(new Map(merged.map(c => [c.id, c])).values())
     
+    // Ordena do mais recente para o mais antigo
     return uniqueClients.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
 }
