@@ -13,7 +13,8 @@ import { ArrowLeft, Plus, MapPin, Play, CheckCircle2, ShieldAlert, Trash2 } from
 export default function PlannedInventoryManager() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isManager } = useAuth()
+  const { user } = useAuth()
+  const isManager = user?.role === 'admin' || user?.role === 'gestor'
   const queryClient = useQueryClient()
   
   const [newAreaName, setNewAreaName] = useState('')
