@@ -409,20 +409,44 @@ export default function ClientConference() {
           <div className="sticky top-[53px] md:top-[64px] z-20 p-4 bg-card/95 backdrop-blur-md border-b border-border shadow-sm space-y-2">
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <ScanLine className="absolute left-3 top-3 h-5 w-5 text-primary animate-pulse" />
+                <ScanLine className="absolute left-3 top-3.5 h-5 w-5 text-primary animate-pulse" />
                 <Input 
                   ref={inputRef}
                   value={scannedCode}
                   onChange={e => setScannedCode(e.target.value)}
                   onKeyDown={handleScan}
-                  placeholder="Bipe o código do produto..."
+                  placeholder="Bipar cód..."
                   className="pl-10 h-12 text-lg font-mono bg-background border-primary/30 focus-visible:border-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]"
                   autoFocus
                 />
               </div>
-              <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="outline" className="h-12 w-12 border-primary/30 text-primary hover:bg-primary/10" title="Usar câmera"><Camera className="h-5 w-5" /></Button>
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar manual..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-10 h-12 bg-background border-primary/30"
+                />
+                {showDropdown && (
+                  <div className="absolute z-50 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {filteredProducts.length > 0 ? (
+                      filteredProducts.map(p => (
+                        <div key={p.id} className="p-3 hover:bg-muted cursor-pointer flex justify-between items-center border-b border-border/50 last:border-0" onClick={() => selectManualProduct(p)}>
+                          <div>
+                            <div className="font-bold text-foreground text-sm">{p.code}</div>
+                            <div className="text-xs text-muted-foreground truncate max-w-[180px]">{p.description}</div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-sm text-muted-foreground">Nenhum produto encontrado</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="outline" className="h-12 w-12 shrink-0 border-primary/30 text-primary hover:bg-primary/10" title="Usar câmera"><Camera className="h-5 w-5" /></Button>
             </div>
-
           </div>
         )}
 
