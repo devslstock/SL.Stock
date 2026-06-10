@@ -519,16 +519,16 @@ export default function PlannedInventoryManager() {
             {/* Seção Outros */}
             <div className="bg-white rounded-md shadow-sm p-4">
               <h3 className="text-gray-500 font-medium mb-4">Outros</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-3 bg-white border-border/50 hover:bg-sky-50 transition-colors rounded-md shadow-sm" onClick={() => exportExcel('nao_coletados')}>
+              <div className="flex flex-wrap gap-4">
+                <Button variant="outline" className="h-auto w-[140px] py-6 flex flex-col items-center justify-center gap-3 bg-white border-border/50 hover:bg-sky-50 transition-colors rounded-md shadow-sm" onClick={() => exportExcel('nao_coletados')}>
                   <FileX className="h-7 w-7 text-[#0ea5e9]" />
                   <span className="text-[10px] text-[#0ea5e9] font-bold whitespace-normal text-center leading-tight">ITENS NÃO<br/>COLETADOS</span>
                 </Button>
-                <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-3 bg-white border-border/50 hover:bg-sky-50 transition-colors rounded-md shadow-sm" onClick={() => exportExcel('divergencias')}>
+                <Button variant="outline" className="h-auto w-[140px] py-6 flex flex-col items-center justify-center gap-3 bg-white border-border/50 hover:bg-sky-50 transition-colors rounded-md shadow-sm" onClick={() => exportExcel('divergencias')}>
                   <ShieldAlert className="h-7 w-7 text-[#0ea5e9]" />
                   <span className="text-[10px] text-[#0ea5e9] font-bold whitespace-normal text-center leading-tight">DIVERGÊNCIAS</span>
                 </Button>
-                <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-3 bg-white border-border/50 hover:bg-sky-50 transition-colors rounded-md shadow-sm" onClick={() => exportExcel('posicoes')}>
+                <Button variant="outline" className="h-auto w-[140px] py-6 flex flex-col items-center justify-center gap-3 bg-white border-border/50 hover:bg-sky-50 transition-colors rounded-md shadow-sm" onClick={() => exportExcel('posicoes')}>
                   <MapPin className="h-7 w-7 text-[#0ea5e9]" />
                   <span className="text-[10px] text-[#0ea5e9] font-bold whitespace-normal text-center leading-tight">POSIÇÕES</span>
                 </Button>
