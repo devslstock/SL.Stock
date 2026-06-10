@@ -504,13 +504,13 @@ export default function PlannedInventoryManager() {
                 <div className="bg-[#bce6f8] rounded-md p-6 flex flex-col items-center justify-center gap-4 text-center border border-[#9edbf5]">
                   <span className="text-[#555] font-medium">Arquivo TXT</span>
                   <Button variant="outline" className="bg-white text-[#0ea5e9] border-white hover:bg-white hover:text-[#0ea5e9] hover:shadow-md transition-all font-bold text-xs px-6 py-5" onClick={() => exportTXT()}>
-                    CONFIGURAR E BAIXAR
+                    BAIXAR
                   </Button>
                 </div>
                 <div className="bg-[#c8e6c9] rounded-md p-6 flex flex-col items-center justify-center gap-4 text-center border border-[#a5d6a7]">
                   <span className="text-[#555] font-medium">Arquivo Excel</span>
                   <Button variant="outline" className="bg-white text-[#0ea5e9] border-white hover:bg-white hover:text-[#0ea5e9] hover:shadow-md transition-all font-bold text-xs px-6 py-5" onClick={() => exportExcel('padrao')}>
-                    CONFIGURAR E BAIXAR
+                    BAIXAR
                   </Button>
                 </div>
               </div>
@@ -531,14 +531,6 @@ export default function PlannedInventoryManager() {
                 <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-3 bg-white border-border/50 hover:bg-sky-50 transition-colors rounded-md shadow-sm" onClick={() => exportExcel('posicoes')}>
                   <MapPin className="h-7 w-7 text-[#0ea5e9]" />
                   <span className="text-[10px] text-[#0ea5e9] font-bold whitespace-normal text-center leading-tight">POSIÇÕES</span>
-                </Button>
-                <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-3 bg-white border-border/50 hover:bg-sky-50 transition-colors rounded-md shadow-sm" onClick={() => exportExcel('conferencias')}>
-                  <ListChecks className="h-7 w-7 text-[#0ea5e9]" />
-                  <span className="text-[10px] text-[#0ea5e9] font-bold whitespace-normal text-center leading-tight">CONFERÊNCIAS</span>
-                </Button>
-                <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-3 bg-white border-border/50 hover:bg-sky-50 transition-colors rounded-md shadow-sm" onClick={() => exportExcel('resumo_final')}>
-                  <FileText className="h-7 w-7 text-[#0ea5e9]" />
-                  <span className="text-[10px] text-[#0ea5e9] font-bold whitespace-normal text-center leading-tight">RESUMO FINAL</span>
                 </Button>
               </div>
             </div>
