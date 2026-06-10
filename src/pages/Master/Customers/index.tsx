@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Search, Plus, Edit2, Trash2, Building2 } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, Building2, UploadCloud } from 'lucide-react'
+import Papa from 'papaparse'
 import { customersApi } from '@/api/customers'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -13,6 +14,7 @@ export default function CustomersList() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
+  const [isImporting, setIsImporting] = useState(false)
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers'],
@@ -34,6 +36,68 @@ export default function CustomersList() {
     if (window.confirm(`Deseja realmente excluir o cliente "${name}"?`)) {
       deleteMutation.mutate(id)
     }
+  }
+
+  const importMutation = useMutation({
+    mutationFn: customersApi.bulkCreateCustomers,
+    onSuccess: () => {
+      toast.success('Clientes importados com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['customers'] })
+      setIsImporting(false)
+    },
+    onError: (e: any) => {
+      toast.error(`Erro ao importar: ${e.message}`)
+      setIsImporting(false)
+    }
+  })
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        try {
+          const payload = results.data.map((row: any) => ({
+            nickname: row['Apelido'] || '',
+            fantasy_name: row['Nome fantasia'] || '',
+            legal_name: row['Razão social/Nome'] || '',
+            document: row['CNPJ/CPF'] || '',
+            document_type: (row['CNPJ/CPF'] || '').length > 14 ? 'CNPJ' : 'CPF',
+            phone1: row['Telefone 1'] || '',
+            address: row['Endereço'] || '',
+            number: row['Núm.'] || '',
+            complement: row['Complemento'] || '',
+            neighborhood: row['Bairro'] || '',
+            cep: row['CEP'] || '',
+            city: row['Município'] || '',
+            state: row['UF'] || '',
+            region: row['Região'] || '',
+            email: row['Email'] || '',
+            sales_rep: row['Representante/ vendedor'] || '',
+            active: true
+          }))
+          
+          if (payload.length === 0) {
+            toast.error('O arquivo parece estar vazio ou no formato incorreto.')
+            setIsImporting(false)
+            return
+          }
+
+          importMutation.mutate(payload)
+        } catch (e: any) {
+          toast.error('Erro ao ler a planilha. Verifique o formato.')
+          setIsImporting(false)
+        }
+      },
+      error: (e) => {
+        toast.error(`Erro ao processar arquivo: ${e.message}`)
+        setIsImporting(false)
+      }
+    })
   }
 
   const filteredCustomers = customers.filter(c => {
@@ -62,11 +126,28 @@ export default function CustomersList() {
           <p className="text-muted-foreground mt-1">Gerencie a base de clientes (CRM).</p>
         </div>
         
-        <Link to="/cadastros/clientes/novo">
-          <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
-            <Plus className="mr-2 h-4 w-4" /> Novo Cliente
-          </Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <label className="cursor-pointer">
+            <Input 
+              type="file" 
+              accept=".csv" 
+              className="hidden" 
+              onChange={handleFileUpload}
+              disabled={isImporting}
+            />
+            <Button asChild variant="outline" className="w-full sm:w-auto shadow-sm" disabled={isImporting}>
+              <span>
+                <UploadCloud className="mr-2 h-4 w-4" /> 
+                {isImporting ? 'Importando...' : 'Importar CSV'}
+              </span>
+            </Button>
+          </label>
+          <Link to="/cadastros/clientes/novo" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
+              <Plus className="mr-2 h-4 w-4" /> Novo Cliente
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="glass-card p-4">

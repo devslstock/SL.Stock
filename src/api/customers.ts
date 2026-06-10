@@ -45,6 +45,24 @@ export const customersApi = {
     return data as Customer
   },
 
+  async bulkCreateCustomers(customers: Partial<Customer>[]) {
+    if (!currentCompanyId) throw new Error('No company context')
+    
+    // We only insert customers, equipments are too complex for bulk right now
+    const payload = customers.map(c => {
+      const { equipments, ...rest } = c
+      return { ...rest, company_id: currentCompanyId }
+    })
+
+    const { data, error } = await supabase
+      .from('customers')
+      .insert(payload)
+      .select()
+      
+    if (error) throw error
+    return data as Customer[]
+  },
+
   async updateCustomer(id: string, updates: Partial<Customer>) {
     if (!currentCompanyId) throw new Error('No company context')
     const { equipments, ...customerData } = updates
