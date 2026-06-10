@@ -1171,29 +1171,7 @@ export default function Conference() {
                 </>
               )}
 
-              {returnedClientsItems.length > 0 && (
-                <>
-                  <div className="pt-6 pb-2">
-                    <h3 className="text-sm font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                      <Undo2 className="h-4 w-4" /> Devolvidos ao Estoque Físico
-                    </h3>
-                  </div>
-                  {returnedClientsItems.map((item, i) => (
-                    <div key={item.id} className="glass-card p-3 flex items-center justify-between slide-up border-amber-500/20 bg-amber-500/5" style={{ animationDelay: `${i * 50}ms` }}>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate text-amber-600 dark:text-amber-600 dark:text-amber-400">{item.description}</p>
-                        <p className="text-xs text-amber-600 dark:text-amber-600 dark:text-amber-400/70 font-mono">{item.product_code}</p>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right">
-                          <span className="text-lg font-bold font-mono text-amber-600 dark:text-amber-600 dark:text-amber-400">+{item.quantity_returned}</span>
-                          <span className="text-amber-600 dark:text-amber-600 dark:text-amber-400/70 text-sm"> retornado</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
+
             </div>
 
 
