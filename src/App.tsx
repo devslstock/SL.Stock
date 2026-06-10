@@ -61,7 +61,6 @@ import PlannedInventoryOperator from './pages/Counts/Planned/Operator'
 
 import ReceiptsList from './pages/Receipts/index'
 import CreateReceipt from './pages/Receipts/CreateReceipt'
-import CreateProduct from './pages/Master/Products/Create'
 
 // Master / Customers
 import CustomersList from './pages/Master/Customers/index'
@@ -77,7 +76,6 @@ import SignaturePad from './pages/Deliveries/SignaturePad'
 import ApprovalsPage from './pages/Approvals'
 import ClientHistory from './pages/ClientHistory'
 import { PlanGuard } from './components/PlanGuard'
-import Sectors from './pages/Sectors'
 
 function App() {
   return (
@@ -125,17 +123,12 @@ function App() {
 
             <Route path="/acesso" element={<AccessControl />} />
 
-            {/* Master Data */}
-            <Route path="cadastros/produtos" element={<Products />} />
-            <Route path="cadastros/produtos/novo" element={<CreateProduct />} />
-            <Route path="cadastros/produtos/:id" element={<CreateProduct />} />
-            
+
             <Route path="cadastros/clientes" element={<CustomersList />} />
             <Route path="cadastros/clientes/novo" element={<CustomerForm />} />
             <Route path="cadastros/clientes/:id/editar" element={<CustomerForm />} />
 
-            <Route path="cadastros/setores" element={<Sectors />} />
-            
+
             {/* SaaS Master Routes */}
             <Route path="/saas" element={<MasterPanel />} />
             <Route path="/saas/empresas" element={<MasterPanel />} />
