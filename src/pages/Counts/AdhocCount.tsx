@@ -350,7 +350,7 @@ function ActiveCountView({ countId, allProducts, onBack, user }: { countId: stri
   const processScannedBarcode = (raw: string) => {
     if (!raw.trim() || count?.status === 'completed') return
     
-    let qty = 1
+    let qty = typeof manualQty === 'number' ? manualQty : 1
     let rawCode = raw.trim()
 
     if (rawCode.includes('*')) {
@@ -387,6 +387,7 @@ function ActiveCountView({ countId, allProducts, onBack, user }: { countId: stri
     processScannedBarcode(input)
     setScanInput('')
     setSearchAddInput('')
+    setManualQty(1)
     if (!keepExtraInfo) setExtraInfo('')
   }
   
@@ -396,6 +397,7 @@ function ActiveCountView({ countId, allProducts, onBack, user }: { countId: stri
     processScannedBarcode(input)
     setScanInput('')
     setSearchAddInput('')
+    setManualQty(1)
     if (!keepExtraInfo) setExtraInfo('')
     scanRef.current?.focus()
   }
