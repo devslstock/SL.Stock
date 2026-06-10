@@ -430,7 +430,7 @@ export const deliveriesApi = {
         client:delivery_clients (
           name,
           route:delivery_routes (
-            driver:users ( name ),
+            driver:users!driver_id ( name ),
             operation:operations ( load_number )
           )
         )
