@@ -118,6 +118,14 @@ export default function RouteClients() {
     }
 
     const sorted = [...filtered].sort((a: any, b: any) => {
+      // Pedidos finalizados vão para o final da lista
+      const isFinished = (status: string) => ['delivered', 'delivered_with_divergence', 'canceled', 'returned'].includes(status)
+      const aFinished = isFinished(a.status)
+      const bFinished = isFinished(b.status)
+      
+      if (aFinished && !bFinished) return 1
+      if (!aFinished && bFinished) return -1
+
       if (sortBy === 'sequence') {
         const seqA = a.delivery_sequence || 0
         const seqB = b.delivery_sequence || 0
