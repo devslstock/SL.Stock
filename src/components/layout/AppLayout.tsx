@@ -21,7 +21,8 @@ const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', permission: 'can_view_dashboard' },
   { label: 'Cargas', icon: Truck, path: '/cargas', permission: 'can_manage_loads' },
   { label: 'Entregas', icon: MapPin, path: '/entregas', permission: 'can_do_delivery' },
-  { label: 'Vendas', icon: FileSignature, path: '/vendas/gestao', permission: 'can_manage_products' },
+  { label: 'App Força de Vendas', icon: Briefcase, path: '/vendas', permission: 'can_manage_products' },
+  { label: 'Gestão de Vendas', icon: FileSignature, path: '/vendas/gestao', permission: 'can_manage_products' },
   { label: 'Estoque', icon: Package, path: '/produtos', permission: 'can_manage_products' },
   { label: 'Acesso', icon: ShieldCheck, path: '/acesso', permission: 'can_manage_users' },
 ] as const
