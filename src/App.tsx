@@ -162,6 +162,7 @@ function App() {
             <Route path="cadastros/condicoes-pagamento" element={<PaymentConditionsList />} />
             <Route path="cadastros/condicoes-pagamento/nova" element={<PaymentConditionForm />} />
             <Route path="cadastros/condicoes-pagamento/:id/editar" element={<PaymentConditionForm />} />
+            <Route path="cadastros/configuracoes-erp" element={<SaaSSettings />} />
 
 
             {/* SaaS Master Routes */}
@@ -172,7 +173,6 @@ function App() {
             <Route path="/saas/campanhas" element={<SaaSCampanhas />} />
             <Route path="/saas/anotacoes" element={<SaaSNotes />} />
             <Route path="/saas/leads" element={<SaaSLeads />} />
-            <Route path="/saas/configuracoes" element={<SaaSSettings />} />
           </Route>
           
           {/* Sales App (Mobile Force) */}

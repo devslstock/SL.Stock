@@ -32,6 +32,7 @@ const crmItems = [
   { label: 'Regiões', icon: Map, path: '/cadastros/regioes', permission: 'can_manage_products' },
   { label: 'Tabelas de Preço', icon: Tag, path: '/cadastros/tabelas-de-preco', permission: 'can_manage_products' },
   { label: 'Condições de Pagamento', icon: Banknote, path: '/cadastros/condicoes-pagamento', permission: 'can_manage_products' },
+  { label: 'Integração ERP', icon: Settings, path: '/cadastros/configuracoes-erp', permission: 'can_manage_products' },
 ] as const
 
 export default function AppLayout() {
@@ -374,20 +375,6 @@ export default function AppLayout() {
               >
                 <Users className={cn("h-4.5 w-4.5", location.pathname === '/saas/leads' && "text-purple-500")} />
                 Leads & Contatos
-              </Link>
-
-              <Link
-                to="/saas/configuracoes"
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                  location.pathname === '/saas/configuracoes'
-                    ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
-                    : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
-                )}
-              >
-                <Settings className={cn("h-4.5 w-4.5", location.pathname === '/saas/configuracoes' && "text-purple-500")} />
-                Configurações Maxiprod
               </Link>
             </div>
           )}
