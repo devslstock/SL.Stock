@@ -1,22 +1,31 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import { Search, Plus, Edit2, Trash2, Tag } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Search, Plus, Edit2, Trash2, Tag, FileUp } from 'lucide-react'
 import { priceTablesApi } from '@/api/priceTables'
+import { productsApi } from '@/api/products'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
+import * as XLSX from 'xlsx'
 
 export default function PriceTablesList() {
   const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: priceTables = [], isLoading } = useQuery({
     queryKey: ['priceTables'],
     queryFn: priceTablesApi.getPriceTables
+  })
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: productsApi.getProducts
   })
 
   const deleteMutation = useMutation({
@@ -33,6 +42,126 @@ export default function PriceTablesList() {
   const handleDelete = (id: string, name: string) => {
     if (window.confirm(`Deseja realmente excluir a tabela "${name}"?`)) {
       deleteMutation.mutate(id)
+    }
+  }
+
+  const normalizeCode = (s: any) => s ? String(s).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const data = await file.arrayBuffer()
+      const workbook = XLSX.read(data, { type: 'array' })
+      const firstSheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[firstSheetName]
+
+      // Lê as duas primeiras linhas para pegar código e título
+      const rows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 })
+      
+      if (rows.length < 3) {
+        toast.error('O arquivo não possui o formato esperado (Código, Título, e cabeçalhos).')
+        return
+      }
+
+      const tableCode = String(rows[0][0] || '').trim()
+      const tableTitle = String(rows[1][0] || '').trim()
+
+      if (!tableTitle) {
+        toast.error('Título da tabela não encontrado na linha 2.')
+        return
+      }
+
+      // Lê os dados a partir da linha 3 (index 2) usando a linha 3 como cabeçalho
+      const json = XLSX.utils.sheet_to_json<any>(worksheet, { range: 2 })
+
+      if (json.length === 0) {
+        toast.warning('A planilha não contém produtos a partir da linha 4.')
+        return
+      }
+
+      toast.info('Criando tabela e importando itens... aguarde.')
+
+      // Cria a tabela
+      const newTable = await priceTablesApi.createPriceTable({
+        code: tableCode,
+        name: tableTitle,
+        active: true
+      })
+
+      const newItems: any[] = []
+      let notFoundCount = 0
+
+      json.forEach(row => {
+        const codeValue = row['Código'] || row['codigo'] || row['Codigo'] || row['CÓDIGO']
+        const priceValue = row['Preço'] || row['preço'] || row['Preco'] || row['PREÇO'] || row['PRECO']
+        const discountValue = row['Desconto (%)'] || row['Desconto'] || row['desconto'] || row['DESCONTO']
+
+        if (!codeValue || !priceValue) return
+
+        const codeStr = normalizeCode(String(codeValue))
+        const matchedProduct = products.find(p => normalizeCode(p.code) === codeStr || (p.external_code && normalizeCode(p.external_code) === codeStr))
+
+        if (matchedProduct) {
+          let priceNum = 0
+          if (typeof priceValue === 'number') {
+            priceNum = priceValue
+          } else {
+            const priceStrRaw = String(priceValue).split('/')[0].replace(/[^0-9,.]/g, '')
+            priceNum = parseFloat(priceStrRaw.replace(',', '.'))
+          }
+
+          let discountNum = 0
+          if (discountValue !== undefined && discountValue !== null && discountValue !== '') {
+            if (typeof discountValue === 'number') {
+               discountNum = discountValue
+            } else {
+               discountNum = parseFloat(String(discountValue).replace(',', '.'))
+            }
+          }
+
+          if (priceNum > 0) {
+            newItems.push({
+              price_table_id: newTable.id,
+              product_id: matchedProduct.id,
+              price: priceNum,
+              discount_percent: discountNum || 0,
+              max_discount_percent: discountNum || 0
+            })
+          }
+        } else {
+          notFoundCount++
+        }
+      })
+
+      // Deduplicate items by product_id
+      const uniqueItemsMap = new Map<string, any>()
+      newItems.forEach(item => {
+        uniqueItemsMap.set(item.product_id, item)
+      })
+      const finalItems = Array.from(uniqueItemsMap.values())
+
+      if (finalItems.length > 0) {
+        await priceTablesApi.bulkAddPriceTableItems(finalItems)
+        toast.success(`Tabela "${tableTitle}" criada com ${finalItems.length} produtos!`)
+        if (notFoundCount > 0) {
+          toast.warning(`${notFoundCount} códigos não encontrados no sistema.`)
+        }
+        queryClient.invalidateQueries({ queryKey: ['priceTables'] })
+        // Redireciona para a tela de edição da nova tabela
+        navigate(`/cadastros/tabelas-de-preco/${newTable.id}/editar`)
+      } else {
+        toast.warning(`Tabela criada, mas nenhum item válido foi encontrado no Excel.`)
+        queryClient.invalidateQueries({ queryKey: ['priceTables'] })
+        navigate(`/cadastros/tabelas-de-preco/${newTable.id}/editar`)
+      }
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Erro ao processar arquivo Excel ou criar tabela.')
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -61,11 +190,23 @@ export default function PriceTablesList() {
           <p className="text-muted-foreground mt-1">Gerencie as tabelas de preço que podem ser vinculadas aos clientes.</p>
         </div>
         
-        <Link to="/cadastros/tabelas-de-preco/nova">
-          <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
-            <Plus className="mr-2 h-4 w-4" /> Nova Tabela
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <input
+            type="file"
+            accept=".xlsx, .xls, .csv"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+          />
+          <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="w-full sm:w-auto shadow-sm hover:scale-105 transition-transform text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10">
+            <FileUp className="mr-2 h-4 w-4" /> Importar Excel (Nova Tabela)
           </Button>
-        </Link>
+          <Link to="/cadastros/tabelas-de-preco/nova">
+            <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
+              <Plus className="mr-2 h-4 w-4" /> Nova Tabela
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="glass-card p-4">
