@@ -17,7 +17,7 @@ export const salesRepsApi = {
   async getSalesRep(id: string) {
     const { data, error } = await supabase
       .from('sales_reps')
-      .select('*, sales_rep_regions(region(*))')
+      .select('*, sales_rep_regions(regions(*))')
       .eq('id', id)
       .single()
     if (error) throw error
