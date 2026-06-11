@@ -56,14 +56,16 @@ export default function CartReview() {
       }
 
       const orderPayload = {
-        customer_id,
-        sales_rep_id: customer?.sales_rep_id || null, // Se vendedor logado, deveria ser ele, mas a regra do coletor: vendedor = auth.user (resolvido no server/api)
-        payment_condition_id,
-        status: 'Enviado' as const, // Sempre vai como enviado para o Gestor faturar
-        subtotal_amount: subtotal,
-        discount_amount: discountAmount,
+        customer_id: customer_id as string,
+        sales_rep_id: customer?.sales_rep_id || null, 
+        payment_condition_id: payment_condition_id as string,
+        price_table_id: customer?.price_table_id || null,
+        status: 'Enviado' as const, 
+        total_amount: subtotal,
+        total_discount: discountAmount,
         net_amount: total,
-        notes
+        delivery_date: null,
+        notes: notes || null
       }
 
       const orderItemsPayload = items.map((i: any) => ({

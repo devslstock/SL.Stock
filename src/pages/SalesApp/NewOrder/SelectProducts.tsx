@@ -36,7 +36,7 @@ export default function SelectProducts() {
 
   const cartMap = useMemo(() => {
     const map = new Map<string, number>()
-    items.forEach(item => map.set(item.product_id, item.quantity))
+    items.forEach((item: any) => map.set(item.product_id, item.quantity))
     return map
   }, [items])
 

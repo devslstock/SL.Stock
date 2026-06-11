@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 export default function SelectCustomer() {
   const [searchTerm, setSearchTerm] = useState('')
   const navigate = useNavigate()
-  const setCustomer = useSalesCart(state => state.setCustomer)
+  const setCustomer = useSalesCart((state: any) => state.setCustomer)
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers'],
