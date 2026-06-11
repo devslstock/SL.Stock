@@ -42,7 +42,7 @@ export default function AppLayout() {
   const location = useLocation()
   const { theme, setTheme } = useTheme()
   const { user, company, logout, hasPermission, isMaster } = useAuth()
-  const isManager = user?.role === 'admin' || user?.role === 'gestor'
+  const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master' || isMaster
 
   const isDark = theme.includes('dark');
   const isClassic = theme.startsWith('classic-');
@@ -98,6 +98,8 @@ export default function AppLayout() {
   }
 
   const isFeatureLocked = (path: string) => {
+    if (isMaster || user?.role === 'master') return false; // Master has no limits
+
     const plan = company?.plan || 'platina' // default to platina if not set
     const requirement = getPlanRequirement(path)
     

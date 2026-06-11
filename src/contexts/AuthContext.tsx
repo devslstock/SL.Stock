@@ -157,8 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const hasPermission = (permission: keyof UserPermissions) => {
-    // Admin has all permissions implicitly
-    if (user?.role === 'admin') return true;
+    // Admin and Master have all permissions implicitly
+    if (user?.role === 'admin' || user?.role === 'master' || user?.is_super_admin) return true;
     if (!user || !user.permissions) return false;
     return user.permissions[permission] === true;
   };
