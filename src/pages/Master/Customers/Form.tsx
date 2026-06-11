@@ -400,8 +400,7 @@ export default function CustomerForm() {
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={formData.sales_rep_id}
                 onChange={e => {
-                  const rep = salesReps.find(r => r.id === e.target.value)
-                  setFormData({...formData, sales_rep_id: e.target.value, sales_rep: rep?.nickname || ''})
+                  setFormData({...formData, sales_rep_id: e.target.value})
                 }}
               >
                 <option value="">Selecione um representante...</option>
