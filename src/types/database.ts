@@ -123,6 +123,7 @@ export interface SalesRep {
   phone: string | null
   city: string | null
   state: string | null
+  commission_rate: number | null
   created_at: string
   updated_at: string
   sales_rep_regions?: { region: Region }[]

@@ -167,6 +167,7 @@ export default function SalesRepsList() {
                 <th className="px-4 py-3 font-medium">Apelido / Nome</th>
                 <th className="px-4 py-3 font-medium">Documento</th>
                 <th className="px-4 py-3 font-medium">Município/UF</th>
+                <th className="px-4 py-3 font-medium">Comissão</th>
                 <th className="px-4 py-3 font-medium">Regiões Atendidas</th>
                 <th className="px-4 py-3 font-medium text-right">Ações</th>
               </tr>
@@ -195,6 +196,9 @@ export default function SalesRepsList() {
                     <td className="px-4 py-3 font-mono text-xs">{rep.document || '-'}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {rep.city ? `${rep.city}${rep.state ? `/${rep.state}` : ''}` : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground font-mono">
+                      {rep.commission_rate ? `${rep.commission_rate}%` : '0%'}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
