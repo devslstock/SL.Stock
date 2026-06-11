@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save, Plus, Edit2, Trash2, X, DownloadCloud } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Edit2, Trash2, X, DownloadCloud, ArrowUpDown } from 'lucide-react'
 import { priceTablesApi } from '@/api/priceTables'
 import { productsApi } from '@/api/products'
 import { Input } from '@/components/ui/input'
@@ -34,6 +34,9 @@ export default function PriceTableForm() {
   // Modal State for Import By Group
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [selectedGroups, setSelectedGroups] = useState<string[]>([])
+
+  // Sorting state for items grid
+  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null)
 
   const { data: priceTable, isLoading } = useQuery({
     queryKey: ['priceTable', id],
@@ -197,11 +200,44 @@ export default function PriceTableForm() {
     bulkImportMutation.mutate(payload)
   }
 
-  if (isEditing && isLoading) {
-    return <div className="p-8 text-center text-muted-foreground">Carregando tabela de preço...</div>
-  }
-
   const items: PriceTableItem[] = priceTable?.price_table_items || []
+
+  const sortedItems = useMemo(() => {
+    let sortableItems = [...items]
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        let valA: any = ''
+        let valB: any = ''
+        
+        if (sortConfig.key === 'code') {
+          valA = a.product?.code || ''
+          valB = b.product?.code || ''
+        } else if (sortConfig.key === 'group') {
+          valA = a.product?.group_name || ''
+          valB = b.product?.group_name || ''
+        } else if (sortConfig.key === 'description') {
+          valA = a.product?.description || ''
+          valB = b.product?.description || ''
+        } else if (sortConfig.key === 'price') {
+          valA = a.price || 0
+          valB = b.price || 0
+        }
+
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1
+        return 0
+      })
+    }
+    return sortableItems
+  }, [items, sortConfig])
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc'
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
 
   return (
     <div className="space-y-6 slide-in max-w-5xl mx-auto pb-20 relative">
@@ -275,26 +311,36 @@ export default function PriceTableForm() {
             <table className="w-full text-sm text-left">
               <thead className="text-xs uppercase bg-muted/50 text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-3 font-medium w-24">Código</th>
-                  <th className="px-4 py-3 font-medium">Descrição</th>
-                  <th className="px-4 py-3 font-medium text-right">Preço</th>
+                  <th className="px-4 py-3 font-medium w-24 cursor-pointer hover:bg-muted/70 transition-colors" onClick={() => handleSort('code')}>
+                    <div className="flex items-center gap-1">Código <ArrowUpDown className="h-3 w-3 opacity-50" /></div>
+                  </th>
+                  <th className="px-4 py-3 font-medium cursor-pointer hover:bg-muted/70 transition-colors" onClick={() => handleSort('group')}>
+                    <div className="flex items-center gap-1">Grupo <ArrowUpDown className="h-3 w-3 opacity-50" /></div>
+                  </th>
+                  <th className="px-4 py-3 font-medium cursor-pointer hover:bg-muted/70 transition-colors" onClick={() => handleSort('description')}>
+                    <div className="flex items-center gap-1">Descrição <ArrowUpDown className="h-3 w-3 opacity-50" /></div>
+                  </th>
+                  <th className="px-4 py-3 font-medium text-right cursor-pointer hover:bg-muted/70 transition-colors" onClick={() => handleSort('price')}>
+                    <div className="flex items-center justify-end gap-1">Preço <ArrowUpDown className="h-3 w-3 opacity-50" /></div>
+                  </th>
                   <th className="px-4 py-3 font-medium text-center">Desc (%)</th>
                   <th className="px-4 py-3 font-medium text-center">Desc Máx (%)</th>
                   <th className="px-4 py-3 font-medium text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {items.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                {sortedItems.length === 0 ? (
+                  <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <p>Nenhum produto cadastrado nesta tabela.</p>
                       <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>Importar Produtos Cadastrados</Button>
                     </div>
                   </td></tr>
                 ) : (
-                  items.map(item => (
+                  sortedItems.map(item => (
                     <tr key={item.id} className="hover:bg-muted/30 transition-colors group">
                       <td className="px-4 py-3 font-mono text-muted-foreground">{item.product?.code || '-'}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">{item.product?.group_name || '-'}</td>
                       <td className="px-4 py-3 font-medium text-foreground">{item.product?.description || 'Produto removido'}</td>
                       <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400 font-bold">
                         R$ {item.price.toFixed(2)}
