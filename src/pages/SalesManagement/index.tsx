@@ -7,8 +7,24 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
 import { FileText, Search, FileSignature, CheckCircle, XCircle } from 'lucide-react'
-import { formatCurrency, formatDate } from '@/utils/formatters'
 import type { SalesOrder } from '@/types/database'
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value)
+}
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 
 export default function SalesManagement() {
   const queryClient = useQueryClient()
