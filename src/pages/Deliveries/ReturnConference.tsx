@@ -6,8 +6,9 @@ import { operationsApi } from '@/api/operations'
 import { productsApi } from '@/api/products'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, ScanLine, Search, CheckCircle2, AlertTriangle, PenTool, Undo2 } from 'lucide-react'
+import { ArrowLeft, ScanLine, Search, CheckCircle2, AlertTriangle, PenTool, Undo2, Camera, Plus } from 'lucide-react'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
 
 export default function ReturnConference() {
@@ -20,6 +21,7 @@ export default function ReturnConference() {
   const [showDropdown, setShowDropdown] = useState(false)
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
   const [isCameraOpen, setIsCameraOpen] = useState(false)
+  const [manualQty, setManualQty] = useState<number | ''>(1)
   
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -162,7 +164,9 @@ export default function ReturnConference() {
     if (existingItem) {
       const itemCodeKey = normalizeCode(existingItem.product_code)
       const currentScanned = scannedItemsState[itemCodeKey] || 0
-      const newQty = currentScanned + 1
+      
+      const qtyToAdd = (typeof manualQty === 'number' && manualQty > 0) ? manualQty : 1
+      const newQty = currentScanned + qtyToAdd
       
       if (newQty > existingItem.quantity_expected) {
         playBeep('error')
@@ -184,9 +188,10 @@ export default function ReturnConference() {
         // We can add it dynamically to expectedReturnItems or handle it.
         // For simplicity, let's just add it to scanned items using the prod code.
         const pCode = normalizeCode(prod.code)
+        const qtyToAdd = (typeof manualQty === 'number' && manualQty > 0) ? manualQty : 1
         setScannedItemsState(prev => ({
           ...prev,
-          [pCode]: (prev[pCode] || 0) + 1
+          [pCode]: (prev[pCode] || 0) + qtyToAdd
         }))
         
         // Push it dynamically to expected array so it renders
@@ -206,11 +211,18 @@ export default function ReturnConference() {
     }
   }
 
-  const handleScan = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && scannedCode.trim()) {
-      e.preventDefault()
+  const handleScan = (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (scannedCode.trim()) {
       processBarcode(scannedCode.trim())
       setScannedCode('')
+      setManualQty(1)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleScan()
     }
   }
 
@@ -304,39 +316,54 @@ export default function ReturnConference() {
         </div>
       </div>
 
-      <div className="p-4 bg-muted/10 sticky top-[60px] md:top-0 z-40 backdrop-blur-md border-b border-border">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <ScanLine className="h-4 w-4 text-muted-foreground" />
+      <div className="p-4 bg-muted/10 sticky top-[60px] md:top-0 z-40 backdrop-blur-md border-b border-border space-y-2">
+        <form onSubmit={handleScan} className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <div className="w-20 shrink-0">
+              <Label className="text-xs text-muted-foreground mb-1 block">Qtd</Label>
+              <Input 
+                type="number" 
+                min="1"
+                value={manualQty} 
+                onChange={e => setManualQty(e.target.value === '' ? '' : Number(e.target.value))}
+                className="h-12 text-lg text-center font-bold bg-background shadow-inner border-primary/30 focus-visible:border-primary"
+              />
             </div>
-            <Input
-              ref={inputRef}
-              type="text"
-              inputMode="none"
-              placeholder="Bipar ou digitar código..."
-              value={scannedCode}
-              onChange={(e) => setScannedCode(e.target.value)}
-              onKeyDown={handleScan}
-              className="pl-9 h-12 text-lg shadow-inner bg-background font-mono"
-              autoFocus
-            />
+            <div className="flex-1 relative">
+              <Label className="text-xs text-muted-foreground mb-1 block opacity-0">Código</Label>
+              <Input 
+                ref={inputRef}
+                type="text"
+                inputMode="none"
+                placeholder="Cod. de Barras"
+                value={scannedCode}
+                onChange={(e) => setScannedCode(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="pl-4 pr-12 h-12 text-lg shadow-inner bg-background font-mono border-primary/30 focus-visible:border-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]"
+                autoFocus
+              />
+              <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="ghost" className="absolute right-1 top-7 h-10 w-10 text-muted-foreground hover:text-primary"><Camera className="h-5 w-5" /></Button>
+            </div>
           </div>
+          <Button type="submit" className="hidden">Buscar</Button>
+        </form>
+
+        <div className="flex gap-2 shrink-0 relative mt-2">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-muted-foreground" />
             </div>
             <Input
-              placeholder="Buscar p/ descrição..."
+              placeholder="Código exato ou busque por descrição..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-9 h-12 bg-background"
+              className="pl-9 h-12 bg-background/50 border-primary/30"
             />
             {showDropdown && (
               <div className="absolute z-50 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map(p => (
-                    <div key={p.id} className="p-3 hover:bg-muted cursor-pointer flex justify-between items-center" onClick={() => selectManualProduct(p)}>
+                    <div key={p.id} className="p-3 hover:bg-muted cursor-pointer flex justify-between items-center border-b border-border/50 last:border-0" onClick={() => selectManualProduct(p)}>
                       <div>
                         <div className="font-bold text-foreground text-sm">{p.code}</div>
                         <div className="text-xs text-muted-foreground truncate max-w-[200px]">{p.description}</div>
@@ -349,6 +376,16 @@ export default function ReturnConference() {
               </div>
             )}
           </div>
+          <Button onClick={() => {
+            if (searchInput.trim()) {
+              if (filteredProducts.length === 1 && normalizeCode(filteredProducts[0].code) === normalizeCode(searchInput.trim())) {
+                selectManualProduct(filteredProducts[0])
+              } else {
+                processBarcode(searchInput.trim())
+                setSearchInput('')
+              }
+            }
+          }} className="h-12 w-12 shrink-0 border-primary/30 text-primary hover:bg-primary/10" variant="outline"><Plus className="h-5 w-5" /></Button>
         </div>
       </div>
 
