@@ -392,8 +392,9 @@ export default function CreateLoad() {
                     if (currentClientKey && clientsMap.has(currentClientKey)) {
                        const codeCell = row[2]
                        const hasRowNumber = (row[0] && /^\d+$/.test(String(row[0]).trim())) || (row[1] && /^\d+$/.test(String(row[1]).trim()))
+                       const hasQuantity = !!(row[4] || row[11] || row[10] || row[12])
                        
-                       if (codeCell && hasRowNumber) {
+                       if (codeCell && (hasRowNumber || hasQuantity)) {
                           const strCode = String(codeCell).trim()
                           if (strCode.toLowerCase() !== 'código' && strCode.toLowerCase() !== 'codigo' && strCode.length > 0 && strCode.length < 30) {
                              const normalizedCode = normalizeCode(strCode)
