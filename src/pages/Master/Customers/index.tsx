@@ -154,10 +154,10 @@ export default function CustomersList() {
                          filters.status === 'Inativos' ? c.active === false : true
                          
       // Representante
-      const matchRep = applyFilter(c.sales_rep || '', filters.representante, 'contains')
+      const matchRep = applyFilter(c.sales_rep_obj?.nickname || '', filters.representante, 'contains')
       
       // Região
-      const matchReg = applyFilter(c.region || '', filters.regiao, 'contains')
+      const matchReg = applyFilter(c.region?.name || '', filters.regiao, 'contains')
 
       return matchApelido && matchRazao && matchDoc && matchStatus && matchRep && matchReg
     })
@@ -478,7 +478,7 @@ export default function CustomersList() {
                       {customer.city ? `${customer.city}${customer.state ? `/${customer.state}` : ''}` : '-'}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs uppercase">
-                      {customer.region || '-'}
+                      {customer.region?.name || '-'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">

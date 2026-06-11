@@ -7,7 +7,7 @@ export const customersApi = {
     if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('customers')
-      .select('*')
+      .select('*, region:region_id(*), sales_rep_obj:sales_rep_id(*), price_table:price_table_id(*)')
       .eq('company_id', currentCompanyId)
       .order('nickname', { ascending: true })
     if (error) throw error
@@ -18,7 +18,7 @@ export const customersApi = {
     if (!currentCompanyId) return null
     const { data, error } = await supabase
       .from('customers')
-      .select('*, equipments:customer_equipments(*)')
+      .select('*, equipments:customer_equipments(*), region:region_id(*), sales_rep_obj:sales_rep_id(*), price_table:price_table_id(*)')
       .eq('id', id)
       .eq('company_id', currentCompanyId)
       .single()

@@ -41,12 +41,11 @@ export default function CustomerForm() {
     phone4: '',
     email: '',
     credit_limit: 0,
-    price_table: '',
-    sales_rep: '',
+    price_table_id: '',
+    sales_rep_id: '',
     payment_condition: '',
     allow_unit_price_change: false,
-    region: '',
-    sales_rep_id: '',
+    region_id: '',
     equipments: [] as any[]
   })
 
@@ -94,11 +93,10 @@ export default function CustomerForm() {
         phone4: customer.phone4 || '',
         email: customer.email || '',
         credit_limit: customer.credit_limit || 0,
-        price_table: customer.price_table || '',
-        sales_rep: customer.sales_rep || '',
+        price_table_id: customer.price_table_id || '',
         payment_condition: customer.payment_condition || '',
         allow_unit_price_change: customer.allow_unit_price_change || false,
-        region: customer.region || '',
+        region_id: customer.region_id || '',
         sales_rep_id: customer.sales_rep_id || '',
         equipments: customer.equipments || []
       })
