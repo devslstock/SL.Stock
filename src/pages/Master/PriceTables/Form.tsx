@@ -193,8 +193,15 @@ export default function PriceTableForm() {
         }
       })
 
-      if (newItems.length > 0) {
-        bulkImportMutation.mutate(newItems)
+      // Deduplicate items by product_id, keeping the last seen row's data
+      const uniqueItemsMap = new Map<string, any>()
+      newItems.forEach(item => {
+        uniqueItemsMap.set(item.product_id, item)
+      })
+      const finalItems = Array.from(uniqueItemsMap.values())
+
+      if (finalItems.length > 0) {
+        bulkImportMutation.mutate(finalItems)
         if (notFoundCount > 0) {
           toast.warning(`${notFoundCount} códigos não encontrados no cadastro de produtos.`)
         }
