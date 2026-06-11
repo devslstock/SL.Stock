@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Search, Plus, Edit2, Trash2, Building2, UploadCloud } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, Building2, UploadCloud, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
 import Papa from 'papaparse'
 import { customersApi } from '@/api/customers'
 import { Input } from '@/components/ui/input'
@@ -10,11 +10,31 @@ import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function CustomersList() {
-  const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor'
   const [isImporting, setIsImporting] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Advanced Filters State
+  const [filters, setFilters] = useState({
+    apelido: '',
+    apelidoType: 'contains', // contains, startsWith, equals
+    razaoSocial: '',
+    razaoSocialType: 'contains',
+    documento: '',
+    documentoType: 'startsWith',
+    status: 'Todos', // Todos, Ativos, Inativos
+    representante: '',
+    regiao: ''
+  })
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
+
+  // Selection State
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers'],
@@ -100,16 +120,72 @@ export default function CustomersList() {
     })
   }
 
-  const filteredCustomers = customers.filter(c => {
-    const s = searchTerm.toLowerCase()
-    return (
-      (c.nickname || '').toLowerCase().includes(s) ||
-      (c.fantasy_name || '').toLowerCase().includes(s) ||
-      (c.legal_name || '').toLowerCase().includes(s) ||
-      (c.document || '').includes(s) ||
-      (c.city || '').toLowerCase().includes(s)
-    )
-  })
+  const applyFilter = (value: string, filterValue: string, type: string) => {
+    if (!filterValue) return true
+    const v = (value || '').toLowerCase()
+    const f = filterValue.toLowerCase()
+    if (type === 'contains') return v.includes(f)
+    if (type === 'startsWith') return v.startsWith(f)
+    if (type === 'equals') return v === f
+    return true
+  }
+
+  const filteredCustomers = useMemo(() => {
+    return customers.filter(c => {
+      // Apelido (Nickname or Fantasy Name)
+      const matchApelido = applyFilter(c.nickname || c.fantasy_name || '', filters.apelido, filters.apelidoType)
+      
+      // Razão Social (Legal Name)
+      const matchRazao = applyFilter(c.legal_name || '', filters.razaoSocial, filters.razaoSocialType)
+      
+      // Documento
+      const matchDoc = applyFilter(c.document || '', filters.documento, filters.documentoType)
+      
+      // Status
+      const matchStatus = filters.status === 'Todos' ? true :
+                         filters.status === 'Ativos' ? c.active === true : 
+                         filters.status === 'Inativos' ? c.active === false : true
+                         
+      // Representante
+      const matchRep = applyFilter(c.sales_rep || '', filters.representante, 'contains')
+      
+      // Região
+      const matchReg = applyFilter(c.region || '', filters.regiao, 'contains')
+
+      return matchApelido && matchRazao && matchDoc && matchStatus && matchRep && matchReg
+    })
+  }, [customers, filters])
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage)
+  
+  // Ensure current page is valid after filtering
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(totalPages)
+  }
+
+  const paginatedCustomers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return filteredCustomers.slice(start, start + itemsPerPage)
+  }, [filteredCustomers, currentPage, itemsPerPage])
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(paginatedCustomers.map(c => c.id))
+      setSelectedIds(allIds)
+    } else {
+      setSelectedIds(new Set())
+    }
+  }
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSet = new Set(selectedIds)
+    if (checked) newSet.add(id)
+    else newSet.delete(id)
+    setSelectedIds(newSet)
+  }
+
+  const allSelected = paginatedCustomers.length > 0 && paginatedCustomers.every(c => selectedIds.has(c.id))
 
   if (!isManager) {
     return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
@@ -149,46 +225,240 @@ export default function CustomersList() {
         </div>
       </div>
 
-      <div className="glass-card p-4">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome, apelido, CNPJ/CPF ou cidade..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-10 bg-background/50 border-border/50 focus:bg-background transition-colors"
-          />
+      {/* Painel de Filtros */}
+      <div className="glass-card overflow-hidden">
+        <div 
+          className="flex justify-between items-center p-4 border-b border-border/50 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Filter className="h-4 w-4 text-primary" />
+            Filtros Avançados
+          </div>
+          {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </div>
+        
+        {showFilters && (
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in slide-in-from-top-2">
+            
+            {/* Apelido */}
+            <div className="flex gap-2 items-end">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-muted-foreground font-medium">Apelido</label>
+                <div className="flex gap-1">
+                  <select 
+                    className="h-9 rounded-md border border-input bg-background px-2 text-xs"
+                    value={filters.apelidoType}
+                    onChange={(e) => setFilters(f => ({ ...f, apelidoType: e.target.value }))}
+                  >
+                    <option value="contains">Contém</option>
+                    <option value="startsWith">Inicia com</option>
+                    <option value="equals">Igual a</option>
+                  </select>
+                  <Input 
+                    className="flex-1 h-9" 
+                    value={filters.apelido}
+                    onChange={(e) => setFilters(f => ({ ...f, apelido: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Razão Social */}
+            <div className="flex gap-2 items-end">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-muted-foreground font-medium">Razão Social</label>
+                <div className="flex gap-1">
+                  <select 
+                    className="h-9 rounded-md border border-input bg-background px-2 text-xs"
+                    value={filters.razaoSocialType}
+                    onChange={(e) => setFilters(f => ({ ...f, razaoSocialType: e.target.value }))}
+                  >
+                    <option value="contains">Contém</option>
+                    <option value="startsWith">Inicia com</option>
+                    <option value="equals">Igual a</option>
+                  </select>
+                  <Input 
+                    className="flex-1 h-9" 
+                    value={filters.razaoSocial}
+                    onChange={(e) => setFilters(f => ({ ...f, razaoSocial: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* CNPJ/CPF */}
+            <div className="flex gap-2 items-end">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-muted-foreground font-medium">CNPJ/CPF</label>
+                <div className="flex gap-1">
+                  <select 
+                    className="h-9 rounded-md border border-input bg-background px-2 text-xs"
+                    value={filters.documentoType}
+                    onChange={(e) => setFilters(f => ({ ...f, documentoType: e.target.value }))}
+                  >
+                    <option value="startsWith">Inicia com</option>
+                    <option value="contains">Contém</option>
+                    <option value="equals">Igual a</option>
+                  </select>
+                  <Input 
+                    className="flex-1 h-9" 
+                    value={filters.documento}
+                    onChange={(e) => setFilters(f => ({ ...f, documento: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Cadastro (Status)</label>
+              <select 
+                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                value={filters.status}
+                onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))}
+              >
+                <option value="Todos">Todos</option>
+                <option value="Ativos">Ativos</option>
+                <option value="Inativos">Inativos</option>
+              </select>
+            </div>
+
+            {/* Representante */}
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Representante</label>
+              <Input 
+                className="h-9" 
+                placeholder="Nome..."
+                value={filters.representante}
+                onChange={(e) => setFilters(f => ({ ...f, representante: e.target.value }))}
+              />
+            </div>
+
+            {/* Região */}
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Região</label>
+              <Input 
+                className="h-9" 
+                placeholder="Bahia, Porto Seguro..."
+                value={filters.regiao}
+                onChange={(e) => setFilters(f => ({ ...f, regiao: e.target.value }))}
+              />
+            </div>
+
+            <div className="col-span-full flex justify-end mt-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setFilters({
+                  apelido: '', apelidoType: 'contains',
+                  razaoSocial: '', razaoSocialType: 'contains',
+                  documento: '', documentoType: 'startsWith',
+                  status: 'Todos', representante: '', regiao: ''
+                })}
+              >
+                Limpar Filtros
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Barra de Ferramentas / Paginação Topo */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-muted/20 p-2 rounded-lg border border-border/50">
+        <div className="text-sm font-medium pl-2">
+          {selectedIds.size > 0 && <span className="text-primary">{selectedIds.size} selecionados</span>}
+        </div>
+        
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-muted-foreground">
+            Exibindo itens {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredCustomers.length)} de {filteredCustomers.length}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentPage(1)} disabled={currentPage === 1}
+            >
+              <span className="sr-only">Primeira</span>
+              <span className="text-xs font-bold">|&lt;</span>
+            </Button>
+            <Button 
+              variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <span className="px-2 font-medium">
+              {currentPage} de {totalPages || 1}
+            </span>
+
+            <Button 
+              variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0}
+            >
+              <span className="sr-only">Última</span>
+              <span className="text-xs font-bold">&gt;|</span>
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="glass-card overflow-hidden border border-border/50">
+      {/* Listagem */}
+      <div className="glass-card overflow-hidden border border-border/50 relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs uppercase bg-muted/50 text-muted-foreground">
               <tr>
+                <th className="px-4 py-3 w-10 text-center">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-input text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                    checked={allSelected}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Apelido / Fantasia</th>
                 <th className="px-4 py-3 font-medium">Razão Social</th>
-                <th className="px-4 py-3 font-medium">Documento</th>
-                <th className="px-4 py-3 font-medium">Cidade/UF</th>
+                <th className="px-4 py-3 font-medium">CNPJ/CPF</th>
+                <th className="px-4 py-3 font-medium">Município/UF</th>
+                <th className="px-4 py-3 font-medium">Região</th>
                 <th className="px-4 py-3 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {isLoading ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando clientes...</td></tr>
-              ) : filteredCustomers.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhum cliente encontrado.</td></tr>
+              {paginatedCustomers.length === 0 ? (
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Nenhum cliente encontrado com os filtros atuais.</td></tr>
               ) : (
-                filteredCustomers.map(customer => (
+                paginatedCustomers.map(customer => (
                   <tr key={customer.id} className="hover:bg-muted/30 transition-colors group">
+                    <td className="px-4 py-3 text-center">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-input text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                        checked={selectedIds.has(customer.id)}
+                        onChange={(e) => handleSelectOne(customer.id, e.target.checked)}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                         customer.active 
                           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
                           : 'bg-red-500/10 text-red-600 dark:text-red-400'
                       }`}>
-                        {customer.active ? 'Ativo' : 'Inativo'}
+                        {customer.active ? 'Ativa' : 'Inativa'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -199,6 +469,9 @@ export default function CustomersList() {
                     <td className="px-4 py-3 font-mono text-xs">{customer.document || '-'}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {customer.city ? `${customer.city}${customer.state ? `/${customer.state}` : ''}` : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs uppercase">
+                      {customer.region || '-'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
@@ -222,11 +495,6 @@ export default function CustomersList() {
               )}
             </tbody>
           </table>
-        </div>
-        
-        <div className="p-4 border-t border-border/50 text-xs text-muted-foreground flex justify-between items-center bg-muted/20">
-          <span>Total: <strong>{filteredCustomers.length}</strong> clientes</span>
-          <span>{customers.length} na base</span>
         </div>
       </div>
     </div>
