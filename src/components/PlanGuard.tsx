@@ -13,7 +13,7 @@ export function PlanGuard({ children, requiredPlan }: PlanGuardProps) {
   
   if (!company) return null
 
-  const plan = company.plan || 'ouro'
+  const plan = company.plan || 'platina'
 
   let isAllowed = true
   if (requiredPlan === 'prata' && plan === 'bronze') isAllowed = false

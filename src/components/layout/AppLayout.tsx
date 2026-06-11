@@ -98,7 +98,7 @@ export default function AppLayout() {
   }
 
   const isFeatureLocked = (path: string) => {
-    const plan = company?.plan || 'ouro' // default to ouro if not set
+    const plan = company?.plan || 'platina' // default to platina if not set
     const requirement = getPlanRequirement(path)
     
     if (requirement === 'bronze') return false
