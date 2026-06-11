@@ -160,6 +160,61 @@ export interface PriceTableItem {
   product?: Product // Relation
 }
 
+export interface PaymentCondition {
+  id: string
+  company_id: string
+  name: string
+  active: boolean
+  installments: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CustomerPaymentCondition {
+  id: string
+  customer_id: string
+  payment_condition_id: string
+  created_at: string
+  payment_condition?: PaymentCondition
+}
+
+export interface SalesOrder {
+  id: string
+  company_id: string
+  customer_id: string
+  sales_rep_id: string | null
+  price_table_id: string | null
+  payment_condition_id: string | null
+  status: 'Rascunho' | 'Enviado' | 'Faturado' | 'Cancelado'
+  total_amount: number
+  total_discount: number
+  net_amount: number
+  notes: string | null
+  delivery_date: string | null
+  created_at: string
+  updated_at: string
+  
+  customer?: Customer
+  sales_rep?: SalesRep
+  payment_condition?: PaymentCondition
+  price_table?: PriceTable
+  items?: SalesOrderItem[]
+}
+
+export interface SalesOrderItem {
+  id: string
+  sales_order_id: string
+  product_id: string
+  quantity: number
+  unit_price: number
+  discount_percent: number
+  net_price: number
+  total_price: number
+  created_at: string
+  
+  product?: Product
+}
+
 export interface CustomerEquipment {
   id: string
   customer_id: string
