@@ -66,19 +66,6 @@ export default function Settings() {
     }
   }
 
-  async function handleSyncStock() {
-    setIsSyncing(true)
-    try {
-      const updated = await maxiprodApi.syncProductsStock()
-      toast.success(`Estoque sincronizado! ${updated} produtos atualizados.`)
-      await loadSettings() // reload last sync date
-    } catch (e: any) {
-      toast.error(e.message || 'Falha ao sincronizar o estoque.')
-    } finally {
-      setIsSyncing(false)
-    }
-  }
-
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
@@ -116,22 +103,9 @@ export default function Settings() {
                     Salvar
                   </Button>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Você pode gerar este token dentro do painel do Maxiprod. Este token permite que o aplicativo do vendedor leia os estoques e crie pedidos em seu nome.
+                <p className="text-sm text-muted-foreground mt-4">
+                  O aplicativo enviará os pedidos para o Maxiprod automaticamente. A integração inversa de estoque está desabilitada, pois o Estoque Fácil é a fonte principal de dados.
                 </p>
-              </div>
-
-              <div className="border-t pt-4 mt-6">
-                <h4 className="text-sm font-medium mb-3 flex items-center justify-between">
-                  Status da Sincronização
-                  {lastSync && <span className="text-xs text-muted-foreground">Última sync: {new Date(lastSync).toLocaleString()}</span>}
-                </h4>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleSyncStock} disabled={isSyncing || !token}>
-                    <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                    Sincronizar Estoque Agora
-                  </Button>
-                </div>
               </div>
             </CardContent>
           </Card>
