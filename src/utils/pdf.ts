@@ -90,10 +90,25 @@ export async function generateDeliveryProofPDF(client: any, company: any): Promi
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9.5)
   doc.setTextColor(71, 85, 105) // Slate-600
+  
+  let currentY = y + 6 + (nameLines.length * 5)
+  
+  if (client.document) {
+    // Basic formatting for CNPJ or CPF
+    let formattedDoc = client.document
+    if (formattedDoc.length === 14) {
+      formattedDoc = formattedDoc.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")
+    } else if (formattedDoc.length === 11) {
+      formattedDoc = formattedDoc.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")
+    }
+    doc.text(`CNPJ/CPF: ${formattedDoc}`, 15, currentY)
+    currentY += 5
+  }
+
   const addrText = client.address || 'Endereço não informado'
   const addrLines = doc.splitTextToSize(addrText, 180)
   
-  const addrStartY = y + 6 + (nameLines.length * 5)
+  const addrStartY = currentY
   doc.text(addrLines, 15, addrStartY)
 
   y = addrStartY + (addrLines.length * 5) + 2
