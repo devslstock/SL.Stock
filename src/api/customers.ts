@@ -29,6 +29,12 @@ export const customersApi = {
   async createCustomer(customer: Partial<Customer>) {
     if (!currentCompanyId) throw new Error('No company context')
     const { equipments, ...customerData } = customer
+    
+    // Sanitize empty strings to null for UUID foreign keys
+    if (customerData.region_id === '') customerData.region_id = null
+    if (customerData.price_table_id === '') customerData.price_table_id = null
+    if (customerData.sales_rep_id === '') customerData.sales_rep_id = null
+
     const { data, error } = await supabase
       .from('customers')
       .insert([{ ...customerData, company_id: currentCompanyId }])
@@ -66,6 +72,12 @@ export const customersApi = {
   async updateCustomer(id: string, updates: Partial<Customer>) {
     if (!currentCompanyId) throw new Error('No company context')
     const { equipments, ...customerData } = updates
+
+    // Sanitize empty strings to null for UUID foreign keys
+    if (customerData.region_id === '') customerData.region_id = null
+    if (customerData.price_table_id === '') customerData.price_table_id = null
+    if (customerData.sales_rep_id === '') customerData.sales_rep_id = null
+
     const { data, error } = await supabase
       .from('customers')
       .update({ ...customerData, updated_at: new Date().toISOString() })
