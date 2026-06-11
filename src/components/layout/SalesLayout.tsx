@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { 
-  FileText, Users, Package, Menu, Search, Filter, Box
+  FileText, Users, Package, Menu, Search, Filter, Box, Sun, Moon
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/components/ThemeProvider'
 import { maxiprodApi } from '@/api/maxiprod'
 
 const navItems = [
@@ -17,6 +18,14 @@ const navItems = [
 export default function SalesLayout() {
   const location = useLocation()
   const { user } = useAuth()
+  const { theme, setTheme } = useTheme()
+  const isDark = theme.includes('dark')
+  const isClassic = theme.startsWith('classic-')
+
+  const toggleDarkLight = () => {
+    const newTheme = (isClassic ? 'classic-' : '') + (isDark ? 'light' : 'dark')
+    setTheme(newTheme as any)
+  }
 
   useEffect(() => {
     // Sincroniza em background quando o Vendedor abre o App, se necessário
@@ -26,15 +35,20 @@ export default function SalesLayout() {
   }, [user?.company_id])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-background flex flex-col font-sans text-foreground">
       {/* App Header (Mobile optimized) */}
-      <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+      <header className="flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-40 shadow-sm">
         <div className="flex items-center gap-2">
           <img src="/logo.png" alt="Logo" className="h-7 w-7 object-contain" />
-          <span className="font-bold text-gray-800 text-lg">Força de Vendas</span>
+          <span className="font-bold text-foreground text-lg">Força de Vendas</span>
         </div>
-        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-          {user?.name?.charAt(0).toUpperCase() || 'V'}
+        <div className="flex items-center gap-3">
+          <button onClick={toggleDarkLight} className="text-muted-foreground hover:text-foreground transition-colors">
+            {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+            {user?.name?.charAt(0).toUpperCase() || 'V'}
+          </div>
         </div>
       </header>
 
@@ -44,7 +58,7 @@ export default function SalesLayout() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-between px-2 pb-safe z-40">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-between px-2 pb-safe z-40">
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path)
           return (
@@ -53,7 +67,7 @@ export default function SalesLayout() {
               to={item.path}
               className={cn(
                 "flex flex-col items-center justify-center w-full py-2 gap-1 transition-colors",
-                isActive ? "text-primary" : "text-gray-400 hover:text-gray-600"
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <item.icon className={cn("h-6 w-6", isActive && "fill-primary/20")} strokeWidth={isActive ? 2.5 : 2} />

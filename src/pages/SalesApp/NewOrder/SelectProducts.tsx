@@ -121,54 +121,54 @@ export default function SelectProducts() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 pb-[140px]"> {/* Extra padding for the bottom bar */}
-      <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div className="flex flex-col h-screen bg-background pb-[140px]"> {/* Extra padding for the bottom bar */}
+      <header className="flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-10">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 -ml-2">
-            <ArrowLeft className="h-6 w-6 text-gray-700" />
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 -ml-2 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-6 w-6" />
           </Button>
-          <h1 className="font-bold text-lg text-gray-900">Adicionar Produtos</h1>
+          <h1 className="font-bold text-lg text-foreground">Adicionar Produtos</h1>
         </div>
       </header>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 flex overflow-x-auto hide-scrollbar sticky top-[52px] z-10">
+      <div className="bg-card border-b border-border flex overflow-x-auto hide-scrollbar sticky top-[52px] z-10">
         <button 
           onClick={() => setActiveTab('todos')}
-          className={`flex-1 min-w-[80px] py-3 px-2 flex flex-col items-center justify-center gap-1 border-b-2 transition-colors ${activeTab === 'todos' ? 'border-primary text-primary' : 'border-transparent text-gray-500'}`}
+          className={`flex-1 min-w-[80px] py-3 px-2 flex flex-col items-center justify-center gap-1 border-b-2 transition-colors ${activeTab === 'todos' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
         >
           <LayoutGrid className="w-5 h-5" />
           <span className="text-[10px] font-bold uppercase tracking-wider">Todos</span>
         </button>
         <button 
           onClick={() => setActiveTab('reposicoes')}
-          className={`flex-1 min-w-[90px] py-3 px-2 flex flex-col items-center justify-center gap-1 border-b-2 transition-colors ${activeTab === 'reposicoes' ? 'border-primary text-primary' : 'border-transparent text-gray-500'}`}
+          className={`flex-1 min-w-[90px] py-3 px-2 flex flex-col items-center justify-center gap-1 border-b-2 transition-colors ${activeTab === 'reposicoes' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
         >
           <History className="w-5 h-5" />
           <span className="text-[10px] font-bold uppercase tracking-wider">Reposições</span>
         </button>
         <button 
           onClick={() => setActiveTab('promocoes')}
-          className={`flex-1 min-w-[90px] py-3 px-2 flex flex-col items-center justify-center gap-1 border-b-2 transition-colors ${activeTab === 'promocoes' ? 'border-primary text-primary' : 'border-transparent text-gray-500'}`}
+          className={`flex-1 min-w-[90px] py-3 px-2 flex flex-col items-center justify-center gap-1 border-b-2 transition-colors ${activeTab === 'promocoes' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
         >
           <Tag className="w-5 h-5" />
           <span className="text-[10px] font-bold uppercase tracking-wider">Promoções</span>
         </button>
         <button 
           onClick={() => setActiveTab('destaques')}
-          className={`flex-1 min-w-[90px] py-3 px-2 flex flex-col items-center justify-center gap-1 border-b-2 transition-colors ${activeTab === 'destaques' ? 'border-primary text-primary' : 'border-transparent text-gray-500'}`}
+          className={`flex-1 min-w-[90px] py-3 px-2 flex flex-col items-center justify-center gap-1 border-b-2 transition-colors ${activeTab === 'destaques' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
         >
           <Star className="w-5 h-5" />
           <span className="text-[10px] font-bold uppercase tracking-wider">Destaques</span>
         </button>
       </div>
 
-      <div className="bg-white p-4 shadow-sm sticky top-[118px] z-10 flex items-center gap-2">
+      <div className="bg-card p-4 shadow-sm sticky top-[118px] z-10 flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input 
             placeholder="Buscar por nome ou código" 
-            className="pl-10 h-12 bg-gray-100 border-none text-base rounded-xl"
+            className="pl-10 h-12 bg-muted border-none text-base rounded-xl text-foreground"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -176,7 +176,7 @@ export default function SelectProducts() {
         <Button 
           variant="ghost" 
           size="icon" 
-          className={`h-12 w-12 shrink-0 rounded-xl ${selectedCategory && selectedCategory !== 'all' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'}`}
+          className={`h-12 w-12 shrink-0 rounded-xl ${selectedCategory && selectedCategory !== 'all' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
           onClick={() => setIsCategoryModalOpen(true)}
         >
           <Filter className="h-5 w-5" />
@@ -185,22 +185,22 @@ export default function SelectProducts() {
 
       <div className="flex-1 overflow-auto p-2">
         {loadingProducts ? (
-          <div className="p-8 text-center text-gray-500">Carregando produtos...</div>
+          <div className="p-8 text-center text-muted-foreground">Carregando produtos...</div>
         ) : filteredProducts.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">Nenhum produto encontrado.</div>
+          <div className="p-8 text-center text-muted-foreground">Nenhum produto encontrado.</div>
         ) : (
           <div className="space-y-2">
             {filteredProducts.map(product => {
               const isOutOfStock = (product.stock || 0) <= 0
               
               return (
-                <div key={product.id} className={`bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex items-center justify-between gap-3 ${product.cartQuantity > 0 ? 'ring-2 ring-primary/20 bg-primary/5' : ''}`}>
+                <div key={product.id} className={`bg-card rounded-xl p-3 shadow-sm border border-border flex items-center justify-between gap-3 ${product.cartQuantity > 0 ? 'ring-2 ring-primary/20 bg-primary/5' : ''}`}>
                   <div className="flex-1 min-w-0 py-1">
-                    <p className="text-xs text-gray-500 font-mono mb-0.5">{product.code}</p>
-                    <h3 className="font-bold text-sm text-gray-900 leading-tight mb-1">{product.description}</h3>
+                    <p className="text-xs text-muted-foreground font-mono mb-0.5">{product.code}</p>
+                    <h3 className="font-bold text-sm text-foreground leading-tight mb-1">{product.description}</h3>
                     <div className="flex items-center gap-3 mt-1.5">
                       <span className="font-bold text-emerald-600">{formatCurrency(product.finalPrice)}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm ${isOutOfStock ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm ${isOutOfStock ? 'bg-red-500/10 text-red-500' : 'bg-muted text-muted-foreground'}`}>
                         Estoque: {product.stock || 0}
                       </span>
                     </div>
@@ -212,20 +212,20 @@ export default function SelectProducts() {
                         onClick={() => handleAdd(product)}
                         disabled={isOutOfStock}
                         className={`h-10 w-24 rounded-lg font-bold text-sm transition-colors ${
-                          isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-primary/10 text-primary active:bg-primary/20'
+                          isOutOfStock ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary/10 text-primary active:bg-primary/20'
                         }`}
                       >
                         Adicionar
                       </button>
                     ) : (
-                      <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                      <div className="flex items-center gap-3 bg-card border border-border rounded-lg p-1 shadow-sm">
                         <button 
                           onClick={() => handleRemove(product)}
-                          className="h-8 w-8 rounded flex items-center justify-center bg-gray-50 text-gray-600 active:bg-gray-200"
+                          className="h-8 w-8 rounded flex items-center justify-center bg-muted text-muted-foreground active:bg-muted/80"
                         >
                           -
                         </button>
-                        <span className="w-6 text-center font-bold text-gray-900">{product.cartQuantity}</span>
+                        <span className="w-6 text-center font-bold text-foreground">{product.cartQuantity}</span>
                         <button 
                           onClick={() => handleAdd(product)}
                           className="h-8 w-8 rounded flex items-center justify-center bg-primary/10 text-primary active:bg-primary/20"
@@ -243,14 +243,14 @@ export default function SelectProducts() {
       </div>
 
       {/* Floating Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <ShoppingCart className="h-5 w-5" />
             <span className="font-medium text-sm">{getItemsCount()} itens selecionados</span>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-gray-500 uppercase font-bold">Total do Pedido</p>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold">Total do Pedido</p>
             <p className="font-bold text-xl text-emerald-600">{formatCurrency(getTotal())}</p>
           </div>
         </div>
@@ -266,17 +266,17 @@ export default function SelectProducts() {
       {/* Category Modal */}
       {isCategoryModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <div className="bg-card w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-border">
               <div className="w-10" /> {/* Spacer */}
-              <h2 className="font-bold text-lg text-gray-900">Categorias</h2>
-              <Button variant="ghost" size="icon" onClick={() => setIsCategoryModalOpen(false)} className="w-10 h-10 rounded-full">
+              <h2 className="font-bold text-lg text-foreground">Categorias</h2>
+              <Button variant="ghost" size="icon" onClick={() => setIsCategoryModalOpen(false)} className="w-10 h-10 rounded-full text-muted-foreground hover:text-foreground">
                 <X className="h-5 w-5" />
               </Button>
             </div>
             <div className="overflow-y-auto p-2">
               <button
-                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${!selectedCategory || selectedCategory === 'all' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-50'}`}
+                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${!selectedCategory || selectedCategory === 'all' ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
                 onClick={() => { setSelectedCategory('all'); setIsCategoryModalOpen(false); }}
               >
                 Selecionar todas
@@ -284,14 +284,14 @@ export default function SelectProducts() {
               {categories.map(cat => (
                 <button
                   key={cat}
-                  className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${selectedCategory === cat ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-50'}`}
+                  className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${selectedCategory === cat ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
                   onClick={() => { setSelectedCategory(cat); setIsCategoryModalOpen(false); }}
                 >
                   {cat}
                 </button>
               ))}
               <button
-                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${selectedCategory === 'sem-categoria' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-50'}`}
+                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${selectedCategory === 'sem-categoria' ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
                 onClick={() => { setSelectedCategory('sem-categoria'); setIsCategoryModalOpen(false); }}
               >
                 Produtos sem categoria
