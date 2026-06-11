@@ -93,9 +93,10 @@ export async function generateDeliveryProofPDF(client: any, company: any): Promi
   
   let currentY = y + 6 + (nameLines.length * 5)
   
-  if (client.document) {
+  const clientDoc = client.document || client.customer?.document
+  if (clientDoc) {
     // Basic formatting for CNPJ or CPF
-    let formattedDoc = client.document
+    let formattedDoc = clientDoc
     if (formattedDoc.length === 14) {
       formattedDoc = formattedDoc.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")
     } else if (formattedDoc.length === 11) {

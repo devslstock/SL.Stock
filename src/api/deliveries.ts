@@ -89,7 +89,7 @@ export const deliveriesApi = {
     if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('delivery_clients')
-      .select('*, delivery_items(*)')
+      .select('*, delivery_items(*), customer:customers(document)')
       .eq('delivery_route_id', routeId)
       .eq('company_id', currentCompanyId)
       .order('name')
@@ -101,7 +101,7 @@ export const deliveriesApi = {
     if (!currentCompanyId) return null
     const { data, error } = await supabase
       .from('delivery_clients')
-      .select('*')
+      .select('*, customer:customers(document)')
       .eq('id', clientId)
       .eq('company_id', currentCompanyId)
       .single()
@@ -457,7 +457,8 @@ export const deliveriesApi = {
         created_at,
         driver:users!driver_id ( name ),
         operation:operations ( load_number )
-      )
+      ),
+      customer:customers(document)
     `
 
     // Realiza buscas paralelas para evitar falhas em cascata se alguma coluna tiver tipo incompatível (ex: order_number numérico x ilike)
