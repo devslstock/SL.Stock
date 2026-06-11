@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import type { SalesRep } from '@/types/database'
+import { usersApi } from '@/api/users'
+import { DEFAULT_PASSWORD_HASH } from '@/utils/crypto'
 
 export default function SalesRepForm() {
   const { id } = useParams()
@@ -27,6 +29,10 @@ export default function SalesRepForm() {
   })
 
   const [regionIds, setRegionIds] = useState<string[]>([])
+  
+  // Create User State
+  const [createLogin, setCreateLogin] = useState(false)
+  const [username, setUsername] = useState('')
 
   const { data: availableRegions = [] } = useQuery({
     queryKey: ['regions'],
@@ -58,7 +64,26 @@ export default function SalesRepForm() {
   }, [rep])
 
   const saveMutation = useMutation({
-    mutationFn: (data: Partial<SalesRep>) => {
+    mutationFn: async (data: Partial<SalesRep>) => {
+      // Create user if requested
+      if (!isEditing && createLogin && username) {
+        await usersApi.createUser({
+          name: data.nickname || data.legal_name || 'Vendedor',
+          username: username,
+          password_hash: DEFAULT_PASSWORD_HASH,
+          role: 'vendedor',
+          permissions: {
+            can_view_dashboard: false,
+            can_manage_loads: false,
+            can_do_conference: false,
+            can_manage_products: false,
+            can_manage_users: false,
+            can_do_delivery: false
+          },
+          active: true
+        })
+      }
+
       if (isEditing) return salesRepsApi.updateSalesRep(id!, data, regionIds)
       return salesRepsApi.createSalesRep(data as any, regionIds)
     },
@@ -76,6 +101,10 @@ export default function SalesRepForm() {
     e.preventDefault()
     if (!formData.nickname) {
       toast.error('O apelido/nome é obrigatório')
+      return
+    }
+    if (!isEditing && createLogin && !username) {
+      toast.error('Informe o usuário de login para o vendedor')
       return
     }
     saveMutation.mutate(formData)
@@ -169,6 +198,39 @@ export default function SalesRepForm() {
             </div>
           </div>
         </div>
+
+        {/* User Account Creation */}
+        {!isEditing && (
+          <div className="pt-4 border-t border-border/50">
+            <h3 className="text-lg font-medium mb-4">Acesso ao Aplicativo</h3>
+            <div className="space-y-4 max-w-sm">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="rounded border-input text-primary focus:ring-primary w-4 h-4"
+                  checked={createLogin}
+                  onChange={e => setCreateLogin(e.target.checked)}
+                />
+                <span className="text-sm font-medium">Criar login de Vendedor?</span>
+              </label>
+              
+              {createLogin && (
+                <div className="space-y-2 pl-6 animate-in slide-in-from-top-2">
+                  <label className="text-sm font-medium">Usuário de Login *</label>
+                  <Input
+                    required
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    placeholder="Ex: joao.vendedor"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    A senha inicial será <strong>123456</strong>.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Regions */}
         <div className="pt-4 border-t border-border/50">
