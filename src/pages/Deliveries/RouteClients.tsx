@@ -206,11 +206,11 @@ export default function RouteClients() {
           const col3 = typeof row[2] === 'string' ? row[2].trim() : ''
 
           // ==== TEMPLATE ESTOQUE FACIL ====
-          if (col1 === 'Numero de pedido:' || col2 === 'Numero de pedido:') {
-             currentOrderNumber = (col1 === 'Numero de pedido:' ? col2 : col3).replace(/[^\d]/g, '')
+          if (col1.includes('Numero de pedido') || col2.includes('Numero de pedido')) {
+             currentOrderNumber = (col1.includes('Numero de pedido') ? col2 : col3).replace(/[^\d]/g, '')
           }
-          if (col1 === 'Razao Social:' || col2 === 'Razao Social:') {
-             const rawName = col1 === 'Razao Social:' ? col2 : col3
+          if (col1.includes('Razao Social') || col2.includes('Razao Social')) {
+             const rawName = col1.includes('Razao Social') ? col2 : col3
              currentClientName = rawName.replace(/[()]/g, '').trim()
              currentClientKey = currentOrderNumber ? `${currentClientName}_${currentOrderNumber}` : currentClientName
              
@@ -227,9 +227,9 @@ export default function RouteClients() {
                 })
              }
           }
-          if (col1 === 'CNPJ:' || col2 === 'CNPJ:') {
+          if (col1.includes('CNPJ') || col2.includes('CNPJ') || col1.includes('CPF') || col2.includes('CPF')) {
              if (currentClientKey && clientsMap.has(currentClientKey)) {
-                clientsMap.get(currentClientKey).document = String(col1 === 'CNPJ:' ? col2 : col3).replace(/[^\d]/g, '')
+                clientsMap.get(currentClientKey).document = String((col1.includes('CNPJ') || col1.includes('CPF')) ? col2 : col3).replace(/[^\d]/g, '')
              }
           }
           if (col1 === 'Endereço' || col2 === 'Endereço') {
