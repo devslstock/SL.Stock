@@ -34,23 +34,26 @@ create table if not exists public.customers (
 alter table public.customers enable row level security;
 
 create policy "Users can view customers of their company" on public.customers
-    for select using (company_id = (select company_id from public.users where id = auth.uid()));
+    for select using (
+        company_id = (select company_id from public.users where id = auth.uid()) OR
+        (select company_id from public.users where id = auth.uid()) IS NULL
+    );
 
 create policy "Admins/Gestors can insert customers" on public.customers
     for insert with check (
-        company_id = (select company_id from public.users where id = auth.uid()) and
+        (company_id = (select company_id from public.users where id = auth.uid()) OR (select company_id from public.users where id = auth.uid()) IS NULL) and
         exists (select 1 from public.users where id = auth.uid() and role in ('admin', 'gestor'))
     );
 
 create policy "Admins/Gestors can update customers" on public.customers
     for update using (
-        company_id = (select company_id from public.users where id = auth.uid()) and
+        (company_id = (select company_id from public.users where id = auth.uid()) OR (select company_id from public.users where id = auth.uid()) IS NULL) and
         exists (select 1 from public.users where id = auth.uid() and role in ('admin', 'gestor'))
     );
 
 create policy "Admins/Gestors can delete customers" on public.customers
     for delete using (
-        company_id = (select company_id from public.users where id = auth.uid()) and
+        (company_id = (select company_id from public.users where id = auth.uid()) OR (select company_id from public.users where id = auth.uid()) IS NULL) and
         exists (select 1 from public.users where id = auth.uid() and role in ('admin', 'gestor'))
     );
 
@@ -72,11 +75,14 @@ create table if not exists public.customer_equipments (
 alter table public.customer_equipments enable row level security;
 
 create policy "Users can view equipments of their company" on public.customer_equipments
-    for select using (company_id = (select company_id from public.users where id = auth.uid()));
+    for select using (
+        company_id = (select company_id from public.users where id = auth.uid()) OR
+        (select company_id from public.users where id = auth.uid()) IS NULL
+    );
 
 create policy "Admins/Gestors can manage equipments" on public.customer_equipments
     for all using (
-        company_id = (select company_id from public.users where id = auth.uid()) and
+        (company_id = (select company_id from public.users where id = auth.uid()) OR (select company_id from public.users where id = auth.uid()) IS NULL) and
         exists (select 1 from public.users where id = auth.uid() and role in ('admin', 'gestor'))
     );
 
