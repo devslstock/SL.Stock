@@ -72,7 +72,8 @@ export default function CartReview() {
         product_id: i.product_id,
         quantity: i.quantity,
         unit_price: i.price,
-        discount_perc: discountPerc,
+        discount_percent: discountPerc,
+        net_price: i.price * (1 - (discountPerc / 100)),
         total_price: (i.price * i.quantity) * (1 - (discountPerc / 100))
       }))
 

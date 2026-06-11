@@ -1,4 +1,5 @@
-import { create, StoreApi } from 'zustand'
+import { create } from 'zustand'
+import type { StoreApi } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export interface CartItem {
