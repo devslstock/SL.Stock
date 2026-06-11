@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save, Plus, Edit2, Trash2, X, DownloadCloud, ArrowUpDown } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Edit2, Trash2, X, DownloadCloud, ArrowUpDown, FileUp } from 'lucide-react'
 import { priceTablesApi } from '@/api/priceTables'
 import { productsApi } from '@/api/products'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import type { PriceTableItem } from '@/types/database'
+import * as XLSX from 'xlsx'
 
 export default function PriceTableForm() {
   const { id } = useParams()
@@ -20,6 +21,8 @@ export default function PriceTableForm() {
     code: '',
     name: ''
   })
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Modal State for Single Item
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -124,6 +127,87 @@ export default function PriceTableForm() {
       toast.error(`Erro ao importar: ${e.message}`)
     }
   })
+
+  const normalizeCode = (s: any) => s ? String(s).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const data = await file.arrayBuffer()
+      const workbook = XLSX.read(data, { type: 'array' })
+      const firstSheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[firstSheetName]
+      const json = XLSX.utils.sheet_to_json<any>(worksheet)
+
+      if (json.length === 0) {
+        toast.warning('A planilha está vazia.')
+        return
+      }
+
+      const newItems: any[] = []
+      let notFoundCount = 0
+
+      json.forEach(row => {
+        // Tenta buscar as colunas Código, Preço e Desconto (%)
+        const codeValue = row['Código'] || row['codigo'] || row['Codigo'] || row['CÓDIGO']
+        const priceValue = row['Preço'] || row['preço'] || row['Preco'] || row['PREÇO'] || row['PRECO']
+        const discountValue = row['Desconto (%)'] || row['Desconto'] || row['desconto'] || row['DESCONTO']
+
+        if (!codeValue || !priceValue) return
+
+        const codeStr = normalizeCode(String(codeValue))
+        const matchedProduct = products.find(p => normalizeCode(p.code) === codeStr || (p.external_code && normalizeCode(p.external_code) === codeStr))
+
+        if (matchedProduct) {
+          // Extrair o preço se vier no formato 101,68/un
+          let priceNum = 0
+          if (typeof priceValue === 'number') {
+            priceNum = priceValue
+          } else {
+            const priceStrRaw = String(priceValue).split('/')[0].replace(/[^0-9,.]/g, '') // pega a parte antes da barra e limpa
+            priceNum = parseFloat(priceStrRaw.replace(',', '.'))
+          }
+
+          let discountNum = 0
+          if (discountValue !== undefined && discountValue !== null && discountValue !== '') {
+            if (typeof discountValue === 'number') {
+               discountNum = discountValue
+            } else {
+               discountNum = parseFloat(String(discountValue).replace(',', '.'))
+            }
+          }
+
+          if (priceNum > 0) {
+            newItems.push({
+              price_table_id: id,
+              product_id: matchedProduct.id,
+              price: priceNum,
+              discount_percent: discountNum || 0,
+              max_discount_percent: discountNum || 0
+            })
+          }
+        } else {
+          notFoundCount++
+        }
+      })
+
+      if (newItems.length > 0) {
+        bulkImportMutation.mutate(newItems)
+        if (notFoundCount > 0) {
+          toast.warning(`${notFoundCount} códigos não encontrados no cadastro de produtos.`)
+        }
+      } else {
+        toast.error('Nenhum item válido encontrado ou produtos não cadastrados.')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Erro ao processar arquivo Excel.')
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -298,6 +382,16 @@ export default function PriceTableForm() {
           <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/10">
             <h2 className="text-lg font-semibold">Produtos/Serviços</h2>
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                type="file"
+                accept=".xlsx, .xls, .csv"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+              />
+              <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="shadow-sm hover:scale-105 transition-transform flex-1 sm:flex-auto text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10">
+                <FileUp className="h-4 w-4 mr-2" /> Importar Excel
+              </Button>
               <Button onClick={() => setIsImportModalOpen(true)} variant="secondary" size="sm" className="shadow-sm hover:scale-105 transition-transform flex-1 sm:flex-auto">
                 <DownloadCloud className="h-4 w-4 mr-2" /> Importar por Grupo
               </Button>

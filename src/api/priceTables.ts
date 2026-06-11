@@ -71,7 +71,7 @@ export const priceTablesApi = {
     if (items.length === 0) return []
     const { data, error } = await supabase
       .from('price_table_items')
-      .insert(items)
+      .upsert(items, { onConflict: 'price_table_id, product_id' })
       .select()
     if (error) throw error
     return data
