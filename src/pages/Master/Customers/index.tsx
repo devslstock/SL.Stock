@@ -66,7 +66,7 @@ export default function CustomersList() {
             fantasy_name: row['Nome fantasia'] || '',
             legal_name: row['Razão social/Nome'] || '',
             document: row['CNPJ/CPF'] || '',
-            document_type: (row['CNPJ/CPF'] || '').length > 14 ? 'CNPJ' : 'CPF',
+            document_type: ((row['CNPJ/CPF'] || '').length > 14 ? 'CNPJ' : 'CPF') as 'CNPJ' | 'CPF',
             phone1: row['Telefone 1'] || '',
             address: row['Endereço'] || '',
             number: row['Núm.'] || '',
@@ -128,19 +128,18 @@ export default function CustomersList() {
         
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <label className="cursor-pointer">
+            <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm" disabled={isImporting} onClick={() => document.getElementById('csv-upload')?.click()}>
+              <UploadCloud className="mr-2 h-4 w-4" /> 
+              {isImporting ? 'Importando...' : 'Importar CSV'}
+            </Button>
             <Input 
+              id="csv-upload"
               type="file" 
               accept=".csv" 
               className="hidden" 
               onChange={handleFileUpload}
               disabled={isImporting}
             />
-            <Button asChild variant="outline" className="w-full sm:w-auto shadow-sm" disabled={isImporting}>
-              <span>
-                <UploadCloud className="mr-2 h-4 w-4" /> 
-                {isImporting ? 'Importando...' : 'Importar CSV'}
-              </span>
-            </Button>
           </label>
           <Link to="/cadastros/clientes/novo" className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
