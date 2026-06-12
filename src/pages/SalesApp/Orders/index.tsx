@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { salesApi } from '@/api/sales'
 import { formatCurrency, formatDate } from '@/utils/formatters'
-import { Search, Plus, Filter, AlertCircle, ShoppingCart } from 'lucide-react'
+import { Search, Plus, Printer, Settings, FileText, Store, Calendar, DollarSign, MessageSquare, FileDigit } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
 export default function SalesOrders() {
-  const [activeTab, setActiveTab] = useState<'all' | 'drafts'>('all')
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
 
   const { data: orders = [], isLoading } = useQuery({
@@ -16,156 +16,149 @@ export default function SalesOrders() {
     queryFn: salesApi.getSalesOrders,
   })
 
-  // No Mercos a tela de Pedidos é a principal e o "Não enviados" corresponde aos Rascunhos
   const filteredOrders = orders.filter(o => {
-    if (activeTab === 'drafts' && o.status !== 'Rascunho') return false
-    
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
-      return o.customer?.fantasy_name?.toLowerCase().includes(term) ||
+      return o.id.toLowerCase().includes(term) ||
+             o.customer?.fantasy_name?.toLowerCase().includes(term) ||
              o.customer?.legal_name?.toLowerCase().includes(term)
     }
     return true
   })
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Rascunho': return 'text-amber-500'
-      case 'Enviado': return 'text-blue-500'
-      case 'Faturado': return 'text-emerald-500'
-      case 'Cancelado': return 'text-red-500'
-      default: return 'text-gray-500'
-    }
+  // Group by date logic (mocking "HOJE" for all to match the design)
+  const groupedOrders = {
+    'HOJE': filteredOrders
   }
 
-  const draftsCount = orders.filter(o => o.status === 'Rascunho').length
+  const getStatusBadge = (status: string) => {
+    if (status === 'Rascunho') {
+      return <span className="bg-yellow-200 text-yellow-800 text-[11px] font-bold px-3 py-1 rounded-full">Em orçamento</span>
+    }
+    return <span className="bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">Concluído</span>
+  }
 
   return (
-    <div className="flex flex-col h-full bg-background pb-6">
-      <div className="bg-card p-4 space-y-4 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+    <div className="flex flex-col min-h-screen bg-[#fafafa]">
+      
+      {/* Top Tabs */}
+      <div className="bg-white border-b border-gray-200 px-4 md:px-8 pt-4 flex gap-6 overflow-x-auto">
+        <div className="flex items-center gap-2 pb-3 border-b-2 border-primary text-primary font-bold text-xs tracking-wider cursor-pointer whitespace-nowrap">
+          <FileText className="h-4 w-4" /> PEDIDOS
+        </div>
+        <div className="flex items-center gap-2 pb-3 text-muted-foreground hover:text-foreground font-semibold text-xs tracking-wider cursor-pointer transition-colors whitespace-nowrap">
+          <Settings className="h-4 w-4" /> CONFIGURAÇÕES
+        </div>
+      </div>
+
+      <div className="p-4 md:p-8 max-w-[1200px] w-full mx-auto">
+        
+        {/* Toolbar */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link to="/vendas/novo-pedido/clientes">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4 h-10 shadow-sm rounded-md">
+                <Plus className="h-4 w-4 mr-2" /> Criar pedido / orçamento
+              </Button>
+            </Link>
+            
+            <Button variant="outline" className="text-primary border-border bg-white font-semibold px-4 h-10 rounded-md">
+              <span className="font-bold mr-2 text-lg">✦</span> Criar com IA no WhatsApp
+            </Button>
+            
+            <Button variant="outline" className="text-primary border-border bg-white font-semibold px-4 h-10 rounded-md">
+              <Printer className="h-4 w-4 mr-2" /> Imprimir pedidos
+            </Button>
+          </div>
+
+          <div className="relative w-full md:w-[320px]">
             <Input 
-              placeholder="Buscar pedido ou orçamento" 
-              className="pl-10 h-12 bg-muted border-none text-base rounded-xl text-foreground"
+              placeholder="Pedido, cliente ou representada" 
+              className="pr-10 h-10 border-border bg-white rounded-md text-sm shadow-sm"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="absolute -bottom-5 right-0 text-[9px] text-muted-foreground hidden md:block">
+              ▾ Pesquise por nota fiscal, data de emissão, etc.
+            </div>
           </div>
-          <Link to="/vendas/novo-pedido/clientes">
-            <Button size="icon" className="h-12 w-12 rounded-xl shrink-0">
-              <Plus className="h-6 w-6" />
-            </Button>
-          </Link>
         </div>
 
-        {/* Tabs */}
-        <div className="flex p-1 bg-muted rounded-lg">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
-              activeTab === 'all' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Todos
-          </button>
-          <button
-            onClick={() => setActiveTab('drafts')}
-            className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'drafts' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Não enviados
-            {draftsCount > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                {draftsCount}
-              </span>
-            )}
-          </button>
+        {/* Filters Summary */}
+        <div className="text-[11px] text-muted-foreground mb-8 mt-6 font-medium leading-relaxed">
+          Mostrando <span className="text-primary font-semibold cursor-pointer hover:underline">Pedidos ativos ▾</span> feitos por <span className="text-primary font-semibold cursor-pointer hover:underline">Todos os vendedores ▾</span> via <span className="text-primary font-semibold cursor-pointer hover:underline">Todas as plataformas ▾</span> Sem considerar o envio ▾ com <span className="text-primary font-semibold cursor-pointer hover:underline">Qualquer status ▾</span>
         </div>
 
-        {/* Legend */}
-        <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground pt-1 font-medium">
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-sm bg-amber-500" /> Em orçamento</div>
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Faturado</div>
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-sm bg-blue-500" /> Enviado</div>
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-sm bg-red-500" /> Cancelado</div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto">
+        {/* List */}
         {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground">Carregando pedidos...</div>
+          <div className="text-center text-muted-foreground py-12">Carregando pedidos...</div>
         ) : filteredOrders.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground flex flex-col items-center">
-            <ShoppingCart className="h-12 w-12 mb-3 opacity-50" />
-            <p>Nenhum pedido encontrado.</p>
-          </div>
+          <div className="text-center text-muted-foreground py-12">Nenhum pedido encontrado.</div>
         ) : (
-          <div className="divide-y divide-border">
-            {filteredOrders.map(order => (
-              <Link key={order.id} to={`/vendas/pedidos/${order.id}`} className="block bg-card p-4 hover:bg-muted/50 active:bg-muted transition-colors">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircleIcon status={order.status} />
-                    <span className={`font-bold text-sm ${order.status === 'Rascunho' ? 'text-amber-600' : 'text-emerald-600'}`}>
-                      {order.status === 'Rascunho' ? 'Orçamento' : 'Pedido'} #{order.id.slice(0, 5).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{order.sales_rep?.nickname || 'Vendedor'}</span>
-                    <div className={`w-2.5 h-2.5 ${getStatusColor(order.status).replace('text-', 'bg-')} ${order.status === 'Rascunho' ? 'clip-triangle' : 'rounded-full'}`} />
-                  </div>
-                </div>
+          Object.entries(groupedOrders).map(([dateLabel, orders]) => (
+            <div key={dateLabel} className="mb-12">
+              <h3 className="text-muted-foreground text-xs font-semibold tracking-wider mb-3">{dateLabel}</h3>
+              <div className="space-y-3">
+                {orders.map(order => (
+                  <div key={order.id} onClick={() => navigate(`/vendas/pedidos/${order.id}`)} className="bg-white border border-border rounded-md p-4 md:p-5 hover:border-primary/50 cursor-pointer transition-colors shadow-sm relative group flex justify-between items-start">
+                    
+                    {/* Left Side */}
+                    <div className="flex flex-col gap-3">
+                      <div className="text-xs font-medium text-foreground">
+                        <span className="text-primary font-bold">#{order.id.slice(0, 5).toUpperCase()}</span> emitido por <span className="uppercase text-muted-foreground">{order.sales_rep?.name || 'Vendedor'}</span>
+                      </div>
+                      
+                      {order.customer && (
+                        <div className="text-[10px] text-muted-foreground uppercase flex flex-col gap-1.5 ml-0.5">
+                          <div className="flex items-center gap-2">
+                            <Store className="h-3.5 w-3.5 text-muted-foreground/60" /> {order.customer.legal_name || order.customer.fantasy_name}
+                          </div>
+                          {order.customer.fantasy_name && order.customer.fantasy_name !== order.customer.legal_name && (
+                            <div className="ml-5 text-muted-foreground/80">{order.customer.fantasy_name}</div>
+                          )}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground/60" /> {order.payment_condition?.name || 'A VISTA'}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-1.5 mt-2 font-bold text-sm text-foreground">
+                        {order.status === 'Rascunho' ? (
+                          <span className="text-foreground text-xs">{formatCurrency(order.net_amount || 0)}</span>
+                        ) : (
+                          <>
+                            <div className="bg-emerald-500 rounded-full flex items-center justify-center h-4 w-4">
+                               <DollarSign className="h-3 w-3 text-white" />
+                            </div>
+                            <span className="text-foreground">{formatCurrency(order.net_amount || 0)}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="flex items-start gap-2 mb-3">
-                  <div className="mt-0.5">
-                    <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
+                    {/* Right Side */}
+                    <div className="flex flex-col justify-between items-end h-full min-h-[80px]">
+                      {getStatusBadge(order.status)}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground uppercase line-clamp-1">{order.customer?.fantasy_name || order.customer?.legal_name}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{order.customer?.address || 'Sem endereço'}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-end justify-between mt-1">
-                  <div className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    <span className="bg-muted p-0.5 rounded text-[10px]">R$</span>
-                    {order.payment_condition?.name || 'Condição não informada'}
-                  </div>
-                  <div className="font-bold text-lg text-foreground">
-                    {formatCurrency(order.net_amount)}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                ))}
+              </div>
+            </div>
+          ))
         )}
+
       </div>
-
-      <style>{`
-        .clip-triangle {
-          clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-        }
-      `}</style>
+      
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 flex flex-col gap-3">
+        <div className="h-10 w-10 bg-white border border-border rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-muted transition-colors ml-auto text-primary">
+          <FileDigit className="h-5 w-5" />
+        </div>
+        <div className="h-14 w-14 bg-primary rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors text-primary-foreground">
+          <MessageSquare className="h-6 w-6" />
+        </div>
+      </div>
     </div>
-  )
-}
-
-function CheckCircleIcon({ status }: { status: string }) {
-  if (status === 'Rascunho') {
-    return (
-      <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
-    )
-  }
-  return (
-    <svg className="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
   )
 }
