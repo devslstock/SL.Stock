@@ -34,17 +34,17 @@
   :root {
     --primary: #4f46e5;
     --primary-foreground: #ffffff;
-    --secondary: #e0e7ff;
-    --accent: #7c3aed;
+    --secondary: #f1f5f9;
+    --accent: #6366f1;
     --accent-foreground: #ffffff;
-    --background: #f1f5f9;
+    --background: #f8fafc;
     --foreground: #0f172a;
     --card: #ffffff;
     --card-foreground: #0f172a;
-    --muted: #e2e8f0;
-    --muted-foreground: #334155;
-    --border: #cbd5e1;
-    --input: #94a3b8;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
     --ring: #4f46e5;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;

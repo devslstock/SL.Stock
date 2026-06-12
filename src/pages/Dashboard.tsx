@@ -1,263 +1,303 @@
-import { useMemo, useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { operationsApi } from '@/api/operations'
-import { productsApi } from '@/api/products'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Truck,
-  PackageCheck,
   Clock,
   CheckCircle2,
+  AlertTriangle,
   ChevronRight,
-  Plus,
-  MapPin,
-  ChevronDown,
-  Package,
+  PackageX,
+  PackageMinus
 } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useAuth } from '@/contexts/AuthContext'
-import { deliveriesApi } from '@/api/deliveries'
+
+const mockChartData = [
+  { time: '00h', total: 0, rota: 0, finalizadas: 0 },
+  { time: '04h', total: 1, rota: 0, finalizadas: 0 },
+  { time: '08h', total: 2, rota: 1, finalizadas: 0 },
+  { time: '12h', total: 4, rota: 2, finalizadas: 0 },
+  { time: '16h', total: 6, rota: 3, finalizadas: 1 },
+  { time: '20h', total: 6, rota: 3, finalizadas: 1 },
+  { time: '24h', total: 6, rota: 3, finalizadas: 1 },
+]
+
+const mockLoads = [
+  { id: '302', status: 'Pendente', origem: 'Orlando', previsao: '12/05 • 14:00', motorista: '---' },
+  { id: '301', status: 'Em Rota', origem: 'Orlando', previsao: '12/05 • 10:30', motorista: 'João Silva' },
+  { id: '300', status: 'Em Rota', origem: 'Itacaré', previsao: '12/05 • 09:00', motorista: 'Carlos Lima' },
+  { id: '299', status: 'Pendente', origem: 'Salvador', previsao: '13/05 • 08:30', motorista: '---' },
+  { id: '298', status: 'Finalizada', origem: 'Vitória da Conquista', previsao: '11/05 • 16:40', motorista: 'Marcos Neto' },
+]
+
+const statusColors: any = {
+  'Pendente': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-500 dark:border-amber-500/20',
+  'Em Rota': 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-500 dark:border-blue-500/20',
+  'Finalizada': 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-500 dark:border-emerald-500/20',
+}
 
 export default function Dashboard() {
   const { user } = useAuth()
-  const isManager = user?.role === 'admin' || user?.role === 'gestor'
-  const isDriverOrHelper = user?.role === 'motorista' || user?.role === 'ajudante'
-  const isConferente = user?.role === 'conferente'
-
-  const [isLoadsRecentExpanded, setIsLoadsRecentExpanded] = useState(true)
-  const [isDeliveriesRecentExpanded, setIsDeliveriesRecentExpanded] = useState(true)
-
-  const showLoads = isManager || isConferente
-  const showDeliveries = isManager || isDriverOrHelper
-
-  const { data: operations = [], isLoading: isLoadingOp } = useQuery({
-    queryKey: ['operations'],
-    queryFn: operationsApi.getOperations,
-    enabled: showLoads,
-  })
-
-  const { data: deliveries = [], isLoading: isLoadingDel } = useQuery({
-    queryKey: ['delivery_routes'],
-    queryFn: deliveriesApi.getDeliveryRoutes,
-    enabled: showDeliveries,
-  })
-
-  const { data: products = [] } = useQuery({
-    queryKey: ['products'],
-    queryFn: productsApi.getProducts,
-    enabled: isManager,
-  })
-
-  const lowStockProducts = useMemo(() => {
-    return products.filter(p => p.min_stock_alert !== undefined && p.min_stock_alert > 0 && p.stock < p.min_stock_alert)
-  }, [products])
-
-  const loadStats = useMemo(() => {
-    return {
-      total: operations.length,
-      pending: operations.filter(l => l.status === 'pending').length,
-      dispatched: operations.filter(l => l.status === 'dispatched').length,
-      completed: operations.filter(l => l.status === 'completed').length,
-    }
-  }, [operations])
-
-  const deliveryStats = useMemo(() => {
-    const relevantDeliveries = isDriverOrHelper 
-      ? deliveries.filter((r: any) => r.driver_id === user?.id || r.helper_id === user?.id) 
-      : deliveries
-
-    return {
-      total: relevantDeliveries.length,
-      pending: relevantDeliveries.filter((l: any) => l.status === 'pending').length,
-      dispatched: relevantDeliveries.filter((l: any) => l.status === 'in_progress').length,
-      completed: relevantDeliveries.filter((l: any) => l.status === 'completed').length,
-    }
-  }, [deliveries, isDriverOrHelper, user?.id])
-
-  const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success' }> = {
-    pending: { label: 'Pendente', variant: 'warning' },
-    in_progress: { label: 'Conferindo', variant: 'default' },
-    dispatched: { label: 'Em Rota', variant: 'warning' },
-    completed: { label: 'Finalizada', variant: 'success' },
-  }
-
-  const isLoading = (showLoads && isLoadingOp) || (showDeliveries && isLoadingDel)
-
-  if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground">Carregando dashboard...</div>
-  }
-
+  
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold gradient-text">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Visão geral das operações logísticas</p>
-        </div>
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">Visão geral das operações logísticas</p>
       </div>
 
-      {isManager && lowStockProducts.length > 0 && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl p-4 flex items-center justify-between gap-4 animate-pulse">
-          <div className="flex items-center gap-3">
-            <Package className="h-6 w-6 shrink-0" />
-            <div>
-              <p className="font-bold text-sm">Alerta de Estoque Baixo!</p>
-              <p className="text-xs opacity-90 font-medium">Há {lowStockProducts.length} produto(s) abaixo do limite mínimo definido.</p>
-            </div>
-          </div>
-          <Link to="/produtos">
-            <Button size="sm" variant="destructive" className="h-8 text-xs font-semibold shrink-0 cursor-pointer">
-              Ver Estoque
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <StatsCard 
+          title="Total de Cargas" 
+          value="3" 
+          icon={Truck} 
+          iconBg="bg-primary" 
+          iconColor="text-white" 
+          trend="↑ 20%" 
+          trendColor="text-primary"
+        />
+        <StatsCard 
+          title="Pendentes" 
+          value="1" 
+          icon={Clock} 
+          iconBg="bg-orange-500" 
+          iconColor="text-white" 
+          trend="↑ 10%" 
+          trendColor="text-orange-500"
+        />
+        <StatsCard 
+          title="Em Rota" 
+          value="2" 
+          icon={Truck} 
+          iconBg="bg-blue-500" 
+          iconColor="text-white" 
+          trend="↑ 5%" 
+          trendColor="text-blue-500"
+        />
+        <StatsCard 
+          title="Finalizadas" 
+          value="0" 
+          icon={CheckCircle2} 
+          iconBg="bg-emerald-500" 
+          iconColor="text-white" 
+          trend="— 0%" 
+          trendColor="text-muted-foreground"
+        />
+        <StatsCard 
+          title="Alertas" 
+          value="2" 
+          icon={AlertTriangle} 
+          iconBg="bg-amber-500" 
+          iconColor="text-white" 
+          trend="↑ 100%" 
+          trendColor="text-amber-500"
+        />
+      </div>
+
+      {/* Middle Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Últimas Cargas Table */}
+        <Card className="lg:col-span-2 border-border shadow-sm">
+          <div className="p-5 flex items-center justify-between border-b border-border/50">
+            <h2 className="text-lg font-semibold text-foreground">Últimas Cargas</h2>
+            <Button variant="secondary" size="sm" className="h-8 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 border-0">
+              Ver todas
             </Button>
-          </Link>
-        </div>
-      )}
-
-      {/* EXPEDIÇÃO / CARGAS SECTION */}
-      {showLoads && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            📦 Expedição (Cargas)
-          </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatsCard title="Total Cargas" value={loadStats.total} icon={Truck} gradient="from-indigo-500/20 to-purple-500/20" iconColor="text-indigo-400" link="/cargas" />
-            <StatsCard title="Pendentes" value={loadStats.pending} icon={Clock} gradient="from-amber-500/20 to-orange-500/20" iconColor="text-amber-600 dark:text-amber-400" link="/cargas?status=pending" />
-            <StatsCard title="Conferindo / Em Rota" value={loadStats.dispatched} icon={PackageCheck} gradient="from-violet-500/20 to-fuchsia-500/20" iconColor="text-violet-400" link="/cargas?status=dispatched" />
-            <StatsCard title="Finalizadas" value={loadStats.completed} icon={CheckCircle2} gradient="from-emerald-500/20 to-teal-500/20" iconColor="text-emerald-600 dark:text-emerald-400" link="/cargas?status=completed" />
           </div>
+          <div className="p-0 overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-muted-foreground bg-muted/30">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Carga</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Origem</th>
+                  <th className="px-5 py-3 font-medium">Previsão</th>
+                  <th className="px-5 py-3 font-medium">Motorista</th>
+                  <th className="px-5 py-3 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {mockLoads.map((load) => (
+                  <tr key={load.id} className="hover:bg-muted/30 transition-colors group cursor-pointer">
+                    <td className="px-5 py-3.5 font-medium text-foreground">{load.id}</td>
+                    <td className="px-5 py-3.5">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border ${statusColors[load.status]}`}>
+                        {load.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-muted-foreground">{load.origem}</td>
+                    <td className="px-5 py-3.5 text-muted-foreground">{load.previsao}</td>
+                    <td className="px-5 py-3.5 text-muted-foreground">{load.motorista}</td>
+                    <td className="px-5 py-3.5 text-right">
+                      <ChevronRight className="inline-block h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
 
-          <div>
-            <div className="flex justify-between items-center mb-3 mt-4">
-              <button 
-                onClick={() => setIsLoadsRecentExpanded(!isLoadsRecentExpanded)}
-                className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${!isLoadsRecentExpanded ? '-rotate-90' : ''}`} />
-                Cargas Recentes
-              </button>
-              <Link to="/cargas" className="text-xs text-primary hover:text-primary/80 transition-colors">
-                Ver todas →
-              </Link>
+        {/* Alertas Importantes */}
+        <Card className="border-border shadow-sm flex flex-col">
+          <div className="p-5 flex items-center justify-between border-b border-border/50">
+            <h2 className="text-lg font-semibold text-foreground">Alertas Importantes</h2>
+            <Button variant="link" size="sm" className="h-8 text-xs font-medium text-primary px-0">
+              Ver todos
+            </Button>
+          </div>
+          <div className="p-5 flex-1 space-y-4">
+            
+            <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:bg-muted/30 transition-colors cursor-pointer group">
+              <div className="bg-orange-500/10 p-2.5 rounded-lg shrink-0">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">2 entregas com atraso</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Verifique as rotas em andamento.</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1 shrink-0 group-hover:text-primary transition-colors" />
             </div>
 
-            {isLoadsRecentExpanded && (
-              <div className="space-y-2">
-                {operations.length === 0 ? (
-                  <div className="glass-card text-center py-8">
-                    <p className="text-sm text-muted-foreground">Nenhuma carga registrada.</p>
-                  </div>
-                ) : (
-                  operations.slice(0, 5).map((op, index) => (
-                    <Link key={op.id} to={['LOAD', 'RECEIPT', 'BLIND_RECEIPT'].includes(op.type) ? `/conferencia/${op.id}` : `/inventario`} className="block group">
-                      <div className="glass-card glass-card-hover p-4 flex items-center justify-between transition-all duration-200" style={{ animationDelay: `${index * 50}ms` }}>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-foreground">{op.load_number}</span>
-                            <Badge variant={statusConfig[op.status]?.variant || 'default'}>
-                              {statusConfig[op.status]?.label || op.status}
-                            </Badge>
-                            {op.type === 'INVENTORY' && <Badge variant="secondary">Inventário</Badge>}
-                            {(op.type === 'RECEIPT' || op.type === 'BLIND_RECEIPT') && <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-0">Fábrica</Badge>}
-                            {op.type === 'LOAD' && <Badge className="bg-blue-500 hover:bg-blue-600 text-white border-0">Carga</Badge>}
-                          </div>
-                          <p className="text-sm text-muted-foreground truncate">{op.client_name}</p>
-                          {op.driver_name && (
-                            <div className="flex flex-wrap gap-x-4 mt-1.5 text-xs text-muted-foreground/70">
-                              <span className="flex items-center gap-1"><Truck className="h-3 w-3" /> {op.vehicle_plate}</span>
-                              <span>{op.driver_name}</span>
-                            </div>
-                          )}
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
-                      </div>
-                    </Link>
-                  ))
-                )}
+            <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:bg-muted/30 transition-colors cursor-pointer group">
+              <div className="bg-red-500/10 p-2.5 rounded-lg shrink-0">
+                <PackageX className="h-5 w-5 text-red-500" />
               </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* DISTRIBUIÇÃO / ENTREGAS SECTION */}
-      {showDeliveries && (
-        <div className="space-y-4 pt-4 border-t border-border/50">
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            🚚 Distribuição (Entregas)
-          </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatsCard title="Total Entregas" value={deliveryStats.total} icon={Truck} gradient="from-indigo-500/20 to-purple-500/20" iconColor="text-indigo-400" link="/entregas" />
-            <StatsCard title="Pendentes" value={deliveryStats.pending} icon={Clock} gradient="from-amber-500/20 to-orange-500/20" iconColor="text-amber-600 dark:text-amber-400" link="/entregas" />
-            <StatsCard title="Em trânsito" value={deliveryStats.dispatched} icon={PackageCheck} gradient="from-violet-500/20 to-fuchsia-500/20" iconColor="text-violet-400" link="/entregas" />
-            <StatsCard title="Concluídas" value={deliveryStats.completed} icon={CheckCircle2} gradient="from-emerald-500/20 to-teal-500/20" iconColor="text-emerald-600 dark:text-emerald-400" link="/entregas" />
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-3 mt-4">
-              <button 
-                onClick={() => setIsDeliveriesRecentExpanded(!isDeliveriesRecentExpanded)}
-                className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${!isDeliveriesRecentExpanded ? '-rotate-90' : ''}`} />
-                Entregas Recentes
-              </button>
-              <Link to="/entregas" className="text-xs text-primary hover:text-primary/80 transition-colors">
-                Ver todas →
-              </Link>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">3 produtos com estoque baixo</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Risco de ruptura nas próximas entregas.</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1 shrink-0 group-hover:text-primary transition-colors" />
             </div>
 
-            {isDeliveriesRecentExpanded && (
-              <div className="space-y-2">
-                {(isDriverOrHelper ? deliveries.filter((r: any) => r.driver_id === user?.id || r.helper_id === user?.id) : deliveries).length === 0 ? (
-                  <div className="glass-card text-center py-8">
-                    <p className="text-sm text-muted-foreground">Nenhuma entrega registrada.</p>
-                  </div>
-                ) : (
-                  (isDriverOrHelper ? deliveries.filter((r: any) => r.driver_id === user?.id || r.helper_id === user?.id) : deliveries).slice(0, 5).map((route: any, index: number) => (
-                    <Link key={route.id} to={`/entregas/${route.id}`} className="block group">
-                      <div className="glass-card glass-card-hover p-4 flex items-center justify-between transition-all duration-200" style={{ animationDelay: `${index * 50}ms` }}>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-foreground">{route.operation?.load_number || 'Rota Sem Nome'}</span>
-                            <Badge variant={statusConfig[route.status]?.variant || 'default'}>
-                              {statusConfig[route.status]?.label || route.status}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-wrap gap-x-4 mt-1 text-xs text-muted-foreground/70">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3 shrink-0 text-primary" /> Rota de Entrega
-                            </span>
-                            {!isDriverOrHelper && route.driver?.name && (
-                              <span>Motorista: {route.driver.name}</span>
-                            )}
-                          </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
-                      </div>
-                    </Link>
-                  ))
-                )}
+            <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:bg-muted/30 transition-colors cursor-pointer group">
+              <div className="bg-primary/10 p-2.5 rounded-lg shrink-0">
+                <PackageMinus className="h-5 w-5 text-primary" />
               </div>
-            )}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">1 divergência na conferência</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Aguardando ajuste.</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1 shrink-0 group-hover:text-primary transition-colors" />
+            </div>
+
+          </div>
+        </Card>
+      </div>
+
+      {/* Bottom Section */}
+      <Card className="border-border shadow-sm p-5">
+        <h2 className="text-lg font-semibold text-foreground mb-6">Resumo das Operações (Hoje)</h2>
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          <div className="flex-1 h-[250px] min-w-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={mockChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/50" />
+                <XAxis 
+                  dataKey="time" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 12, fill: 'currentColor' }}
+                  className="text-muted-foreground"
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 12, fill: 'currentColor' }}
+                  className="text-muted-foreground"
+                />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
+                  itemStyle={{ color: 'var(--foreground)' }}
+                />
+                <Line type="monotone" dataKey="total" name="Total de Cargas" stroke="var(--primary)" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="rota" name="Em Rota" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} />
+                <Line type="monotone" dataKey="finalizadas" name="Finalizadas" stroke="#10b981" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Chart Legend Summary */}
+          <div className="w-full lg:w-64 shrink-0 flex flex-col justify-center space-y-4 pr-4">
+            
+            {/* Legend Toggles */}
+            <div className="flex items-center gap-4 mb-2">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                <div className="w-2 h-2 rounded-full bg-primary" /> Cargas
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                <div className="w-2 h-2 rounded-full bg-blue-500" /> Em Rota
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" /> Finalizadas
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between py-2 border-b border-border/50">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary" />
+                <span className="text-sm text-foreground font-medium">Total de Cargas</span>
+              </div>
+              <span className="font-bold">3</span>
+            </div>
+            
+            <div className="flex items-center justify-between py-2 border-b border-border/50">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-sm text-foreground font-medium">Em Rota</span>
+              </div>
+              <span className="font-bold">2</span>
+            </div>
+
+            <div className="flex items-center justify-between py-2 border-b border-border/50">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-orange-500" />
+                <span className="text-sm text-foreground font-medium">Pendentes</span>
+              </div>
+              <span className="font-bold">1</span>
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-sm text-foreground font-medium">Finalizadas</span>
+              </div>
+              <span className="font-bold">0</span>
+            </div>
+
           </div>
         </div>
-      )}
+      </Card>
+
     </div>
   )
 }
 
-function StatsCard({ title, value, icon: Icon, gradient, iconColor, link }: any) {
+function StatsCard({ title, value, icon: Icon, iconBg, iconColor, trend, trendColor }: any) {
   return (
-    <Link to={link}>
-      <div className={`glass-card glass-card-hover p-4 h-24 flex flex-col justify-between bg-gradient-to-br ${gradient} cursor-pointer`}>
-        <div className="flex justify-between items-start">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
-          <Icon className={`h-5 w-5 ${iconColor}`} />
+    <Card className="p-4 border-border shadow-sm flex flex-col justify-between h-[120px]">
+      <div className="flex items-start justify-between">
+        <div className={`p-2 rounded-xl ${iconBg} bg-opacity-10 dark:bg-opacity-20`}>
+          <Icon className={`h-6 w-6 ${iconBg.replace('bg-', 'text-')} dark:${iconColor}`} />
         </div>
-        <span className="text-3xl font-bold text-foreground">{value}</span>
       </div>
-    </Link>
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground">{title}</p>
+        <div className="flex items-baseline justify-between mt-1">
+          <span className="text-2xl font-bold text-foreground">{value}</span>
+          <span className={`text-[10px] font-bold ${trendColor}`}>
+            Hoje {trend}
+          </span>
+        </div>
+      </div>
+    </Card>
   )
 }
