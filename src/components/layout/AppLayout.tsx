@@ -404,21 +404,19 @@ export default function AppLayout() {
           
           {/* Bottom Actions */}
           <div className="pt-4 mt-4 border-t border-border/50 space-y-1 pb-4">
-            <a
-              href="mailto:suporte@estoquefacil.app"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            <Link
+              to="/ajuda"
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                location.pathname === '/ajuda'
+                  ? "bg-primary/15 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
             >
-              <HelpCircle className="h-4.5 w-4.5" />
+              <HelpCircle className={cn("h-4.5 w-4.5", location.pathname === '/ajuda' && "text-primary")} />
               Ajuda e Suporte
-            </a>
-            
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-red-500/70 hover:text-red-500 hover:bg-red-500/10"
-            >
-              <LogOut className="h-4.5 w-4.5" />
-              Sair
-            </button>
+            </Link>
           </div>
         </nav>
       </aside>

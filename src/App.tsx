@@ -21,6 +21,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { DEFAULT_PASSWORD_HASH } from './utils/crypto'
 import Landing from './pages/Landing'
+import HelpAndSupport from './pages/HelpAndSupport'
 
 
 // Protected Route Wrapper
@@ -141,6 +142,7 @@ function App() {
             <Route path="/vendas/gestao" element={<SalesManagement />} />
 
             <Route path="/acesso" element={<AccessControl />} />
+            <Route path="/ajuda" element={<HelpAndSupport />} />
 
 
             <Route path="cadastros/clientes" element={<CustomersList />} />
