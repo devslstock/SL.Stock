@@ -88,7 +88,7 @@ export default function Login() {
             </div>
             
             <h1 className="text-2xl font-bold text-foreground mb-2">Acessar o sistema</h1>
-            <p className="text-[#00d06c] text-sm font-medium px-4">
+            <p className="text-primary text-sm font-medium px-4">
               Seu usuário acessou o sistema de outro computador ou dispositivo, por isso você foi desconectado. Por favor, entre no sistema novamente.
             </p>
           </div>
@@ -100,7 +100,7 @@ export default function Login() {
                 id="username"
                 type="text" 
                 placeholder="Seu usuário ou e-mail" 
-                className="h-12 rounded-full px-5 border-[#00d06c] focus-visible:ring-[#00d06c] focus-visible:border-[#00d06c] bg-white dark:bg-card"
+                className="h-12 rounded-full px-5 border-primary focus-visible:ring-primary focus-visible:border-primary bg-white dark:bg-card"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 autoFocus
@@ -123,7 +123,7 @@ export default function Login() {
               <button 
                 type="button" 
                 onClick={() => setShowForgotPassword(true)}
-                className="text-sm font-bold text-foreground hover:text-[#00d06c] transition-colors"
+                className="text-sm font-bold text-foreground hover:text-primary transition-colors"
               >
                 Esqueci minha senha
               </button>
@@ -132,7 +132,7 @@ export default function Login() {
             <div className="pt-2">
               <Button 
                 type="submit" 
-                className="w-full h-12 text-base font-bold bg-[#00d06c] hover:bg-[#00b55d] text-white rounded-full shadow-[0_4px_14px_0_rgba(0,208,108,0.39)] hover:shadow-[0_6px_20px_rgba(0,208,108,0.23)] hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-wide"
+                className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-white rounded-full shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all duration-200 uppercase tracking-wide"
                 disabled={isLoading}
               >
                 {isLoading ? 'Acessando...' : 'ENTRAR'}
@@ -164,15 +164,15 @@ export default function Login() {
       </div>
 
       {/* RIGHT SIDE - MARKETING */}
-      <div className="hidden lg:flex w-1/2 bg-[#6b4c9a] flex-col items-center justify-center p-12 text-white relative overflow-hidden">
+      <div className="hidden lg:flex w-1/2 bg-primary flex-col items-center justify-center p-12 text-white relative overflow-hidden">
         
         {/* Background decorations */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-white/5 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-400/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary-foreground/10 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-xl text-center space-y-8 flex flex-col items-center">
           
-          <div className="bg-white text-[#6b4c9a] font-bold text-xs px-5 py-2 rounded-full inline-block shadow-sm tracking-wide">
+          <div className="bg-white text-primary font-bold text-xs px-5 py-2 rounded-full inline-block shadow-sm tracking-wide">
             Lançamento Estoque Fácil
           </div>
 
@@ -218,7 +218,7 @@ export default function Login() {
 
           <Link to="/saiba-mais">
             <Button 
-              className="bg-[#00d06c] hover:bg-[#00b55d] text-white font-bold h-11 px-8 rounded-full shadow-[0_4px_14px_0_rgba(0,208,108,0.39)] hover:shadow-[0_6px_20px_rgba(0,208,108,0.23)] hover:-translate-y-0.5 transition-all duration-200 mt-2"
+              className="bg-white text-primary hover:bg-slate-50 font-bold h-11 px-8 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 mt-2"
             >
               Saiba Mais
             </Button>
