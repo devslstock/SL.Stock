@@ -1,29 +1,15 @@
-# Estoque Fácil (Coletor IA) - Plataforma de Gestão Completa 📦
+# Estoque Fácil - Plataforma de Gestão Completa 📦
 
-O **Estoque Fácil** (antigo Coletor IA) evoluiu para uma plataforma unificada que conecta as pontas soltas da logística e da operação comercial de empresas distribuidoras. Trata-se de um sistema **SaaS (Software as a Service) Multitenant**, ou seja, atende várias empresas isolando os dados de cada cliente dentro da mesma infraestrutura.
+O **Estoque Fácil** é uma plataforma unificada que conecta as pontas soltas da logística e da operação comercial de empresas distribuidoras. 
 
-O sistema provê três grandes pilares:
-1. **Painel Master (SaaS):** A gestão do "Dono do Software", para faturamento e gestão das empresas clientes.
-2. **Logística (ERP/WMS):** Toda a operação de centro de distribuição, contagem, conferência e rotas de entrega.
-3. **Força de Vendas (CRM/Vendas):** O módulo focado nos vendedores e representantes comerciais, unificando a cadeia (venda → separação → entrega).
-
----
-
-## 🏢 1. Arquitetura Multitenant e Painel Master (SaaS)
-
-A plataforma utiliza um modelo "Multitenant" na camada de aplicação. Todo registro de cliente possui um `company_id`.
-
-### Permissões do Master (`is_super_admin: true`)
-Existe um nível global supremo. A equipe "Master" enxerga os dados do SaaS, mas as empresas clientes nunca enxergam as outras.
-
-#### Funcionalidades Exclusivas do Master (`/saas`):
-- **Gestão de Empresas:** Cadastro de clientes vinculando o CNPJ automaticamente como Slug, definição de limite máximo de usuários (`max_users`) e botão "Impersonate" para acessar o painel do cliente sem pedir senha.
-- **Planos Dinâmicos e Financeiro:** A plataforma possui planos escaláveis (Bronze, Prata e Ouro). Há uma tabela dinâmica de preços (`saas_plans`) e geração de faturas. Pagamentos em atraso geram bloqueio automático da empresa no 6º dia de atraso.
-- **Equipe SaaS e Anotações:** Gestão da equipe interna do SaaS e um mural de recados/bloco de notas global.
+O sistema provê duas grandes áreas:
+1. **Logística (ERP/WMS):** Toda a operação de centro de distribuição, contagem, conferência e rotas de entrega.
+2. **Força de Vendas (CRM/Vendas):** O módulo focado nos vendedores e representantes comerciais, unificando a cadeia (venda → separação → entrega).
 
 ---
 
-## ⚙️ 2. Funcionalidades Logísticas e Cadastros (Empresa Cliente)
+
+## ⚙️ 1. Funcionalidades Logísticas e Cadastros (Empresa Cliente)
 
 ### Bloqueio por Planos (Feature Toggling)
 Os recursos são destravados conforme a assinatura do cliente:
@@ -46,7 +32,7 @@ O sistema agora possui um núcleo base robusto para faturamento e pedidos:
 
 ---
 
-## 💼 3. Força de Vendas (Sales App)
+## 💼 2. Força de Vendas (Sales App)
 
 O mais recente e poderoso módulo do Estoque Fácil, desenhado para fechar o ciclo desde a ponta comercial.
 
