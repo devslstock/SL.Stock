@@ -44,19 +44,6 @@ O mais recente e poderoso módulo do Estoque Fácil, desenhado para fechar o cic
 
 ---
 
-## 🎨 UI/UX e Frontend
-
-O sistema foi desenhado para causar o famoso "Efeito Uau", fugindo dos ERPs cinzas tradicionais.
-
-### Dupla Identidade Visual (Temas)
-- **Modo Moderno (Padrão):**
-  - Blur, Transparências, Glassmorphism. Dashboard interativo, notificações inteligentes e esquema de cores baseados em semântica nativa da marca.
-  - Tela de login revolucionária estilo "Split Screen" (marketing de um lado, acesso do outro).
-- **Modo Tradicional (Windows 2000):**
-  - Foco em rodar leve em coletores de rádiofrequência (Zebra, Honeywell) e celulares antigos. Corta transparências e processamento visual para zero lag de bipagem.
-
----
-
 ## 🗄️ Arquitetura do Banco de Dados (Supabase / Postgres)
 
 ### Camada Global (SaaS)
