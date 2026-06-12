@@ -342,7 +342,7 @@ export default function ClientConference() {
                 </a>
               )}
               {client.notes && (
-                <div className="text-xs text-amber-700 bg-amber-500/10 dark:text-amber-400 p-2 rounded mt-2 mb-1 border border-amber-500/20 whitespace-pre-wrap max-w-sm">
+                <div className="text-xs text-amber-900 bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400 p-2.5 rounded-lg mt-2 mb-1 border border-amber-300 dark:border-amber-500/20 whitespace-pre-wrap max-w-sm">
                   <span className="font-bold uppercase tracking-wider text-[10px] opacity-70 block mb-0.5">Observação</span>
                   {client.notes.replace('Obs: ', '')}
                 </div>
