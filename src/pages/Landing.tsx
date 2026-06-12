@@ -57,8 +57,8 @@ export default function Landing() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Box className="text-white h-6 w-6" />
+              <div className="h-10 w-10 flex items-center justify-center">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <span className="font-bold text-xl tracking-tight text-white">
                 Estoque Fácil
