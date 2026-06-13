@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users, Plus, Pencil, Trash2, ShieldCheck } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, ShieldCheck, KeyRound } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
 import { hashPassword } from '@/utils/crypto';
 import type { User } from '@/types/database';
@@ -118,6 +118,13 @@ export default function SaaSTeam() {
     }
   };
 
+  const handleResetPassword = () => {
+    if (!editing) return;
+    if (window.confirm('Tem certeza que deseja resetar a senha deste usuário Master para a senha padrão (123456)?')) {
+      updateMutation.mutate({ id: editing.id, data: { password_hash: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', reset_requested: false } });
+    }
+  };
+
   const deleteUser = (id: string) => {
     if (id === currentUser?.id) {
       toast.error('Você não pode apagar a si mesmo.');
@@ -218,11 +225,23 @@ export default function SaaSTeam() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                Salvar
-              </Button>
+            <div className="flex justify-between items-center pt-4 border-t mt-4">
+              {editing ? (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="text-amber-600 border-amber-500/50 hover:bg-amber-500/10" 
+                  onClick={handleResetPassword}
+                >
+                  <KeyRound className="h-4 w-4 mr-2" /> Resetar Senha
+                </Button>
+              ) : <div></div>}
+              <div className="flex gap-2">
+                <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancelar</Button>
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  Salvar
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>
