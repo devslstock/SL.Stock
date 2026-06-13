@@ -46,8 +46,10 @@ export default function SalesLayout() {
           <button onClick={toggleDarkLight} className="text-muted-foreground hover:text-foreground transition-colors">
             {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
-          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-            {user?.name?.charAt(0).toUpperCase() || 'V'}
+          <div className="flex-1 flex items-center justify-end gap-3 px-4">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
+              {(user?.name || user?.username || 'V').charAt(0).toUpperCase()}
+            </div>
           </div>
         </div>
       </header>

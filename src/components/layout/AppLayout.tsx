@@ -240,8 +240,8 @@ export default function AppLayout() {
 
         {/* Mobile User Profile */}
         <div className="md:hidden flex items-center gap-3 px-5 py-4 border-b border-border/50 mt-14 bg-card/50">
-          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-            <UserIcon className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary to-blue-500 flex items-center justify-center text-white font-bold shadow-md">
+            {(user?.name || user?.username || 'US').substring(0, 2)?.toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-foreground leading-tight truncate">{user?.name || 'Usuário'}</p>
