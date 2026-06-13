@@ -60,6 +60,10 @@ export default function SignaturePad() {
         toast.error('Informe o nome de quem recebeu a entrega.')
         return
       }
+      if (!receiverDoc || !receiverDoc.trim()) {
+        toast.error('Informe o CPF/Documento de quem recebeu a entrega.')
+        return
+      }
 
       // Get Base64 image - use getCanvas if getTrimmedCanvas fails
       let signatureData = ''
@@ -110,11 +114,12 @@ export default function SignaturePad() {
             />
           </div>
           <div className="space-y-2">
-            <Label>Documento (RG/CPF) - Opcional</Label>
+            <Label>Documento (CPF) *</Label>
             <Input 
               value={receiverDoc}
               onChange={e => setReceiverDoc(e.target.value)}
               placeholder="Ex: 123.456.789-00"
+              required
             />
           </div>
         </div>
