@@ -14,8 +14,8 @@ import type { Equipment } from '@/types/database'
 
 export default function EquipmentsList() {
   const queryClient = useQueryClient()
-  const { hasPermission } = useAuth()
-  const canManage = hasPermission('can_manage_equipments')
+  const { hasPermission, user } = useAuth()
+  const canManage = hasPermission('can_manage_equipments') && user?.role !== 'mecanico'
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)

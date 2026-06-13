@@ -497,11 +497,47 @@ export interface EquipmentOrder {
   receiver_name: string | null
   receiver_doc: string | null
   notes: string | null
+  defect_description: string | null
+  solution_description: string | null
+  action_taken: string | null
   created_at: string
   updated_at: string
   customer?: Customer
   equipment?: Equipment
   driver?: User
+}
+
+export interface Supply {
+  id: string
+  company_id: string
+  name: string
+  unit: string
+  stock_quantity: number
+  created_at: string
+  updated_at: string
+}
+
+export interface SupplyRequest {
+  id: string
+  company_id: string
+  mechanic_id: string
+  supply_id: string
+  quantity_requested: number
+  status: 'pendente' | 'aprovado' | 'rejeitado'
+  notes: string | null
+  created_at: string
+  updated_at: string
+  mechanic?: User
+  supply?: Supply
+}
+
+export interface EquipmentOrderSupply {
+  id: string
+  order_id: string
+  supply_id: string
+  quantity_consumed: number
+  created_at: string
+  supply?: Supply
 }
 
 export interface EquipmentHistory {

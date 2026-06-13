@@ -10,16 +10,21 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { Plus, Search, ClipboardList, CheckCircle2, Truck, Wrench, ArrowRightLeft } from 'lucide-react'
+import { Plus, Search, ClipboardList, CheckCircle2, Truck, Wrench, ArrowRightLeft, PenTool } from 'lucide-react'
 import type { EquipmentOrder } from '@/types/database'
+import { ExecutionModal } from './ExecutionModal'
 
 export default function EquipmentOrdersList() {
   const queryClient = useQueryClient()
-  const { hasPermission } = useAuth()
-  const canManage = hasPermission('can_manage_equipments')
+  const { hasPermission, user } = useAuth()
+  const canManage = hasPermission('can_manage_equipments') && user?.role !== 'mecanico'
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  
+  // Execution Modal
+  const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false)
+  const [executingOrder, setExecutingOrder] = useState<EquipmentOrder | null>(null)
 
   // Form
   const [type, setType] = useState<'entrega' | 'recolha' | 'troca' | 'manutencao'>('entrega')
@@ -165,20 +170,48 @@ export default function EquipmentOrdersList() {
                 </div>
               </div>
               
-              {canManage && order.status !== 'concluido' && order.status !== 'cancelado' && (
-                <div className="flex gap-2 w-full md:w-auto">
-                  <Button variant="outline" className="w-full md:w-auto">
+              <div className="flex gap-2 w-full md:w-auto">
+                {canManage && (
+                  <Button variant="outline" size="sm" className="flex-1 md:flex-none">
                     Editar
                   </Button>
-                </div>
-              )}
+                )}
+                {order.status !== 'concluido' && order.status !== 'cancelado' && (
+                  <Button 
+                    size="sm" 
+                    className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white" 
+                    onClick={() => {
+                      setExecutingOrder(order)
+                      setIsExecutionModalOpen(true)
+                    }}
+                  >
+                    <PenTool className="h-4 w-4 mr-2" /> Executar OS
+                  </Button>
+                )}
+                {order.status === 'concluido' && (
+                  <Button variant="outline" size="sm" className="flex-1 md:flex-none">
+                    Ver Detalhes
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
-        {filtered.length === 0 && !isLoadingOrders && (
-          <div className="text-center p-8 text-muted-foreground">Nenhuma OS encontrada.</div>
+        {filtered.length === 0 && (
+          <div className="text-center py-10 text-muted-foreground border rounded-lg bg-muted/20">
+            Nenhuma OS encontrada.
+          </div>
         )}
       </div>
+
+      <ExecutionModal 
+        isOpen={isExecutionModalOpen}
+        onClose={() => {
+          setIsExecutionModalOpen(false)
+          setExecutingOrder(null)
+        }}
+        order={executingOrder}
+      />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
