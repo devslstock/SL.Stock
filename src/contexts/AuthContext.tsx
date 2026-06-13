@@ -159,6 +159,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasPermission = (permission: keyof UserPermissions) => {
     // Admin and Master have all permissions implicitly
     if (user?.role === 'admin' || user?.role === 'master' || user?.is_super_admin) return true;
+    if (user?.role === 'gestor') {
+      return ['can_view_dashboard', 'can_manage_loads', 'can_manage_products', 'can_manage_users'].includes(permission);
+    }
+    if (user?.role === 'vendedor' || user?.role === 'representante') {
+      return ['can_view_dashboard', 'can_manage_products'].includes(permission);
+    }
+    if (user?.role === 'conferente' || user?.role === 'operador') {
+      return ['can_view_dashboard', 'can_manage_loads', 'can_do_conference'].includes(permission);
+    }
+    if (user?.role === 'motorista' || user?.role === 'ajudante') {
+      return ['can_view_dashboard', 'can_do_delivery'].includes(permission);
+    }
     if (!user || !user.permissions) return false;
     return user.permissions[permission] === true;
   };
