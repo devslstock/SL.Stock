@@ -1,10 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { Equipment, EquipmentOrder, EquipmentHistory } from '@/types/database'
-
-let currentCompanyId: string | null = null;
-export const setEquipmentsCompanyId = (id: string | null) => {
-  currentCompanyId = id;
-};
+import { currentCompanyId } from '@/contexts/AuthContext'
 
 export const equipmentsApi = {
   // Equipments
