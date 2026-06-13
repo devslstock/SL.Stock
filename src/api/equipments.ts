@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { Equipment, EquipmentOrder, EquipmentHistory } from '@/types/database'
+import type { Equipment, EquipmentOrder, EquipmentHistory } from '@/types/database'
 
 let currentCompanyId: string | null = null;
 export const setEquipmentsCompanyId = (id: string | null) => {

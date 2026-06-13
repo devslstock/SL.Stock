@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Plus, Search, Box, Edit2, History, AlertCircle } from 'lucide-react'
-import { Equipment } from '@/types/database'
+import type { Equipment } from '@/types/database'
 
 export default function EquipmentsList() {
   const queryClient = useQueryClient()

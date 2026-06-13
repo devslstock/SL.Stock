@@ -11,8 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Plus, Search, ClipboardList, CheckCircle2, Truck, Wrench, ArrowRightLeft } from 'lucide-react'
-import { EquipmentOrder } from '@/types/database'
-import { format } from 'date-fns'
+import type { EquipmentOrder } from '@/types/database'
 
 export default function EquipmentOrdersList() {
   const queryClient = useQueryClient()
@@ -160,7 +159,7 @@ export default function EquipmentOrdersList() {
                   </div>
                   {order.driver && (
                     <div className="text-xs text-muted-foreground mt-1">
-                      Responsável: {order.driver.name} | Agendado: {order.scheduled_date ? format(new Date(order.scheduled_date + 'T00:00:00'), 'dd/MM/yyyy') : 'Sem data'}
+                      Responsável: {order.driver.name} | Agendado: {order.scheduled_date ? new Date(order.scheduled_date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem data'}
                     </div>
                   )}
                 </div>

@@ -157,7 +157,7 @@ export default function AccessControl() {
 
   const usersNeedingReset = users.filter(u => u.reset_requested)
 
-  const roleWeight: Record<UserRole, number> = { master: 0, admin: 1, gestor: 2, conferente: 3, operador: 4, motorista: 5, ajudante: 6, vendedor: 7, representante: 8 }
+  const roleWeight: Record<UserRole, number> = { master: 0, admin: 1, gestor: 2, conferente: 3, operador: 4, mecanico: 5, motorista: 6, ajudante: 7, vendedor: 8, representante: 9 }
   const sortedUsers = [...users].sort((a, b) => {
     if (roleWeight[a.role] !== roleWeight[b.role]) return roleWeight[a.role] - roleWeight[b.role]
     return a.name.localeCompare(b.name)
