@@ -379,8 +379,12 @@ export default function ApprovalsPage() {
                       </div>
                       <div className="w-px h-8 bg-border"></div>
                       <div className="text-center flex-1">
-                        <p className="text-[10px] uppercase font-bold text-purple-400 mb-1">Qtd Solicitada</p>
-                        <p className="text-xl font-mono font-bold text-purple-500">{item.requested_qty}</p>
+                        <p className="text-[10px] uppercase font-bold text-purple-400 mb-1">{item.return_reason ? 'Motivo do Retorno' : 'Qtd Solicitada'}</p>
+                        {item.return_reason ? (
+                          <p className="text-sm font-semibold text-amber-500 line-clamp-2 leading-tight" title={item.return_reason}>{item.return_reason}</p>
+                        ) : (
+                          <p className="text-xl font-mono font-bold text-purple-500">{item.requested_qty}</p>
+                        )}
                       </div>
                     </div>
 
@@ -402,21 +406,33 @@ export default function ApprovalsPage() {
                     </div>
 
                     <div className="flex gap-2 pt-2">
-                      <Button 
-                        variant="outline"
-                        className="flex-1 text-red-500 hover:text-red-500 hover:bg-red-500/10 border-red-500/20"
-                        onClick={() => resolveMutation.mutate({ id: item.id, status: 'rejected' })}
-                        disabled={resolveMutation.isPending}
-                      >
-                        <X className="h-4 w-4 mr-2" /> Rejeitar
-                      </Button>
-                      <Button 
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                        onClick={() => resolveMutation.mutate({ id: item.id, status: 'approved', finalQty: item.requested_qty })}
-                        disabled={resolveMutation.isPending}
-                      >
-                        <Check className="h-4 w-4 mr-2" /> Aprovar
-                      </Button>
+                      {item.return_reason ? (
+                        <Button 
+                          className="w-full bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                          onClick={() => resolveMutation.mutate({ id: item.id, status: 'approved' })}
+                          disabled={resolveMutation.isPending}
+                        >
+                          <Check className="h-4 w-4 mr-2" /> Estou Ciente
+                        </Button>
+                      ) : (
+                        <>
+                          <Button 
+                            variant="outline"
+                            className="flex-1 text-red-500 hover:text-red-500 hover:bg-red-500/10 border-red-500/20"
+                            onClick={() => resolveMutation.mutate({ id: item.id, status: 'rejected' })}
+                            disabled={resolveMutation.isPending}
+                          >
+                            <X className="h-4 w-4 mr-2" /> Rejeitar
+                          </Button>
+                          <Button 
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                            onClick={() => resolveMutation.mutate({ id: item.id, status: 'approved', finalQty: item.requested_qty })}
+                            disabled={resolveMutation.isPending}
+                          >
+                            <Check className="h-4 w-4 mr-2" /> Aprovar
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

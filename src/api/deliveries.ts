@@ -311,9 +311,13 @@ export const deliveriesApi = {
   },
 
   async updateDeliveryItemQuantity(itemId: string, quantity_scanned: number, status: string, return_reason?: string) {
+    const updates: any = { quantity_scanned, status, return_reason }
+    if (return_reason) {
+      updates.approval_status = 'pending'
+    }
     const { data, error } = await supabase
       .from('delivery_items')
-      .update({ quantity_scanned, status, return_reason })
+      .update(updates)
       .eq('id', itemId)
       .eq('company_id', currentCompanyId)
       .select()
