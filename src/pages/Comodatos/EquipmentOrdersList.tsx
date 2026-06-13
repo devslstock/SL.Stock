@@ -58,12 +58,33 @@ export default function EquipmentOrdersList() {
   const availableEquipments = equipmentsList.filter(e => type === 'entrega' ? e.status === 'Disponível' : (e.current_customer_id === customerId))
   const mechanicsAndDrivers = usersList.filter(u => ['mecanico', 'motorista', 'ajudante'].includes(u.role))
 
+  const [editingId, setEditingId] = useState<string | null>(null)
+
   const createMutation = useMutation({
     mutationFn: (data: Partial<EquipmentOrder>) => equipmentsApi.createOrder(data),
     onSuccess: () => {
       toast.success('Ordem de Serviço criada com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['equipment_orders'] })
       setIsModalOpen(false)
+    },
+    onError: (err: any) => toast.error(err.message)
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<EquipmentOrder>) => equipmentsApi.updateOrder(editingId!, data),
+    onSuccess: () => {
+      toast.success('Ordem de Serviço atualizada!')
+      queryClient.invalidateQueries({ queryKey: ['equipment_orders'] })
+      setIsModalOpen(false)
+    },
+    onError: (err: any) => toast.error(err.message)
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: equipmentsApi.deleteOrder,
+    onSuccess: () => {
+      toast.success('Ordem de Serviço excluída com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['equipment_orders'] })
     },
     onError: (err: any) => toast.error(err.message)
   })
@@ -75,17 +96,24 @@ export default function EquipmentOrdersList() {
       return
     }
 
-    createMutation.mutate({ 
+    const payload = {
       customer_id: customerId, 
       equipment_id: equipmentId, 
       type, 
       driver_id: driverId || null,
       scheduled_date: scheduledDate || null,
       notes 
-    })
+    }
+
+    if (editingId) {
+      updateMutation.mutate(payload)
+    } else {
+      createMutation.mutate(payload)
+    }
   }
 
   const openNew = () => {
+    setEditingId(null)
     setType('entrega')
     setCustomerId('')
     setEquipmentId('')
@@ -93,6 +121,23 @@ export default function EquipmentOrdersList() {
     setScheduledDate('')
     setNotes('')
     setIsModalOpen(true)
+  }
+
+  const openEdit = (order: EquipmentOrder) => {
+    setEditingId(order.id)
+    setType(order.type)
+    setCustomerId(order.customer_id)
+    setEquipmentId(order.equipment_id)
+    setDriverId(order.driver_id || '')
+    setScheduledDate(order.scheduled_date || '')
+    setNotes(order.notes || '')
+    setIsModalOpen(true)
+  }
+
+  const handleDelete = (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta OS? A exclusão é permanente.')) {
+      deleteMutation.mutate(id)
+    }
   }
 
   const getTypeIcon = (type: string) => {
@@ -172,9 +217,14 @@ export default function EquipmentOrdersList() {
               
               <div className="flex gap-2 w-full md:w-auto">
                 {canManage && (
-                  <Button variant="outline" size="sm" className="flex-1 md:flex-none">
-                    Editar
-                  </Button>
+                  <>
+                    <Button variant="outline" size="sm" className="flex-1 md:flex-none" onClick={() => openEdit(order)}>
+                      Editar
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1 md:flex-none text-red-500 hover:text-red-700" onClick={() => handleDelete(order.id)}>
+                      Excluir
+                    </Button>
+                  </>
                 )}
                 {order.status !== 'concluido' && order.status !== 'cancelado' && (
                   <Button 
@@ -189,7 +239,10 @@ export default function EquipmentOrdersList() {
                   </Button>
                 )}
                 {order.status === 'concluido' && (
-                  <Button variant="outline" size="sm" className="flex-1 md:flex-none">
+                  <Button variant="outline" size="sm" className="flex-1 md:flex-none" onClick={() => {
+                    setExecutingOrder(order)
+                    setIsExecutionModalOpen(true)
+                  }}>
                     Ver Detalhes
                   </Button>
                 )}
@@ -216,7 +269,7 @@ export default function EquipmentOrdersList() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nova Ordem de Serviço de Comodato</DialogTitle>
+            <DialogTitle>{editingId ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

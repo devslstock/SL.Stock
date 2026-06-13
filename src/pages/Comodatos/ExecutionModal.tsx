@@ -139,6 +139,11 @@ export function ExecutionModal({ isOpen, onClose, order }: ExecutionModalProps) 
           <div className="text-sm text-muted-foreground">
             Equipamento: <span className="font-bold">{order.equipment?.patrimony}</span> ({order.equipment?.model})<br/>
             Cliente: {order.customer?.fantasy_name || order.customer?.legal_name}
+            {order.notes && (
+              <div className="mt-2 p-2 bg-muted/50 rounded border-l-2 border-primary text-foreground text-sm">
+                <strong>Motivo / Observação Inicial:</strong> {order.notes}
+              </div>
+            )}
           </div>
         </DialogHeader>
 
