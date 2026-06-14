@@ -120,11 +120,12 @@ export default function RouteClients() {
         const clientsWithCoords = []
         let idx = 1
         for (const c of clients) {
-          if (!c.address && !c.latitude) continue;
+          const lat = c.latitude || c.customer?.latitude;
+          const lng = c.longitude || c.customer?.longitude;
           
-          if (c.latitude && c.longitude) {
-            // Already has coords saved
-            clientsWithCoords.push({ id: c.id, coord: { lat: Number(c.latitude), lng: Number(c.longitude) } })
+          if (lat && lng) {
+            // Already has coords saved locally or in customer registry
+            clientsWithCoords.push({ id: c.id, coord: { lat: Number(lat), lng: Number(lng) } })
           } else if (c.address) {
             // Needs geocoding
             setOptimizationStatus(`Buscando coordenadas ${idx}/${clients.length}...`)

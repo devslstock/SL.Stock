@@ -91,7 +91,7 @@ export const deliveriesApi = {
     if (!currentCompanyId) return []
     const { data, error } = await supabase
       .from('delivery_clients')
-      .select('*, delivery_items(*), customer:customers(document)')
+      .select('*, delivery_items(*), customer:customers(document, latitude, longitude)')
       .eq('delivery_route_id', routeId)
       .eq('company_id', currentCompanyId)
       .order('name')
