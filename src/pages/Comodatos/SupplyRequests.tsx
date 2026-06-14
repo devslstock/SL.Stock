@@ -78,7 +78,7 @@ export default function SupplyRequests() {
   }
 
   const handleApprove = (req: SupplyRequest) => {
-    if (confirm('Aprovar esta solicitação? O estoque será reduzido.')) {
+    if (confirm('Aprovar esta solicitação? O estoque do item será aumentado com essa quantidade.')) {
       updateStatusMutation.mutate({ id: req.id, status: 'aprovado' })
     }
   }
