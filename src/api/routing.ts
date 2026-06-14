@@ -52,7 +52,7 @@ export async function optimizeRoute(garageCoord: Coordinate, clients: { id: stri
     if (!response.ok) {
         const errText = await response.text();
         console.error('OSRM Erro HTTP:', response.status, errText);
-        throw new Error(`Falha no serviço de roteamento (OSRM). Tente novamente.`);
+        throw new Error(`OSRM HTTP ${response.status}: ${errText.substring(0, 50)}...`);
     }
 
     const data = await response.json();
