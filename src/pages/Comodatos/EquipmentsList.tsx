@@ -191,14 +191,35 @@ export default function EquipmentsList() {
         )}
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder="Buscar por patrimônio, modelo ou cliente..." 
-          className="pl-10"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Buscar por patrimônio, modelo ou cliente..." 
+            className="pl-10"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Label className="whitespace-nowrap hidden sm:block">Ordenar:</Label>
+          <select 
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm sm:w-[200px]"
+            value={sortField}
+            onChange={e => {
+              setSortField(e.target.value as any)
+              setSortOrder('asc')
+            }}
+          >
+            <option value="patrimony">Nº Série / Patrimônio</option>
+            <option value="model">Marca / Modelo</option>
+            <option value="status">Situação</option>
+            <option value="customer">Cliente Atual</option>
+          </select>
+          <Button variant="outline" size="icon" onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')} title="Inverter Ordem">
+            {sortOrder === 'asc' ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
 
       <Card>
