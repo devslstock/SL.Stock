@@ -52,7 +52,8 @@ export function InternalMaintenanceModal({ isOpen, onClose, equipment }: Interna
       for (const part of consumedParts) {
         const { data: supplyRow } = await supabase.from('supplies').select('stock_quantity').eq('id', part.supply.id).single()
         if (supplyRow) {
-          await supabase.from('supplies').update({ stock_quantity: supplyRow.stock_quantity - part.quantity }).eq('id', part.supply.id)
+          const currentStock = Number(supplyRow.stock_quantity) || 0;
+          await supabase.from('supplies').update({ stock_quantity: currentStock - part.quantity }).eq('id', part.supply.id)
         }
       }
 

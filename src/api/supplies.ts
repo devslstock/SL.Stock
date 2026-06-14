@@ -141,9 +141,10 @@ export const suppliesApi = {
       .single()
       
     if (supply) {
+      const currentStock = Number(supply.stock_quantity) || 0;
       await supabase
         .from('supplies')
-        .update({ stock_quantity: supply.stock_quantity - quantity })
+        .update({ stock_quantity: currentStock - quantity })
         .eq('id', supplyId)
     }
 
