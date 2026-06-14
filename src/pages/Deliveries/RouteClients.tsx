@@ -103,12 +103,18 @@ export default function RouteClients() {
     mutationFn: async () => {
       setIsOptimizing(true)
       try {
-        if (!company?.garage_address) {
+        if (!company?.garage_address && (!company?.garage_lat || !company?.garage_lng)) {
           throw new Error('Endereço da garagem não configurado. Vá em "Minha Empresa" para configurar.')
         }
         
-        setOptimizationStatus('Geocodificando garagem...')
-        const garageCoord = await geocodeAddress(company.garage_address)
+        let garageCoord: {lat: number, lng: number} | null = null;
+        if (company.garage_lat && company.garage_lng) {
+           garageCoord = { lat: Number(company.garage_lat), lng: Number(company.garage_lng) };
+        } else if (company.garage_address) {
+           setOptimizationStatus('Geocodificando garagem...')
+           garageCoord = await geocodeAddress(company.garage_address)
+        }
+
         if (!garageCoord) throw new Error('Não foi possível encontrar as coordenadas da garagem.')
 
         const clientsWithCoords = []

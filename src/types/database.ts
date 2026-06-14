@@ -43,6 +43,12 @@ export interface Company {
   monthly_fee?: number
   plan?: 'bronze' | 'prata' | 'ouro' | 'platina'
   garage_address?: string | null
+  fantasy_name?: string | null
+  phone?: string | null
+  email?: string | null
+  additional_info?: string | null
+  garage_lat?: number | null
+  garage_lng?: number | null
   created_at: string
 }
 
