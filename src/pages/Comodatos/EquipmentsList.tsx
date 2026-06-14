@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { Plus, Search, Box, Edit2, History, AlertCircle } from 'lucide-react'
+import { Plus, Search, Box, Edit2, History, AlertCircle, Trash2 } from 'lucide-react'
 import type { Equipment } from '@/types/database'
 
 export default function EquipmentsList() {
@@ -61,6 +61,21 @@ export default function EquipmentsList() {
     },
     onError: (err: any) => toast.error(err.message)
   })
+
+  const deleteMutation = useMutation({
+    mutationFn: equipmentsApi.deleteEquipment,
+    onSuccess: () => {
+      toast.success('Equipamento excluído com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['equipments'] })
+    },
+    onError: (err: any) => toast.error(err.message)
+  })
+
+  const handleDelete = (id: string) => {
+    if (confirm('Tem certeza que deseja apagar este equipamento? O histórico e as ordens de serviço vinculadas a ele também poderão ser afetadas.')) {
+      deleteMutation.mutate(id)
+    }
+  }
 
   const { data: equipmentHistory = [], isLoading: isLoadingHistory } = useQuery({
     queryKey: ['equipment_history', historyEquipment?.id],
@@ -174,6 +189,9 @@ export default function EquipmentsList() {
                   </Button>
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => openHistory(eq)}>
                     <History className="h-4 w-4 mr-2" /> Histórico
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(eq.id)}>
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               )}
