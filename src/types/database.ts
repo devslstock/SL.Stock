@@ -475,7 +475,7 @@ export interface Equipment {
   type: string
   model: string
   size: string | null
-  status: 'Teste' | 'Disponível' | 'Em Manutenção' | 'Danificado' | 'No Cliente'
+  status: 'Teste' | 'Disponível' | 'Em Manutenção' | 'Danificado' | 'No Cliente' | 'Equipamento de Estoque'
   current_customer_id: string | null
   created_at: string
   updated_at: string

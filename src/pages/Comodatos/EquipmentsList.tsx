@@ -10,13 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Search, Box, Edit2, History, AlertCircle, Trash2, ArrowUp, ArrowDown } from 'lucide-react'
+import { Plus, Search, Box, Edit2, History, AlertCircle, Trash2, ArrowUp, ArrowDown, Settings } from 'lucide-react'
 import type { Equipment } from '@/types/database'
+
+import { InternalMaintenanceModal } from './InternalMaintenanceModal'
 
 export default function EquipmentsList() {
   const queryClient = useQueryClient()
   const { hasPermission, user } = useAuth()
-  const canManage = hasPermission('can_manage_equipments') && user?.role !== 'mecanico'
+  const hasAccess = hasPermission('can_manage_equipments')
+  const canEdit = user?.role !== 'mecanico'
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -24,6 +27,9 @@ export default function EquipmentsList() {
 
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
   const [historyEquipment, setHistoryEquipment] = useState<Equipment | null>(null)
+
+  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false)
+  const [maintenanceEquipment, setMaintenanceEquipment] = useState<Equipment | null>(null)
 
   const [sortField, setSortField] = useState<'patrimony' | 'model' | 'status' | 'customer'>('patrimony')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
@@ -33,7 +39,7 @@ export default function EquipmentsList() {
   const [type, setType] = useState('Freezer')
   const [model, setModel] = useState('')
   const [size, setSize] = useState('')
-  const [status, setStatus] = useState<'Teste' | 'Disponível' | 'Em Manutenção' | 'Danificado' | 'No Cliente'>('Disponível')
+  const [status, setStatus] = useState<'Teste' | 'Disponível' | 'Em Manutenção' | 'Danificado' | 'No Cliente' | 'Equipamento de Estoque'>('Disponível')
   const [currentCustomerId, setCurrentCustomerId] = useState('')
 
   const { data: customersList = [] } = useQuery({
@@ -170,7 +176,7 @@ export default function EquipmentsList() {
       return 0
     })
 
-  if (!canManage) {
+  if (!hasAccess) {
     return <div className="p-8 text-center text-muted-foreground">Você não tem permissão para acessar esta página.</div>
   }
 
@@ -181,9 +187,9 @@ export default function EquipmentsList() {
           <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
             <Box className="h-6 w-6 text-primary" /> Ativos e Equipamentos
           </h1>
-          <p className="text-sm text-muted-foreground">Gestão de patrimônio e comodatos</p>
+          <p className="text-sm text-muted-foreground">Gerencie o parque de equipamentos em comodato</p>
         </div>
-        {canManage && (
+        {canEdit && (
           <Button onClick={openNew}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Equipamento
@@ -239,7 +245,7 @@ export default function EquipmentsList() {
                 <TableHead className="cursor-pointer whitespace-nowrap" onClick={() => handleSort('customer')}>
                   Cliente Atual <SortIcon field="customer" />
                 </TableHead>
-                {canManage && <TableHead className="text-right">Ações</TableHead>}
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -266,26 +272,38 @@ export default function EquipmentsList() {
                       <span className="text-muted-foreground text-sm">-</span>
                     )}
                   </TableCell>
-                  {canManage && (
-                    <TableCell className="text-right">
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="outline" size="sm" onClick={() => openEdit(eq)} title="Editar">
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => openHistory(eq)} title="Histórico">
-                          <History className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(eq.id)} title="Excluir">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
+                  <TableCell className="text-right">
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => openHistory(eq)} title="Histórico">
+                        <History className="h-4 w-4" />
+                      </Button>
+                      {canEdit ? (
+                        <>
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(eq)}>
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(eq.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        eq.status !== 'No Cliente' && (
+                          <Button variant="outline" size="sm" className="ml-2" onClick={() => {
+                            setMaintenanceEquipment(eq)
+                            setIsMaintenanceModalOpen(true)
+                          }}>
+                            <Settings className="h-4 w-4 mr-2" />
+                            Manutenção
+                          </Button>
+                        )
+                      )}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={canManage ? 5 : 4} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     Nenhum equipamento encontrado.
                   </TableCell>
                 </TableRow>
@@ -294,6 +312,15 @@ export default function EquipmentsList() {
           </Table>
         </div>
       </Card>
+
+      <InternalMaintenanceModal 
+        isOpen={isMaintenanceModalOpen}
+        onClose={() => {
+          setIsMaintenanceModalOpen(false)
+          setMaintenanceEquipment(null)
+        }}
+        equipment={maintenanceEquipment}
+      />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
@@ -341,11 +368,12 @@ export default function EquipmentsList() {
                 onChange={e => setStatus(e.target.value as any)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option value="Disponível">Disponível (No Galpão)</option>
-                <option value="Em Manutenção">Em Manutenção</option>
                 <option value="Teste">Em Teste</option>
+                <option value="Disponível">Disponível no Galpão</option>
+                <option value="Em Manutenção">Em Manutenção</option>
                 <option value="Danificado">Danificado / Sucata</option>
                 <option value="No Cliente">No Cliente</option>
+                <option value="Equipamento de Estoque">Equipamento de Estoque</option>
               </select>
             </div>
 
