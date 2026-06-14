@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
 import { ArrowLeft, User, Search, Trash2, Save, MapPin, Phone, StickyNote, Hash } from 'lucide-react'
 import { Navigate } from 'react-router-dom'
+import { geocodeAddress } from '@/api/routing'
 
 interface NewItem {
   id?: string
@@ -33,6 +34,9 @@ export default function RouteClientForm() {
   const [phone, setPhone] = useState('')
   const [orderNumber, setOrderNumber] = useState('')
   const [notes, setNotes] = useState('')
+  const [latitude, setLatitude] = useState<string>('')
+  const [longitude, setLongitude] = useState<string>('')
+  const [isGeocoding, setIsGeocoding] = useState(false)
 
   const [items, setItems] = useState<NewItem[]>([])
   const [originalItemIds, setOriginalItemIds] = useState<string[]>([])
@@ -74,6 +78,8 @@ export default function RouteClientForm() {
       setPhone(client.phone || '')
       setOrderNumber(client.order_number || '')
       setNotes(client.notes || '')
+      setLatitude(client.latitude ? client.latitude.toString() : '')
+      setLongitude(client.longitude ? client.longitude.toString() : '')
     }
   }, [client])
 
@@ -188,7 +194,9 @@ export default function RouteClientForm() {
         address: address.trim() || '',
         phone: phone.trim() || '',
         order_number: orderNumber.trim() || undefined,
-        notes: notes.trim() || ''
+        notes: notes.trim() || '',
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null
       })
 
       const currentIds = items.filter(i => i.id).map(i => i.id)
@@ -247,6 +255,8 @@ export default function RouteClientForm() {
         phone: phone.trim() || '',
         order_number: orderNumber.trim() || undefined,
         notes: notes.trim() || '',
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
         items: items.map(i => ({
           product_id: i.product_id,
           product_code: i.product_code,
@@ -311,11 +321,62 @@ export default function RouteClientForm() {
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Endereço Completo</Label>
-              <Input 
-                value={address} 
-                onChange={e => setAddress(e.target.value)} 
-                placeholder="Opcional"
-              />
+              <div className="flex gap-2">
+                <Input 
+                  value={address} 
+                  onChange={e => setAddress(e.target.value)} 
+                  placeholder="Ex: Rua das Flores, 123, Centro, São Paulo - SP"
+                />
+                <Button 
+                  type="button"
+                  variant="outline"
+                  className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 whitespace-nowrap"
+                  disabled={isGeocoding || !address}
+                  onClick={async () => {
+                    setIsGeocoding(true)
+                    try {
+                      const coords = await geocodeAddress(address)
+                      if (coords) {
+                        setLatitude(coords.lat.toString())
+                        setLongitude(coords.lng.toString())
+                        toast.success('Coordenadas localizadas com sucesso!')
+                      } else {
+                        toast.error('Não foi possível localizar este endereço.')
+                      }
+                    } catch (e) {
+                      toast.error('Erro na busca de coordenadas.')
+                    } finally {
+                      setIsGeocoding(false)
+                    }
+                  }}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  {isGeocoding ? 'Buscando...' : 'Localizar'}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Latitude</Label>
+                <Input 
+                  value={latitude} 
+                  onChange={e => setLatitude(e.target.value)} 
+                  placeholder="-23.5505"
+                  type="number"
+                  step="any"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Longitude</Label>
+                <Input 
+                  value={longitude} 
+                  onChange={e => setLongitude(e.target.value)} 
+                  placeholder="-46.6333"
+                  type="number"
+                  step="any"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

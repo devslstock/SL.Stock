@@ -442,6 +442,8 @@ export interface DeliveryClient {
   address?: string
   phone?: string
   notes?: string
+  latitude?: number | null
+  longitude?: number | null
   status: 'pending' | 'waiting' | 'delivered' | 'delivered_with_divergence' | 'canceled' | 'returned'
   signature_data?: string
   receiver_name?: string

@@ -114,11 +114,19 @@ export default function RouteClients() {
         const clientsWithCoords = []
         let idx = 1
         for (const c of clients) {
-          if (!c.address) continue;
-          setOptimizationStatus(`Buscando coordenadas ${idx}/${clients.length}...`)
-          const coord = await geocodeAddress(c.address)
-          if (coord) {
-            clientsWithCoords.push({ id: c.id, coord })
+          if (!c.address && !c.latitude) continue;
+          
+          if (c.latitude && c.longitude) {
+            // Already has coords saved
+            clientsWithCoords.push({ id: c.id, coord: { lat: Number(c.latitude), lng: Number(c.longitude) } })
+          } else if (c.address) {
+            // Needs geocoding
+            setOptimizationStatus(`Buscando coordenadas ${idx}/${clients.length}...`)
+            const coord = await geocodeAddress(c.address)
+            if (coord) {
+              clientsWithCoords.push({ id: c.id, coord })
+              // Could also save it back to DB here, but let's keep it simple
+            }
           }
           idx++
         }
