@@ -14,7 +14,8 @@ import type { Supply } from '@/types/database'
 export default function SuppliesList() {
   const queryClient = useQueryClient()
   const { hasPermission, user } = useAuth()
-  const canManage = hasPermission('can_manage_equipments') && user?.role !== 'mecanico'
+  const hasAccess = hasPermission('can_manage_equipments')
+  const canEdit = user?.role !== 'mecanico'
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -101,7 +102,7 @@ export default function SuppliesList() {
     sup.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  if (!canManage) {
+  if (!hasAccess) {
     return <div className="p-8 text-center text-muted-foreground">Você não tem permissão para acessar esta página.</div>
   }
 
@@ -114,10 +115,12 @@ export default function SuppliesList() {
           </h1>
           <p className="text-sm text-muted-foreground">Gerencie o estoque de peças usadas nas manutenções</p>
         </div>
-        <Button onClick={openNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Insumo
-        </Button>
+        {canEdit && (
+          <Button onClick={openNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Insumo
+          </Button>
+        )}
       </div>
 
       <div className="relative">
@@ -144,14 +147,16 @@ export default function SuppliesList() {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" className="flex-1" onClick={() => openEdit(sup)}>
-                  <Edit2 className="h-4 w-4 mr-2" /> Editar
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleDelete(sup.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              {canEdit && (
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openEdit(sup)}>
+                    <Edit2 className="h-4 w-4 mr-2" /> Editar
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleDelete(sup.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
