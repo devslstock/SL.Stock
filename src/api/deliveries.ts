@@ -96,7 +96,10 @@ export const deliveriesApi = {
       .eq('company_id', currentCompanyId)
       .order('name')
     if (error) throw error
-    return data as (DeliveryClient & { delivery_items: DeliveryItem[] })[]
+    return data as (DeliveryClient & { 
+      delivery_items: DeliveryItem[], 
+      customer?: { document: string | null, latitude?: number | null, longitude?: number | null } 
+    })[]
   },
 
   async getDeliveryClient(clientId: string) {
