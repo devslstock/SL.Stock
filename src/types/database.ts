@@ -114,6 +114,8 @@ export interface Customer {
   po_box: string | null
   city: string | null
   state: string | null
+  latitude?: number | null
+  longitude?: number | null
   phone1: string | null
   phone2: string | null
   phone3: string | null

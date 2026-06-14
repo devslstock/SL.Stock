@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link } from 'react-router-dom'
+import { geocodeAddress } from '@/api/routing'
 
 export default function CustomerForm() {
   const { id } = useParams()
@@ -22,6 +23,8 @@ export default function CustomerForm() {
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   
   const isEditing = Boolean(id)
+
+  const [isGeocoding, setIsGeocoding] = useState(false)
 
   const [formData, setFormData] = useState({
     active: true,
@@ -38,6 +41,8 @@ export default function CustomerForm() {
     po_box: '',
     city: '',
     state: '',
+    latitude: '',
+    longitude: '',
     phone1: '',
     phone2: '',
     phone3: '',
@@ -107,6 +112,8 @@ export default function CustomerForm() {
         po_box: customer.po_box || '',
         city: customer.city || '',
         state: customer.state || '',
+        latitude: customer.latitude ? customer.latitude.toString() : '',
+        longitude: customer.longitude ? customer.longitude.toString() : '',
         phone1: customer.phone1 || '',
         phone2: customer.phone2 || '',
         phone3: customer.phone3 || '',
@@ -125,7 +132,12 @@ export default function CustomerForm() {
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
-      const { payment_condition_ids, ...customerData } = data
+      const payload = {
+        ...data,
+        latitude: data.latitude ? parseFloat(data.latitude) : null,
+        longitude: data.longitude ? parseFloat(data.longitude) : null
+      }
+      const { payment_condition_ids, equipments, ...customerData } = payload
       const result = isEditing ? await customersApi.updateCustomer(id!, customerData) : await customersApi.createCustomer(customerData)
       await salesApi.setCustomerPaymentConditions(result.id, payment_condition_ids)
       return result
@@ -353,6 +365,62 @@ export default function CustomerForm() {
                 maxLength={2}
                 className="uppercase text-center"
               />
+            </div>
+            <div className="md:col-span-12 mt-2 pt-4 border-t border-border/50">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <MapPin className="h-4 w-4" /> Coordenadas Geográficas (Latitude e Longitude)
+                </label>
+                <Button 
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                  disabled={isGeocoding || !formData.address || !formData.city}
+                  onClick={async () => {
+                    setIsGeocoding(true)
+                    try {
+                      const fullAddress = `${formData.address}, ${formData.number || ''}, ${formData.neighborhood || ''}, ${formData.city} - ${formData.state}`.replace(/,\s*,/g, ',').trim()
+                      const coords = await geocodeAddress(fullAddress)
+                      if (coords) {
+                        setFormData({...formData, latitude: coords.lat.toString(), longitude: coords.lng.toString()})
+                        toast.success('Coordenadas localizadas com sucesso!')
+                      } else {
+                        toast.error('Não foi possível localizar este endereço.')
+                      }
+                    } catch (e) {
+                      toast.error('Erro na busca de coordenadas.')
+                    } finally {
+                      setIsGeocoding(false)
+                    }
+                  }}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  {isGeocoding ? 'Buscando...' : 'Localizar a partir do Endereço'}
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase block">Latitude</label>
+                  <Input 
+                    value={formData.latitude} 
+                    onChange={e => setFormData({...formData, latitude: e.target.value})} 
+                    placeholder="-23.5505"
+                    type="number"
+                    step="any"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase block">Longitude</label>
+                  <Input 
+                    value={formData.longitude} 
+                    onChange={e => setFormData({...formData, longitude: e.target.value})} 
+                    placeholder="-46.6333"
+                    type="number"
+                    step="any"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
