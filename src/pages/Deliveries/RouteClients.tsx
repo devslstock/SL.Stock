@@ -120,9 +120,24 @@ export default function RouteClients() {
         const clientsWithCoords = []
         let idx = 1
         for (const c of clients) {
-          const lat = c.latitude || c.customer?.latitude;
-          const lng = c.longitude || c.customer?.longitude;
+          let lat = c.latitude || c.customer?.latitude;
+          let lng = c.longitude || c.customer?.longitude;
           
+          // Se ainda não tem lat/lng, tenta achar o cliente no cadastro geral pelo nome ou documento
+          if (!lat || !lng) {
+             const docStr = c.customer?.document ? c.customer.document.replace(/[^\d]/g, '') : null;
+             const foundCustomer = customers.find((cust: any) => 
+               (docStr && cust.document && cust.document.replace(/[^\d]/g, '') === docStr) ||
+               (cust.nickname && c.name && cust.nickname.toLowerCase().includes(c.name.toLowerCase())) ||
+               (cust.legal_name && c.name && cust.legal_name.toLowerCase().includes(c.name.toLowerCase())) ||
+               (c.name && cust.nickname && c.name.toLowerCase().includes(cust.nickname.toLowerCase()))
+             );
+             if (foundCustomer && foundCustomer.latitude && foundCustomer.longitude) {
+               lat = foundCustomer.latitude;
+               lng = foundCustomer.longitude;
+             }
+          }
+
           if (lat && lng) {
             // Already has coords saved locally or in customer registry
             clientsWithCoords.push({ id: c.id, coord: { lat: Number(lat), lng: Number(lng) } })
@@ -132,7 +147,7 @@ export default function RouteClients() {
             const coord = await geocodeAddress(c.address)
             if (coord) {
               clientsWithCoords.push({ id: c.id, coord })
-              // Could also save it back to DB here, but let's keep it simple
+              // Poderíamos salvar no banco aqui também, mas vamos focar em otimizar
             }
           }
           idx++
