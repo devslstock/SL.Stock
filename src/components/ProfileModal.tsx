@@ -66,20 +66,27 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
         if (authError) throw authError
       }
 
-      // 2. Atualizar Dados no Banco (tabela users)
-      const updates: any = {
-        name,
-        phone
+      // 2. Atualizar Dados no Banco (tabela users) apenas se houver mudanças
+      const updates: any = {}
+      
+      if (name !== user.name) {
+        updates.name = name
+      }
+      
+      if (phone !== (user.phone || '')) {
+        updates.phone = phone
       }
 
       if (previewImage) {
         updates.avatar_url = previewImage
       }
 
-      await usersApi.updateUser(user.id, updates)
-
-      // Atualizar o contexto
-      updateUserLocally(updates)
+      // Só chama a API se realmente teve alguma mudança nos dados
+      if (Object.keys(updates).length > 0) {
+        await usersApi.updateUser(user.id, updates)
+        // Atualizar o contexto localmente
+        updateUserLocally(updates)
+      }
 
       toast.success('Perfil atualizado com sucesso!')
       onClose()
