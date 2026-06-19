@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation, Outlet } from 'react-router-dom'
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { 
   Menu, X, Boxes, LayoutDashboard, Truck, Package, ClipboardList, 
@@ -36,8 +36,8 @@ const navGroups = [
   {
     title: 'VENDAS',
     items: [
-      { label: 'App Força de Vendas', icon: Briefcase, path: '/vendas', permission: 'can_use_sales_app' },
-      { label: 'Gestão de Vendas', icon: FileSignature, path: '/vendas/gestao', permission: 'can_manage_sales' }
+      { label: 'App Força de Vendas', icon: Briefcase, path: '/vendas', permission: 'can_use_sales_app', masterOnly: true },
+      { label: 'Gestão de Vendas', icon: FileSignature, path: '/vendas/gestao', permission: 'can_manage_sales', masterOnly: true }
     ]
   },
   {
@@ -101,11 +101,44 @@ export default function AppLayout() {
   }
 
   const location = useLocation()
+  const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const { user, company, logout, hasPermission, isMaster } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master' || isMaster
 
   const isDark = theme.includes('dark');
+
+  // Lembrete de backup toda sexta-feira às 15h
+  useEffect(() => {
+    if (!isManager) return;
+
+    const checkBackupReminder = () => {
+      const now = new Date();
+      // 5 = Sexta-feira
+      if (now.getDay() === 5 && now.getHours() >= 15) {
+        const lastAlert = localStorage.getItem('last_backup_alert');
+        const todayStr = now.toISOString().split('T')[0];
+        
+        if (lastAlert !== todayStr) {
+          toast.info(
+            '🛡️ Lembrete de Segurança: Como hoje é sexta-feira, não se esqueça de realizar o backup do sistema para manter seus dados seguros.',
+            { 
+              duration: 0,
+              action: {
+                label: 'Fazer Backup Agora',
+                onClick: () => navigate('/configuracoes/empresa')
+              }
+            }
+          );
+          localStorage.setItem('last_backup_alert', todayStr);
+        }
+      }
+    };
+
+    checkBackupReminder();
+    const interval = setInterval(checkBackupReminder, 1000 * 60 * 60); // Verifica a cada 1 hora
+    return () => clearInterval(interval);
+  }, [isManager]);
 
   const { data: pendingApprovals = [] } = useQuery({
     queryKey: ['pending_approvals'],
@@ -273,7 +306,10 @@ export default function AppLayout() {
         <nav className="flex-1 p-3 space-y-1 overflow-auto md:mt-0">
           {/* Grouped Navigation Items */}
           {company && navGroups.map((group, gIdx) => {
-            const hasVisibleItems = group.items.some(item => hasPermission(item.permission as any));
+            const hasVisibleItems = group.items.some(item => {
+              if (item.masterOnly && !isMaster) return false;
+              return hasPermission(item.permission as any);
+            });
             if (!hasVisibleItems) return null;
 
             const isClosed = closedGroups.includes(group.title);
@@ -297,6 +333,7 @@ export default function AppLayout() {
                   isClosed ? "max-h-0 opacity-0 scale-y-95 mt-0" : "max-h-[500px] opacity-100 scale-y-100"
                 )}>
                   {group.items.map((item) => {
+                    if (item.masterOnly && !isMaster) return null;
                     if (!hasPermission(item.permission as any)) return null;
                     const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
                     const isLocked = isFeatureLocked(item.path);

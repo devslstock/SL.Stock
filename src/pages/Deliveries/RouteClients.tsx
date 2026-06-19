@@ -655,16 +655,37 @@ export default function RouteClients() {
           <Button variant="ghost" size="icon" onClick={() => navigate('/entregas')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold gradient-text">{route?.title || route?.operation?.load_number || 'Rota de Entrega'}</h1>
-            {route?.scheduled_date && (
-              <p className="text-xs font-semibold text-primary/80 uppercase tracking-wide mt-1">
-                Previsão: {new Date(route.scheduled_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-              </p>
-            )}
+          <div className="flex-1 flex items-start sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold gradient-text">{route?.title || route?.operation?.load_number || 'Rota de Entrega'}</h1>
+              {route?.scheduled_date && (
+                <p className="text-xs font-semibold text-primary/80 uppercase tracking-wide mt-1">
+                  Previsão: {new Date(route.scheduled_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                </p>
+              )}
               <p className="text-sm text-muted-foreground mt-1">
                 {processedStops.reduce((sum: number, group: any) => sum + group.stops.length, 0)} paradas
               </p>
+            </div>
+
+            {isManager && (route?.status === 'completed' || route?.status === 'returned') && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="shrink-0 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary"
+                onClick={() => {
+                  toast.info('Gerando PDF...', { duration: 3000 });
+                  generateRouteReportPDF(route, clients, routeOrders, company, true).catch(err => {
+                    console.error(err);
+                    toast.error('Erro ao gerar relatório com comprovantes.');
+                  });
+                }}
+              >
+                <FileDown className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Imprimir Comprovantes</span>
+                <span className="sm:hidden">Comprovantes</span>
+              </Button>
+            )}
           </div>
         </div>
 

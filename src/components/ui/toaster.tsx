@@ -4,25 +4,31 @@ import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
 
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 interface Toast {
   id: number
-  message: string
+  message: React.ReactNode
   type: ToastType
   duration: number
+  action?: ToastAction
 }
 
 let toastId = 0
 let addToastFn: ((toast: Omit<Toast, 'id'>) => void) | null = null
 
 export const toast = {
-  success: (message: string, opts?: { duration?: number }) =>
-    addToastFn?.({ message, type: 'success', duration: opts?.duration || 3000 }),
-  error: (message: string, opts?: { duration?: number }) =>
-    addToastFn?.({ message, type: 'error', duration: opts?.duration || 4000 }),
-  info: (message: string, opts?: { duration?: number }) =>
-    addToastFn?.({ message, type: 'info', duration: opts?.duration || 2500 }),
-  warning: (message: string, opts?: { duration?: number }) =>
-    addToastFn?.({ message, type: 'warning', duration: opts?.duration || 4000 }),
+  success: (message: React.ReactNode, opts?: { duration?: number, action?: ToastAction }) =>
+    addToastFn?.({ message, type: 'success', duration: opts?.duration ?? 3000, action: opts?.action }),
+  error: (message: React.ReactNode, opts?: { duration?: number, action?: ToastAction }) =>
+    addToastFn?.({ message, type: 'error', duration: opts?.duration ?? 4000, action: opts?.action }),
+  info: (message: React.ReactNode, opts?: { duration?: number, action?: ToastAction }) =>
+    addToastFn?.({ message, type: 'info', duration: opts?.duration ?? 2500, action: opts?.action }),
+  warning: (message: React.ReactNode, opts?: { duration?: number, action?: ToastAction }) =>
+    addToastFn?.({ message, type: 'warning', duration: opts?.duration ?? 4000, action: opts?.action }),
 }
 
 const icons: Record<ToastType, typeof CheckCircle2> = {
@@ -45,9 +51,11 @@ export function Toaster() {
   const addToast = useCallback((t: Omit<Toast, 'id'>) => {
     const id = ++toastId
     setToasts(prev => [...prev, { ...t, id }])
-    setTimeout(() => {
-      setToasts(prev => prev.filter(x => x.id !== id))
-    }, t.duration)
+    if (t.duration > 0) {
+      setTimeout(() => {
+        setToasts(prev => prev.filter(x => x.id !== id))
+      }, t.duration)
+    }
   }, [])
 
   useEffect(() => {
@@ -72,13 +80,33 @@ export function Toaster() {
             )}
           >
             <Icon className="h-5 w-5 shrink-0" />
-            <span className="text-sm font-medium flex-1">{t.message}</span>
-            <button
-              onClick={() => removeToast(t.id)}
-              className="shrink-0 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex-1 flex flex-col gap-2">
+              <span className="text-sm font-medium">{t.message}</span>
+              {t.action && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { t.action!.onClick(); removeToast(t.id); }}
+                    className="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-md bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 transition-colors"
+                  >
+                    {t.action.label}
+                  </button>
+                  <button
+                    onClick={() => removeToast(t.id)}
+                    className="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              )}
+            </div>
+            {!t.action && (
+              <button
+                onClick={() => removeToast(t.id)}
+                className="shrink-0 opacity-60 hover:opacity-100 transition-opacity cursor-pointer ml-2 self-start mt-0.5"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         )
       })}

@@ -21,12 +21,7 @@ function formatDateOnly(dateStr: string | undefined) {
   }).format(date)
 }
 
-export async function generateDeliveryProofPDF(client: any, company: any): Promise<void> {
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  })
+export function drawDeliveryProofOnDoc(doc: jsPDF, client: any, company: any) {
 
   let y = 15
 
@@ -250,6 +245,16 @@ export async function generateDeliveryProofPDF(client: any, company: any): Promi
   doc.setFontSize(7.5)
   doc.setTextColor(148, 163, 184)
   doc.text('Comprovante gerado eletronicamente pelo sistema Estoque Fácil WMS.', 15, 287)
+}
+
+export async function generateDeliveryProofPDF(client: any, company: any): Promise<void> {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  })
+
+  drawDeliveryProofOnDoc(doc, client, company)
 
   // Output file based on environment
   const filename = `comprovante_${client.order_number || client.id}.pdf`
@@ -456,7 +461,7 @@ Porto Seguro, ${new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 
   }
 }
 
-export async function generateRouteReportPDF(route: any, clients: any[], routeOrders: any[], company: any): Promise<void> {
+export async function generateRouteReportPDF(route: any, clients: any[], routeOrders: any[], company: any, includeProofs: boolean = false): Promise<void> {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -657,7 +662,17 @@ export async function generateRouteReportPDF(route: any, clients: any[], routeOr
   doc.setTextColor(148, 163, 184)
   doc.text('Relatório gerado eletronicamente pelo sistema Estoque Fácil WMS.', 15, 287)
 
-  const filename = `relatorio_rota_${route.operation?.load_number || route.id}.pdf`
+  if (includeProofs) {
+    const completedClients = clients.filter(c => c.status === 'delivered' || c.status === 'delivered_with_divergence' || c.status === 'returned')
+    for (const client of completedClients) {
+      doc.addPage()
+      drawDeliveryProofOnDoc(doc, client, company)
+    }
+  }
+
+  const filename = includeProofs 
+    ? `relatorio_comprovantes_${route.operation?.load_number || route.id}.pdf`
+    : `relatorio_rota_${route.operation?.load_number || route.id}.pdf`
   if (Capacitor.isNativePlatform()) {
     try {
       const pdfOutput = doc.output('datauristring')
