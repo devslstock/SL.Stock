@@ -8,12 +8,18 @@ export default async function handler(req, res) {
   try {
     const { user, forceCompanyId, isSuperAdmin } = req.body;
     
-    // We need service role to create users
-    const supabaseAdmin = createClient(
-      process.env.VITE_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase Environment Variables in Serverless Function.', { 
+        url: !!supabaseUrl, 
+        key: !!supabaseKey 
+      });
+      return res.status(500).json({ error: 'Configuração do servidor ausente (VITE_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configurados no Vercel).' });
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
     let finalCompanyId = null;
     
     if (!isSuperAdmin) {
