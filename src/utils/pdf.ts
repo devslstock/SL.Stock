@@ -135,9 +135,24 @@ export function drawDeliveryProofOnDoc(doc: jsPDF, client: any, company: any) {
     // Check if we need to wrap page
     if (y > 260) {
       doc.addPage()
-      y = 20
+      y = 15
       
-      // Draw minimal header on new page
+      // Draw header with order info on new page
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.setTextColor(15, 23, 42)
+      doc.text('COMPROVANTE DE ENTREGA (Continuação)', 15, y)
+      
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.setTextColor(71, 85, 105)
+      doc.text(`Pedido: ${client.order_number || 'Sem número'} | Cliente: ${client.name || ''}`, 15, y + 5)
+      
+      y += 10
+      doc.setLineWidth(0.5)
+      doc.line(15, y, 195, y)
+      y += 7
+
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(9)
       doc.setTextColor(100, 116, 139)
@@ -145,6 +160,7 @@ export function drawDeliveryProofOnDoc(doc: jsPDF, client: any, company: any) {
       doc.text('Descrição do Item', 45, y)
       doc.text('Conferido / Esperado', 195, y, { align: 'right' })
       y += 3
+      doc.setLineWidth(0.2)
       doc.line(15, y, 195, y)
       y += 7
       
@@ -184,7 +200,23 @@ export function drawDeliveryProofOnDoc(doc: jsPDF, client: any, company: any) {
   // If box goes out of page bounds, add page
   if (y > 220) {
     doc.addPage()
-    y = 20
+    y = 15
+    
+    // Draw header with order info on new page
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(15, 23, 42)
+    doc.text('COMPROVANTE DE ENTREGA (Assinatura)', 15, y)
+    
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.setTextColor(71, 85, 105)
+    doc.text(`Pedido: ${client.order_number || 'Sem número'} | Cliente: ${client.name || ''}`, 15, y + 5)
+    
+    y += 10
+    doc.setLineWidth(0.5)
+    doc.line(15, y, 195, y)
+    y += 7
   }
 
   doc.setDrawColor(226, 232, 240)
