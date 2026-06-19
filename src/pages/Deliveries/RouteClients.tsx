@@ -142,10 +142,10 @@ export default function RouteClients() {
 
   // Sync data to local Dexie DB when loaded and online
   useEffect(() => {
-    if (route && clients.length > 0 && navigator.onLine) {
-      OfflineSyncService.downloadRouteData(id!)
+    if (route && clients && clients.length > 0 && navigator.onLine) {
+      OfflineSyncService.syncRouteData(route, clients, routeOrders)
     }
-  }, [route, clients, id])
+  }, [route, clients, routeOrders])
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],

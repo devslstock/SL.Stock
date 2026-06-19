@@ -210,7 +210,7 @@ export const deliveriesApi = {
   },
 
   async updateDeliveryClient(id: string, updates: Partial<DeliveryClient>) {
-    if (!navigator.onLine) {
+    const saveOffline = async () => {
       await db.clients.update(id, updates as any)
       await db.sync_queue.add({
         type: 'CONFIRM_DELIVERY',
@@ -220,20 +220,29 @@ export const deliveriesApi = {
       })
       return { id, ...updates } as any
     }
-    const { data, error } = await supabase
-      .from('delivery_clients')
-      .update(updates)
-      .eq('id', id)
-      
-      .select()
-      .single()
-    if (error) throw error
 
-    if (updates.status && data) {
-      await this.recalculateRouteStatus(data.delivery_route_id)
+    if (!navigator.onLine) {
+      return saveOffline()
     }
 
-    return data as DeliveryClient
+    try {
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), 6000));
+      const request = supabase.from('delivery_clients').update(updates).eq('id', id).select().single();
+      const { data, error } = await Promise.race([request, timeout]) as any;
+      
+      if (error) throw error
+
+      if (updates.status && data) {
+        await this.recalculateRouteStatus(data.delivery_route_id)
+      }
+
+      return data as DeliveryClient
+    } catch (error: any) {
+      if (error.message === 'Network timeout' || error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')) {
+        return saveOffline()
+      }
+      throw error
+    }
   },
 
   async recalculateRouteStatus(routeId: string) {
@@ -434,7 +443,7 @@ export const deliveriesApi = {
       if (requested_by_name) updates.requested_by_name = requested_by_name
     }
 
-    if (!navigator.onLine) {
+    const saveOffline = async () => {
       await db.products.update(itemId, updates)
       await db.sync_queue.add({
         type: 'CONFIRM_DELIVERY',
@@ -445,15 +454,23 @@ export const deliveriesApi = {
       return { id: itemId, ...updates } as any
     }
 
-    const { data, error } = await supabase
-      .from('delivery_items')
-      .update(updates)
-      .eq('id', itemId)
+    if (!navigator.onLine) {
+      return saveOffline()
+    }
+
+    try {
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), 6000));
+      const request = supabase.from('delivery_items').update(updates).eq('id', itemId).select().single();
+      const { data, error } = await Promise.race([request, timeout]) as any;
       
-      .select()
-      .single()
-    if (error) throw error
-    return data as DeliveryItem
+      if (error) throw error
+      return data as DeliveryItem
+    } catch (error: any) {
+      if (error.message === 'Network timeout' || error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')) {
+        return saveOffline()
+      }
+      throw error
+    }
   },
 
   async updateDeliveryItem(itemId: string, updates: Partial<DeliveryItem>) {
