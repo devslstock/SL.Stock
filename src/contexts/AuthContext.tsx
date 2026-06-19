@@ -21,6 +21,7 @@ interface AuthContextType {
   exitCompany: () => void;
   isLoading: boolean;
   hasPermission: (permission: keyof UserPermissions) => boolean;
+  updateUserLocally: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -269,8 +270,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isMaster = user?.is_super_admin === true;
 
+  const updateUserLocally = (updates: Partial<User>) => {
+    if (user) {
+      setUser({ ...user, ...updates });
+      
+      // Atualizar também o fallback offline se existir
+      const offlineProfileStr = localStorage.getItem('offline_user_profile');
+      if (offlineProfileStr) {
+        try {
+          const offlineData = JSON.parse(offlineProfileStr);
+          offlineData.user = { ...offlineData.user, ...updates };
+          localStorage.setItem('offline_user_profile', JSON.stringify(offlineData));
+        } catch(e) {}
+      }
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, company, isMaster, login, confirmLogin, cancelLogin, logout, switchCompany, exitCompany, isLoading, hasPermission }}>
+    <AuthContext.Provider value={{ user, company, isMaster, login, confirmLogin, cancelLogin, logout, switchCompany, exitCompany, isLoading, hasPermission, updateUserLocally }}>
       {children}
     </AuthContext.Provider>
   );

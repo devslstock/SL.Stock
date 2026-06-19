@@ -98,6 +98,8 @@ export interface User {
   name: string
   username: string
   email?: string
+  phone?: string
+  avatar_url?: string
   role: UserRole
   active: boolean
   reset_requested?: boolean

@@ -15,6 +15,7 @@ import { deliveriesApi } from '@/api/deliveries'
 import { operationsApi } from '@/api/operations'
 import { saasApi } from '@/api/saas'
 import { toast } from '@/components/ui/toaster'
+import { ProfileModal } from '@/components/ProfileModal'
 import { TesterNotes } from '@/components/TesterNotes'
 
 
@@ -80,6 +81,8 @@ export default function AppLayout() {
     navGroups.map(g => g.title).filter(Boolean)
   )
   const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true)
@@ -453,14 +456,74 @@ export default function AppLayout() {
         {/* Desktop Header */}
         <header className="hidden md:flex h-16 px-6 border-b border-border bg-card/50 backdrop-blur-md items-center justify-end sticky top-0 z-30">
           <div className="flex items-center gap-4">
-             <div className="flex items-center gap-3">
-                <div className="text-right">
-                   <p className="text-sm font-bold text-foreground leading-none">{user?.name || 'Usuário'}</p>
-                   <p className="text-xs text-muted-foreground capitalize mt-1">{user?.role || 'operator'}</p>
-                </div>
-                <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center">
-                   <UserIcon className="h-4 w-4 text-primary" />
-                </div>
+             {/* User Menu Trigger */}
+             <div className="relative">
+               <div 
+                 className="flex items-center gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors"
+                 onClick={() => setShowProfileMenu(!showProfileMenu)}
+               >
+                  <div className="text-right">
+                     <p className="text-sm font-bold text-foreground leading-none">{user?.name || 'Usuário'}</p>
+                     <p className="text-xs text-muted-foreground capitalize mt-1">{user?.role || 'operator'}</p>
+                  </div>
+                  <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-border">
+                     {user?.avatar_url ? (
+                       <img src={user.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                     ) : (
+                       <UserIcon className="h-4 w-4 text-primary" />
+                     )}
+                  </div>
+               </div>
+
+               {/* Dropdown Menu */}
+               {showProfileMenu && (
+                 <>
+                   <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
+                   <div className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-card shadow-lg z-50 py-1 slide-in fade-in animate-in">
+                     <button 
+                       className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                       onClick={() => {
+                         setShowProfileMenu(false)
+                         setIsProfileModalOpen(true)
+                       }}
+                     >
+                       <UserIcon className="h-4 w-4" />
+                       Meu Perfil
+                     </button>
+                     <button 
+                       className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                       onClick={() => {
+                         setShowProfileMenu(false)
+                         toggleStyle()
+                       }}
+                     >
+                       <Palette className="h-4 w-4" />
+                       Tema ({isClassic ? 'Clássico' : 'Padrão'})
+                     </button>
+                     <button 
+                       className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                       onClick={() => {
+                         setShowProfileMenu(false)
+                         toggleDarkLight()
+                       }}
+                     >
+                       {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                       Modo {isDark ? 'Claro' : 'Escuro'}
+                     </button>
+                     <div className="h-px bg-border my-1"></div>
+                     <button 
+                       className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-2"
+                       onClick={() => {
+                         setShowProfileMenu(false)
+                         logout()
+                       }}
+                     >
+                       <LogOut className="h-4 w-4" />
+                       Sair
+                     </button>
+                   </div>
+                 </>
+               )}
              </div>
              
              <div className="h-6 w-px bg-border mx-1"></div>
@@ -503,17 +566,6 @@ export default function AppLayout() {
              )}
              
              <TesterNotes />
-             
-             <button onClick={toggleStyle} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer" title="Alternar tema (Padrão / Clássico)">
-                <Palette className="h-5 w-5" />
-             </button>
-             <button onClick={toggleDarkLight} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer" title="Alternar tema">
-                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-             </button>
-             
-             <button onClick={logout} className="p-2 rounded-lg hover:bg-red-500/10 text-red-500/70 hover:text-red-500 transition-colors cursor-pointer" title="Sair">
-                <LogOut className="h-5 w-5" />
-             </button>
           </div>
         </header>
 
@@ -521,6 +573,11 @@ export default function AppLayout() {
           <Outlet />
         </div>
       </main>
+
+      <ProfileModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
     </div>
   )
 }
