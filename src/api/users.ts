@@ -8,15 +8,14 @@ export const usersApi = {
     throw new Error('Use AuthContext.login para autenticação')
   },
 
-  async getUsers() {
-    
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      
-      .order('name')
-    if (error) throw error
-    return data as User[]
+  async getUsers(company_id?: string) {
+    let query = supabase.from('users').select('*').order('name');
+    if (company_id) {
+      query = query.eq('company_id', company_id);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as User[];
   },
 
   async createUser(user: Omit<User, 'id' | 'created_at' | 'company_id'>, forceCompanyId?: string) {

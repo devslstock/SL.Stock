@@ -54,8 +54,9 @@ export default function AccessControl() {
   const [perms, setPerms] = useState<UserPermissions>(defaultPermissions.conferente)
 
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: usersApi.getUsers,
+    queryKey: ['users', company?.id],
+    queryFn: () => usersApi.getUsers(company?.id),
+    enabled: !!company?.id,
   })
 
   const createMutation = useMutation({
