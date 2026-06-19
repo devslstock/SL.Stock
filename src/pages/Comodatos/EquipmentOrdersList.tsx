@@ -62,7 +62,8 @@ export default function EquipmentOrdersList() {
 
   const { data: usersList = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: usersApi.getUsers
+    queryFn: () => usersApi.getUsers(company?.id),
+    enabled: !!company?.id,
   })
 
   // Filter available equipments for delivery, or customer equipments for collection/maintenance

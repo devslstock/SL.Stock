@@ -30,7 +30,8 @@ export default function CreateDelivery() {
   // We only want 'motorista' users for the driver selection
   const { data: usersList = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: usersApi.getUsers,
+    queryFn: () => usersApi.getUsers(company?.id),
+    enabled: !!company?.id,
   })
   
   const drivers = usersList.filter(u => u.role === 'motorista' && u.active)

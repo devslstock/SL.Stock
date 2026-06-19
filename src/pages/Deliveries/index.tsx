@@ -59,8 +59,8 @@ export default function DeliveriesList() {
 
   const { data: usersList = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: usersApi.getUsers,
-    enabled: isManager,
+    queryFn: () => usersApi.getUsers(company?.id),
+    enabled: !!company?.id && isManager,
   })
   
   const drivers = usersList.filter((u: any) => u.role === 'motorista' && u.active)
