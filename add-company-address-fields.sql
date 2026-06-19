@@ -1,0 +1,8 @@
+ALTER TABLE companies
+ADD COLUMN IF NOT EXISTS garage_cep TEXT,
+ADD COLUMN IF NOT EXISTS garage_street TEXT,
+ADD COLUMN IF NOT EXISTS garage_number TEXT,
+ADD COLUMN IF NOT EXISTS garage_complement TEXT,
+ADD COLUMN IF NOT EXISTS garage_neighborhood TEXT,
+ADD COLUMN IF NOT EXISTS garage_city TEXT,
+ADD COLUMN IF NOT EXISTS garage_state TEXT;
