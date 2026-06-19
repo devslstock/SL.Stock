@@ -85,7 +85,7 @@ export default function RouteClientForm() {
 
   useEffect(() => {
     if (clientItems && clientItems.length > 0 && items.length === 0) {
-      setItems(clientItems.map(i => ({
+      setItems(clientItems.map((i: any) => ({
         id: i.id,
         tempId: i.id,
         product_id: i.product_id,
@@ -93,7 +93,7 @@ export default function RouteClientForm() {
         description: i.description,
         quantity_expected: i.quantity_expected
       })))
-      setOriginalItemIds(clientItems.map(i => i.id))
+      setOriginalItemIds(clientItems.map((i: any) => i.id))
     }
   }, [clientItems])
 

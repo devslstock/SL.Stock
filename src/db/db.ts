@@ -10,6 +10,8 @@ export interface LocalRoute {
   driver_id?: string;
   helper_id?: string;
   synced_at: number;
+  initial_km?: number;
+  final_km?: number;
 }
 
 export interface LocalClient {

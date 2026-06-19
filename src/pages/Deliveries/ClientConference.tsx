@@ -194,7 +194,7 @@ export default function ClientConference() {
     if (!normalized) return
 
     // Verifica se pertence ao cliente
-    const existingItem = items.find(i => {
+    const existingItem = items.find((i: any) => {
       if (normalizeCode(i.product_code) === normalized) return true
       const prod = allProducts.find((p: any) => p.id === i.product_id)
       if (prod && prod.external_code && normalizeCode(prod.external_code) === normalized) return true
@@ -279,7 +279,7 @@ export default function ClientConference() {
     let totalScanned = 0
     let divergenceFound = false
 
-    items.forEach(i => {
+    items.forEach((i: any) => {
       totalExpected += i.quantity_expected
       totalScanned += Math.min(i.quantity_scanned, i.quantity_expected) // cap progress at 100%
       if (i.quantity_scanned !== i.quantity_expected) divergenceFound = true
@@ -301,7 +301,7 @@ export default function ClientConference() {
       if (!window.confirm('Existem divergências (faltas ou excessos) neste pedido. Tem certeza que deseja finalizar assim mesmo?')) {
         return
       }
-      const missingItems = items.filter(i => i.quantity_scanned < i.quantity_expected)
+      const missingItems = items.filter((i: any) => i.quantity_scanned < i.quantity_expected)
       
       setIsFinishing(true)
       try {
@@ -471,7 +471,7 @@ export default function ClientConference() {
         {items.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">Nenhum item na lista deste cliente.</div>
         ) : (
-          items.map(item => {
+          items.map((item: any) => {
             const isPendingApproval = item.approval_status === 'pending'
             const isOk = item.quantity_scanned === item.quantity_expected && item.quantity_expected > 0
             const isMissing = item.quantity_scanned < item.quantity_expected

@@ -63,7 +63,7 @@ export default function RouteClients() {
     queryFn: async () => {
       if (!navigator.onLine) {
         // Fallback to local DB check
-        const { db } = await import('@/db/db')
+        const { default: db } = await import('@/db/db')
         const route = await db.routes.get(id!)
         if (route && (route as any).initial_km) {
            return {
@@ -82,7 +82,7 @@ export default function RouteClients() {
   const saveChecklistMutation = useMutation({
     mutationFn: async ({ km, temp, type }: { km: number, temp?: number, type: 'initial' | 'final' }) => {
       if (!navigator.onLine) {
-        const { db } = await import('@/db/db')
+        const { default: db } = await import('@/db/db')
         const updateData: any = type === 'initial' ? { initial_km: km } : { final_km: km }
         await db.routes.update(id!, updateData)
         
