@@ -389,6 +389,14 @@ export default function ApprovalsPage() {
                     </div>
 
                     <div className="space-y-2 text-sm text-muted-foreground bg-muted/20 p-3 rounded-lg">
+                      {item.requested_by_name && (
+                        <p className="flex items-start gap-2">
+                          <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                          <span>
+                            <span className="font-semibold text-foreground">Operador:</span> {item.requested_by_name}
+                          </span>
+                        </p>
+                      )}
                       <p className="flex items-start gap-2">
                         <Truck className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
                         <span>

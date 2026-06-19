@@ -90,7 +90,7 @@ export default function SalesRepsList() {
   }
 
   const handleDelete = (id: string, name: string) => {
-    if (window.confirm(`Deseja realmente excluir o representante "${name}"?`)) {
+    if (window.confirm(`Deseja realmente excluir o representante "${name}"?. Esta ação não pode ser desfeita.`)) {
       deleteMutation.mutate(id)
     }
   }

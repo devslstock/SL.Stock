@@ -141,7 +141,7 @@ export default function SaaSNotes() {
                   {(note.author_id === user?.id || user?.role === 'admin') && (
                     <button 
                       onClick={() => {
-                        if (window.confirm('Apagar este recado?')) {
+                        if (window.confirm('Apagar este recado?. Esta ação não pode ser desfeita.')) {
                           deleteNoteMutation.mutate(note.id);
                         }
                       }}

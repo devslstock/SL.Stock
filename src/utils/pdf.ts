@@ -282,3 +282,400 @@ export async function generateDeliveryProofPDF(client: any, company: any): Promi
     doc.save(filename)
   }
 }
+
+export async function generateContractPDF(order: any, company: any): Promise<void> {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  })
+
+  let y = 15
+
+  const isRecolha = order.type === 'recolha'
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(14)
+  if (isRecolha) {
+    doc.text('TERMO DE RECOLHA DE EQUIPAMENTO', 105, y, { align: 'center' })
+  } else {
+    doc.text('CONTRATO PARTICULAR DE COMODATO', 105, y, { align: 'center' })
+  }
+  y += 10
+
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  
+  if (!isRecolha) {
+    const contractNumber = order.os_number ? `BA${String(order.os_number).padStart(5, '0')}/2026` : 'BA00000/2026'
+    doc.text(`Contrato nº ${contractNumber}`, 15, y)
+    doc.text(`Patrimônio: ${order.equipment?.patrimony || '______'}`, 195, y, { align: 'right' })
+    y += 10
+
+    doc.setFont('helvetica', 'bold')
+    doc.text('PARTES', 15, y)
+    y += 6
+
+    doc.setFont('helvetica', 'normal')
+    const comodanteText = `COMODANTE: ${company?.name || '______________'}, inscrita no CNPJ sob o número ${company?.cnpj || '______________'}, sediada à ${company?.garage_street || '______________'}, nº. ${company?.garage_number || '___'} ${company?.garage_neighborhood || ''}, ${company?.garage_city || '______________'} - ${company?.garage_state || '___'}, CEP: ${company?.garage_cep || '______________'}.`
+    const comodanteLines = doc.splitTextToSize(comodanteText, 180)
+    doc.text(comodanteLines, 15, y)
+    y += (comodanteLines.length * 5) + 3
+
+    const comodatarioText = `COMODATÁRIO: ${order.customer?.legal_name || order.customer?.fantasy_name || '______________'}, insc.no CNPJ/CPF ${order.customer?.document || '______________'}, ${[order.customer?.address, order.customer?.number, order.customer?.neighborhood, order.customer?.city, order.customer?.state].filter(Boolean).join(', ')}`
+    const comodatarioLines = doc.splitTextToSize(comodatarioText, 180)
+    doc.text(comodatarioLines, 15, y)
+    y += (comodatarioLines.length * 5) + 6
+
+    doc.setFont('helvetica', 'bold')
+    doc.text('DAS OBRIGAÇÕES DAS PARTES', 15, y)
+    y += 6
+
+    doc.setFont('helvetica', 'normal')
+    const obgLines = doc.splitTextToSize(`1º) A parte denominada neste ato COMODANTE cede 01 ${order.equipment?.type || '______________'} ${order.equipment?.model || '______________'}, entregue no endereço do COMODATÁRIO, sem nenhum custo de aluguel para este, devendo o mesmo guardar e zelar do mesmo.
+
+2º) O equipamento cedido em comodato destina-se exclusivamente para o uso e venda dos produtos do COMODANTE, ficando expressamente vedada a sua utilização para produtos de outras marcas, sob pena de imediata rescisão deste contrato.
+
+3º) É dever do COMODATÁRIO conservar o equipamento como se seu fosse, de forma que findo o presente contrato possa devolvê-lo em perfeito estado de conservação e funcionamento, ressalvando o desgaste normal pelo uso.
+
+4º) As obrigações deste contrato são intransferíveis, entendendo que o objeto do comodato deve ficar em posse única e exclusivamente do COMODATÁRIO enquanto durar o contrato, sob pena de indenizar o COMODANTE no valor equivalente 01 aparelho novo, do mesmo modelo que o cedido e no valor do marcado na época da compra, que poderá ser cobrado na via judicial. No caso de troca do endereço de prestação dos serviços do COMODATÁRIO, este deverá solicitar por escrito o consentimento do COMODANTE, que se reserva no direito de autorizar ou não, importando a violação desta cláusula na retenção do aparelho por parte do cedente.
+
+5º) O COMODATÁRIO deverá permitir a inspeção e fiscalização do objeto por parte do COMODANTE sempre que este entender necessário.
+
+6º) Em caso de defeito técnico o COMODATÁRIO deverá comunicar o COMODANTE por escrito, de forma a serem tomadas todas as medidas cabíveis, que podem ir desde a manutenção do bem ou a sua troca por outro. Caso o defeito seja por culpa do COMODATÁRIO, este deverá arcar com as despesas.
+
+7º) O COMODANTE não se responsabilizará por produtos danificados em razão da falta de energia elétrica, ou acidentes causados por casos fortuitos e forças maiores.
+
+8º) O COMODANTE irá fornecer todo o produto que será oferecido ao COMODATÁRIO para venda, mediante compra dos mesmos pelo segundo, de forma que havendo atraso no pagamento dos mesmos, ao COMODATÁRIO será imposto multa no importe de 6%, juros de 0,20% ao dia, bem como custas judiciais que possam haver e honorários do advogado do COMODANTE no importe de 30% sobre o valor do débito.`, 180)
+    
+    for (let i = 0; i < obgLines.length; i++) {
+      if (y > 270) {
+        doc.addPage()
+        y = 15
+      }
+      doc.text(obgLines[i], 15, y)
+      y += 5
+    }
+
+    y += 5
+    if (y > 270) {
+      doc.addPage()
+      y = 15
+    }
+
+    doc.setFont('helvetica', 'bold')
+    doc.text('DO PRAZO DE VALIDADE', 15, y)
+    y += 6
+
+    doc.setFont('helvetica', 'normal')
+    const prazoLines = doc.splitTextToSize(`9º) Este contrato será por tempo indeterminado, podendo ser unilateralmente rescindido por ambas as partes, havendo justo motivo para tanto, devendo notificar a outra parte por escrito com antecedência mínima de 48 horas.
+
+10º) Assinam ao final, além das partes, 02 testemunhas.
+
+Elege-se o foro da comarca de Porto Seguro - BA para dirimir quaisquer controvérsias oriundas do presente contrato.
+
+Porto Seguro, ${new Date(order.created_at || new Date()).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}.`, 180)
+
+    for (let i = 0; i < prazoLines.length; i++) {
+      if (y > 270) {
+        doc.addPage()
+        y = 15
+      }
+      doc.text(prazoLines[i], 15, y)
+      y += 5
+    }
+
+    y += 10
+    if (y > 230) {
+      doc.addPage()
+      y = 20
+    }
+  } else {
+    // Termo de Recolha
+    const recolhaText = `Serve o presente termo para atestar que na presente data, foi recolhido o equipamento descrito abaixo (Item1.) do cliente:
+
+• CNPJ/CPF: ${order.customer?.document || '_____________________'}
+• Razão Social: ${order.customer?.legal_name || order.customer?.fantasy_name || '______________'}
+• Endereço: ${[order.customer?.address, order.customer?.number, order.customer?.neighborhood, order.customer?.city, order.customer?.state].filter(Boolean).join(', ')}
+
+• Tipo de equipamento: ${order.equipment?.type || '______________________'}
+• Modelo: ${order.equipment?.model || '_____________'}
+• Número do patrimônio: ${order.equipment?.patrimony || '_________'}
+(1) Quantidade: 1
+
+As partes assinam o presente documento em 2(duas) vias de igual teor e forma na presença de 2(duas) testemunhas abaixo identificadas.
+
+Porto Seguro, ${new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}.`
+    
+    const recolhaLines = doc.splitTextToSize(recolhaText, 180)
+    for (let i = 0; i < recolhaLines.length; i++) {
+      if (y > 270) {
+        doc.addPage()
+        y = 15
+      }
+      doc.text(recolhaLines[i], 15, y)
+      y += 6
+    }
+    y += 20
+  }
+
+  doc.setLineWidth(0.3)
+  doc.line(60, y, 150, y)
+  y += 5
+  doc.text('Assinatura do COMODATÁRIO', 105, y, { align: 'center' })
+  doc.text(`${order.customer?.legal_name || order.customer?.fantasy_name || '______________'}`, 105, y + 5, { align: 'center' })
+
+  if (order.signature_data) {
+    try {
+      doc.addImage(order.signature_data, 'PNG', 75, y - 25, 60, 20)
+    } catch (err) {
+      console.error('Error rendering signature', err)
+    }
+  }
+
+  const filename = `contrato_comodato_${order.os_number || order.id}.pdf`
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const pdfOutput = doc.output('datauristring')
+      const base64Data = pdfOutput.split(',')[1]
+      const result = await Filesystem.writeFile({
+        path: filename,
+        data: base64Data,
+        directory: Directory.Cache
+      })
+      await Share.share({
+        title: `Contrato - ${order.customer?.fantasy_name || ''}`,
+        text: 'Segue o contrato assinado',
+        url: result.uri
+      })
+    } catch (e: any) {
+      throw new Error(`Erro ao compartilhar PDF: ${e.message}`)
+    }
+  } else {
+    doc.save(filename)
+  }
+}
+
+export async function generateRouteReportPDF(route: any, clients: any[], routeOrders: any[], company: any): Promise<void> {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  })
+
+  let y = 15
+
+  // Header
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(14)
+  doc.setTextColor(79, 70, 229)
+  const compNameText = company?.name || 'Empresa Emissora'
+  const compNameLines = doc.splitTextToSize(compNameText, 120)
+  doc.text(compNameLines, 15, y)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(12)
+  doc.setTextColor(15, 23, 42)
+  doc.text('RELATÓRIO DE ROTA', 195, y, { align: 'right' })
+
+  let currentY = y + (compNameLines.length * 5)
+  y = Math.max(currentY, y + 10)
+  
+  doc.setDrawColor(226, 232, 240)
+  doc.setLineWidth(0.5)
+  doc.line(15, y, 195, y)
+  y += 8
+
+  // Route Details
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(100, 116, 139)
+  doc.text('DETALHES DA ROTA', 15, y)
+
+  y += 6
+  doc.setFontSize(9)
+  doc.setTextColor(15, 23, 42)
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Carga:`, 15, y)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`${route.operation?.load_number || 'N/A'}`, 30, y)
+
+  y += 5
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Motorista:`, 15, y)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`${route.driver?.name || 'N/A'}`, 35, y)
+
+  y += 5
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Ajudante:`, 15, y)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`${route.helper?.name || 'N/A'}`, 35, y)
+
+  // Find start/end times
+  const deliveredItems = [
+    ...clients.filter(c => c.status === 'delivered' || c.status === 'delivered_with_divergence' || c.status === 'returned').map(c => ({ date: new Date(c.signed_at || c.updated_at).getTime(), data: c })),
+    ...routeOrders.filter(o => o.status === 'concluido' || o.status === 'cancelado').map(o => ({ date: new Date(o.updated_at).getTime(), data: o }))
+  ].filter(x => !isNaN(x.date)).sort((a, b) => a.date - b.date)
+
+  const firstDelivery = deliveredItems.length > 0 ? deliveredItems[0].date : null
+  const lastDelivery = deliveredItems.length > 0 ? deliveredItems[deliveredItems.length - 1].date : null
+
+  y += 5
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Início (Primeira Entrega):`, 15, y)
+  doc.setFont('helvetica', 'normal')
+  doc.text(firstDelivery ? formatDateTime(new Date(firstDelivery).toISOString()) : 'N/A', 60, y)
+
+  y += 5
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Fim (Última Entrega):`, 15, y)
+  doc.setFont('helvetica', 'normal')
+  doc.text(lastDelivery ? formatDateTime(new Date(lastDelivery).toISOString()) : 'N/A', 55, y)
+
+  y += 8
+  doc.setLineWidth(0.2)
+  doc.line(15, y, 195, y)
+  y += 8
+
+  // Clients List
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(100, 116, 139)
+  doc.text('CLIENTES DA ROTA', 15, y)
+  y += 6
+
+  const allStops = [
+    ...clients.map(c => ({ ...c, isClient: true })),
+    ...routeOrders.map(o => ({ ...o, isClient: false }))
+  ].sort((a, b) => (a.delivery_sequence || 0) - (b.delivery_sequence || 0))
+
+  for (const stop of allStops) {
+    if (y > 270) {
+      doc.addPage()
+      y = 20
+    }
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(15, 23, 42)
+    const name = stop.isClient ? stop.name : (stop.customer?.legal_name || stop.customer?.fantasy_name || 'OS sem cliente')
+    const typeLabel = stop.isClient ? '' : ' [OS]'
+    
+    let statusText = 'Pendente'
+    let statusColor = [100, 116, 139] // Gray
+    if (stop.status === 'delivered') { statusText = 'Entregue'; statusColor = [16, 185, 129] }
+    if (stop.status === 'delivered_with_divergence') { statusText = 'Divergência'; statusColor = [245, 158, 11] }
+    if (stop.status === 'returned') { statusText = 'Retornado'; statusColor = [220, 38, 38] }
+    if (stop.status === 'canceled') { statusText = 'Cancelado'; statusColor = [220, 38, 38] }
+    if (stop.status === 'concluido') { statusText = 'Concluído'; statusColor = [16, 185, 129] }
+
+    doc.text(`${name}${typeLabel}`, 15, y)
+    
+    doc.setTextColor(statusColor[0], statusColor[1], statusColor[2])
+    doc.text(statusText, 195, y, { align: 'right' })
+
+    y += 4
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(71, 85, 105)
+    
+    const timeText = (stop.status === 'delivered' || stop.status === 'delivered_with_divergence' || stop.status === 'returned' || stop.status === 'concluido') 
+      ? `Realizado em: ${formatDateTime(stop.signed_at || stop.updated_at)}` 
+      : 'Não finalizado'
+    doc.text(timeText, 15, y)
+    
+    y += 6
+  }
+
+  // Divergences
+  const divergences = clients.filter(c => c.status === 'delivered_with_divergence' || c.status === 'returned')
+  if (divergences.length > 0) {
+    if (y > 250) {
+      doc.addPage()
+      y = 20
+    } else {
+      y += 8
+      doc.setDrawColor(226, 232, 240)
+      doc.setLineWidth(0.2)
+      doc.line(15, y, 195, y)
+      y += 8
+    }
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(245, 158, 11) // Amber
+    doc.text('DIVERGÊNCIAS REGISTRADAS', 15, y)
+    y += 6
+
+    for (const client of divergences) {
+      if (y > 270) {
+        doc.addPage()
+        y = 20
+      }
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(15, 23, 42)
+      doc.text(`Cliente: ${client.name}`, 15, y)
+      y += 5
+
+      if (client.status === 'returned') {
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8)
+        doc.setTextColor(220, 38, 38)
+        const text = `PEDIDO TOTALMENTE RETORNADO. Motivo: ${client.return_reason || 'Não informado'}`
+        const lines = doc.splitTextToSize(text, 180)
+        doc.text(lines, 15, y)
+        y += (lines.length * 4) + 2
+      } else {
+        const itemsWithDivergence = (client.delivery_items || []).filter((i: any) => i.quantity_scanned !== i.quantity_expected)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8)
+        doc.setTextColor(71, 85, 105)
+        for (const item of itemsWithDivergence) {
+          if (y > 280) { doc.addPage(); y = 20 }
+          const diff = item.quantity_scanned - item.quantity_expected
+          const type = diff > 0 ? 'Excedente' : 'Faltante'
+          const qty = Math.abs(diff)
+          const op = item.requested_by_name ? ` [Solicitado por ${item.requested_by_name}]` : ''
+          let text = `- Item: ${item.description} (${type}: ${qty})`
+          if (item.return_reason) text += ` | Motivo: ${item.return_reason}`
+          text += op
+          const lines = doc.splitTextToSize(text, 180)
+          doc.text(lines, 15, y)
+          y += (lines.length * 4)
+        }
+        y += 2
+      }
+    }
+  }
+
+  // Footer
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.setTextColor(148, 163, 184)
+  doc.text('Relatório gerado eletronicamente pelo sistema Estoque Fácil WMS.', 15, 287)
+
+  const filename = `relatorio_rota_${route.operation?.load_number || route.id}.pdf`
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const pdfOutput = doc.output('datauristring')
+      const base64Data = pdfOutput.split(',')[1]
+      const result = await Filesystem.writeFile({
+        path: filename,
+        data: base64Data,
+        directory: Directory.Cache
+      })
+      await Share.share({
+        title: `Relatório Rota - ${route.operation?.load_number || ''}`,
+        text: 'Segue relatório da rota',
+        url: result.uri
+      })
+    } catch (e: any) {
+      throw new Error(`Erro ao compartilhar PDF: ${e.message}`)
+    }
+  } else {
+    doc.save(filename)
+  }
+}

@@ -37,9 +37,10 @@ export const companiesApi = {
       .update(updates)
       .eq('id', id)
       .select()
-      .single()
+    
     if (error) throw error
-    return data as Company
+    if (!data || data.length === 0) throw new Error('Não foi possível atualizar a empresa. Verifique as permissões.')
+    return data[0] as Company
   },
 
   async verifyCompanyFinancialStatus(id: string) {

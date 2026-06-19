@@ -42,7 +42,7 @@ export default function PaymentConditions() {
   )
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Tem certeza que deseja remover esta condição de pagamento? Ela pode estar sendo usada por clientes.')) {
+    if (window.confirm('Tem certeza que deseja remover esta condição de pagamento? Ela pode estar sendo usada por clientes.. Esta ação não pode ser desfeita.')) {
       deleteMutation.mutate(id)
     }
   }

@@ -75,20 +75,20 @@ export const productsApi = {
   },
 
   async deleteAllProducts() {
-    
     const { error } = await supabase
       .from('products')
       .delete()
+      .not('id', 'is', null)
       
     if (error) throw error
     return true
   },
 
   async setAllStockTo100() {
-    
     const { error } = await supabase
       .from('products')
       .update({ stock: 100 })
+      .not('id', 'is', null)
       
     if (error) throw error
     return true

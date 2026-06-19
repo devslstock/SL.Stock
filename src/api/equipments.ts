@@ -6,7 +6,7 @@ export const equipmentsApi = {
   async getEquipments() {
         const { data, error } = await supabase
       .from('equipments')
-      .select('*, customer:customers(legal_name, fantasy_name)')
+      .select('*, customer:customers(legal_name, nickname, fantasy_name, document)')
       
       .order('created_at', { ascending: false })
     if (error) throw error
@@ -16,7 +16,7 @@ export const equipmentsApi = {
   async getEquipment(id: string) {
         const { data, error } = await supabase
       .from('equipments')
-      .select('*, customer:customers(legal_name, fantasy_name)')
+      .select('*, customer:customers(legal_name, nickname, fantasy_name, document)')
       .eq('id', id)
       
       .single()
@@ -68,7 +68,7 @@ export const equipmentsApi = {
   async getOrders() {
         const { data, error } = await supabase
       .from('equipment_orders')
-      .select('*, customer:customers(legal_name, fantasy_name, address, number, neighborhood, city, state), equipment:equipments(patrimony, type, model), driver:users(name)')
+      .select('*, customer:customers(legal_name, nickname, fantasy_name, address, number, neighborhood, city, state, document), equipment:equipments(patrimony, type, model), driver:users(name)')
       
       .order('created_at', { ascending: false })
     if (error) throw error
@@ -78,11 +78,21 @@ export const equipmentsApi = {
   async getDriverOrders(driverId: string) {
         const { data, error } = await supabase
       .from('equipment_orders')
-      .select('*, customer:customers(legal_name, fantasy_name, address, number, neighborhood, city, state), equipment:equipments(patrimony, type, model)')
+      .select('*, customer:customers(legal_name, nickname, fantasy_name, address, number, neighborhood, city, state, document), equipment:equipments(patrimony, type, model)')
       
       .eq('driver_id', driverId)
       .in('status', ['pendente', 'em_rota'])
       .order('scheduled_date', { ascending: true })
+    if (error) throw error
+    return data as EquipmentOrder[]
+  },
+
+  async getRouteOrders(routeId: string) {
+    const { data, error } = await supabase
+      .from('equipment_orders')
+      .select('*, customer:customers(legal_name, nickname, fantasy_name, address, number, neighborhood, city, state, document), equipment:equipments(patrimony, type, model)')
+      .eq('delivery_route_id', routeId)
+      .order('delivery_sequence', { ascending: true })
     if (error) throw error
     return data as EquipmentOrder[]
   },
@@ -106,6 +116,12 @@ export const equipmentsApi = {
       .select()
       .single()
     if (error) throw error
+
+    if (data && data.delivery_route_id && updates.status) {
+      const { deliveriesApi } = await import('./deliveries');
+      await deliveriesApi.recalculateRouteStatus(data.delivery_route_id);
+    }
+
     return data as EquipmentOrder
   },
 
@@ -137,12 +153,51 @@ export const equipmentsApi = {
   async getEquipmentHistory(equipmentId: string) {
         const { data, error } = await supabase
       .from('equipment_history')
-      .select('*, customer:customers(legal_name, fantasy_name), user:users(name)')
+      .select('*, customer:customers(legal_name, nickname, fantasy_name), user:users(name)')
       .eq('equipment_id', equipmentId)
       
       .order('created_at', { ascending: false })
     if (error) throw error
     return data as EquipmentHistory[]
+  },
+
+  async getCustomerEquipmentsHistory(customerId: string) {
+    const { data, error } = await supabase
+      .from('equipment_history')
+      .select('*, equipment:equipments(patrimony, type, model), user:users(name)')
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data as EquipmentHistory[]
+  },
+
+  async getCustomerOrders(customerId: string) {
+    const { data, error } = await supabase
+      .from('equipment_orders')
+      .select('*, equipment:equipments(patrimony, type, model), driver:users(name)')
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data as EquipmentOrder[]
+  },
+
+  async getEquipmentOrders(equipmentId: string) {
+    const { data, error } = await supabase
+      .from('equipment_orders')
+      .select('*, customer:customers(legal_name, nickname, fantasy_name), driver:users(name), supplies:equipment_order_supplies(quantity_consumed, supply:supplies(name, unit))')
+      .eq('equipment_id', equipmentId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data as any[]
+  },
+
+  async getOrderSupplies(orderId: string) {
+    const { data, error } = await supabase
+      .from('equipment_order_supplies')
+      .select('*, supply:supplies(name, unit)')
+      .eq('order_id', orderId)
+    if (error) throw error
+    return data as any[]
   },
 
   async getCustomerEquipments(customerId: string) {

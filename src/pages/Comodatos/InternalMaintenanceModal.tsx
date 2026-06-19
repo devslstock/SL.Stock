@@ -44,6 +44,23 @@ export function InternalMaintenanceModal({ isOpen, onClose, equipment }: Interna
     enabled: isOpen
   })
 
+  const { data: lastReturnOrder } = useQuery({
+    queryKey: ['last_return_order', equipment?.id],
+    queryFn: async () => {
+      if (!equipment) return null
+      const { data } = await supabase
+        .from('equipment_orders')
+        .select('*')
+        .eq('equipment_id', equipment.id)
+        .in('type', ['recolha', 'troca'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+      return data
+    },
+    enabled: isOpen && !!equipment
+  })
+
   const maintenanceMutation = useMutation({
     mutationFn: async () => {
       if (!equipment) throw new Error('Equipamento não encontrado')
@@ -57,11 +74,37 @@ export function InternalMaintenanceModal({ isOpen, onClose, equipment }: Interna
         }
       }
 
+      // Create an OS for internal maintenance
+      const { data: orderData, error: orderError } = await supabase.from('equipment_orders').insert([{
+        company_id: equipment.company_id,
+        equipment_id: equipment.id,
+        customer_id: null,
+        type: 'manutencao',
+        status: 'concluido',
+        completed_at: new Date().toISOString(),
+        defect_description: defectDesc,
+        solution_description: solutionDesc,
+        notes: `Manutenção Interna no Galpão`,
+        action_taken: 'Manutenção realizada no depósito'
+      }]).select().single()
+
+      if (orderError) throw orderError
+
+      // Register parts in equipment_order_supplies
+      if (consumedParts.length > 0 && orderData) {
+        const suppliesInserts = consumedParts.map(part => ({
+          order_id: orderData.id,
+          supply_id: part.supply.id,
+          quantity_consumed: part.quantity
+        }))
+        await supabase.from('equipment_order_supplies').insert(suppliesInserts)
+      }
+
       // Update Equipment
       const hasChanges = defectDesc || solutionDesc || consumedParts.length > 0 || finalStatus !== equipment.status
       if (hasChanges) {
         const partsText = consumedParts.map(p => `${p.quantity}x ${p.supply.name}`).join(', ')
-        const notes = `Manutenção Interna - Defeito: ${defectDesc || 'N/A'}. Solução: ${solutionDesc || 'N/A'}. Peças: ${partsText || 'Nenhuma'}.`
+        const notes = `Manutenção Interna (OS #${orderData.os_number}) - Defeito: ${defectDesc || 'N/A'}. Solução: ${solutionDesc || 'N/A'}. Peças: ${partsText || 'Nenhuma'}.`
         await equipmentsApi.updateEquipment(equipment.id, {
           status: finalStatus
         }, notes)
@@ -116,6 +159,22 @@ export function InternalMaintenanceModal({ isOpen, onClose, equipment }: Interna
               <p className="font-bold text-primary">{equipment.status}</p>
             </div>
           </div>
+
+          {lastReturnOrder && (
+            <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg">
+              <h4 className="font-semibold text-amber-800 dark:text-amber-500 mb-1 flex items-center gap-2">
+                Motivo do Retorno ao Depósito
+              </h4>
+              <p className="text-sm text-foreground">
+                <span className="font-medium">Defeito relatado:</span> {lastReturnOrder.defect_description || 'Não informado na recolha/troca.'}
+              </p>
+              {lastReturnOrder.notes && (
+                <p className="text-sm text-foreground mt-1">
+                  <span className="font-medium">Observações da OS:</span> {lastReturnOrder.notes}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">

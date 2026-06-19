@@ -1,9 +1,15 @@
 import { supabase } from '@/lib/supabase'
 import type { DeliveryRoute, DeliveryClient, DeliveryItem } from '@/types/database'
+import db from '@/db/db'
 
 export const deliveriesApi = {
   async getDeliveryRoutes() {
-        const { data, error } = await supabase
+    if (!navigator.onLine) {
+      const routes = await db.routes.toArray()
+      return routes as any
+    }
+    
+    const { data, error } = await supabase
       .from('delivery_routes')
       .select(`
         *,
@@ -11,14 +17,33 @@ export const deliveriesApi = {
         driver:users!driver_id ( name ),
         helper:users!helper_id ( name )
       `)
-      
       .order('created_at', { ascending: false })
-    if (error) throw error
+      
+    if (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        return await db.routes.toArray() as any
+      }
+      throw error
+    }
     return data
   },
 
   async getDeliveryRoute(id: string) {
-        const { data, error } = await supabase
+    if (!navigator.onLine) {
+      const localRoute = await db.routes.get(id)
+      if (localRoute) {
+        return {
+          id: localRoute.id,
+          status: localRoute.status,
+          operation_id: localRoute.operation_id,
+          created_at: localRoute.created_at,
+          driver_id: localRoute.driver_id,
+          operation: { load_number: localRoute.load_number }
+        } as any
+      }
+      throw new Error('Você está offline e esta rota não está baixada no dispositivo.')
+    }
+    const { data, error } = await supabase
       .from('delivery_routes')
       .select(`
         *,
@@ -60,9 +85,12 @@ export const deliveriesApi = {
   },
 
   async updateDeliveryRoute(id: string, updates: Partial<DeliveryRoute>) {
-        const { data, error } = await supabase
+    const sanitizedUpdates = { ...updates }
+    delete sanitizedUpdates.title
+    
+    const { data, error } = await supabase
       .from('delivery_routes')
-      .update(updates)
+      .update(sanitizedUpdates)
       .eq('id', id)
       
       .select()
@@ -72,6 +100,15 @@ export const deliveriesApi = {
   },
 
   async deleteDeliveryRoute(id: string) {
+    // 1. Desvincular equipamentos que estavam na rota, voltando para pendente
+    const { error: unlinkError } = await supabase
+      .from('equipment_orders')
+      .update({ delivery_route_id: null, status: 'pendente' })
+      .eq('delivery_route_id', id)
+      
+    if (unlinkError) throw unlinkError
+
+    // 2. Excluir a rota
     const { error } = await supabase
       .from('delivery_routes')
       .delete()
@@ -82,9 +119,32 @@ export const deliveriesApi = {
   },
 
   async getDeliveryClients(routeId: string) {
-        const { data, error } = await supabase
+    if (!navigator.onLine) {
+      const localClients = await db.clients.where('route_id').equals(routeId).toArray()
+      return Promise.all(localClients.map(async (client) => {
+        const items = await db.products.where('client_id').equals(client.id).toArray()
+        return {
+          id: client.id,
+          delivery_route_id: client.route_id,
+          customer_id: client.customer_id,
+          name: client.customer_name,
+          address: client.address,
+          status: client.status,
+          order_number: client.order_number,
+          delivery_sequence: client.sort_order,
+          delivery_items: items,
+          customer: {
+            document: client.document,
+            latitude: client.latitude,
+            longitude: client.longitude,
+            legal_name: client.customer_name
+          }
+        } as any
+      }))
+    }
+    const { data, error } = await supabase
       .from('delivery_clients')
-      .select('*, delivery_items(*), customer:customers(document, latitude, longitude)')
+      .select('*, delivery_items(*), customer:customers(document, latitude, longitude, legal_name, nickname, fantasy_name)')
       .eq('delivery_route_id', routeId)
       
       .order('name')
@@ -96,7 +156,23 @@ export const deliveriesApi = {
   },
 
   async getDeliveryClient(clientId: string) {
-        const { data, error } = await supabase
+    if (!navigator.onLine) {
+      const client = await db.clients.get(clientId)
+      if (client) {
+        return {
+          id: client.id,
+          delivery_route_id: client.route_id,
+          name: client.customer_name,
+          address: client.address,
+          status: client.status,
+          order_number: client.order_number,
+          delivery_sequence: client.sort_order,
+          customer: { document: client.document }
+        } as any
+      }
+      throw new Error('Você está offline e este cliente não está baixado no dispositivo.')
+    }
+    const { data, error } = await supabase
       .from('delivery_clients')
       .select('*, customer:customers(document)')
       .eq('id', clientId)
@@ -117,6 +193,16 @@ export const deliveriesApi = {
   },
 
   async updateDeliveryClient(id: string, updates: Partial<DeliveryClient>) {
+    if (!navigator.onLine) {
+      await db.clients.update(id, updates as any)
+      await db.sync_queue.add({
+        type: 'CONFIRM_DELIVERY',
+        payload: { action: 'updateDeliveryClient', id, updates },
+        created_at: Date.now(),
+        status: 'pending'
+      })
+      return { id, ...updates } as any
+    }
     const { data, error } = await supabase
       .from('delivery_clients')
       .update(updates)
@@ -140,82 +226,63 @@ export const deliveriesApi = {
       .eq('delivery_route_id', routeId)
     if (error) throw error
 
-    if (!clients || clients.length === 0) return
+    const { data: routeOrders, error: errorOrders } = await supabase
+      .from('equipment_orders')
+      .select('status')
+      .eq('delivery_route_id', routeId)
+    if (errorOrders) throw errorOrders
 
-    const allFinished = clients.every(c => 
+    const allStops = [
+      ...(clients || []),
+      ...(routeOrders || [])
+    ]
+
+    if (allStops.length === 0) return
+
+    const allFinished = allStops.every(c => 
       c.status === 'delivered' || 
+      c.status === 'concluido' ||
       c.status === 'delivered_with_divergence' || 
       c.status === 'canceled' || 
+      c.status === 'cancelado' || 
       c.status === 'returned'
     )
 
-    const anyFinished = clients.some(c => 
+    const anyFinished = allStops.some(c => 
       c.status === 'delivered' || 
+      c.status === 'concluido' ||
       c.status === 'delivered_with_divergence' || 
       c.status === 'canceled' || 
+      c.status === 'cancelado' || 
       c.status === 'returned'
     )
 
-    let hasPendingReturns = false
+    const { data: routeData } = await supabase.from('delivery_routes').select('status').eq('id', routeId).single()
+    const currentStatus = routeData?.status
+
+    if (currentStatus === 'returned') return
+
+    let newStatus: string = 'pending'
     if (allFinished) {
-      const { data: clientsWithItems } = await supabase
-        .from('delivery_clients')
-        .select('status, delivery_items(quantity_expected, quantity_scanned, returned_to_stock)')
-        .eq('delivery_route_id', routeId)
-      
-      if (clientsWithItems) {
-        for (const c of clientsWithItems) {
-          const isClientReturned = c.status === 'returned'
-          for (const item of c.delivery_items) {
-            if (item.returned_to_stock) continue;
-            
-            let returnQty = 0
-            if (isClientReturned) {
-              returnQty = item.quantity_expected
-            } else {
-              returnQty = Math.max(0, item.quantity_expected - item.quantity_scanned)
-            }
-            if (returnQty > 0) {
-              hasPendingReturns = true
-              break
-            }
-          }
-          if (hasPendingReturns) break
-        }
-      }
-    }
-
-    let newStatus: 'pending' | 'in_progress' | 'completed' = 'pending'
-    if (allFinished && !hasPendingReturns) {
       newStatus = 'completed'
     } else if (anyFinished) {
       newStatus = 'in_progress'
     }
-
-    const { data: routeData } = await supabase
-      .from('delivery_routes')
-      .select('operation_id')
-      .eq('id', routeId)
-      .single()
 
     await supabase
       .from('delivery_routes')
       .update({ status: newStatus })
       .eq('id', routeId)
 
-    if (routeData?.operation_id) {
-      await supabase
-        .from('operations')
-        .update({ status: newStatus === 'completed' ? 'completed' : 'dispatched' })
-        .eq('id', routeData.operation_id)
-    }
+    // A Carga (operation) NÃO é finalizada aqui. Ela permanece em andamento (dispatched)
+    // até que seja feito o "Retorno de Rota" no sistema.
   },
 
   async confirmRouteReturn(routeId: string, scannedItems: any[], hasDivergence: boolean) {
     
     const { data: route } = await supabase
       .from('delivery_routes')
-      .select('operation:operations(load_number)')
+      .select('operation_id, operation:operations(load_number), company_id')
       .eq('id', routeId)
       .single()
 
@@ -260,6 +327,27 @@ export const deliveriesApi = {
       author_name: 'Sistema',
       content: alertMsg})
 
+    await supabase.from('delivery_routes').update({ status: 'returned' }).eq('id', routeId)
+
+    const returnedItems = scannedItems.filter(i => i.scannedQty > 0)
+    if (returnedItems.length > 0) {
+      // Adicionar os itens também à carga (operation) para que apareçam na lista de mercadorias carregadas
+      if (route?.operation_id) {
+        const opItemsToInsert = returnedItems.map(i => ({
+          operation_id: route.operation_id,
+          product_id: i.product_id,
+          product_code: i.product_code,
+          description: `🔄 Devolução: ${i.description}`,
+          quantity_expected: 0,
+          quantity_scanned: i.scannedQty,
+          status: 'ok',
+          company_id: route?.company_id
+        }))
+        await supabase.from('operation_items').insert(opItemsToInsert)
+      }
+    }
+    
+    // We can call recalculateRouteStatus just to be safe, it will preserve 'returned' now
     await this.recalculateRouteStatus(routeId)
     return true
   },
@@ -292,7 +380,10 @@ export const deliveriesApi = {
   },
 
   async getDeliveryItems(clientId: string) {
-        const { data, error } = await supabase
+    if (!navigator.onLine) {
+      return await db.products.where('client_id').equals(clientId).toArray() as any
+    }
+    const { data, error } = await supabase
       .from('delivery_items')
       .select('*')
       .eq('delivery_client_id', clientId)
@@ -302,11 +393,24 @@ export const deliveriesApi = {
     return data as DeliveryItem[]
   },
 
-  async updateDeliveryItemQuantity(itemId: string, quantity_scanned: number, status: string, return_reason?: string) {
+  async updateDeliveryItemQuantity(itemId: string, quantity_scanned: number, status: string, return_reason?: string, requested_by_name?: string) {
     const updates: any = { quantity_scanned, status, return_reason }
     if (return_reason) {
       updates.approval_status = 'pending'
+      if (requested_by_name) updates.requested_by_name = requested_by_name
     }
+
+    if (!navigator.onLine) {
+      await db.products.update(itemId, updates)
+      await db.sync_queue.add({
+        type: 'CONFIRM_DELIVERY',
+        payload: { action: 'updateDeliveryItemQuantity', itemId, updates },
+        created_at: Date.now(),
+        status: 'pending'
+      })
+      return { id: itemId, ...updates } as any
+    }
+
     const { data, error } = await supabase
       .from('delivery_items')
       .update(updates)
@@ -380,10 +484,10 @@ export const deliveriesApi = {
     return true
   },
 
-  async requestItemApproval(itemId: string, requestedQty: number) {
+  async requestItemApproval(itemId: string, requestedQty: number, requested_by_name?: string) {
     const { data, error } = await supabase
       .from('delivery_items')
-      .update({ approval_status: 'pending', requested_qty: requestedQty })
+      .update({ approval_status: 'pending', requested_qty: requestedQty, requested_by_name })
       .eq('id', itemId)
       
       .select()

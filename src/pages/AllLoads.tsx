@@ -178,7 +178,7 @@ export default function AllLoads() {
                       onClick={(e) => {
                         e.preventDefault() // prevent navigating to Link
                         e.stopPropagation()
-                        if (window.confirm(`Tem certeza que deseja APAGAR definitivamente a rota ${op.load_number}?`)) {
+                        if (window.confirm(`Tem certeza que deseja APAGAR definitivamente a rota ${op.load_number}?. Esta ação não pode ser desfeita.`)) {
                           deleteMutation.mutate(op.id)
                         }
                       }}

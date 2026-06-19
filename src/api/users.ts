@@ -20,49 +20,36 @@ export const usersApi = {
   },
 
   async createUser(user: Omit<User, 'id' | 'created_at' | 'company_id'>, forceCompanyId?: string) {
-    const { data, error } = await supabase.functions.invoke('create-company-user', { 
-      body: { user, forceCompanyId } 
-    })
+    const response = await fetch('/api/create-company-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user, forceCompanyId })
+    });
     
-    if (error) {
-      // O error.context ou body pode conter a mensagem original
-      throw new Error(error.message || 'Erro ao criar usuário. Tente novamente.')
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Erro ao criar usuário. Tente novamente.');
     }
+    
+    const data = await response.json();
     
     return data as User
   },
 
   async updateUser(id: string, updates: Partial<User>) {
-    if (updates.username) {
-      const normalizedUsername = updates.username.trim().toLowerCase();
-
-      // Verificar se outro usuário já usa este username
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('username', normalizedUsername)
-        .neq('id', id)
-        .maybeSingle()
-
-      if (existingUser) {
-        throw new Error(`O usuário de login '${updates.username}' já está em uso no sistema. Escolha outro nome de usuário.`)
-      }
-      updates.username = normalizedUsername;
+    const response = await fetch('/api/update-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, updates })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Erro ao atualizar usuário. Tente novamente.');
     }
-
-    const { data, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single()
-    if (error) {
-      if (error.code === '23505') {
-        throw new Error(`O usuário de login '${updates.username || 'informado'}' já está em uso no sistema. Escolha outro nome de usuário.`)
-      }
-      throw error
-    }
-    return data as User
+    
+    const data = await response.json();
+    return data as User;
   },
 
   async deleteUser(id: string) {

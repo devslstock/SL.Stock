@@ -11,9 +11,9 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/toaster'
 import { ShieldCheck, Plus, Pencil, Trash2, UserCircle, KeyRound, AlertTriangle } from 'lucide-react'
-import { hashPassword, DEFAULT_PASSWORD_HASH } from '@/utils/crypto'
 
-const roleLabels: Record<UserRole, string> = { admin: 'Admin', gestor: 'Gestor', conferente: 'Conferente', motorista: 'Motorista', ajudante: 'Ajudante', vendedor: 'Vendedor', representante: 'Representante', operador: 'Operador', mecanico: 'Mecânico', master: 'Master' }
+
+const roleLabels: Record<UserRole, string> = { admin: 'Admin', gestor: 'Gestor', conferente: 'Conferente', motorista: 'Motorista', ajudante: 'Ajudante', vendedor: 'Vendedor', representante: 'Representante', operador: 'Operador', mecanico: 'Técnico', master: 'Master' }
 const roleVariants: Record<UserRole, 'default' | 'success' | 'warning' | 'destructive'> = { admin: 'default', gestor: 'success', conferente: 'warning', motorista: 'destructive', ajudante: 'destructive', vendedor: 'default', representante: 'default', operador: 'warning', mecanico: 'warning', master: 'default' }
 
 const baseFalsePermissions: Partial<UserPermissions> = {
@@ -132,14 +132,19 @@ export default function AccessControl() {
     if (editing) {
       updateMutation.mutate({ id: editing.id, data: baseData })
     } else {
-      createMutation.mutate({ ...baseData, password_hash: DEFAULT_PASSWORD_HASH, active: true } as Omit<User, 'id' | 'created_at'>)
+      createMutation.mutate({ ...baseData, active: true } as Omit<User, 'id' | 'created_at'>)
     }
   }
 
-  const handleResetPassword = () => {
-    if (!editing) return
-    if (window.confirm('Tem certeza que deseja resetar a senha deste usuário para 123456?')) {
-      updateMutation.mutate({ id: editing.id, data: { password_hash: DEFAULT_PASSWORD_HASH, reset_requested: false } })
+  const handleResetPassword = async () => {
+    if (!editing || !editing.email) return
+    if (window.confirm('Enviar link de redefinição de senha para este usuário?')) {
+      const { supabase } = await import('@/lib/supabase');
+      await supabase.auth.resetPasswordForEmail(editing.email, {
+        redirectTo: `${window.location.origin}/reset-password-auto`,
+      });
+      updateMutation.mutate({ id: editing.id, data: { reset_requested: false } })
+      toast.success('Link de redefinição enviado com sucesso!');
     }
   }
 
@@ -148,7 +153,7 @@ export default function AccessControl() {
   }
 
   const deleteUser = (id: string) => {
-    if (window.confirm('Tem certeza que deseja remover este usuário?')) {
+    if (window.confirm('Tem certeza que deseja remover este usuário?. Esta ação não pode ser desfeita.')) {
       deleteMutation.mutate(id)
     }
   }
@@ -238,8 +243,8 @@ export default function AccessControl() {
                 <Input value={name} onChange={e => setName(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label>Usuário de Login *</Label>
-                <Input value={username} onChange={e => setUsername(e.target.value)} required />
+                <Label>E-mail de Login *</Label>
+                <Input type="email" value={username} onChange={e => setUsername(e.target.value)} required placeholder="email@exemplo.com" />
               </div>
             </div>
 
@@ -255,7 +260,7 @@ export default function AccessControl() {
                   <option value="conferente">Conferente</option>
                   {(company?.plan === 'ouro' || company?.plan === 'platina') && <option value="motorista">Motorista</option>}
                   {(company?.plan === 'ouro' || company?.plan === 'platina') && <option value="ajudante">Ajudante</option>}
-                  {(company?.plan === 'ouro' || company?.plan === 'platina') && <option value="mecanico">Mecânico</option>}
+                  {(company?.plan === 'ouro' || company?.plan === 'platina') && <option value="mecanico">Técnico</option>}
                   {company?.plan === 'platina' && <option value="vendedor">Vendedor</option>}
                 </select>
               </div>

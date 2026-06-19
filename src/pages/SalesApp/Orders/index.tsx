@@ -39,10 +39,10 @@ export default function SalesOrders() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#fafafa]">
+    <div className="flex flex-col min-h-screen bg-background">
       
       {/* Top Tabs */}
-      <div className="bg-white border-b border-gray-200 px-4 md:px-8 pt-4 flex gap-6 overflow-x-auto">
+      <div className="bg-card border-b border-border px-4 md:px-8 pt-4 flex gap-6 overflow-x-auto">
         <div className="flex items-center gap-2 pb-3 border-b-2 border-primary text-primary font-bold text-xs tracking-wider cursor-pointer whitespace-nowrap">
           <FileText className="h-4 w-4" /> PEDIDOS
         </div>
@@ -62,11 +62,11 @@ export default function SalesOrders() {
               </Button>
             </Link>
             
-            <Button variant="outline" className="text-primary border-border bg-white font-semibold px-4 h-10 rounded-md">
+            <Button variant="outline" className="text-primary border-border bg-background font-semibold px-4 h-10 rounded-md">
               <span className="font-bold mr-2 text-lg">✦</span> Criar com IA no WhatsApp
             </Button>
             
-            <Button variant="outline" className="text-primary border-border bg-white font-semibold px-4 h-10 rounded-md">
+            <Button variant="outline" className="text-primary border-border bg-background font-semibold px-4 h-10 rounded-md">
               <Printer className="h-4 w-4 mr-2" /> Imprimir pedidos
             </Button>
           </div>
@@ -74,7 +74,7 @@ export default function SalesOrders() {
           <div className="relative w-full md:w-[320px]">
             <Input 
               placeholder="Pedido, cliente ou representada" 
-              className="pr-10 h-10 border-border bg-white rounded-md text-sm shadow-sm"
+              className="pr-10 h-10 border-border bg-background rounded-md text-sm shadow-sm"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
@@ -101,7 +101,7 @@ export default function SalesOrders() {
               <h3 className="text-muted-foreground text-xs font-semibold tracking-wider mb-3">{dateLabel}</h3>
               <div className="space-y-3">
                 {orders.map(order => (
-                  <div key={order.id} onClick={() => navigate(`/vendas/pedidos/${order.id}`)} className="bg-white border border-border rounded-md p-4 md:p-5 hover:border-primary/50 cursor-pointer transition-colors shadow-sm relative group flex justify-between items-start">
+                  <div key={order.id} onClick={() => navigate(`/vendas/pedidos/${order.id}`)} className="bg-card border border-border rounded-md p-4 md:p-5 hover:border-primary/50 cursor-pointer transition-colors shadow-sm relative group flex justify-between items-start">
                     
                     {/* Left Side */}
                     <div className="flex flex-col gap-3">
@@ -152,7 +152,7 @@ export default function SalesOrders() {
       
       {/* Floating Action Buttons */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-3">
-        <div className="h-10 w-10 bg-white border border-border rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-muted transition-colors ml-auto text-primary">
+        <div className="h-10 w-10 bg-card border border-border rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-muted transition-colors ml-auto text-primary">
           <FileDigit className="h-5 w-5" />
         </div>
         <div className="h-14 w-14 bg-primary rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors text-primary-foreground">

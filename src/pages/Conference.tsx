@@ -13,7 +13,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check, FileSignature, Zap, Truck, Plus, Trash2, Pencil, Download, PackageCheck, Undo2, PenTool } from 'lucide-react'
+import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check, FileSignature, Zap, Truck, Plus, Trash2, Pencil, Download, PackageCheck, Undo2, PenTool, ChevronDown, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import * as XLSX from 'xlsx'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
@@ -31,6 +31,8 @@ export default function Conference() {
   const [activeTab, setActiveTab] = useState('scan')
   const [lastScanned, setLastScanned] = useState<OperationItem | null>(null)
   const [isCameraOpen, setIsCameraOpen] = useState(false)
+  const [isLoadedListOpen, setIsLoadedListOpen] = useState(true)
+  const [isReturnListOpen, setIsReturnListOpen] = useState(true)
   
   // Return state: maps product_code to quantity returned
   const [returnedItems, setReturnedItems] = useState<Record<string, number>>({})
@@ -147,6 +149,33 @@ export default function Conference() {
     }
   })
 
+  const reopenMutation = useMutation({
+    mutationFn: async () => {
+      // 1. Add stock back for all scanned items
+      for (const item of items) {
+        if (item.quantity_scanned > 0) {
+          await productsApi.incrementStockByCode(item.product_code, item.quantity_scanned)
+        }
+      }
+      
+      // 2. Delete shortage alerts for this operation
+      await supabase.from('operation_alerts').delete().eq('operation_id', id!)
+      
+      // 3. Update status back to 'in_progress'
+      return operationsApi.updateOperationStatus(id!, 'in_progress')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operation', id] })
+      queryClient.invalidateQueries({ queryKey: ['operations'] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('Carga reaberta com sucesso! Estoque restaurado.')
+      setActiveTab('scan')
+    },
+    onError: (e: any) => {
+      toast.error(`Erro ao reabrir carga: ${e.message}`)
+    }
+  })
+
   const dispatchMutation = useMutation({
     mutationFn: async () => {
       // 1. Deduct stock for all scanned items & identify shortages
@@ -183,7 +212,11 @@ export default function Conference() {
       queryClient.invalidateQueries({ queryKey: ['operations'] })
       queryClient.invalidateQueries({ queryKey: ['products'] })
       toast.success('Rota despachada, estoque deduzido e alertas gerados!')
-      navigate('/entregas/nova')
+      if (route?.id) {
+        navigate(`/entregas/${route.id}`)
+      } else {
+        navigate('/entregas/nova')
+      }
     },
     onError: (e: any) => {
       toast.error(`Erro ao despachar rota: ${e.message}`)
@@ -313,6 +346,12 @@ export default function Conference() {
   }, [addSearchTerm, allProducts]);
 
   useEffect(() => { if (activeTab === 'scan' || activeTab === 'return') scanRef.current?.focus() }, [activeTab])
+
+  useEffect(() => {
+    if (op && (op.status === 'dispatched' || op.status === 'completed') && activeTab === 'scan') {
+      setActiveTab('return')
+    }
+  }, [op, activeTab])
 
   // Helper to strip non-alphanumeric characters and uppercase for comparison
   const normalizeCode = (s: any) => s ? String(s).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
@@ -668,7 +707,7 @@ export default function Conference() {
   }
 
   const handleDeleteItem = (itemId: string) => {
-    if (window.confirm('Remover este item da rota?')) {
+    if (window.confirm('Remover este item da rota?. Esta ação não pode ser desfeita.')) {
       deleteItemMutation.mutate(itemId)
       setEditingItem(null)
       toast.info('Item removido')
@@ -746,6 +785,20 @@ export default function Conference() {
           )}
           {isManager && (
             <div className="flex gap-2 shrink-0">
+              {(!op.type || op.type === 'LOAD') && (op.status === 'dispatched' || op.status === 'completed') && (
+                <Button 
+                  variant="outline"
+                  className="gap-2 border-amber-600 text-amber-600 hover:bg-amber-50 h-10 px-3"
+                  onClick={() => {
+                    if (window.confirm('Tem certeza que deseja reabrir esta conferência? O estoque será devolvido e a operação voltará para andamento.')) {
+                      reopenMutation.mutate()
+                    }
+                  }}
+                  disabled={reopenMutation.isPending}
+                >
+                  <Undo2 className="h-4 w-4" /> Reabrir
+                </Button>
+              )}
               <Button 
                 variant="outline"
                 className="gap-2 border-blue-600 text-blue-600 hover:bg-blue-50 h-10 px-3"
@@ -1092,10 +1145,18 @@ export default function Conference() {
 
 
           <div className="space-y-2 mt-6">
-            <div className="pt-2 pb-1">
-              <h3 className="text-sm font-bold text-foreground">Lista de Produtos da Rota</h3>
+            <div 
+              className="pt-2 pb-1 flex justify-between items-center cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setIsLoadedListOpen(!isLoadedListOpen)}
+            >
+              <h3 className="text-sm font-bold text-foreground">Lista de Carregamento</h3>
+              <div className="text-muted-foreground">
+                {isLoadedListOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </div>
             </div>
-              {regularItems.map((item, i) => {
+            {isLoadedListOpen && (
+              <div className="space-y-2">
+                {regularItems.map((item, i) => {
                 const done = item.quantity_scanned >= item.quantity_expected
                 const isEditing = editingItem?.id === item.id
                 
@@ -1156,15 +1217,25 @@ export default function Conference() {
                   </div>
                 )
               })}
+              </div>
+            )}
 
-              {returnItemsList.length > 0 && (
-                <>
-                  <div className="pt-6 pb-2">
-                    <h3 className="text-sm font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                      <ArrowLeft className="h-4 w-4" /> Devoluções Anteriores
-                    </h3>
+            {returnItemsList.length > 0 && (
+              <div className="space-y-2 mt-6">
+                <div 
+                  className="pt-2 pb-1 flex justify-between items-center cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setIsReturnListOpen(!isReturnListOpen)}
+                >
+                  <h3 className="text-sm font-bold text-amber-600 dark:text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                    <ArrowLeft className="h-4 w-4" /> Lista de Retorno
+                  </h3>
+                  <div className="text-muted-foreground">
+                    {isReturnListOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </div>
-                  {returnItemsList.map((item, i) => (
+                </div>
+                {isReturnListOpen && (
+                  <div className="space-y-2">
+                    {returnItemsList.map((item, i) => (
                     <div key={item.id} className="glass-card p-3 flex items-center justify-between slide-up border-amber-500/20 bg-amber-500/5" style={{ animationDelay: `${i * 50}ms` }}>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate text-amber-600 dark:text-amber-600 dark:text-amber-400">{item.description.replace('🔄 Devolução: ', '')}</p>
@@ -1178,11 +1249,12 @@ export default function Conference() {
                       </div>
                     </div>
                   ))}
-                </>
-              )}
+                  </div>
+                )}
+              </div>
+            )}
 
-
-            </div>
+          </div>
 
 
             <div className="mt-auto pt-4">

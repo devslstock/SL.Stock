@@ -118,39 +118,39 @@ export default function CartReview() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 pb-[100px]">
-      <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div className="flex flex-col h-screen bg-background pb-[100px]">
+      <header className="flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 -ml-2">
-            <ArrowLeft className="h-6 w-6 text-gray-700" />
+            <ArrowLeft className="h-6 w-6 text-foreground" />
           </Button>
-          <h1 className="font-bold text-lg text-gray-900">Revisar Pedido</h1>
+          <h1 className="font-bold text-lg text-foreground">Revisar Pedido</h1>
         </div>
       </header>
 
       <div className="flex-1 overflow-auto p-4 space-y-4">
         
         {/* Cliente Info */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">Cliente</h3>
-          <p className="font-bold text-gray-900">{customer?.fantasy_name || customer?.legal_name || 'Carregando...'}</p>
-          <p className="text-sm text-gray-500">{customer?.document}</p>
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+          <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Cliente</h3>
+          <p className="font-bold text-foreground">{customer?.legal_name || customer?.fantasy_name || 'Carregando...'}</p>
+          <p className="text-sm text-muted-foreground">{customer?.document}</p>
         </div>
 
         {/* Resumo dos Itens */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-xs font-bold text-gray-400 uppercase">Itens do Pedido ({items.length})</h3>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase">Itens do Pedido ({items.length})</h3>
             <Button variant="link" className="h-auto p-0 text-primary text-xs" onClick={() => navigate('/vendas/novo-pedido/produtos')}>Editar</Button>
           </div>
-          <div className="space-y-3 divide-y divide-gray-50">
+          <div className="space-y-3 divide-y divide-border">
             {items.map((item: any) => (
               <div key={item.product_id} className="pt-3 first:pt-0 flex justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-800 leading-tight truncate">{item.name}</p>
-                  <p className="text-xs text-gray-500">{item.quantity}x {formatCurrency(item.price)}</p>
+                  <p className="text-sm font-semibold text-foreground leading-tight truncate">{item.name}</p>
+                  <p className="text-xs text-muted-foreground">{item.quantity}x {formatCurrency(item.price)}</p>
                 </div>
-                <div className="font-bold text-sm text-gray-900 shrink-0">
+                <div className="font-bold text-sm text-foreground shrink-0">
                   {formatCurrency(item.price * item.quantity)}
                 </div>
               </div>
@@ -159,8 +159,8 @@ export default function CartReview() {
         </div>
 
         {/* Condição de Pagamento */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-emerald-100 bg-emerald-50/30">
-          <h3 className="text-xs font-bold text-emerald-600 uppercase mb-2">Condição de Pagamento *</h3>
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-emerald-100 bg-emerald-50/30 dark:bg-emerald-900/10 dark:border-emerald-900">
+          <h3 className="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase mb-2">Condição de Pagamento *</h3>
           {allowedPaymentConditions.length === 0 ? (
             <p className="text-sm text-red-500 font-medium flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
@@ -169,13 +169,13 @@ export default function CartReview() {
           ) : (
             <div className="space-y-2">
               {allowedPaymentConditions.map(pc => (
-                <label key={pc.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${payment_condition_id === pc.id ? 'border-emerald-500 bg-emerald-50 text-emerald-900' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
+                <label key={pc.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${payment_condition_id === pc.id ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-300' : 'border-border bg-background hover:bg-muted'}`}>
                   <input 
                     type="radio" 
                     name="payment_condition"
                     checked={payment_condition_id === pc.id}
                     onChange={() => setPaymentCondition(pc.id)}
-                    className="w-4 h-4 text-emerald-600 border-gray-300 focus:ring-emerald-500"
+                    className="w-4 h-4 text-emerald-600 border-border focus:ring-emerald-500"
                   />
                   <span className="font-medium text-sm flex-1">{pc.name}</span>
                 </label>
@@ -185,25 +185,25 @@ export default function CartReview() {
         </div>
 
         {/* Descontos e Observações */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-4">
+        <div className="bg-card rounded-xl p-4 shadow-sm border border-border space-y-4">
           <div>
-            <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">Desconto (%)</h3>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Desconto (%)</h3>
             <Input 
               type="number"
               min="0"
               max="100"
               value={discountPerc || ''}
               onChange={e => setDiscountPerc(parseFloat(e.target.value) || 0)}
-              className="h-12 bg-gray-50 font-bold text-lg"
+              className="h-12 bg-muted font-bold text-lg"
               placeholder="0%"
             />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">Observações</h3>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Observações</h3>
             <textarea 
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none min-h-[80px]"
+              className="w-full rounded-lg border border-border bg-muted p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none min-h-[80px]"
               placeholder="Ex: Entregar na doca 2..."
             />
           </div>
@@ -212,9 +212,9 @@ export default function CartReview() {
       </div>
 
       {/* Floating Finalize Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20">
         <div className="space-y-1.5 mb-3">
-          <div className="flex justify-between text-sm text-gray-500">
+          <div className="flex justify-between text-sm text-muted-foreground">
             <span>Subtotal</span>
             <span>{formatCurrency(subtotal)}</span>
           </div>
@@ -224,9 +224,9 @@ export default function CartReview() {
               <span>- {formatCurrency(discountAmount)}</span>
             </div>
           )}
-          <div className="flex justify-between text-lg font-bold text-gray-900 pt-1 border-t border-gray-100">
+          <div className="flex justify-between text-lg font-bold text-foreground pt-1 border-t border-border">
             <span>Total</span>
-            <span className="text-emerald-600">{formatCurrency(total)}</span>
+            <span className="text-emerald-600 dark:text-emerald-500">{formatCurrency(total)}</span>
           </div>
         </div>
         <Button 

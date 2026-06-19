@@ -28,19 +28,24 @@ export const saasApi = {
       throw new Error(`O usuário de login '${user.username}' já está em uso no sistema. Escolha outro nome de usuário.`)
     }
 
-    const { data, error } = await supabase
-      .from('users')
-      .insert([{ ...user, username: normalizedUsername, company_id: null, is_super_admin: true }])
-      .select()
-      .single()
-      
-    if (error) {
-      if (error.code === '23505') {
-        throw new Error(`O usuário de login '${user.username}' já está em uso no sistema. Escolha outro nome de usuário.`)
+    const response = await fetch('/api/create-company-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        user: { ...user, username: normalizedUsername }, 
+        isSuperAdmin: true 
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      if (errorData.error?.includes('duplicate key') || errorData.error?.includes('23505')) {
+        throw new Error(`O usuário de login '${user.username}' já está em uso no sistema. Escolha outro nome de usuário.`);
       }
-      throw error
+      throw new Error(errorData.error || 'Erro ao criar super administrador. Tente novamente.');
     }
-    return data as User
+    
+    return await response.json() as User;
   },
 
   async updateSystemUser(id: string, updates: Partial<User>) {

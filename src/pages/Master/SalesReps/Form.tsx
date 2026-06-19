@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import type { SalesRep } from '@/types/database'
 import { usersApi } from '@/api/users'
-import { DEFAULT_PASSWORD_HASH } from '@/utils/crypto'
+
 
 export default function SalesRepForm() {
   const { id } = useParams()
@@ -70,7 +70,7 @@ export default function SalesRepForm() {
         await usersApi.createUser({
           name: data.nickname || data.legal_name || 'Vendedor',
           username: username,
-          password_hash: DEFAULT_PASSWORD_HASH,
+
           role: 'vendedor',
           permissions: {
             can_view_dashboard: false,
@@ -224,7 +224,7 @@ export default function SalesRepForm() {
                     placeholder="Ex: joao.vendedor"
                   />
                   <p className="text-xs text-muted-foreground">
-                    A senha inicial será <strong>123456</strong>.
+                    A senha inicial será <strong>Trocar@123</strong>.
                   </p>
                 </div>
               )}

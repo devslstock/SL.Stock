@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { suppliesApi } from '@/api/supplies'
 import { useAuth } from '@/contexts/AuthContext'
@@ -22,8 +22,22 @@ export default function SupplyRequests() {
 
   // Form
   const [supplyId, setSupplyId] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
   const [quantity, setQuantity] = useState('')
   const [notes, setNotes] = useState('')
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['supply_requests'],
@@ -72,10 +86,14 @@ export default function SupplyRequests() {
 
   const openNew = () => {
     setSupplyId('')
+    setSearchTerm('')
     setQuantity('')
     setNotes('')
+    setIsDropdownOpen(false)
     setIsModalOpen(true)
   }
+
+  const filteredSupplies = supplies.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   const handleApprove = (req: SupplyRequest) => {
     if (confirm('Aprovar esta solicitação? O estoque do item será aumentado com essa quantidade.')) {
@@ -176,19 +194,43 @@ export default function SupplyRequests() {
             <DialogTitle>Nova Solicitação de Peça/Insumo</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-2 relative" ref={dropdownRef}>
               <Label>Peça / Insumo *</Label>
-              <select 
-                value={supplyId} 
-                onChange={e => setSupplyId(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                required
-              >
-                <option value="">Selecione...</option>
-                {supplies.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} (Estoque atual: {s.stock_quantity} {s.unit})</option>
-                ))}
-              </select>
+              <Input
+                type="text"
+                placeholder="Digite para buscar..."
+                value={searchTerm}
+                onChange={e => {
+                  setSearchTerm(e.target.value)
+                  setSupplyId('')
+                  setIsDropdownOpen(true)
+                }}
+                onFocus={() => setIsDropdownOpen(true)}
+                required={!supplyId}
+              />
+              {isDropdownOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+                  {filteredSupplies.length > 0 ? (
+                    filteredSupplies.map(s => (
+                      <div
+                        key={s.id}
+                        className="px-3 py-2 text-sm hover:bg-muted cursor-pointer transition-colors"
+                        onClick={() => {
+                          setSupplyId(s.id)
+                          setSearchTerm(`${s.name} (Estoque: ${s.stock_quantity})`)
+                          setIsDropdownOpen(false)
+                        }}
+                      >
+                        <span className="font-medium">{s.name}</span> <span className="text-muted-foreground text-xs">(Estoque atual: {s.stock_quantity} {s.unit})</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                      Nenhuma peça encontrada.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">

@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
+import '@/services/SyncManager'
 import Dashboard from './pages/Dashboard'
 import AllLoads from './pages/AllLoads'
 import CreateLoad from './pages/CreateLoad'
@@ -17,6 +18,7 @@ import SaaSNotes from './pages/Master/Notes'
 import SaaSLeads from './pages/Master/Leads'
 import { ThemeProvider } from './components/ThemeProvider'
 import ChangePassword from './pages/ChangePassword'
+import ResetPasswordAuto from './pages/ResetPasswordAuto'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
@@ -104,6 +106,8 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/saiba-mais" element={<Landing />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/trocar-senha" element={<ChangePassword />} />
+        <Route path="/reset-password-auto" element={<ResetPasswordAuto />} />
         
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>

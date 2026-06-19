@@ -683,7 +683,7 @@ function AreaCountView({ inventory, area, allProducts, user, onBack }: {
                       size="icon" 
                       className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10 shrink-0"
                       onClick={() => {
-                        if (window.confirm('Tem certeza que deseja apagar este item da contagem?')) {
+                        if (window.confirm('Tem certeza que deseja apagar este item da contagem?. Esta ação não pode ser desfeita.')) {
                           deleteItemMutation.mutate(item.id)
                         }
                       }}

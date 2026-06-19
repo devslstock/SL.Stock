@@ -60,7 +60,7 @@ export default function CustomersList() {
   })
 
   const handleDelete = (id: string, name: string) => {
-    if (window.confirm(`Deseja realmente excluir o cliente "${name}"?`)) {
+    if (window.confirm(`Deseja realmente excluir o cliente "${name}"?. Esta ação não pode ser desfeita.`)) {
       deleteMutation.mutate(id)
     }
   }
@@ -456,9 +456,9 @@ export default function CustomersList() {
                   />
                 </th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Apelido / Fantasia</th>
                 <th className="px-4 py-3 font-medium">Razão Social</th>
-                <th className="px-4 py-3 font-medium">CNPJ/CPF</th>
+                <th className="px-4 py-3 font-medium">Apelido / Fantasia</th>
+                <th className="px-4 py-3 font-medium whitespace-nowrap">CNPJ/CPF</th>
                 <th className="px-4 py-3 font-medium">Município/UF</th>
                 <th className="px-4 py-3 font-medium">Região</th>
                 <th className="px-4 py-3 font-medium text-right">Ações</th>
@@ -487,12 +487,13 @@ export default function CustomersList() {
                         {customer.active ? 'Ativa' : 'Inativa'}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-foreground">{customer.nickname || '-'}</div>
-                      <div className="text-xs text-muted-foreground">{customer.fantasy_name || '-'}</div>
+                    <td className="px-4 py-3 font-medium text-foreground">
+                      {customer.legal_name || customer.nickname || '-'}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{customer.legal_name || '-'}</td>
-                    <td className="px-4 py-3 font-mono text-xs">{customer.document || '-'}</td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-foreground">{customer.fantasy_name || '-'}</div>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">{customer.document || '-'}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {customer.city ? `${customer.city}${customer.state ? `/${customer.state}` : ''}` : '-'}
                     </td>

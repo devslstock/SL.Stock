@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { equipmentsApi } from '@/api/equipments'
 import { customersApi } from '@/api/customers'
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Search, Box, Edit2, History, AlertCircle, Trash2, ArrowUp, ArrowDown, Settings } from 'lucide-react'
+import { Plus, Search, Box, Edit2, History, AlertCircle, Trash2, ArrowUp, ArrowDown, Settings, ClipboardList } from 'lucide-react'
 import type { Equipment } from '@/types/database'
 
 import { InternalMaintenanceModal } from './InternalMaintenanceModal'
@@ -27,6 +27,7 @@ export default function EquipmentsList() {
 
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
   const [historyEquipment, setHistoryEquipment] = useState<Equipment | null>(null)
+  const [historyTab, setHistoryTab] = useState<'movimentacoes' | 'os'>('movimentacoes')
 
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false)
   const [maintenanceEquipment, setMaintenanceEquipment] = useState<Equipment | null>(null)
@@ -41,6 +42,9 @@ export default function EquipmentsList() {
   const [size, setSize] = useState('')
   const [status, setStatus] = useState<'Teste' | 'Disponível' | 'Em Manutenção' | 'Danificado' | 'No Cliente' | 'Equipamento de Estoque'>('Disponível')
   const [currentCustomerId, setCurrentCustomerId] = useState('')
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
+  const [filteredCustomers, setFilteredCustomers] = useState<any[]>([])
 
   const { data: customersList = [] } = useQuery({
     queryKey: ['customers'],
@@ -51,6 +55,22 @@ export default function EquipmentsList() {
     queryKey: ['equipments'],
     queryFn: equipmentsApi.getEquipments
   })
+
+  useEffect(() => {
+    if (customerSearch.trim().length > 0) {
+      const term = customerSearch.toLowerCase()
+      const filtered = customersList.filter((c: any) => 
+        (c.fantasy_name && c.fantasy_name.toLowerCase().includes(term)) ||
+        (c.legal_name && c.legal_name.toLowerCase().includes(term)) ||
+        (c.document && c.document.includes(term))
+      ).slice(0, 10)
+      setFilteredCustomers(filtered)
+      setShowCustomerDropdown(true)
+    } else {
+      setFilteredCustomers([])
+      setShowCustomerDropdown(false)
+    }
+  }, [customerSearch, customersList])
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Equipment>) => equipmentsApi.createEquipment(data),
@@ -87,9 +107,9 @@ export default function EquipmentsList() {
     }
   }
 
-  const { data: equipmentHistory = [], isLoading: isLoadingHistory } = useQuery({
-    queryKey: ['equipment_history', historyEquipment?.id],
-    queryFn: () => equipmentsApi.getEquipmentHistory(historyEquipment!.id),
+  const { data: equipmentOrders = [], isLoading: isLoadingOrders } = useQuery({
+    queryKey: ['equipment_orders', historyEquipment?.id],
+    queryFn: () => equipmentsApi.getEquipmentOrders(historyEquipment!.id),
     enabled: !!historyEquipment && isHistoryModalOpen
   })
 
@@ -105,10 +125,19 @@ export default function EquipmentsList() {
       return
     }
 
+    const isDuplicate = equipments.some(eq => 
+      eq.patrimony.toLowerCase().trim() === patrimony.toLowerCase().trim() && eq.id !== editing?.id
+    )
+
+    if (isDuplicate) {
+      toast.error('Equipamento já cadastrado com este Nº de Patrimônio/Série.')
+      return
+    }
+
     if (editing) {
-      updateMutation.mutate({ patrimony, type, model, size, status, current_customer_id: status === 'No Cliente' ? currentCustomerId : null })
+      updateMutation.mutate({ patrimony: patrimony.trim(), type, model, size, status, current_customer_id: status === 'No Cliente' ? currentCustomerId : null })
     } else {
-      createMutation.mutate({ patrimony, type, model, size, status, current_customer_id: status === 'No Cliente' ? currentCustomerId : null })
+      createMutation.mutate({ patrimony: patrimony.trim(), type, model, size, status, current_customer_id: status === 'No Cliente' ? currentCustomerId : null })
     }
   }
 
@@ -119,6 +148,8 @@ export default function EquipmentsList() {
     setModel('')
     setSize('')
     setStatus('Disponível')
+    setCurrentCustomerId('')
+    setCustomerSearch('')
     setIsModalOpen(true)
   }
 
@@ -130,6 +161,7 @@ export default function EquipmentsList() {
     setSize(eq.size || '')
     setStatus(eq.status as any)
     setCurrentCustomerId(eq.current_customer_id || '')
+    setCustomerSearch(eq.customer ? (eq.customer.legal_name || eq.customer.fantasy_name || '') : '')
     setIsModalOpen(true)
   }
 
@@ -167,8 +199,8 @@ export default function EquipmentsList() {
         aVal = a.status
         bVal = b.status
       } else if (sortField === 'customer') {
-        aVal = a.customer?.fantasy_name || a.customer?.legal_name || ''
-        bVal = b.customer?.fantasy_name || b.customer?.legal_name || ''
+        aVal = a.customer?.legal_name || a.customer?.fantasy_name || ''
+        bVal = b.customer?.legal_name || b.customer?.fantasy_name || ''
       }
 
       if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1
@@ -267,7 +299,20 @@ export default function EquipmentsList() {
                   </TableCell>
                   <TableCell>
                     {eq.customer ? (
-                      <span className="font-medium text-sm">{eq.customer.fantasy_name || eq.customer.legal_name}</span>
+                      (() => {
+                        const legalName = eq.customer.legal_name || eq.customer.nickname || eq.customer.fantasy_name;
+                        const fantasyName = eq.customer.fantasy_name;
+                        const showFantasy = fantasyName && legalName && fantasyName !== legalName;
+                        return (
+                          <div>
+                            <div className="font-medium text-sm text-foreground">{legalName}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {showFantasy ? `${fantasyName} - ` : ''}
+                              {eq.customer.document || ''}
+                            </div>
+                          </div>
+                        )
+                      })()
                     ) : (
                       <span className="text-muted-foreground text-sm">-</span>
                     )}
@@ -378,19 +423,37 @@ export default function EquipmentsList() {
             </div>
 
             {status === 'No Cliente' && (
-              <div className="space-y-2 col-span-2">
-                <Label>Cliente Atual (Vínculo Manual)</Label>
-                <select 
-                  value={currentCustomerId} 
-                  onChange={e => setCurrentCustomerId(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  required
-                >
-                  <option value="">Selecione o cliente...</option>
-                  {customersList.map((c: any) => (
-                    <option key={c.id} value={c.id}>{c.fantasy_name || c.legal_name} ({c.document})</option>
-                  ))}
-                </select>
+              <div className="space-y-2 col-span-2 relative">
+                <Label>Cliente Atual (Vínculo Manual) *</Label>
+                <div className="relative">
+                  <Input 
+                    placeholder="Digite nome, fantasia ou CNPJ/CPF..." 
+                    value={customerSearch}
+                    onChange={e => {
+                      setCustomerSearch(e.target.value)
+                      setCurrentCustomerId('') // clear ID if typing
+                    }}
+                    required={!currentCustomerId}
+                  />
+                  {showCustomerDropdown && filteredCustomers.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+                      {filteredCustomers.map(c => (
+                        <div 
+                          key={c.id}
+                          className="px-4 py-3 hover:bg-muted cursor-pointer border-b border-border/50 last:border-0"
+                          onClick={() => {
+                            setCurrentCustomerId(c.id)
+                            setCustomerSearch(c.legal_name || c.fantasy_name || '')
+                            setShowCustomerDropdown(false)
+                          }}
+                        >
+                          <div className="font-bold text-foreground">{c.legal_name || c.fantasy_name}</div>
+                          <div className="text-xs text-muted-foreground mt-1">Doc: {c.document}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -407,23 +470,53 @@ export default function EquipmentsList() {
           <DialogHeader>
             <DialogTitle>Histórico do Equipamento: {historyEquipment?.patrimony}</DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4">
-            {isLoadingHistory ? (
+            {isLoadingOrders ? (
               <p className="text-center py-4">Carregando histórico...</p>
-            ) : equipmentHistory.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">Nenhum histórico encontrado para este equipamento.</p>
+            ) : equipmentOrders.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">Nenhum histórico de OS encontrado para este equipamento.</p>
             ) : (
-              equipmentHistory.map(h => (
-                <div key={h.id} className="border p-3 rounded bg-muted/30">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-bold text-sm">{h.action}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString('pt-BR')}</span>
-                  </div>
-                  {h.customer && <div className="text-sm bg-background p-2 rounded mb-2 border">Cliente: <span className="font-medium">{h.customer.fantasy_name || h.customer.legal_name}</span></div>}
-                  {h.notes && <div className="text-sm mt-2 text-muted-foreground">{h.notes}</div>}
-                  <div className="text-xs mt-2 text-primary font-medium">Por: {h.user?.name || 'Sistema'}</div>
-                </div>
-              ))
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>OS</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Detalhes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {equipmentOrders.map(order => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-bold whitespace-nowrap">#{order.os_number || '---'}</TableCell>
+                        <TableCell className="whitespace-nowrap">{new Date(order.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell className="uppercase text-xs font-medium">{order.type}</TableCell>
+                        <TableCell>
+                          {order.type === 'manutencao' ? (
+                            <div className="text-sm">
+                              {order.supplies && order.supplies.length > 0 ? (
+                                <ul className="list-disc list-inside">
+                                  {order.supplies.map((s: any, idx: number) => (
+                                    <li key={idx}>{s.quantity_consumed} {s.supply?.unit} - {s.supply?.name}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="text-muted-foreground italic">Nenhum insumo registrado</span>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-sm">
+                              <span className="font-semibold">Local:</span> {order.customer?.legal_name || order.customer?.fantasy_name || 'Depósito / Galpão'}
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </div>
           <DialogFooter>

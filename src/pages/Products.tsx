@@ -175,7 +175,7 @@ export default function Products() {
   }
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Tem certeza que deseja remover este produto?')) {
+    if (window.confirm('Tem certeza que deseja remover este produto?. Esta ação não pode ser desfeita.')) {
       deleteMutation.mutate(id)
     }
   }
@@ -191,30 +191,59 @@ export default function Products() {
         const workbook = XLSX.read(bstr, { type: 'binary' })
         const wsname = workbook.SheetNames[0]
         const ws = workbook.Sheets[wsname]
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][]
+        
+        // raw: false faz com que o XLSX mantenha a formatação da célula como string (ex: '00123' não vira 123)
+        // defval: '' preenche células vazias com string vazia
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' }) as string[][]
 
         let count = 0
         let errors = 0
         let lastError = ''
 
-        for (let i = 0; i < data.length; i++) {
-          const row = data[i]
-          if (!row || row.length === 0) continue
+        if (data.length <= 1) {
+          toast.warning('O arquivo parece estar vazio.')
+          setIsImporting(false)
+          return
+        }
 
-          let parts = row.map(cell => cell != null ? String(cell).trim() : '').filter(Boolean)
-          if (parts.length < 2) continue
+        const headerRow = data[0].map(h => String(h).toLowerCase().trim())
+        
+        // Dynamic indexes mapping
+        const idxId = headerRow.findIndex(h => h === 'id')
+        const idxCode = headerRow.findIndex(h => h === 'código' || h === 'codigo' || h === 'cod.' || h === 'cod')
+        const idxExt = headerRow.findIndex(h => h.includes('externo'))
+        const idxDesc = headerRow.findIndex(h => h.includes('descrição') || h === 'descricao')
+        const idxGroup = headerRow.findIndex(h => h === 'grupo')
+        const idxStock = headerRow.findIndex(h => h === 'estoque' || h === 'quantidade' || h === 'qtd' || h === 'qtd.')
+        const idxMinStock = headerRow.findIndex(h => h.includes('mínimo') || h.includes('alerta'))
+        const idxBatch = headerRow.findIndex(h => h === 'lote')
+        const idxWeight = headerRow.findIndex(h => h.includes('peso'))
+        const idxBox = headerRow.findIndex(h => h.includes('caixa'))
+
+        for (let i = 1; i < data.length; i++) {
+          const row = data[i]
+          // Skip completely empty rows
+          if (!row || row.every(cell => !cell)) continue
+
+          // Função auxiliar para pegar o valor baseado no index dinâmico ou fallback posicional antigo
+          const getVal = (idx: number, fallbackIdx: number) => {
+            const val = idx >= 0 ? row[idx] : row[fallbackIdx]
+            return val != null ? String(val).trim() : ''
+          }
 
           if (type === 'new') {
-            const firstPart = parts[0].toLowerCase()
-            if (firstPart.includes('cod') || firstPart.includes('código')) continue
+            const code = getVal(idxCode, 0)
+            const desc = getVal(idxDesc, 1)
+            const ext = getVal(idxExt, 2)
+            const group_name = getVal(idxGroup, 3)
+            const rawQty = getVal(idxStock, 4)
+            const batch = getVal(idxBatch, 5)
+            const rawMinQty = getVal(idxMinStock, 6)
+            const weight = getVal(idxWeight, 8) // Fallback posicional
+            const boxQty = getVal(idxBox, 9)
 
-            const code = parts[0]?.trim() || ''
-            const desc = parts[1]?.trim() || ''
-            const ext = parts[2]?.trim() || ''
-            const group_name = parts[3]?.trim() || ''
-            const qty = parseInt(parts[4]?.trim() || '0')
-            const batch = parts[5]?.trim() || ''
-            const min_qty = parseInt(parts[6]?.trim() || '0')
+            const qty = parseInt(rawQty || '0', 10)
+            const min_qty = parseInt(rawMinQty || '0', 10)
 
             if (code && desc) {
               if (qty < 0) {
@@ -222,16 +251,30 @@ export default function Products() {
                 lastError = `Estoque do produto '${code}' não pode ser negativo (${qty})`
                 continue
               }
+              
+              // Verifica se o produto já existe para fazer update ou create (Upsert)
+              const existingProduct = products.find(p => p.code === code)
+
               try {
-                await productsApi.createProduct({
+                const productData = {
                   code,
-                  external_code: ext,
+                  external_code: ext || undefined,
                   description: desc,
-                  group_name,
-                  stock: qty,
-                  batch,
+                  group_name: group_name || undefined,
+                  stock: isNaN(qty) ? 0 : qty,
+                  batch: batch || undefined,
                   min_stock_alert: isNaN(min_qty) ? 0 : min_qty,
-                })
+                  unit_weight: weight ? parseFloat(weight.replace(',', '.')) : undefined,
+                  box_quantity: boxQty ? parseInt(boxQty, 10) : undefined
+                }
+
+                if (existingProduct) {
+                  await productsApi.updateProduct(existingProduct.id, productData)
+                } else {
+                  const newProduct = await productsApi.createProduct(productData)
+                  // Adicionar o novo produto à lista local para evitar tentar criá-lo novamente no mesmo loop
+                  products.push(newProduct)
+                }
                 count++
               } catch (err: any) {
                 console.error(err)
@@ -245,19 +288,11 @@ export default function Products() {
               }
             }
           } else {
-            const firstPart = parts[0].toLowerCase()
-            if (firstPart.includes('cod') || firstPart.includes('código') || firstPart.includes('itens') || firstPart.includes('relatório') || firstPart.includes('delicius') || firstPart.includes('quantidade')) {
-              continue
-            }
-
-            const codePart = parts[0]
-            const qtyPart = parts[parts.length - 1]
-
-            let rawCode = codePart
-            if (rawCode.includes(' - ')) {
-              rawCode = rawCode.split(' - ')[0].trim()
-            }
-            const codeOrExt = rawCode.replace(/[^a-zA-Z0-9]/g, '')
+            // type === 'stock' (Apenas Atualização de Estoque)
+            // Lê o primeiro campo como código, e o último campo como quantidade
+            const codeOrExt = getVal(idxCode, 0).replace(/[^a-zA-Z0-9]/g, '')
+            const qtyPart = getVal(idxStock, row.length - 1)
+            
             const qtyToAdd = Math.round(parseFloat(qtyPart.replace(',', '.')))
 
             if (codeOrExt && !isNaN(qtyToAdd)) {
@@ -372,7 +407,7 @@ export default function Products() {
               </Button>
               {isMaster && (
                 <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => {
-                  if (window.confirm('CUIDADO: Isso irá apagar TODOS os produtos cadastrados. Tem certeza que deseja continuar?')) {
+                  if (window.confirm('CUIDADO: Isso irá apagar TODOS os produtos cadastrados. Tem certeza que deseja continuar?. Esta ação não pode ser desfeita.')) {
                     deleteAllMutation.mutate()
                   }
                 }}>

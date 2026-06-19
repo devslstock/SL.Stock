@@ -31,7 +31,7 @@ export default function RegionsList() {
   })
 
   const handleDelete = (id: string, name: string) => {
-    if (window.confirm(`Deseja realmente excluir a região "${name}"?`)) {
+    if (window.confirm(`Deseja realmente excluir a região "${name}"?. Esta ação não pode ser desfeita.`)) {
       deleteMutation.mutate(id)
     }
   }

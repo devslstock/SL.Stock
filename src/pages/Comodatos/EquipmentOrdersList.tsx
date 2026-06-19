@@ -10,13 +10,14 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { Plus, Search, ClipboardList, CheckCircle2, Truck, Wrench, ArrowRightLeft, PenTool } from 'lucide-react'
+import { Plus, Search, ClipboardList, CheckCircle2, Truck, Wrench, ArrowRightLeft, PenTool, FileText } from 'lucide-react'
 import type { EquipmentOrder } from '@/types/database'
 import { ExecutionModal } from './ExecutionModal'
+import { generateContractPDF } from '@/utils/pdf'
 
 export default function EquipmentOrdersList() {
   const queryClient = useQueryClient()
-  const { hasPermission, user } = useAuth()
+  const { hasPermission, user, company } = useAuth()
   const canManage = hasPermission('can_manage_equipments') && user?.role !== 'mecanico'
 
   const [search, setSearch] = useState('')
@@ -25,6 +26,16 @@ export default function EquipmentOrdersList() {
   // Execution Modal
   const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false)
   const [executingOrder, setExecutingOrder] = useState<EquipmentOrder | null>(null)
+
+  // Details Modal (Read-Only)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [detailsOrder, setDetailsOrder] = useState<EquipmentOrder | null>(null)
+  
+  const { data: detailsSupplies = [] } = useQuery({
+    queryKey: ['order_supplies', detailsOrder?.id],
+    queryFn: () => equipmentsApi.getOrderSupplies(detailsOrder!.id),
+    enabled: isDetailsModalOpen && !!detailsOrder
+  })
 
   // Form
   const [type, setType] = useState<'entrega' | 'recolha' | 'troca' | 'manutencao'>('entrega')
@@ -126,7 +137,7 @@ export default function EquipmentOrdersList() {
   const openEdit = (order: EquipmentOrder) => {
     setEditingId(order.id)
     setType(order.type)
-    setCustomerId(order.customer_id)
+    setCustomerId(order.customer_id || '')
     setEquipmentId(order.equipment_id)
     setDriverId(order.driver_id || '')
     setScheduledDate(order.scheduled_date || '')
@@ -153,8 +164,23 @@ export default function EquipmentOrdersList() {
   const filtered = orders.filter(o => 
     o.customer?.fantasy_name?.toLowerCase().includes(search.toLowerCase()) ||
     o.equipment?.patrimony.toLowerCase().includes(search.toLowerCase()) ||
-    o.driver?.name.toLowerCase().includes(search.toLowerCase())
+    o.driver?.name.toLowerCase().includes(search.toLowerCase()) ||
+    (o.os_number && String(o.os_number).includes(search))
   )
+
+  const statusOrder: Record<string, number> = {
+    'pendente': 1,
+    'em_rota': 2,
+    'concluido': 3,
+    'cancelado': 4
+  }
+
+  const sortedOrders = [...filtered].sort((a, b) => {
+    const sA = statusOrder[a.status] || 99
+    const sB = statusOrder[b.status] || 99
+    if (sA !== sB) return sA - sB
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto slide-in">
@@ -184,7 +210,7 @@ export default function EquipmentOrdersList() {
       </div>
 
       <div className="space-y-4">
-        {filtered.map(order => (
+        {sortedOrders.map(order => (
           <Card key={order.id}>
             <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
               <div className="flex gap-4 items-center flex-1">
@@ -193,7 +219,8 @@ export default function EquipmentOrdersList() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold uppercase text-sm tracking-wide">{order.type}</span>
+                    <span className="font-black text-lg">#{order.os_number || '---'}</span>
+                    <span className="font-bold uppercase text-sm tracking-wide text-muted-foreground">{order.type}</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                       order.status === 'concluido' ? 'bg-green-100 text-green-700' :
                       order.status === 'em_rota' ? 'bg-blue-100 text-blue-700' :
@@ -203,7 +230,20 @@ export default function EquipmentOrdersList() {
                       {order.status}
                     </span>
                   </div>
-                  <div className="font-bold text-lg">{order.customer?.fantasy_name || order.customer?.legal_name}</div>
+                  {(() => {
+                    const legalName = order.customer?.legal_name || order.customer?.nickname || order.customer?.fantasy_name;
+                    const fantasyName = order.customer?.fantasy_name;
+                    const showFantasy = fantasyName && legalName && fantasyName !== legalName;
+                    return (
+                      <>
+                        <div className="font-bold text-lg">{legalName}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5 mb-2">
+                          {showFantasy ? `${fantasyName} - ` : ''}
+                          {order.customer?.document || 'Sem documento'}
+                        </div>
+                      </>
+                    )
+                  })()}
                   <div className="text-sm text-muted-foreground">
                     Equipamento: <strong>{order.equipment?.patrimony}</strong> ({order.equipment?.type} {order.equipment?.model})
                   </div>
@@ -239,18 +279,37 @@ export default function EquipmentOrdersList() {
                   </Button>
                 )}
                 {order.status === 'concluido' && (
-                  <Button variant="outline" size="sm" className="flex-1 md:flex-none" onClick={() => {
-                    setExecutingOrder(order)
-                    setIsExecutionModalOpen(true)
-                  }}>
-                    Ver Detalhes
-                  </Button>
+                  <>
+                    {(order.type === 'entrega' || order.type === 'troca' || order.type === 'recolha') && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 md:flex-none text-blue-600 border-blue-200 hover:bg-blue-50" 
+                        onClick={async () => {
+                          try {
+                            await generateContractPDF(order, company)
+                          } catch (err: any) {
+                            toast.error(err.message || 'Erro ao gerar PDF')
+                          }
+                        }}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Baixar Contrato
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" className="flex-1 md:flex-none" onClick={() => {
+                      setDetailsOrder(order)
+                      setIsDetailsModalOpen(true)
+                    }}>
+                      Ver Detalhes
+                    </Button>
+                  </>
                 )}
               </div>
             </CardContent>
           </Card>
         ))}
-        {filtered.length === 0 && (
+        {sortedOrders.length === 0 && (
           <div className="text-center py-10 text-muted-foreground border rounded-lg bg-muted/20">
             Nenhuma OS encontrada.
           </div>
@@ -297,7 +356,7 @@ export default function EquipmentOrdersList() {
                 >
                   <option value="">Selecione o cliente...</option>
                   {customersList.map(c => (
-                    <option key={c.id} value={c.id}>{c.fantasy_name || c.legal_name} ({c.document})</option>
+                    <option key={c.id} value={c.id}>{c.legal_name || c.fantasy_name} ({c.document})</option>
                   ))}
                 </select>
               </div>
@@ -360,6 +419,95 @@ export default function EquipmentOrdersList() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ReadOnly Details Modal */}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes da OS #{detailsOrder?.os_number}</DialogTitle>
+          </DialogHeader>
+          {detailsOrder && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4 bg-muted/20 p-4 rounded-lg">
+                <div>
+                  <div className="text-xs text-muted-foreground font-bold">Cliente</div>
+                  <div>{detailsOrder.customer?.legal_name || detailsOrder.customer?.fantasy_name}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-bold">Equipamento Original</div>
+                  <div>{detailsOrder.equipment?.patrimony} - {detailsOrder.equipment?.model}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-bold">Tipo da OS</div>
+                  <div className="uppercase">{detailsOrder.type}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-bold">Data de Conclusão</div>
+                  <div>{detailsOrder.completed_at ? new Date(detailsOrder.completed_at).toLocaleString('pt-BR') : '---'}</div>
+                </div>
+              </div>
+
+              {detailsOrder.defect_description && (
+                <div>
+                  <h3 className="font-bold text-sm border-b pb-1 mb-2">Defeito Relatado</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{detailsOrder.defect_description}</p>
+                </div>
+              )}
+
+              {detailsOrder.solution_description && (
+                <div>
+                  <h3 className="font-bold text-sm border-b pb-1 mb-2">Solução Aplicada / Observações</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{detailsOrder.solution_description}</p>
+                </div>
+              )}
+
+              {detailsOrder.action_taken && (
+                <div>
+                  <h3 className="font-bold text-sm border-b pb-1 mb-2">Ação Tomada</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{detailsOrder.action_taken}</p>
+                </div>
+              )}
+
+              {detailsSupplies.length > 0 && (
+                <div>
+                  <h3 className="font-bold text-sm border-b pb-1 mb-2">Insumos e Peças Consumidas</h3>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground">
+                    {detailsSupplies.map(s => (
+                      <li key={s.id}>{s.quantity_consumed} {s.supply?.unit} - {s.supply?.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {detailsOrder.signature_data && (
+                <div>
+                  <h3 className="font-bold text-sm border-b pb-1 mb-2">Assinatura ({detailsOrder.receiver_name} - {detailsOrder.receiver_doc})</h3>
+                  <img src={detailsOrder.signature_data} alt="Assinatura" className="max-h-32 border bg-white rounded" />
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter className="flex flex-row justify-between items-center sm:justify-between">
+            {detailsOrder && (detailsOrder.type === 'entrega' || detailsOrder.type === 'troca' || detailsOrder.type === 'recolha') ? (
+              <Button 
+                variant="outline" 
+                className="text-blue-600 border-blue-200 hover:bg-blue-50" 
+                onClick={async () => {
+                  try {
+                    await generateContractPDF(detailsOrder, company)
+                  } catch (err: any) {
+                    toast.error(err.message || 'Erro ao gerar PDF')
+                  }
+                }}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Baixar Contrato
+              </Button>
+            ) : <div />}
+            <Button onClick={() => setIsDetailsModalOpen(false)}>Fechar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

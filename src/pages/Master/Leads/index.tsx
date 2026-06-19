@@ -172,7 +172,7 @@ export default function SaaSLeads() {
                       size="icon"
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 shrink-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                       onClick={() => {
-                        if (window.confirm('Tem certeza que deseja excluir este lead?')) {
+                        if (window.confirm('Tem certeza que deseja excluir este lead?. Esta ação não pode ser desfeita.')) {
                           deleteLeadMutation.mutate(lead.id);
                         }
                       }}

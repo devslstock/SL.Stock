@@ -457,7 +457,7 @@ export default function PriceTableForm() {
                             variant="ghost" 
                             size="icon" 
                             onClick={() => {
-                              if (window.confirm('Remover este item?')) deleteItemMutation.mutate(item.id)
+                              if (window.confirm('Remover este item?. Esta ação não pode ser desfeita.')) deleteItemMutation.mutate(item.id)
                             }}
                             className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
                           >

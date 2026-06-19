@@ -23,6 +23,16 @@ export const customersApi = {
     return data as Customer
   },
 
+  async checkDocumentExists(document: string, excludeId?: string) {
+    let query = supabase.from('customers').select('id').eq('document', document)
+    if (excludeId) {
+      query = query.neq('id', excludeId)
+    }
+    const { data, error } = await query.limit(1)
+    if (error) throw error
+    return data && data.length > 0
+  },
+
   async createCustomer(customer: Partial<Customer>) {
         const { equipments, ...customerData } = customer
     
@@ -48,20 +58,40 @@ export const customersApi = {
   },
 
   async bulkCreateCustomers(customers: Partial<Customer>[]) {
-        
-    // We only insert customers, equipments are too complex for bulk right now
+    // We only insert/update customers, equipments are too complex for bulk right now
     const payload = customers.map(c => {
       const { equipments, ...rest } = c
-      return { ...rest}
+      return { ...rest }
     })
 
-    const { data, error } = await supabase
+    const { data: existingData, error: fetchError } = await supabase
       .from('customers')
-      .insert(payload)
-      .select()
-      
-    if (error) throw error
-    return data as Customer[]
+      .select('id, document')
+    if (fetchError) throw fetchError
+
+    const existingMap = new Map(existingData.filter(c => c.document).map(c => [c.document, c.id]))
+
+    const toInsert = []
+    let updatedCount = 0
+
+    for (const c of payload) {
+      if (c.document && existingMap.has(c.document)) {
+        // update
+        const id = existingMap.get(c.document)
+        await supabase.from('customers').update({ ...c, updated_at: new Date().toISOString() }).eq('id', id)
+        updatedCount++
+      } else {
+        // insert
+        toInsert.push(c)
+      }
+    }
+
+    if (toInsert.length > 0) {
+      const { error } = await supabase.from('customers').insert(toInsert)
+      if (error) throw error
+    }
+
+    return [] as Customer[]
   },
 
   async updateCustomer(id: string, updates: Partial<Customer>) {

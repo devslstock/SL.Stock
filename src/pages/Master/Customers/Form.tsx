@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save, Building2, MapPin, Phone, Wallet, Briefcase, Plus, Trash2, Box } from 'lucide-react'
+import { ArrowLeft, Save, Building2, MapPin, Phone, Wallet, Briefcase, Plus, Trash2, Box, History, ClipboardList, FileText } from 'lucide-react'
 import { customersApi } from '@/api/customers'
 import { salesRepsApi } from '@/api/salesReps'
 import { regionsApi } from '@/api/regions'
@@ -14,17 +14,19 @@ import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import { geocodeAddress } from '@/api/routing'
+import { generateContractPDF } from '@/utils/pdf'
 
 export default function CustomerForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
+  const { user, company } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   
   const isEditing = Boolean(id)
 
   const [isGeocoding, setIsGeocoding] = useState(false)
+  const [comodatoTab, setComodatoTab] = useState<'atuais' | 'historico' | 'os'>('atuais')
 
   const [formData, setFormData] = useState({
     active: true,
@@ -95,6 +97,18 @@ export default function CustomerForm() {
     enabled: isEditing
   })
 
+  const { data: customerHistory = [] } = useQuery({
+    queryKey: ['customer_equipment_history', id],
+    queryFn: () => equipmentsApi.getCustomerEquipmentsHistory(id!),
+    enabled: isEditing
+  })
+
+  const { data: customerOrders = [] } = useQuery({
+    queryKey: ['customer_orders', id],
+    queryFn: () => equipmentsApi.getCustomerOrders(id!),
+    enabled: isEditing
+  })
+
   useEffect(() => {
     if (customer) {
       setFormData({
@@ -132,6 +146,14 @@ export default function CustomerForm() {
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
+      if (data.document && data.document.trim() !== '') {
+        const docTrimmed = data.document.trim()
+        const isDuplicate = await customersApi.checkDocumentExists(docTrimmed, isEditing ? id : undefined)
+        if (isDuplicate) {
+          throw new Error('Já existe um cliente cadastrado com este CPF/CNPJ.')
+        }
+      }
+
       const payload = {
         ...data,
         latitude: data.latitude ? parseFloat(data.latitude) : null,
@@ -562,37 +584,152 @@ export default function CustomerForm() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-lg font-bold text-foreground">
                 <Box className="h-5 w-5 text-orange-500" />
-                Equipamentos em Comodato
+                Comodatos do Cliente
               </div>
-              <Link to={`/comodatos?cliente=${id}`}>
-                <Button type="button" size="sm" variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
-                  Ver Histórico de OS
-                </Button>
-              </Link>
+            </div>
+
+            <div className="flex border-b mb-4 gap-2">
+              <button 
+                type="button"
+                className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${comodatoTab === 'atuais' ? 'border-orange-500 text-orange-600' : 'border-transparent text-muted-foreground'}`}
+                onClick={() => setComodatoTab('atuais')}
+              >
+                <Box className="h-4 w-4 inline mr-1" /> Equipamentos Atuais
+              </button>
+              <button 
+                type="button"
+                className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${comodatoTab === 'historico' ? 'border-orange-500 text-orange-600' : 'border-transparent text-muted-foreground'}`}
+                onClick={() => setComodatoTab('historico')}
+              >
+                <History className="h-4 w-4 inline mr-1" /> Histórico de Movimentações
+              </button>
+              <button 
+                type="button"
+                className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${comodatoTab === 'os' ? 'border-orange-500 text-orange-600' : 'border-transparent text-muted-foreground'}`}
+                onClick={() => setComodatoTab('os')}
+              >
+                <ClipboardList className="h-4 w-4 inline mr-1" /> Ordens de Serviço
+              </button>
             </div>
             
             <div className="space-y-4">
-              {currentEquipments.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border/50">
-                  Nenhum equipamento em comodato registrado para este cliente.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {currentEquipments.map((eq: any) => (
-                    <div key={eq.id} className="p-4 bg-background/50 border border-border/50 rounded-xl relative group">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="text-xs text-muted-foreground font-mono">{eq.patrimony}</div>
-                          <div className="font-bold">{eq.type} {eq.model}</div>
-                          {eq.size && <div className="text-sm text-muted-foreground">{eq.size}</div>}
+              {comodatoTab === 'atuais' && (
+                currentEquipments.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border/50">
+                    Nenhum equipamento em comodato registrado para este cliente.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {currentEquipments.map((eq: any) => {
+                      const latestPdfOrder = customerOrders
+                        .filter((o: any) => o.equipment_id === eq.id && (o.type === 'entrega' || o.type === 'troca'))
+                        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+                      return (
+                        <div key={eq.id} className="p-4 bg-background/50 border border-border/50 rounded-xl relative group flex flex-col gap-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="text-xs text-muted-foreground font-mono">{eq.patrimony}</div>
+                              <div className="font-bold">{eq.type} {eq.model}</div>
+                              {eq.size && <div className="text-sm text-muted-foreground">{eq.size}</div>}
+                            </div>
+                            <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700`}>
+                              Com o Cliente
+                            </div>
+                          </div>
+                          
+                          <div className="pt-3 border-t border-border/50">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (latestPdfOrder) {
+                                  try {
+                                    // Inject current customer and equipment data since getCustomerOrders doesn't fetch customer details
+                                    const enrichedOrder = {
+                                      ...latestPdfOrder,
+                                      customer: customer,
+                                      equipment: eq
+                                    };
+                                    await generateContractPDF(enrichedOrder, company);
+                                  } catch (error: any) {
+                                    toast.error(error.message || 'Erro ao gerar o PDF do contrato.');
+                                  }
+                                } else {
+                                  toast.error('Nenhuma OS de entrega/troca encontrada para este equipamento.');
+                                }
+                              }}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              Contrato Assinado
+                            </Button>
+                          </div>
                         </div>
-                        <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700`}>
-                          Com o Cliente
+                      )
+                    })}
+                  </div>
+                )
+              )}
+
+              {comodatoTab === 'historico' && (
+                customerHistory.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border/50">
+                    Nenhum histórico de comodato.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                    {customerHistory.map(h => (
+                      <div key={h.id} className="border p-3 rounded bg-muted/30">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <span className="font-bold text-sm">{h.action}</span>
+                            <div className="text-xs text-muted-foreground">{h.equipment?.patrimony} - {h.equipment?.model} ({h.equipment?.type})</div>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString('pt-BR')}</span>
                         </div>
+                        {h.notes && <div className="text-sm mt-2 text-muted-foreground">{h.notes}</div>}
+                        <div className="text-xs mt-1">Por: {h.user?.name || 'Sistema'}</div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )
+              )}
+
+              {comodatoTab === 'os' && (
+                customerOrders.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border/50">
+                    Nenhuma Ordem de Serviço encontrada.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                    {customerOrders.map(order => (
+                      <div key={order.id} className="border p-3 rounded bg-muted/30">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-black">#{order.os_number || '---'}</span>
+                            <span className="font-bold text-sm uppercase text-muted-foreground">{order.type}</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              order.status === 'concluido' ? 'bg-green-100 text-green-700' :
+                              order.status === 'em_rota' ? 'bg-blue-100 text-blue-700' :
+                              order.status === 'cancelado' ? 'bg-red-100 text-red-700' :
+                              'bg-amber-100 text-amber-700'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleString('pt-BR')}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">Equipamento: {order.equipment?.patrimony} - {order.equipment?.model}</div>
+                        {order.driver && <div className="text-xs mt-1">Resp: {order.driver.name}</div>}
+                        {order.defect_description && <div className="text-sm mt-2 text-muted-foreground line-clamp-2">Defeito: {order.defect_description}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )
               )}
             </div>
           </div>

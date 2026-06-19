@@ -194,7 +194,7 @@ export default function AdhocCountPage() {
                         className="export-btn h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                         onClick={(e) => { 
                           e.stopPropagation(); 
-                          if (window.confirm('Tem certeza que deseja APAGAR esta contagem definitivamente?')) {
+                          if (window.confirm('Tem certeza que deseja APAGAR esta contagem definitivamente?. Esta ação não pode ser desfeita.')) {
                             deleteCountMutation.mutate(count.id)
                           }
                         }}
@@ -663,7 +663,7 @@ function ActiveCountView({ countId, allProducts, onBack, user }: { countId: stri
                         size="icon" 
                         className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10 shrink-0"
                         onClick={() => {
-                          if (window.confirm('Tem certeza que deseja apagar este item da contagem?')) {
+                          if (window.confirm('Tem certeza que deseja apagar este item da contagem?. Esta ação não pode ser desfeita.')) {
                             deleteItemMutation.mutate(item.id)
                           }
                         }}

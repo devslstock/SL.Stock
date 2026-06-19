@@ -129,8 +129,21 @@ export default function SalesManagement() {
                   <tr key={order.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">{formatDate(order.created_at)}</td>
                     <td className="px-4 py-3 font-medium">
-                      {order.customer?.fantasy_name || order.customer?.legal_name}
-                      <p className="text-xs text-muted-foreground font-normal">{order.payment_condition?.name}</p>
+                      {(() => {
+                        const legalName = order.customer?.legal_name || order.customer?.nickname || order.customer?.fantasy_name;
+                        const fantasyName = order.customer?.fantasy_name;
+                        const showFantasy = fantasyName && legalName && fantasyName !== legalName;
+                        return (
+                          <>
+                            <div className="font-bold">{legalName}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {showFantasy ? `${fantasyName} - ` : ''}
+                              {order.customer?.document || ''}
+                            </div>
+                          </>
+                        )
+                      })()}
+                      <p className="text-xs text-muted-foreground font-normal mt-1">{order.payment_condition?.name}</p>
                     </td>
                     <td className="px-4 py-3">{order.sales_rep?.nickname || '---'}</td>
                     <td className="px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">

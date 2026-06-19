@@ -43,6 +43,13 @@ export interface Company {
   monthly_fee?: number
   plan?: 'bronze' | 'prata' | 'ouro' | 'platina'
   garage_address?: string | null
+  garage_cep?: string | null
+  garage_street?: string | null
+  garage_number?: string | null
+  garage_complement?: string | null
+  garage_neighborhood?: string | null
+  garage_city?: string | null
+  garage_state?: string | null
   fantasy_name?: string | null
   phone?: string | null
   email?: string | null
@@ -480,6 +487,7 @@ export interface DeliveryItem {
   returned_to_stock?: boolean
   requested_qty?: number
   return_reason?: string
+  requested_by_name?: string
   created_at: string
 }
 
@@ -499,9 +507,12 @@ export interface Equipment {
 
 export interface EquipmentOrder {
   id: string
+  os_number: number
   company_id: string
-  customer_id: string
+  customer_id: string | null
   equipment_id: string
+  delivery_route_id?: string | null
+  delivery_sequence?: number
   type: 'entrega' | 'recolha' | 'troca' | 'manutencao'
   status: 'pendente' | 'em_rota' | 'concluido' | 'cancelado'
   driver_id: string | null
@@ -566,4 +577,5 @@ export interface EquipmentHistory {
   created_at: string
   customer?: Customer
   user?: User
+  equipment?: Equipment
 }

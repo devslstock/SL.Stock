@@ -31,6 +31,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'warnin
   pending: { label: 'Aguardando', variant: 'warning', icon: Clock },
   in_progress: { label: 'Em Entrega', variant: 'default', icon: PackageCheck },
   completed: { label: 'Concluído', variant: 'success', icon: CheckCircle2 },
+  returned: { label: 'Retornado (Estoque)', variant: 'success', icon: CheckCircle2 },
 }
 
 export default function DeliveriesList() {
@@ -163,7 +164,7 @@ export default function DeliveriesList() {
                   <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                       <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${
-                        route.status === 'completed' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                        (route.status === 'completed' || route.status === 'returned') ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
                         route.status === 'in_progress' ? 'bg-violet-500/15 text-violet-400' :
                         'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                       }`}>
@@ -211,7 +212,7 @@ export default function DeliveriesList() {
                             onClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
-                              if (window.confirm('Tem certeza que deseja APAGAR esta rota de entrega definitivamente?')) {
+                              if (window.confirm('Tem certeza que deseja APAGAR esta rota de entrega definitivamente?. Esta ação não pode ser desfeita.')) {
                                 deleteMutation.mutate(route.id)
                               }
                             }}

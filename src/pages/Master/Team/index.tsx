@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Users, Plus, Pencil, Trash2, ShieldCheck, KeyRound } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
-import { hashPassword } from '@/utils/crypto';
+
 import type { User } from '@/types/database';
 
 export default function SaaSTeam() {
@@ -114,14 +114,22 @@ export default function SaaSTeam() {
     if (editing) {
       updateMutation.mutate({ id: editing.id, data: baseData });
     } else {
-      createMutation.mutate({ ...baseData, password_hash: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', active: true } as any);
+      createMutation.mutate({ ...baseData, active: true } as any);
     }
   };
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (!editing) return;
-    if (window.confirm('Tem certeza que deseja resetar a senha deste usuário Master para a senha padrão (123456)?')) {
-      updateMutation.mutate({ id: editing.id, data: { password_hash: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', reset_requested: false } });
+    if (window.confirm('Enviar link de redefinição de senha para este usuário Master?')) {
+      const { supabase } = await import('@/lib/supabase');
+      if (editing.email) {
+        await supabase.auth.resetPasswordForEmail(editing.email, {
+          redirectTo: `${window.location.origin}/reset-password-auto`,
+        });
+        toast.success('Link enviado!');
+      } else {
+        toast.error('Usuário não tem e-mail configurado');
+      }
     }
   };
 
@@ -130,7 +138,7 @@ export default function SaaSTeam() {
       toast.error('Você não pode apagar a si mesmo.');
       return;
     }
-    if (window.confirm('Tem certeza que deseja remover este funcionário?')) {
+    if (window.confirm('Tem certeza que deseja remover este funcionário?. Esta ação não pode ser desfeita.')) {
       deleteMutation.mutate(id);
     }
   };
@@ -203,8 +211,8 @@ export default function SaaSTeam() {
             </div>
             
             <div className="space-y-2">
-              <Label>Usuário de Login *</Label>
-              <Input value={username} onChange={e => setUsername(e.target.value)} required />
+              <Label>E-mail de Login *</Label>
+              <Input type="email" value={username} onChange={e => setUsername(e.target.value)} required placeholder="email@exemplo.com" />
             </div>
 
             <div className="space-y-3 pt-4 border-t">

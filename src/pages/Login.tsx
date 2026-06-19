@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/toaster';
 import { LogIn, Box, Smartphone, CheckCircle2, Lock, Eye, EyeOff, User, ArrowRight, ShieldCheck, Mail, ScanLine, BarChart3, ChevronRight } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,12 +14,19 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const { user, login } = useAuth();
+  const [showSessionConflictDialog, setShowSessionConflictDialog] = useState(false);
+  const [pendingLoginData, setPendingLoginData] = useState<{ pendingUserId?: string, isInitialPassword?: boolean } | null>(null);
+
+  const { user, login, confirmLogin, cancelLogin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard', { replace: true });
+      if (user.must_change_password) {
+        navigate('/trocar-senha', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
   }, [user, navigate]);
 
@@ -31,11 +39,21 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      const success = await login(email.trim(), password);
+      const result = await login(email.trim(), password);
       
-      if (success) {
+      if (result && result.success) {
+        if (result.requiresConfirmation) {
+          setPendingLoginData({ pendingUserId: result.pendingUserId, isInitialPassword: result.isInitialPassword });
+          setShowSessionConflictDialog(true);
+          return; // Espera a resposta do usuário
+        }
+
         toast.success('Login realizado com sucesso!');
-        navigate('/dashboard');
+        if (result.mustChangePassword) {
+          navigate('/trocar-senha');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         // O Supabase Auth vai emitir o toast no AuthContext em caso de erro
         setShowForgotPassword(true);
@@ -43,8 +61,38 @@ export default function Login() {
     } catch (error) {
       toast.error('Erro ao realizar login.');
     } finally {
-      setIsLoading(false);
+      if (!showSessionConflictDialog) {
+        setIsLoading(false);
+      }
     }
+  };
+
+  const handleConfirmSessionDrop = async () => {
+    setIsLoading(true);
+    try {
+      const result = await confirmLogin(pendingLoginData?.pendingUserId, pendingLoginData?.isInitialPassword);
+      if (result && result.success) {
+        toast.success('Sessão assumida com sucesso!');
+        if (result.mustChangePassword) {
+          navigate('/trocar-senha');
+        } else {
+          navigate('/dashboard');
+        }
+      }
+    } catch (error) {
+      toast.error('Erro ao assumir a sessão.');
+    } finally {
+      setIsLoading(false);
+      setShowSessionConflictDialog(false);
+      setPendingLoginData(null);
+    }
+  };
+
+  const handleCancelSessionDrop = async () => {
+    await cancelLogin();
+    setShowSessionConflictDialog(false);
+    setPendingLoginData(null);
+    toast.info('Login cancelado.');
   };
 
   const handleForgotPassword = async () => {
@@ -57,7 +105,7 @@ export default function Login() {
     try {
       const { supabase } = await import('@/lib/supabase');
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/trocar-senha`,
+        redirectTo: `${window.location.origin}/reset-password-auto`,
       });
       
       if (error) throw error;
@@ -249,6 +297,38 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* Diálogo de Conflito de Sessão */}
+      <Dialog open={showSessionConflictDialog} onOpenChange={(open) => { if (!open) handleCancelSessionDrop(); }}>
+        <DialogContent className="max-w-[400px] bg-white border-none shadow-2xl rounded-lg p-0 overflow-hidden">
+          <DialogHeader className="bg-white p-5 pb-4 border-b border-gray-100 m-0">
+            <DialogTitle className="text-xl font-semibold text-gray-800 tracking-tight">Exclusão de sessões anteriores</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 py-5 bg-white">
+            <p className="text-gray-600 text-[15px] leading-relaxed">Você possui outra(s) conexão(ões) ativa(s).</p>
+            <p className="text-gray-600 text-[15px] leading-relaxed">Gostaria de derrubar a(s) sessão(ões) anterior(es)?</p>
+          </div>
+          <DialogFooter className="px-6 py-4 bg-gray-50/50 flex sm:justify-center gap-3 border-t border-gray-100">
+            <Button 
+              type="button" 
+              className="bg-[#EFF4FB] text-[#2A61D2] hover:bg-[#E2EAF6] border-none shadow-none font-medium h-10 px-8 rounded-md transition-colors" 
+              onClick={handleConfirmSessionDrop} 
+              disabled={isLoading}
+            >
+              Sim
+            </Button>
+            <Button 
+              type="button" 
+              variant="ghost" 
+              className="text-[#2A61D2] hover:bg-transparent hover:text-[#1e4aab] font-medium h-10 px-6 rounded-md shadow-none" 
+              onClick={handleCancelSessionDrop} 
+              disabled={isLoading}
+            >
+              Não
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer Links & Info */}
       <div className="relative z-10 mt-12 w-full max-w-[1000px] flex flex-col items-center gap-6 text-white/60 text-sm">

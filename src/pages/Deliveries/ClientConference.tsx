@@ -45,8 +45,8 @@ export default function ClientConference() {
   })
 
   const updateItemMutation = useMutation({
-    mutationFn: ({ itemId, qty, status, return_reason }: { itemId: string, qty: number, status: string, return_reason?: string }) => 
-      deliveriesApi.updateDeliveryItemQuantity(itemId, qty, status, return_reason),
+    mutationFn: ({ itemId, qty, status, return_reason, requested_by_name }: { itemId: string, qty: number, status: string, return_reason?: string, requested_by_name?: string }) => 
+      deliveriesApi.updateDeliveryItemQuantity(itemId, qty, status, return_reason, requested_by_name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery_items', clientId] })
     }
@@ -60,8 +60,8 @@ export default function ClientConference() {
   })
 
   const requestApprovalMutation = useMutation({
-    mutationFn: ({ itemId, requestedQty }: { itemId: string, requestedQty: number }) => 
-      deliveriesApi.requestItemApproval(itemId, requestedQty),
+    mutationFn: ({ itemId, requestedQty, requested_by_name }: { itemId: string, requestedQty: number, requested_by_name: string }) => 
+      deliveriesApi.requestItemApproval(itemId, requestedQty, requested_by_name),
     onSuccess: () => {
       toast.success('Liberação solicitada ao gestor.')
       queryClient.invalidateQueries({ queryKey: ['delivery_items', clientId] })
@@ -80,7 +80,7 @@ export default function ClientConference() {
   })
 
   const handleDeleteItem = (itemId: string, description: string) => {
-    if (window.confirm(`Deseja realmente remover o item "${description}" do pedido do cliente?`)) {
+    if (window.confirm(`Deseja realmente remover o item "${description}" do pedido do cliente?. Esta ação não pode ser desfeita.`)) {
       deleteItemMutation.mutate(itemId)
     }
   }
@@ -216,7 +216,7 @@ export default function ClientConference() {
       if (newQty > existingItem.quantity_expected) {
         playBeep('error')
         if (window.confirm(`ATENÇÃO: Este item excedeu a quantidade do pedido (${existingItem.quantity_expected}). Deseja solicitar liberação do gestor para adicionar esta quantidade extra?`)) {
-          requestApprovalMutation.mutate({ itemId: existingItem.id, requestedQty: newQty })
+          requestApprovalMutation.mutate({ itemId: existingItem.id, requestedQty: newQty, requested_by_name: user?.name || '' })
         }
         return // Do not update item scanned qty yet
       }
@@ -239,7 +239,8 @@ export default function ClientConference() {
             quantity_scanned: 0,
             status: 'divergent',
             approval_status: 'pending',
-            requested_qty: 1
+            requested_qty: 1,
+            requested_by_name: user?.name || ''
           })
         }
       } else {
@@ -292,6 +293,8 @@ export default function ClientConference() {
     }
   }, [items])
 
+  const [isFinishing, setIsFinishing] = useState(false)
+
   const handleFinish = async () => {
     const finalStatus: 'delivered_with_divergence' | 'delivered' = hasDivergence ? 'delivered_with_divergence' : 'delivered'
     if (hasDivergence) {
@@ -299,13 +302,25 @@ export default function ClientConference() {
         return
       }
       const missingItems = items.filter(i => i.quantity_scanned < i.quantity_expected)
-      for (const item of missingItems) {
-        if (!item.return_reason) {
-          const reason = window.prompt(`Qual o motivo da não entrega do item: ${item.description}?`)
-          if (reason === null) return // user cancelled
-          await updateItemMutation.mutateAsync({ itemId: item.id, qty: item.quantity_scanned, status: 'divergent', return_reason: reason })
+      
+      setIsFinishing(true)
+      try {
+        for (const item of missingItems) {
+          if (!item.return_reason) {
+            const reason = window.prompt(`Qual o motivo da não entrega do item: ${item.description}?`)
+            if (reason === null) {
+              setIsFinishing(false)
+              return // user cancelled
+            }
+            await updateItemMutation.mutateAsync({ itemId: item.id, qty: item.quantity_scanned, status: 'divergent', return_reason: reason, requested_by_name: user?.name || '' })
+          }
         }
+      } catch (error: any) {
+        toast.error(`Erro ao atualizar item divergente: ${error.message}`)
+        setIsFinishing(false)
+        return
       }
+      setIsFinishing(false)
     }
     updateClientStatusMutation.mutate(finalStatus)
   }
@@ -540,16 +555,16 @@ export default function ClientConference() {
               onClick={() => {
                 updateClientStatusMutation.mutate('waiting')
               }}
-              disabled={updateClientStatusMutation.isPending || returnClientMutation.isPending}
+              disabled={updateClientStatusMutation.isPending || returnClientMutation.isPending || isFinishing}
             >
               <Save className="h-4 w-4 mr-2" /> Salvar Pausa
             </Button>
             <Button 
               className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)]"
               onClick={handleFinish}
-              disabled={updateClientStatusMutation.isPending || returnClientMutation.isPending}
+              disabled={updateClientStatusMutation.isPending || returnClientMutation.isPending || isFinishing}
             >
-              <PenTool className="h-4 w-4 mr-2" /> Finalizar Entrega
+              <PenTool className="h-4 w-4 mr-2" /> {isFinishing ? 'Processando...' : 'Finalizar Entrega'}
             </Button>
           </div>
           <div className="max-w-2xl mx-auto">

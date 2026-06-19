@@ -4,7 +4,7 @@ import { companiesApi } from '@/api/companies';
 import { usersApi } from '@/api/users';
 import { saasApi } from '@/api/saas';
 import { useAuth } from '@/contexts/AuthContext';
-import { DEFAULT_PASSWORD_HASH } from '@/utils/crypto';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,13 +33,9 @@ export default function MasterPanel() {
   const [adminName, setAdminName] = useState('');
   const [adminUsername, setAdminUsername] = useState('');
 
-  // Edit Company State
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
 
-  // Custom Delete & Backup State
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
-  const [companyToDelete, setCompanyToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [companyToDelete, setCompanyToDelete] = useState<{ id: string, name: string } | null>(null);
 
   const { data: companies, isLoading } = useQuery({
     queryKey: ['companies'],
@@ -62,17 +58,6 @@ export default function MasterPanel() {
     }
   };
 
-  const handleEditPlanChange = (selectedPlan: 'bronze' | 'prata' | 'ouro' | 'platina') => {
-    if (!editingCompany) return;
-    const planDefaults = saasPlans.find(p => p.id === selectedPlan);
-    
-    setEditingCompany({
-      ...editingCompany,
-      plan: selectedPlan,
-      ...(planDefaults ? { max_users: planDefaults.base_users, monthly_fee: planDefaults.base_price } : {})
-    });
-  };
-
   const handleMaxUsersChange = (newMaxUsers: number) => {
     setMaxUsers(newMaxUsers);
     const planDefaults = saasPlans.find(p => p.id === plan);
@@ -83,19 +68,6 @@ export default function MasterPanel() {
       }
       setMonthlyFee(fee);
     }
-  };
-
-  const handleEditMaxUsersChange = (newMaxUsers: number) => {
-    if (!editingCompany) return;
-    const planDefaults = saasPlans.find(p => p.id === editingCompany.plan);
-    let fee = editingCompany.monthly_fee || 0;
-    if (planDefaults) {
-      fee = planDefaults.base_price;
-      if (newMaxUsers > planDefaults.base_users) {
-        fee += (newMaxUsers - planDefaults.base_users) * planDefaults.extra_user_price;
-      }
-    }
-    setEditingCompany({ ...editingCompany, max_users: newMaxUsers, monthly_fee: fee });
   };
 
   const toggleStatusMutation = useMutation({
@@ -111,7 +83,7 @@ export default function MasterPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       toast.success('Empresa atualizada com sucesso!');
-      setIsEditModalOpen(false);
+      setIsModalOpen(false);
     },
     onError: () => toast.error('Erro ao atualizar empresa.')
   });
@@ -121,7 +93,7 @@ export default function MasterPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       toast.success('Empresa excluída com sucesso!');
-      setIsEditModalOpen(false);
+      setIsModalOpen(false);
     },
     onError: (e: any) => toast.error(`Erro ao excluir empresa: ${e.message || e}`)
   });
@@ -152,7 +124,10 @@ export default function MasterPanel() {
     }
   };
 
-  const handleCreateCompany = async (e: React.FormEvent) => {
+  const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
+  const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
+
+  const handleSaveCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !cnpj || !adminName || !adminUsername) {
       toast.error('Preencha os campos obrigatórios');
@@ -161,75 +136,101 @@ export default function MasterPanel() {
 
     setIsSubmitting(true);
     try {
-      // 1. Criar empresa
-      const newCompany = await companiesApi.createCompany({
-        name,
-        slug: cnpj.replace(/\D/g, ''),
-        cnpj,
-        max_users: maxUsers,
-        active: true,
-        billing_day: billingDay,
-        monthly_fee: monthlyFee,
-        plan
-      });
+      if (editingCompanyId) {
+        // Edit mode
+        await companiesApi.updateCompany(editingCompanyId, {
+          name,
+          slug: cnpj.replace(/\D/g, ''),
+          cnpj,
+          max_users: maxUsers,
+          billing_day: billingDay,
+          monthly_fee: monthlyFee,
+          plan
+        });
+        
+        if (editingAdminId) {
+          await usersApi.updateUser(editingAdminId, { name: adminName, username: adminUsername });
+        }
+        
+        toast.success('Empresa atualizada com sucesso!');
+      } else {
+        // Create mode
+        const newCompany = await companiesApi.createCompany({
+          name,
+          slug: cnpj.replace(/\D/g, ''),
+          cnpj,
+          max_users: maxUsers,
+          active: true,
+          billing_day: billingDay,
+          monthly_fee: monthlyFee,
+          plan
+        });
 
-      // 2. Criar usuário admin para a empresa
-      await usersApi.createUser({
-        name: adminName,
-        username: adminUsername,
-        password_hash: DEFAULT_PASSWORD_HASH,
-        role: 'admin',
-        active: true,
-        permissions: {
-          can_view_dashboard: true,
-          can_manage_loads: true,
-          can_do_conference: true,
-          can_manage_products: true,
-          can_manage_users: true,
-          can_do_delivery: true
-        },
-        reset_requested: false
-      }, newCompany.id);
+        await usersApi.createUser({
+          name: adminName,
+          username: adminUsername,
+          role: 'admin',
+          active: true,
+          permissions: {
+            can_view_dashboard: true,
+            can_manage_loads: true,
+            can_do_conference: true,
+            can_manage_products: true,
+            can_manage_users: true,
+            can_do_delivery: true
+          },
+          reset_requested: false
+        }, newCompany.id);
 
-      toast.success('Empresa e administrador criados com sucesso!');
+        toast.success('Empresa e administrador criados com sucesso!');
+      }
+
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setIsModalOpen(false);
       resetForm();
     } catch (error: any) {
-      toast.error('Erro ao criar empresa. O Slug já pode estar em uso.');
+      toast.error(editingCompanyId ? 'Erro ao atualizar empresa.' : 'Erro ao criar empresa. Verifique os dados.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleEditCompany = (comp: Company) => {
-    setEditingCompany(comp);
-    setIsEditModalOpen(true);
+  const handleEditCompany = async (comp: Company) => {
+    setName(comp.name);
+    setCnpj(comp.cnpj || '');
+    setPlan(comp.plan || 'ouro');
+    setMaxUsers(comp.max_users);
+    setBillingDay(comp.billing_day || 10);
+    setMonthlyFee(comp.monthly_fee || 0);
+
+    // Fetch the admin user
+    const { supabase } = await import('@/lib/supabase');
+    const { data: users } = await supabase
+      .from('users')
+      .select('*')
+      .eq('company_id', comp.id)
+      .eq('role', 'admin')
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    if (users && users.length > 0) {
+      setAdminName(users[0].name);
+      setAdminUsername(users[0].username);
+      setEditingAdminId(users[0].id);
+    } else {
+      setAdminName('');
+      setAdminUsername('');
+      setEditingAdminId(null);
+    }
+
+    setEditingCompanyId(comp.id);
+    setIsModalOpen(true);
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingCompany) return;
-    
-    updateCompanyMutation.mutate({
-      id: editingCompany.id,
-      updates: {
-        name: editingCompany.name,
-        slug: editingCompany.slug,
-        cnpj: editingCompany.cnpj,
-        max_users: editingCompany.max_users,
-        billing_day: editingCompany.billing_day,
-        monthly_fee: editingCompany.monthly_fee,
-        plan: editingCompany.plan
-      }
-    });
-  };
-
-  const handleSwitchCompany = async (id: string, name: string) => {
+  const handleSwitchCompany = async (id: string, compName: string) => {
     const success = await switchCompany(id);
     if (success) {
-      toast.success(`Contexto alterado para ${name}`);
-      // Invalidate all queries to fetch new company data
+      toast.success(`Contexto alterado para ${compName}`);
       queryClient.clear();
       navigate('/dashboard');
     } else {
@@ -247,6 +248,8 @@ export default function MasterPanel() {
     setName(''); setCnpj(''); setMaxUsers(5);
     setBillingDay(10); setMonthlyFee(0); setPlan('ouro');
     setAdminName(''); setAdminUsername('');
+    setEditingCompanyId(null);
+    setEditingAdminId(null);
   };
 
   if (!isMaster) {
@@ -365,13 +368,15 @@ export default function MasterPanel() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Cadastrar Nova Empresa</DialogTitle>
+            <DialogTitle>{editingCompanyId ? 'Editar Empresa' : 'Cadastrar Nova Empresa'}</DialogTitle>
             <DialogDescription>
-              Crie um novo ambiente de cliente e o primeiro usuário administrador dele.
+              {editingCompanyId 
+                ? 'Faça a mudança completa dos dados da empresa e de seu administrador.'
+                : 'Crie um novo ambiente de cliente e o primeiro usuário administrador dele.'}
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleCreateCompany} className="space-y-4 mt-4">
+          <form onSubmit={handleSaveCompany} className="space-y-4 mt-4">
             <div className="space-y-3">
               <h3 className="font-semibold text-sm border-b pb-1">Dados da Empresa</h3>
               <div className="space-y-2">
@@ -414,109 +419,24 @@ export default function MasterPanel() {
             </div>
 
             <div className="space-y-3 pt-2">
-              <h3 className="font-semibold text-sm border-b pb-1">Primeiro Administrador</h3>
+              <h3 className="font-semibold text-sm border-b pb-1">{editingCompanyId ? 'Administrador Principal' : 'Primeiro Administrador'}</h3>
               <div className="space-y-2">
                 <Label>Nome Completo *</Label>
                 <Input value={adminName} onChange={e => setAdminName(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label>Usuário de Login *</Label>
-                <Input value={adminUsername} onChange={e => setAdminUsername(e.target.value)} required />
+                <Label>E-mail de Login *</Label>
+                <Input type="email" value={adminUsername} onChange={e => setAdminUsername(e.target.value)} required placeholder="email@exemplo.com" />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Criando...' : 'Criar Empresa'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Empresa</DialogTitle>
-          </DialogHeader>
-          
-          {editingCompany && (
-            <form onSubmit={handleSaveEdit} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>Nome Fantasia/Razão Social *</Label>
-                <Input 
-                  value={editingCompany.name} 
-                  onChange={e => setEditingCompany({...editingCompany, name: e.target.value})} 
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>CNPJ ou CPF *</Label>
-                <Input 
-                  value={editingCompany.cnpj || ''} 
-                  onChange={e => setEditingCompany({...editingCompany, cnpj: e.target.value})} 
-                  placeholder="00.000.000/0000-00"
-                  required 
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Plano de Assinatura *</Label>
-                  <select 
-                    value={editingCompany.plan || 'ouro'} 
-                    onChange={e => handleEditPlanChange(e.target.value as any)} 
-                    className="flex h-10 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
-                  >
-                    <option value="bronze">Bronze (Apenas Estoque)</option>
-                    <option value="prata">Prata (+ Expedição)</option>
-                    <option value="ouro">Ouro (+ Entregas e Motoristas)</option>
-                    <option value="platina">Platina (+ Força de Vendas e CRM)</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Limite de Usuários</Label>
-                  <Input 
-                    type="number" 
-                    min={1} 
-                    value={editingCompany.max_users} 
-                    onChange={e => handleEditMaxUsersChange(Number(e.target.value))} 
-                    required 
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Melhor Dia de Vencimento *</Label>
-                  <Input 
-                    type="number" 
-                    min={1} 
-                    max={28} 
-                    value={editingCompany.billing_day || 10} 
-                    onChange={e => setEditingCompany({...editingCompany, billing_day: Number(e.target.value)})} 
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Valor da Mensalidade (R$) *</Label>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    min={0} 
-                    value={editingCompany.monthly_fee || 0} 
-                    onChange={e => setEditingCompany({...editingCompany, monthly_fee: Number(e.target.value)})} 
-                    required 
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-4 border-t mt-4">
+            <div className={`flex items-center pt-4 border-t mt-4 ${editingCompanyId ? 'justify-between' : 'justify-end'}`}>
+              {editingCompanyId && (
                 <Button 
                   type="button" 
                   variant="ghost" 
                   onClick={() => {
-                    setCompanyToDelete({ id: editingCompany.id, name: editingCompany.name });
+                    setCompanyToDelete({ id: editingCompanyId, name: name });
                     setIsBackupModalOpen(true);
                   }} 
                   className="text-red-500 hover:text-red-600 hover:bg-red-50 gap-2"
@@ -524,15 +444,16 @@ export default function MasterPanel() {
                 >
                   <Trash2 className="h-4 w-4" /> Excluir
                 </Button>
-                <div className="flex gap-2">
-                  <Button type="button" variant="ghost" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={updateCompanyMutation.isPending}>
-                    {updateCompanyMutation.isPending ? 'Salvando...' : 'Salvar'}
-                  </Button>
-                </div>
+              )}
+              
+              <div className="flex gap-2">
+                <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Salvando...' : editingCompanyId ? 'Salvar Alterações' : 'Criar Empresa'}
+                </Button>
               </div>
-            </form>
-          )}
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
 

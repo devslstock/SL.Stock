@@ -68,9 +68,9 @@ export default function SignaturePad() {
       // Get Base64 image - use getCanvas if getTrimmedCanvas fails
       let signatureData = ''
       try {
-        signatureData = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png')
+        signatureData = sigCanvas.current.getTrimmedCanvas().toDataURL('image/webp', 0.5)
       } catch (e) {
-        signatureData = sigCanvas.current.getCanvas().toDataURL('image/png')
+        signatureData = sigCanvas.current.getCanvas().toDataURL('image/webp', 0.5)
       }
       
       saveSignatureMutation.mutate({

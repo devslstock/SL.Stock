@@ -153,7 +153,7 @@ export default function ReceiptsList() {
                       className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-500/10 cursor-pointer"
                       onClick={(e) => {
                         e.preventDefault()
-                        if (window.confirm('Tem certeza que deseja excluir?')) deleteMutation.mutate(op.id)
+                        if (window.confirm('Tem certeza que deseja excluir?. Esta ação não pode ser desfeita.')) deleteMutation.mutate(op.id)
                       }}
                     >
                       <Trash2 className="h-4 w-4" />

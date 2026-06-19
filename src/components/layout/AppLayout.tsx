@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { 
@@ -6,7 +6,7 @@ import {
   Settings, Users, CheckSquare, Palette, Sun, Moon, Search,
   Clock, History, UserIcon, FileSignature, Box, Building2, Banknote,
   Megaphone, StickyNote, MapPin, Bell, ShieldCheck, LogOut, Lock,
-  ChevronDown, Map, Tag, Briefcase, HelpCircle
+  ChevronDown, Map, Tag, Briefcase, HelpCircle, Wifi, WifiOff
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
@@ -15,6 +15,7 @@ import { deliveriesApi } from '@/api/deliveries'
 import { operationsApi } from '@/api/operations'
 import { saasApi } from '@/api/saas'
 import { toast } from '@/components/ui/toaster'
+import { TesterNotes } from '@/components/TesterNotes'
 
 
 const navGroups = [
@@ -78,6 +79,18 @@ export default function AppLayout() {
   const [closedGroups, setClosedGroups] = useState<string[]>(
     navGroups.map(g => g.title).filter(Boolean)
   )
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   const toggleGroup = (title: string) => {
     if (!title) return;
@@ -173,6 +186,11 @@ export default function AppLayout() {
           <span className="font-bold text-lg gradient-text whitespace-nowrap">Estoque Fácil</span>
         </Link>
         <div className="flex items-center gap-1">
+          {!isOnline && (
+            <div className="flex items-center justify-center mr-1 p-1 bg-red-500/10 text-red-500 rounded-full" title="Você está offline">
+              <WifiOff className="h-4 w-4" />
+            </div>
+          )}
           {isManager && (
             <Link
               to="/liberacoes"
@@ -447,6 +465,13 @@ export default function AppLayout() {
              
              <div className="h-6 w-px bg-border mx-1"></div>
              
+             {!isOnline && (
+               <div className="flex items-center gap-2 px-2 py-1 bg-red-500/10 text-red-500 rounded-lg text-sm font-medium">
+                 <WifiOff className="h-4 w-4" />
+                 <span>Offline</span>
+               </div>
+             )}
+
              {isManager && (
                <Link
                   to="/liberacoes"
@@ -476,6 +501,8 @@ export default function AppLayout() {
                    )}
                 </Link>
              )}
+             
+             <TesterNotes />
              
              <button onClick={toggleStyle} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors cursor-pointer" title="Alternar tema (Padrão / Clássico)">
                 <Palette className="h-5 w-5" />
