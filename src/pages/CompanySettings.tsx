@@ -10,7 +10,8 @@ import { Building, MapPin, Save, Phone, Mail, FileText, Info, Link, Key, Refresh
 import { geocodeAddress } from '@/api/routing'
 import { maxiprodApi } from '@/api/maxiprod'
 import { backupApi } from '@/api/backup'
-import { Database, Download, Upload } from 'lucide-react'
+import { saasApi } from '@/api/saas'
+import { Database, Download, Upload, Crown, Star, CheckCircle2, ArrowUpCircle } from 'lucide-react'
 
 export default function CompanySettings() {
   const queryClient = useQueryClient()
@@ -113,6 +114,22 @@ export default function CompanySettings() {
       queryClient.invalidateQueries({ queryKey: ['company_settings'] })
     },
     onError: (err: any) => toast.error(err.message)
+  })
+
+  const requestUpgradeMutation = useMutation({
+    mutationFn: async () => {
+      if (!company?.id || !user) throw new Error('Dados não encontrados');
+      return saasApi.createLead({
+        name: user.name || 'Usuário Sistema',
+        email: user.email || user.username || 'N/A',
+        phone: formData.phone || company?.phone || 'N/A',
+        message: `SOLICITAÇÃO DE UPGRADE: A empresa ${company.name || company.fantasy_name} (${company.cnpj || 'CNPJ não inf.'}) deseja conhecer os planos superiores para expandir suas operações. Plano atual: ${(company.plan || 'platina').toUpperCase()}.`
+      });
+    },
+    onSuccess: () => {
+      toast.success('Solicitação enviada com sucesso! Nossa equipe comercial entrará em contato em breve para apresentar os benefícios do Upgrade.');
+    },
+    onError: (err: any) => toast.error(`Erro ao enviar solicitação: ${err.message}`)
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -224,6 +241,16 @@ export default function CompanySettings() {
     }
   }
 
+  const planDetails: Record<string, any> = {
+    bronze: { name: 'Bronze', desc: 'Funcionalidades Básicas', icon: Star, color: 'text-amber-700 dark:text-amber-600', bg: 'bg-amber-700/10', border: 'border-t-amber-700', perms: ['Dashboard Básico', 'Configurações de Empresa', 'Gestão de Usuários'] },
+    prata: { name: 'Prata', desc: 'Gestão de Cargas e Operações', icon: Star, color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-500/10', border: 'border-t-slate-500', perms: ['Dashboard Básico', 'Configurações de Empresa', 'Módulo de Cargas', 'Controle Operacional'] },
+    ouro: { name: 'Ouro', desc: 'Entregas, Rotas e Conferência', icon: Crown, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-t-amber-500', perms: ['Módulo de Cargas', 'Módulo de Entregas', 'Acompanhamento de Rotas', 'Comprovantes Digitais'] },
+    platina: { name: 'Platina (Premium)', desc: 'Sistema Completo e Ilimitado', icon: Crown, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-t-emerald-500', perms: ['Todos os módulos anteriores', 'Módulo de Vendas (CRM)', 'Cadastros Completos', 'Acesso Total e Ilimitado'] }
+  }
+  
+  const currentPlanKey = (company?.plan || 'platina') as string;
+  const activePlan = planDetails[currentPlanKey] || planDetails.platina;
+
   if (!isManager) {
     return <div className="p-8 text-center text-muted-foreground">Acesso negado. Apenas gestores podem configurar a empresa.</div>
   }
@@ -242,6 +269,49 @@ export default function CompanySettings() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
+        {/* Plano e Assinatura */}
+        <div className={`glass-card p-6 border-t-4 ${activePlan.border}`}>
+          <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <activePlan.icon className={`h-6 w-6 ${activePlan.color}`} />
+                <h2 className={`text-xl font-bold ${activePlan.color}`}>Plano {activePlan.name}</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">{activePlan.desc}</p>
+              
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase text-foreground mb-2">Permissões Atuais:</p>
+                {activePlan.perms.map((perm: string, i: number) => (
+                  <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 className={`h-4 w-4 ${activePlan.color}`} />
+                    {perm}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-muted/30 p-4 rounded-xl border border-border/50 max-w-xs text-center w-full md:w-auto">
+              <h3 className="font-bold text-foreground mb-2">Deseja expandir suas operações?</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Faça um upgrade e tenha acesso a roteirização inteligente, gestão de vendas e relatórios avançados.
+              </p>
+              <Button 
+                type="button" 
+                onClick={() => requestUpgradeMutation.mutate()}
+                disabled={requestUpgradeMutation.isPending || currentPlanKey === 'platina'}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20"
+              >
+                {requestUpgradeMutation.isPending ? 'Enviando...' : (
+                  <>
+                    <ArrowUpCircle className="mr-2 h-4 w-4" />
+                    {currentPlanKey === 'platina' ? 'Você já possui o melhor plano!' : 'Solicitar Upgrade'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Dados Principais */}
         <div className="glass-card p-6 border-t-4 border-t-primary">
           <div className="flex items-center gap-2 mb-4 text-lg font-bold text-foreground">
