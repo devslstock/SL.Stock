@@ -646,6 +646,8 @@ export default function RouteClients() {
     reader.readAsBinaryString(file)
   }
 
+  const isInitialChecklistDone = !!checklist?.initial_km || (route?.status && route.status !== 'pending') || processedStops.some((g: any) => g.stops.some((s: any) => ['em_rota', 'delivered', 'delivered_with_divergence', 'concluido'].includes(s.status)))
+
   if (isLoadingRoute || isLoadingClients) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>
 
   return (
@@ -692,7 +694,7 @@ export default function RouteClients() {
         {/* Botoes de Checklist */}
         {!isLoadingChecklist && (
           <div className="w-full flex flex-col gap-2 bg-muted/20 p-4 rounded-lg border border-border/50">
-            {!checklist?.initial_km ? (
+            {!isInitialChecklistDone ? (
               <>
                 <p className="text-sm text-amber-600 font-semibold mb-1">Você precisa realizar o Checklist Inicial para iniciar as entregas.</p>
                 <Button 
@@ -935,7 +937,7 @@ export default function RouteClients() {
                         // Impedir navegação se clicou no input de sequência
                         if ((e.target as HTMLElement).tagName.toLowerCase() === 'input') return;
                         
-                        if (!isManager && !checklist?.initial_km) {
+                        if (!isManager && !isInitialChecklistDone) {
                           toast.warning('Preencha o Checklist Inicial antes de iniciar as entregas.')
                           return;
                         }
