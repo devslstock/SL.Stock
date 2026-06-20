@@ -30,6 +30,7 @@ export default function CustomersList() {
     documento: '',
     documentoType: 'startsWith',
     status: 'Todos', // Todos, Ativos, Inativos
+    coordenadas: 'Todos', // Todos, Com Lat/Lng, Sem Lat/Lng
     representante: [] as string[],
     regiao: [] as string[]
   })
@@ -227,6 +228,11 @@ export default function CustomersList() {
       const matchStatus = filters.status === 'Todos' ? true :
                          filters.status === 'Ativos' ? c.active === true : 
                          filters.status === 'Inativos' ? c.active === false : true
+
+      // Coordenadas
+      const matchCoordenadas = filters.coordenadas === 'Todos' ? true :
+                               filters.coordenadas === 'Com Lat/Lng' ? (c.latitude !== null && c.longitude !== null) :
+                               filters.coordenadas === 'Sem Lat/Lng' ? (c.latitude === null || c.longitude === null) : true
                          
       // Representante
       const matchRep = filters.representante.length === 0 || 
@@ -236,7 +242,7 @@ export default function CustomersList() {
       const matchReg = filters.regiao.length === 0 || 
         (c.region_id && filters.regiao.includes(c.region_id))
 
-      return matchApelido && matchRazao && matchDoc && matchStatus && matchRep && matchReg
+      return matchApelido && matchRazao && matchDoc && matchStatus && matchCoordenadas && matchRep && matchReg
     })
   }, [customers, filters])
 
@@ -495,6 +501,20 @@ export default function CustomersList() {
               </select>
             </div>
 
+            {/* Coordenadas */}
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Coordenadas (Lat/Lng)</label>
+              <select 
+                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                value={filters.coordenadas}
+                onChange={(e) => setFilters(f => ({ ...f, coordenadas: e.target.value }))}
+              >
+                <option value="Todos">Todos</option>
+                <option value="Com Lat/Lng">Cadastrados</option>
+                <option value="Sem Lat/Lng">Não Cadastrados</option>
+              </select>
+            </div>
+
             {/* Representante */}
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground font-medium">Representantes</label>
@@ -525,7 +545,7 @@ export default function CustomersList() {
                   apelido: '', apelidoType: 'contains',
                   razaoSocial: '', razaoSocialType: 'contains',
                   documento: '', documentoType: 'startsWith',
-                  status: 'Todos', representante: [], regiao: []
+                  status: 'Todos', coordenadas: 'Todos', representante: [], regiao: []
                 })}
               >
                 Limpar Filtros
