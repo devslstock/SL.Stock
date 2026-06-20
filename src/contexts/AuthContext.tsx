@@ -208,8 +208,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.from('users').update({ last_session_id: newSessionId }).eq('id', pendingUserId);
     }
     
-    isLoggingIn = false;
-    
     let mustChangePassword = false;
 
     // Força a troca de senha se a senha for o padrão inicial
@@ -223,6 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     await loadProfile();
+    isLoggingIn = false;
     return { success: true, mustChangePassword };
   };
 
