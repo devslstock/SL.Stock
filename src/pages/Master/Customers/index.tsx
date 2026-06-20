@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Search, Plus, Edit2, Trash2, Building2, UploadCloud, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Filter, MapPin } from 'lucide-react'
@@ -19,10 +19,11 @@ export default function CustomersList() {
   const [isImporting, setIsImporting] = useState(false)
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [geocodeProgress, setGeocodeProgress] = useState({ current: 0, total: 0 })
-  const [showFilters, setShowFilters] = useState(false)
+  const [showFilters, setShowFilters] = useState(() => {
+    return sessionStorage.getItem('customersShowFilters') === 'true'
+  })
 
-  // Advanced Filters State
-  const [filters, setFilters] = useState({
+  const defaultFilters = {
     apelido: '',
     apelidoType: 'contains', // contains, startsWith, equals
     razaoSocial: '',
@@ -33,7 +34,26 @@ export default function CustomersList() {
     coordenadas: 'Todos', // Todos, Com Lat/Lng, Sem Lat/Lng
     representante: [] as string[],
     regiao: [] as string[]
+  }
+
+  // Advanced Filters State
+  const [filters, setFilters] = useState(() => {
+    const saved = sessionStorage.getItem('customersFilters')
+    if (saved) {
+      try { 
+        return { ...defaultFilters, ...JSON.parse(saved) } 
+      } catch (e) {}
+    }
+    return defaultFilters
   })
+
+  useEffect(() => {
+    sessionStorage.setItem('customersFilters', JSON.stringify(filters))
+  }, [filters])
+
+  useEffect(() => {
+    sessionStorage.setItem('customersShowFilters', showFilters.toString())
+  }, [showFilters])
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
@@ -541,12 +561,7 @@ export default function CustomersList() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => setFilters({
-                  apelido: '', apelidoType: 'contains',
-                  razaoSocial: '', razaoSocialType: 'contains',
-                  documento: '', documentoType: 'startsWith',
-                  status: 'Todos', coordenadas: 'Todos', representante: [], regiao: []
-                })}
+                onClick={() => setFilters(defaultFilters)}
               >
                 Limpar Filtros
               </Button>
