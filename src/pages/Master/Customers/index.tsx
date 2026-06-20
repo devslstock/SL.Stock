@@ -36,8 +36,10 @@ export default function CustomersList() {
     regiao: [] as string[]
   }
 
+  type FiltersType = typeof defaultFilters
+
   // Advanced Filters State
-  const [filters, setFilters] = useState(() => {
+  const [filters, setFilters] = useState<FiltersType>(() => {
     const saved = sessionStorage.getItem('customersFilters')
     if (saved) {
       try { 
