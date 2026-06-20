@@ -69,15 +69,20 @@ export const customersApi = {
       .select('id, document')
     if (fetchError) throw fetchError
 
-    const existingMap = new Map(existingData.filter(c => c.document).map(c => [c.document, c.id]))
+    const existingMap = new Map(
+      existingData
+        .filter(c => c.document)
+        .map(c => [c.document.replace(/\D/g, ''), c.id])
+    )
 
     const toInsert = []
     let updatedCount = 0
 
     for (const c of payload) {
-      if (c.document && existingMap.has(c.document)) {
+      const cleanDoc = c.document ? c.document.replace(/\D/g, '') : null;
+      if (cleanDoc && existingMap.has(cleanDoc)) {
         // update
-        const id = existingMap.get(c.document)
+        const id = existingMap.get(cleanDoc)
         await supabase.from('customers').update({ ...c, updated_at: new Date().toISOString() }).eq('id', id)
         updatedCount++
       } else {
