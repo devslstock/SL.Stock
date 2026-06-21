@@ -487,14 +487,17 @@ export default function PlannedInventoryManager() {
                         <div 
                           key={area.id} 
                           className={`
-                            relative group px-4 py-2 rounded-md border-2 text-sm font-bold shadow-sm transition-all cursor-default hover:z-50
+                            relative group px-4 py-2 rounded-md border-2 text-sm font-bold shadow-sm transition-all cursor-default hover:z-50 flex flex-col items-center justify-center min-w-[60px]
                             ${hasCount 
                               ? 'border-green-500 bg-green-500/10 text-green-600' 
                               : 'border-red-500 bg-red-500/5 text-red-500 opacity-90'
                             }
                           `}
                         >
-                          #{area.area_number}
+                          <span>#{area.area_number}</span>
+                          {area.name !== `Área #${area.area_number}` && (
+                             <span className="text-[10px] font-normal truncate max-w-[120px] mt-0.5">{area.name}</span>
+                          )}
                           
                           {/* Tooltip Card */}
                           <div className="absolute z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 top-full pt-2 left-1/2 -translate-x-1/2 w-64 pointer-events-auto">
