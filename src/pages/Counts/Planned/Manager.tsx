@@ -449,11 +449,33 @@ export default function PlannedInventoryManager() {
                   <div className="flex flex-wrap gap-3">
                     {sectorAreas.map(area => {
                       const hasCount = areasWithCounts.has(area.id)
+                      const areaCounts = counts.filter(c => c.area_id === area.id)
+                      
+                      const totalQty = areaCounts.reduce((acc, c) => acc + c.quantity, 0)
+                      const uniqueCodes = new Set(areaCounts.map(c => c.product_code)).size
+                      const operators = Array.from(new Set(areaCounts.map(c => c.user_name))).filter(Boolean).join(', ') || '-'
+                      
+                      const dates = areaCounts.map(c => new Date(c.created_at).getTime())
+                      const startMs = dates.length ? Math.min(...dates) : null
+                      const endMs = dates.length ? Math.max(...dates) : null
+                      
+                      const startStr = startMs ? new Date(startMs).toLocaleTimeString('pt-BR') : '-'
+                      const endStr = endMs ? new Date(endMs).toLocaleTimeString('pt-BR') : '-'
+                      
+                      let durationStr = '-'
+                      if (startMs && endMs) {
+                        const diffSecs = Math.floor((endMs - startMs) / 1000)
+                        const h = Math.floor(diffSecs / 3600)
+                        const m = Math.floor((diffSecs % 3600) / 60)
+                        const s = diffSecs % 60
+                        durationStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`
+                      }
+
                       return (
                         <div 
                           key={area.id} 
                           className={`
-                            px-4 py-2 rounded-md border-2 text-sm font-bold shadow-sm transition-all
+                            relative group px-4 py-2 rounded-md border-2 text-sm font-bold shadow-sm transition-all cursor-default
                             ${hasCount 
                               ? 'border-green-500 bg-green-500/10 text-green-600' 
                               : 'border-red-500 bg-red-500/5 text-red-500 opacity-90'
@@ -461,6 +483,29 @@ export default function PlannedInventoryManager() {
                           `}
                         >
                           #{area.area_number}
+                          
+                          {/* Tooltip Card */}
+                          <div className="absolute z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-white dark:bg-card border border-border rounded-lg shadow-xl text-left pointer-events-none p-4 before:content-[''] before:absolute before:bottom-[100%] before:left-1/2 before:-translate-x-1/2 before:border-8 before:border-transparent before:border-b-border dark:before:border-b-border">
+                            <div className="font-bold text-base text-foreground mb-1">
+                              Área #{area.area_number} - {sector.name}
+                            </div>
+                            
+                            <div className="relative mt-3 mb-3">
+                               <div className="absolute -top-2 left-2 px-1 bg-white dark:bg-card text-[10px] text-muted-foreground z-10">Endereço da área (Opcional)</div>
+                               <div className="border border-border rounded p-2 pt-2.5 text-sm text-foreground bg-transparent min-h-[36px]">
+                                 {area.name !== `Área #${area.area_number}` ? area.name : ''}
+                               </div>
+                            </div>
+                            
+                            <div className="space-y-1 text-sm text-muted-foreground flex flex-col">
+                              <div className="flex justify-between"><span>Operador:</span> <span className="text-foreground font-medium">{operators}</span></div>
+                              <div className="flex justify-between"><span>Início:</span> <span className="text-foreground font-medium">{startStr}</span></div>
+                              <div className="flex justify-between"><span>Término:</span> <span className="text-foreground font-medium">{endStr}</span></div>
+                              <div className="flex justify-between"><span>Duração:</span> <span className="text-foreground font-medium">{durationStr}</span></div>
+                              <div className="flex justify-between"><span>Qtd códigos:</span> <span className="text-foreground font-medium">{uniqueCodes}</span></div>
+                              <div className="flex justify-between"><span>Qtd total:</span> <span className="text-foreground font-medium">{totalQty}</span></div>
+                            </div>
+                          </div>
                         </div>
                       )
                     })}
