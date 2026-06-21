@@ -110,12 +110,36 @@ export default function AppLayout() {
 
   const toggleGroup = (title: string) => {
     if (!title) return;
-    setClosedGroups(prev => prev.includes(title) ? prev.filter(g => g !== title) : [...prev, title])
+    
+    setClosedGroups(prev => {
+      const isCurrentlyClosed = prev.includes(title);
+      const allGroups = navGroups.map(g => g.title).filter(Boolean);
+      
+      if (isCurrentlyClosed) {
+        // We are opening it. Close all others.
+        return allGroups.filter(g => g !== title);
+      } else {
+        // We are closing it. Close all.
+        return allGroups;
+      }
+    });
   }
 
   const location = useLocation()
   const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    // Ao mudar de rota, abre o menu atual e fecha todos os outros
+    const activeGroup = navGroups.find(g => 
+      g.items.some(item => location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path)))
+    )
+
+    if (activeGroup?.title) {
+      const allGroups = navGroups.map(g => g.title).filter(Boolean)
+      setClosedGroups(allGroups.filter(g => g !== activeGroup.title))
+    }
+  }, [location.pathname])
   const { user, company, logout, hasPermission, isMaster } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master' || isMaster
 
