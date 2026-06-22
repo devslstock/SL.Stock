@@ -453,9 +453,9 @@ export default function CreateReceipt() {
               <ClipboardList className="h-5 w-5 text-primary" /> Lista de Produtos (Expectativa)
             </CardTitle>
             <div className="flex items-center gap-2">
-              <input type="file" accept=".csv,.txt,.xls,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="text-amber-600 dark:text-amber-600 dark:text-amber-400 hover:text-amber-600 hover:bg-amber-50">
-                <Upload className="h-4 w-4 mr-2" /> Importar Excel
+              <input type="file" accept=".csv,.txt,.xls,.xlsx,.pdf" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="text-amber-600 dark:text-amber-400 hover:text-amber-600 hover:bg-amber-50">
+                <Upload className="h-4 w-4 mr-2" /> Importar PDF / Excel
               </Button>
             </div>
           </CardHeader>
