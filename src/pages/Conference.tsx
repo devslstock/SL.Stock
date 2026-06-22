@@ -224,7 +224,38 @@ export default function Conference() {
   })
 
   const finalizeReceiptMutation = useMutation({
-    mutationFn: () => operationsApi.finalizeReceiptAndUpdateStock(id!),
+    mutationFn: async () => {
+      const receiptAlerts = []
+      for (const item of items) {
+        if (item.quantity_scanned !== item.quantity_expected) {
+          const isMissing = item.quantity_scanned < item.quantity_expected
+          receiptAlerts.push({
+            operation_id: id!,
+            product_id: item.product_id,
+            product_code: item.product_code,
+            description: item.description,
+            quantity_expected: item.quantity_expected,
+            quantity_scanned: item.quantity_scanned,
+            quantity_missing: isMissing ? item.quantity_expected - item.quantity_scanned : 0
+          })
+        }
+      }
+
+      if (receiptAlerts.length > 0) {
+        await operationsApi.createOperationAlerts(receiptAlerts)
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          const userName = session.user.user_metadata?.name || 'Sistema'
+          await supabase.from('system_notes').insert([{
+            author_id: session.user.id,
+            author_name: userName,
+            content: `Divergência no Recebimento ${op?.load_number}: ${receiptAlerts.length} item(s) divergente(s).`,
+          }])
+        }
+      }
+
+      return operationsApi.finalizeReceiptAndUpdateStock(id!)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operation', id] })
       queryClient.invalidateQueries({ queryKey: ['operations'] })
@@ -409,17 +440,22 @@ export default function Conference() {
         if (!ok) return
       }
       
+      const isReceipt = op?.type === 'RECEIPT'
       const newItem = {
         product_id: matchedProduct.id,
         product_code: matchedProduct.code,
         description: matchedProduct.description,
-        quantity_expected: qtyToAdd,
+        quantity_expected: isReceipt ? 0 : qtyToAdd,
         quantity_scanned: qtyToAdd,
-        status: 'ok' as const
+        status: (isReceipt ? 'divergent' : 'ok') as const
       }
       addItemMutation.mutate(newItem)
       playBeep('error')
-      toast.success(`${matchedProduct.description} (${qtyToAdd}x) adicionado à rota!`)
+      if (isReceipt) {
+        toast.warning(`${matchedProduct.description} (${qtyToAdd}x) não estava na nota. Marcado como Divergente!`)
+      } else {
+        toast.success(`${matchedProduct.description} (${qtyToAdd}x) adicionado à rota!`)
+      }
       if (op && op.status === 'pending') {
         updateOpMutation.mutate({ status: 'in_progress' })
       }
@@ -440,11 +476,13 @@ export default function Conference() {
         playBeep('error')
         const ok = window.confirm(`Atenção: A quantidade escaneada (${nq}) ultrapassa o esperado (${item.quantity_expected}) para ${item.description}. Deseja adicionar o extra à rota?`)
         if (!ok) return
+        nextExpected = nq
+        playBeep('error')
+        toast.success(`${item.description}: Quantidade extra adicionada à rota!`)
+      } else {
+        playBeep('error')
+        toast.warning(`${item.description}: Quantidade extra bipada (${nq}/${item.quantity_expected}). Marcado como divergente!`)
       }
-
-      nextExpected = nq
-      playBeep('error')
-      toast.success(`${item.description}: Quantidade extra adicionada à rota!`)
     } else {
       const ns = nq >= nextExpected ? 'ok' : 'pending'
       playBeep('success')
@@ -452,7 +490,7 @@ export default function Conference() {
       else toast.info(`${item.description}: +${qtyToAdd} (${nq}/${nextExpected})`)
     }
     
-    const ns = nq >= nextExpected ? 'ok' : 'pending'
+    const ns = (op?.type === 'RECEIPT' && nq > nextExpected) ? 'divergent' : (nq >= nextExpected ? 'ok' : 'pending')
     
     // Check stock alerts and physical divergence
     const systemStock = item.system_stock_at_load !== undefined && item.system_stock_at_load !== null 
@@ -966,15 +1004,19 @@ export default function Conference() {
               }
 
               const hasAlert = hasStockAlert(item)
+              const isDivergent = item.status === 'divergent' || (op?.type === 'RECEIPT' && item.quantity_scanned > item.quantity_expected)
               const matchedProduct = allProducts.find(p => p.id === item.product_id || normalizeCode(p.code) === normalizeCode(item.product_code))
               const groupName = matchedProduct?.group_name
 
               return (
-                <div key={item.id} className={`glass-card p-3 flex flex-col gap-2 slide-up transition-all ${done ? 'border-emerald-500/20' : hasAlert ? 'border-amber-500/30 bg-amber-500/5' : ''}`} style={{ animationDelay: `${i * 10}ms` }}>
+                <div key={item.id} className={`glass-card p-3 flex flex-col gap-2 slide-up transition-all ${isDivergent ? 'border-red-500/40 bg-red-500/5' : done ? 'border-emerald-500/20' : hasAlert ? 'border-amber-500/30 bg-amber-500/5' : ''}`} style={{ animationDelay: `${i * 10}ms` }}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`font-medium truncate ${done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.description}</p>
+                        <p className={`font-medium truncate ${isDivergent ? 'text-red-600 dark:text-red-400' : done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.description}</p>
+                        {isDivergent && (
+                          <span className="text-[10px] font-bold bg-red-500/20 text-red-600 px-1.5 py-0.5 rounded uppercase">Divergente</span>
+                        )}
                         {groupName && (
                           <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">
                             {groupName}
@@ -985,7 +1027,7 @@ export default function Conference() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
-                        <span className={`text-lg font-bold font-mono ${done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
+                        <span className={`text-lg font-bold font-mono ${isDivergent ? 'text-red-600 dark:text-red-400' : done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
                         <span className="text-muted-foreground text-sm">/{item.quantity_expected}</span>
                       </div>
                       {op.status !== 'dispatched' && op.status !== 'completed' ? (
