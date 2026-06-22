@@ -379,7 +379,7 @@ export default function Conference() {
   useEffect(() => { if (activeTab === 'scan' || activeTab === 'return') scanRef.current?.focus() }, [activeTab])
 
   useEffect(() => {
-    if (op && (op.status === 'dispatched' || op.status === 'completed') && activeTab === 'scan') {
+    if (op && op.type === 'LOAD' && (op.status === 'dispatched' || op.status === 'completed') && activeTab === 'scan') {
       setActiveTab('return')
     }
   }, [op, activeTab])
@@ -873,7 +873,7 @@ export default function Conference() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList>
-          {op.status !== 'dispatched' && op.status !== 'completed' ? (
+          {op.type !== 'LOAD' || (op.status !== 'dispatched' && op.status !== 'completed') ? (
              <TabsTrigger value="scan" className="flex-1"><ScanLine className="h-4 w-4 mr-1.5" />Conferência e Lista</TabsTrigger>
           ) : (
              <TabsTrigger value="return" className="flex-1"><ArrowLeft className="h-4 w-4 mr-1.5" />Retorno e Lista</TabsTrigger>
@@ -886,8 +886,9 @@ export default function Conference() {
           )}
         </TabsList>
 
-        {op.status !== 'dispatched' && op.status !== 'completed' && (
+        {(op.type !== 'LOAD' || (op.status !== 'dispatched' && op.status !== 'completed')) && (
         <TabsContent value="scan" className="flex-1 flex flex-col gap-4 mt-4">
+          {op.status !== 'completed' && op.status !== 'dispatched' && (
           <Card className="border-primary/20 sticky top-[53px] md:top-[64px] z-20 bg-card/95 backdrop-blur-md shadow-sm">
             <CardContent className="p-4">
               <form onSubmit={handleScan} className="flex flex-col gap-2">
@@ -919,6 +920,7 @@ export default function Conference() {
               </form>
             </CardContent>
           </Card>
+          )}
 
           {lastScanned && (
             <div className={`glass-card p-4 flex items-center gap-4 slide-up shrink-0 ${lastScanned.status === 'ok' ? 'border-emerald-500/30' : ''}`}>
@@ -1133,26 +1135,32 @@ export default function Conference() {
                </Button>
             )}
             
-            {op.type === 'RECEIPT' ? (
-              <Button className="w-full h-12 text-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 glow-success" onClick={() => {
-                if (window.confirm('Atenção: Isso vai injetar as quantidades lidas diretamente no estoque. Deseja finalizar?')) {
-                  finalizeReceiptMutation.mutate()
-                }
-              }} disabled={finalizeReceiptMutation.isPending}>
-                {finalizeReceiptMutation.isPending ? 'Finalizando...' : <><PackageCheck className="mr-2 h-5 w-5" /> Finalizar e Atualizar Estoque</>}
-              </Button>
-            ) : op.type === 'RETURN' ? (
-              <Button className="w-full h-12 text-lg bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 glow-success" onClick={() => {
-                if (window.confirm('Atenção: Isso vai finalizar a conferência de retorno e retornar os itens bipados ao estoque. Deseja finalizar?')) {
-                  finalizeReturnMutation.mutate()
-                }
-              }} disabled={finalizeReturnMutation.isPending}>
-                {finalizeReturnMutation.isPending ? 'Finalizando...' : <><PackageCheck className="mr-2 h-5 w-5" /> Finalizar Retorno</>}
-              </Button>
+            {op.status !== 'completed' && op.status !== 'dispatched' ? (
+              op.type === 'RECEIPT' ? (
+                <Button className="w-full h-12 text-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 glow-success" onClick={() => {
+                  if (window.confirm('Atenção: Isso vai injetar as quantidades lidas diretamente no estoque. Deseja finalizar?')) {
+                    finalizeReceiptMutation.mutate()
+                  }
+                }} disabled={finalizeReceiptMutation.isPending}>
+                  {finalizeReceiptMutation.isPending ? 'Finalizando...' : <><PackageCheck className="mr-2 h-5 w-5" /> Finalizar e Atualizar Estoque</>}
+                </Button>
+              ) : op.type === 'RETURN' ? (
+                <Button className="w-full h-12 text-lg bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 glow-success" onClick={() => {
+                  if (window.confirm('Atenção: Isso vai finalizar a conferência de retorno e retornar os itens bipados ao estoque. Deseja finalizar?')) {
+                    finalizeReturnMutation.mutate()
+                  }
+                }} disabled={finalizeReturnMutation.isPending}>
+                  {finalizeReturnMutation.isPending ? 'Finalizando...' : <><PackageCheck className="mr-2 h-5 w-5" /> Finalizar Retorno</>}
+                </Button>
+              ) : (
+                <Button className="w-full h-12 text-lg glow-primary" onClick={handleDispatch} disabled={dispatchMutation.isPending}>
+                  {dispatchMutation.isPending ? 'Despachando...' : <><Truck className="mr-2 h-5 w-5" /> Despachar e Concluir Conferência</>}
+                </Button>
+              )
             ) : (
-              <Button className="w-full h-12 text-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 glow-success" onClick={handleDispatch} disabled={dispatchMutation.isPending}>
-                {dispatchMutation.isPending ? 'Despachando...' : <><Truck className="mr-2 h-5 w-5" /> Despachar Rota</>}
-              </Button>
+              <div className="w-full h-12 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 rounded-md border border-emerald-500/20">
+                <CheckCircle2 className="mr-2 h-5 w-5" /> Operação Finalizada
+              </div>
             )}
           </div>
         </TabsContent>
