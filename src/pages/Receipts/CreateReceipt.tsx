@@ -484,8 +484,25 @@ export default function CreateReceipt() {
                 items.map((item) => (
                   <div key={item.tempId} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-background rounded-md border border-border gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm truncate">{item.description}</p>
-                      <p className="text-xs text-muted-foreground font-mono">{item.product_code}</p>
+                      <div className="flex items-center gap-2">
+                        <p className={`font-bold text-sm truncate ${!item.product_id ? 'text-red-500 underline' : ''}`}>
+                          {item.description}
+                        </p>
+                        {!item.product_id && (
+                          <Badge variant="destructive" className="ml-2 whitespace-nowrap text-[10px] px-1 py-0 h-4">⚠️ Pendente Vínculo</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        Cód. Fábrica: {item.product_code}
+                      </p>
+                      {!item.product_id && (
+                        <div className="mt-2">
+                          <Button size="sm" variant="outline" className="text-xs py-1 h-7 border-red-200 text-red-600 hover:bg-red-50" onClick={() => setLinkingItemId(item.tempId)}>
+                            <Search className="h-3 w-3 mr-1" />
+                            Buscar correspondente interno
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="flex items-center gap-2">
@@ -514,6 +531,65 @@ export default function CreateReceipt() {
           {createMutation.isPending || updateMutation.isPending ? 'Salvando...' : (id ? 'Atualizar Recebimento' : 'Criar Recebimento')}
         </Button>
       </form>
+    </div>
+
+      {/* Modal para Vincular Produto */}
+      <Dialog open={!!linkingItemId} onOpenChange={(open) => { if (!open) { setLinkingItemId(null); setLinkSearch(''); } }}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Vincular Produto Interno</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              O produto <strong>{items.find(i => i.tempId === linkingItemId)?.description}</strong> (Fábrica: {items.find(i => i.tempId === linkingItemId)?.product_code}) não foi encontrado. Selecione o produto correspondente no seu estoque para vincular.
+            </p>
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input 
+                autoFocus
+                placeholder="Buscar produto no estoque..." 
+                className="pl-10" 
+                value={linkSearch} 
+                onChange={(e) => setLinkSearch(e.target.value)} 
+              />
+            </div>
+            
+            <div className="max-h-[300px] overflow-y-auto border rounded-md divide-y divide-border">
+              {linkSearch.trim() === '' ? (
+                <div className="p-4 text-center text-muted-foreground text-sm">
+                  Digite para buscar um produto...
+                </div>
+              ) : products.filter(p => 
+                  p.description.toLowerCase().includes(linkSearch.toLowerCase()) || 
+                  p.code.includes(linkSearch) || 
+                  (p.external_code && p.external_code.includes(linkSearch))
+                ).length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground text-sm">
+                  Nenhum produto encontrado.
+                </div>
+              ) : products.filter(p => 
+                p.description.toLowerCase().includes(linkSearch.toLowerCase()) || 
+                p.code.includes(linkSearch) || 
+                (p.external_code && p.external_code.includes(linkSearch))
+              ).map(p => (
+                <div key={p.id} className="p-3 hover:bg-muted flex justify-between items-center cursor-pointer transition-colors" onClick={() => handleConfirmLink(p)}>
+                  <div>
+                    <p className="font-bold text-sm">{p.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cód: {p.code} {p.external_code && `| EAN: ${p.external_code}`}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="secondary">Selecionar</Button>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => { setLinkingItemId(null); setLinkSearch(''); }}>Cancelar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
