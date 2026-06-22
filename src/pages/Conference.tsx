@@ -656,7 +656,7 @@ export default function Conference() {
         'Descrição': i.description,
         'Qtd Esperada': i.quantity_expected,
         'Qtd Recebida': i.quantity_scanned,
-        'Status': i.status === 'ok' ? 'OK' : (i.status === 'divergent' ? 'Divergente' : 'Pendente'),
+        'Status': i.quantity_scanned > i.quantity_expected ? 'Excedente' : (i.quantity_scanned < i.quantity_expected ? 'Pendente' : 'OK'),
         'Diferença': i.quantity_scanned - i.quantity_expected
       }
     })
