@@ -25,7 +25,11 @@ export default function Login() {
       if (user.must_change_password) {
         navigate('/trocar-senha', { replace: true });
       } else {
-        navigate('/dashboard', { replace: true });
+        if (!user.permissions?.can_view_dashboard && user.permissions?.can_use_sales_app) {
+          navigate('/vendas', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       }
     }
   }, [user, navigate]);
@@ -52,7 +56,11 @@ export default function Login() {
         if (result.mustChangePassword) {
           navigate('/trocar-senha');
         } else {
-          navigate('/dashboard');
+          if (!user?.permissions?.can_view_dashboard && user?.permissions?.can_use_sales_app) {
+            navigate('/vendas');
+          } else {
+            navigate('/dashboard');
+          }
         }
       } else {
         // O Supabase Auth vai emitir o toast no AuthContext em caso de erro
@@ -76,7 +84,11 @@ export default function Login() {
         if (result.mustChangePassword) {
           navigate('/trocar-senha');
         } else {
-          navigate('/dashboard');
+          if (!user?.permissions?.can_view_dashboard && user?.permissions?.can_use_sales_app) {
+            navigate('/vendas');
+          } else {
+            navigate('/dashboard');
+          }
         }
       }
     } catch (error) {

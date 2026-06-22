@@ -91,7 +91,6 @@ import SignaturePad from './pages/Deliveries/SignaturePad'
 import ApprovalsPage from './pages/Approvals'
 import ClientHistory from './pages/ClientHistory'
 import SalesManagement from './pages/SalesManagement/index'
-import SalesLayout from './components/layout/SalesLayout'
 import SalesOrders from './pages/SalesApp/Orders/index'
 import SalesCustomers from './pages/SalesApp/Customers/index'
 import SelectCustomer from './pages/SalesApp/NewOrder/SelectCustomer'
@@ -155,6 +154,16 @@ function App() {
             {/* Sales Management */}
             <Route path="/vendas/gestao" element={<SalesManagement />} />
 
+            {/* Sales App (Moved into AppLayout) */}
+            <Route path="/vendas" element={<Navigate to="/vendas/pedidos" replace />} />
+            <Route path="/vendas/pedidos" element={<SalesOrders />} />
+            <Route path="/vendas/clientes" element={<SalesCustomers />} />
+            
+            {/* New Order Flow */}
+            <Route path="/vendas/novo-pedido/clientes" element={<SelectCustomer />} />
+            <Route path="/vendas/novo-pedido/produtos" element={<SelectProducts />} />
+            <Route path="/vendas/novo-pedido/carrinho" element={<CartReview />} />
+
             <Route path="/configuracoes/empresa" element={<CompanySettings />} />
             <Route path="/acesso" element={<AccessControl />} />
             <Route path="/ajuda" element={<HelpAndSupport />} />
@@ -190,20 +199,6 @@ function App() {
             <Route path="/saas/anotacoes" element={<SaaSNotes />} />
             <Route path="/saas/leads" element={<SaaSLeads />} />
           </Route>
-          
-          {/* Sales App (Mobile Force) */}
-          <Route path="/vendas" element={<SalesLayout />}>
-            <Route index element={<Navigate to="/vendas/pedidos" replace />} />
-            <Route path="pedidos" element={<SalesOrders />} />
-            <Route path="clientes" element={<SalesCustomers />} />
-            {/* Outras rotas serão adicionadas conforme criadas */}
-          </Route>
-
-          {/* New Order Flow (No Bottom Tabs) */}
-          <Route path="/vendas/novo-pedido/clientes" element={<SelectCustomer />} />
-          <Route path="/vendas/novo-pedido/produtos" element={<SelectProducts />} />
-          <Route path="/vendas/novo-pedido/carrinho" element={<CartReview />} />
-
         </Route>
       </Routes>
     </AuthProvider>
