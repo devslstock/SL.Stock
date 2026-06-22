@@ -13,7 +13,7 @@ export default function ChangePassword() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { user, login } = useAuth(); // using login to refresh the local state slightly if needed
+  const { user, login, logout } = useAuth(); // using login to refresh the local state slightly if needed
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,6 +108,23 @@ export default function ChangePassword() {
             disabled={isLoading}
           >
             {isLoading ? 'Salvando...' : 'Salvar e Continuar'}
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full mt-2"
+            onClick={async () => {
+              if (logout) {
+                await logout();
+              } else {
+                await supabase.auth.signOut();
+              }
+              navigate('/login');
+            }}
+            disabled={isLoading}
+          >
+            Voltar ao Login
           </Button>
         </form>
       </div>
