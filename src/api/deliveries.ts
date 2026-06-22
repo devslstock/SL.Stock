@@ -85,12 +85,9 @@ export const deliveriesApi = {
   },
 
   async updateDeliveryRoute(id: string, updates: Partial<DeliveryRoute>) {
-    const sanitizedUpdates = { ...updates }
-    delete sanitizedUpdates.title
-    
     const { data, error } = await supabase
       .from('delivery_routes')
-      .update(sanitizedUpdates)
+      .update(updates)
       .eq('id', id)
       
       .select()

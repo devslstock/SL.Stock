@@ -106,10 +106,10 @@ export default function DeliveriesList() {
     updateMutation.mutate({
       id: editingRoute.id,
       updates: {
-        title: editTitle || undefined,
-        scheduled_date: editDate || undefined,
+        title: editTitle.trim() || null as any,
+        scheduled_date: editDate || null as any,
         driver_id: editDriver,
-        helper_id: editHelper || undefined
+        helper_id: editHelper || null as any
       }
     })
   }
