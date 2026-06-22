@@ -531,7 +531,7 @@ export default function CreateReceipt() {
           {createMutation.isPending || updateMutation.isPending ? 'Salvando...' : (id ? 'Atualizar Recebimento' : 'Criar Recebimento')}
         </Button>
       </form>
-    </div>
+
 
       {/* Modal para Vincular Produto */}
       <Dialog open={!!linkingItemId} onOpenChange={(open) => { if (!open) { setLinkingItemId(null); setLinkSearch(''); } }}>
