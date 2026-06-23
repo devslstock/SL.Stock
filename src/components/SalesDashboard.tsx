@@ -254,14 +254,18 @@ export function SalesDashboard() {
         <Card className="p-6">
           <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase">Carteira de Clientes</h3>
           <div className="h-[200px] relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={carteiraData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                  {carteiraData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {(ativosCount + inativosCount) === 0 ? (
+              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">Sem dados</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={carteiraData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                    {carteiraData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-2xl font-bold">{relevantCustomers.length}</span>
               <span className="text-xs text-muted-foreground">Clientes</span>
@@ -283,14 +287,18 @@ export function SalesDashboard() {
         <Card className="p-6">
           <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase">Positivação</h3>
           <div className="h-[200px] relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={positivacaoData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                  {positivacaoData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {(positivadosCount + naoPositivadosCount) === 0 ? (
+              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">Sem dados</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={positivacaoData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                    {positivacaoData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-2xl font-bold">{positivadosCount}</span>
               <span className="text-xs text-muted-foreground">Positivados</span>
@@ -312,14 +320,18 @@ export function SalesDashboard() {
         <Card className="p-6">
           <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase">Curva ABC (Apenas Clientes Ativos c/ Compra)</h3>
           <div className="h-[200px] relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={abcData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                  {abcData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {(curvaA + curvaB + curvaC) === 0 ? (
+              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">Sem dados</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={abcData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                    {abcData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-2xl font-bold">{salesByCustomer.length}</span>
               <span className="text-xs text-muted-foreground">Clientes</span>
