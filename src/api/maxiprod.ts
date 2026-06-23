@@ -4,7 +4,6 @@ const MAXIPROD_API_URL = 'https://api.maxiprod.com.br/api/v3'
 
 // Helper to get company maxiprod token
 async function getCompanyToken(): Promise<string> {
-  
   const { data, error } = await supabase
     .from('companies')
     .select('maxiprod_api_token')
@@ -25,8 +24,8 @@ export const maxiprodApi = {
   async testConnection() {
     try {
       const token = await getCompanyToken()
-      // Faremos um ping genérico (ex: GET /estoques) com limit=1
-      const res = await fetch(`${MAXIPROD_API_URL}/estoques?limit=1`, {
+      // Faremos um ping na api de itens (produtos) para validar a chave
+      const res = await fetch(`${MAXIPROD_API_URL}/itens?limit=1`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -40,8 +39,6 @@ export const maxiprodApi = {
 
   /**
    * FUTURO: Sincroniza o estoque atual (Background)
-   * Atualmente o EstoqueFacil é a fonte da verdade, então futuramente essa função será 
-   * invertida para enviar o estoque local para o Maxiprod (Opção A).
    */
   async syncProductsStock() {
     console.log('Sincronização de estoque desabilitada por padrão. O EstoqueFacil é a fonte principal.');
@@ -52,7 +49,7 @@ export const maxiprodApi = {
    * Envia um pedido fechado para o Maxiprod
    */
   async sendSalesOrder(orderId: string) {
-        const token = await getCompanyToken()
+    const token = await getCompanyToken()
 
     // 1. Fetch full order with items and customer info
     const { data: order, error } = await supabase
@@ -70,20 +67,19 @@ export const maxiprodApi = {
     // 2. Build Payload according to Maxiprod structure
     const payload = {
       cliente: {
-        cnpj_cpf: order.customer.document,
-        razao_social: order.customer.legal_name,
-        nome_fantasia: order.customer.fantasy_name
+        cnpj_cpf: order.customer.document || '',
+        razao_social: order.customer.legal_name || 'Consumidor',
+        nome_fantasia: order.customer.fantasy_name || 'Consumidor'
       },
       itens: order.items.map((i: any) => ({
         codigo_item: i.product.external_code || i.product.code,
         quantidade: i.quantity,
         preco_unitario: i.unit_price,
-        desconto_percentual: i.discount_percent
+        desconto_percentual: i.discount_percent || 0
       })),
-      observacoes: order.notes,
-      desconto_total: order.total_discount,
+      observacoes: order.notes || '',
+      desconto_total: order.total_discount || 0,
       valor_total: order.net_amount
-      // Outros campos obrigatórios de acordo com a doc real
     }
 
     // 3. Send Request
@@ -97,14 +93,15 @@ export const maxiprodApi = {
     })
 
     if (!res.ok) {
-      const errorData = await res.json()
-      throw new Error(errorData.mensagem || `Erro Maxiprod: ${res.statusText}`)
+      let errorMsg = `Erro Maxiprod: ${res.statusText}`
+      try {
+        const errorData = await res.json()
+        errorMsg = errorData.mensagem || errorData.message || errorMsg
+      } catch (e) {}
+      throw new Error(errorMsg)
     }
 
     const maxiprodRes = await res.json()
-
-    // 4. Se quiser, salvar o ID do pedido no Maxiprod dentro do Supabase.
-
     return maxiprodRes
   },
 
@@ -112,7 +109,6 @@ export const maxiprodApi = {
    * FUTURO: Verifica se o estoque precisa ser sincronizado
    */
   async autoSyncStockIfNeeded(minutesLimit = 10) {
-    // Disabled logic for now
     return;
   },
 
@@ -120,23 +116,79 @@ export const maxiprodApi = {
    * Sincroniza dados pré-definidos (Clientes e Produtos) do Maxiprod para o Estoque Fácil
    */
   async syncAllData() {
-        
-    // Simulate API delay for syncing
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // In a real scenario, we would fetch data from Maxiprod and upsert into Supabase tables
-    // (products, customers, etc). For now, we simulate success.
-    
-    // Update last sync time in company
-    const now = new Date().toISOString()
+    const token = await getCompanyToken()
     const { data: comp } = await supabase.from('companies').select('id').limit(1).single();
-    if (comp) {
+    if (!comp) throw new Error("Empresa não encontrada");
+
+    let syncStats = { products: 0, customers: 0 }
+
+    try {
+      // 1. Puxar Produtos (Itens) do Maxiprod
+      const resItens = await fetch(`${MAXIPROD_API_URL}/itens?limit=500`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (resItens.ok) {
+        const itensData = await resItens.json()
+        // Assuming data is inside a property, or it is the array itself
+        const itensList = Array.isArray(itensData) ? itensData : (itensData.itens || itensData.data || [])
+        
+        for (const item of itensList) {
+          // Upsert product
+          if (item.codigo && item.descricao) {
+            await supabase.from('products').upsert({
+              company_id: comp.id,
+              code: item.codigo.toString(),
+              description: item.descricao,
+              price: item.preco_venda || 0,
+              stock: item.estoque_atual || 0,
+              unit: item.unidade_medida || 'UN',
+              external_code: item.id?.toString() || item.codigo?.toString(),
+              active: item.ativo !== false
+            }, { onConflict: 'company_id, code' })
+            syncStats.products++
+          }
+        }
+      }
+
+      // 2. Puxar Clientes (Contatos) do Maxiprod
+      const resContatos = await fetch(`${MAXIPROD_API_URL}/contatos?limit=500`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (resContatos.ok) {
+        const contatosData = await resContatos.json()
+        const contatosList = Array.isArray(contatosData) ? contatosData : (contatosData.contatos || contatosData.data || [])
+
+        for (const contato of contatosList) {
+          // Upsert customer
+          if (contato.cnpj_cpf) {
+            await supabase.from('customers').upsert({
+              company_id: comp.id,
+              document: contato.cnpj_cpf.replace(/\D/g, ''),
+              legal_name: contato.razao_social || contato.nome,
+              fantasy_name: contato.nome_fantasia || contato.nome,
+              active: contato.ativo !== false,
+              address: contato.endereco || null,
+              address_number: contato.numero || null,
+              neighborhood: contato.bairro || null,
+              city: contato.cidade || null,
+              state: contato.uf || null,
+              zip_code: contato.cep ? contato.cep.replace(/\D/g, '') : null
+            }, { onConflict: 'company_id, document' })
+            syncStats.customers++
+          }
+        }
+      }
+
+      // 3. Atualizar Data de Sincronização
+      const now = new Date().toISOString()
       await supabase
         .from('companies')
         .update({ maxiprod_last_sync: now })
         .eq('id', comp.id)
-    }
 
-    return { success: true, timestamp: now }
+      return { success: true, timestamp: now, stats: syncStats }
+    } catch (e: any) {
+      throw new Error(`Erro na sincronização: ${e.message}`)
+    }
   }
 }
