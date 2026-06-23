@@ -26,14 +26,26 @@ const formatDate = (dateString: string) => {
   })
 }
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+
 export default function SalesManagement() {
   const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
 
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['sales_orders'],
     queryFn: salesApi.getSalesOrders,
+  })
+
+  const { data: selectedOrderDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['sales_order_details', selectedOrderId],
+    queryFn: () => salesApi.getSalesOrder(selectedOrderId!),
+    enabled: !!selectedOrderId,
   })
 
   const updateStatusMutation = useMutation({
@@ -117,6 +129,11 @@ export default function SalesManagement() {
     if (window.confirm(`Tem certeza que deseja alterar o status de "${currentStatus}" para "${newStatus}"?`)) {
       updateStatusMutation.mutate({ id, status: newStatus })
     }
+  }
+
+  const openDetails = (id: string) => {
+    setSelectedOrderId(id)
+    setIsDetailsOpen(true)
   }
 
   const getStatusBadgeVariant = (status: string) => {
@@ -234,7 +251,7 @@ export default function SalesManagement() {
                             </Button>
                           </>
                         )}
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" title="Ver Detalhes">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" title="Ver Detalhes" onClick={() => openDetails(order.id)}>
                           <FileSignature className="h-4 w-4" />
                         </Button>
                       </div>
@@ -246,6 +263,98 @@ export default function SalesManagement() {
           </table>
         </div>
       </div>
+
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Resumo do Pedido</DialogTitle>
+            <DialogDescription>
+              Detalhes dos itens e valores deste pedido.
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoadingDetails ? (
+            <div className="py-8 text-center text-muted-foreground">Carregando detalhes...</div>
+          ) : selectedOrderDetails ? (
+            <div className="space-y-6 mt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium">Cliente</p>
+                  <p className="text-sm font-semibold">{selectedOrderDetails.customer?.legal_name || 'Consumidor'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium">Vendedor</p>
+                  <p className="text-sm font-semibold">{selectedOrderDetails.sales_rep?.nickname || '---'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium">Data</p>
+                  <p className="text-sm font-semibold">{formatDate(selectedOrderDetails.created_at)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium">Cond. Pgto</p>
+                  <p className="text-sm font-semibold">{selectedOrderDetails.payment_condition?.name || '---'}</p>
+                </div>
+              </div>
+
+              <div className="border rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead>Produto</TableHead>
+                      <TableHead className="text-right w-24">Qtd</TableHead>
+                      <TableHead className="text-right w-32">Preço Unit.</TableHead>
+                      <TableHead className="text-right w-24">Desc. %</TableHead>
+                      <TableHead className="text-right w-32">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedOrderDetails.items?.map((item: any) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="font-medium text-sm">{item.product?.description}</div>
+                          <div className="text-xs text-muted-foreground">Cód: {item.product?.code}</div>
+                        </TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                        <TableCell className="text-right">{item.discount_percent || 0}%</TableCell>
+                        <TableCell className="text-right font-medium text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(item.total_price)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex flex-col items-end space-y-2 bg-muted/20 p-4 rounded-lg">
+                <div className="flex justify-between w-full sm:w-64 text-sm">
+                  <span className="text-muted-foreground">Subtotal:</span>
+                  <span className="font-medium">{formatCurrency((selectedOrderDetails.net_amount || 0) + (selectedOrderDetails.total_discount || 0))}</span>
+                </div>
+                <div className="flex justify-between w-full sm:w-64 text-sm text-red-500">
+                  <span>Descontos:</span>
+                  <span>- {formatCurrency(selectedOrderDetails.total_discount || 0)}</span>
+                </div>
+                <div className="flex justify-between w-full sm:w-64 text-base font-bold pt-2 border-t border-border">
+                  <span>Total Líquido:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(selectedOrderDetails.net_amount || 0)}</span>
+                </div>
+              </div>
+
+              {selectedOrderDetails.notes && (
+                <div>
+                  <p className="text-sm font-medium mb-1">Observações:</p>
+                  <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md border border-border/50">
+                    {selectedOrderDetails.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">Erro ao carregar os detalhes do pedido.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
