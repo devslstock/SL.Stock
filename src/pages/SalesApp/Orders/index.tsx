@@ -6,17 +6,28 @@ import { formatCurrency, formatDate } from '@/utils/formatters'
 import { Search, Plus, Printer, Settings, FileText, Store, Calendar, DollarSign, MessageSquare, FileDigit } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function SalesOrders() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
+  const { user, isMaster } = useAuth()
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['sales_orders'],
     queryFn: salesApi.getSalesOrders,
   })
 
+  const isVendedor = user?.role === 'vendedor' || user?.role === 'representante'
+
   const filteredOrders = orders.filter(o => {
+    if (isVendedor && !isMaster) {
+      const repName = o.sales_rep?.nickname || o.sales_rep?.legal_name
+      if (repName !== user?.name) {
+        return false
+      }
+    }
+
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       return o.id.toLowerCase().includes(term) ||

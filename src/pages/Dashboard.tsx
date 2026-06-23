@@ -21,6 +21,7 @@ import { operationsApi } from '@/api/operations'
 import { deliveriesApi } from '@/api/deliveries'
 import { productsApi } from '@/api/products'
 import { equipmentsApi } from '@/api/equipments'
+import { SalesDashboard } from '@/components/SalesDashboard'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success', colorClass: string }> = {
   pending: { label: 'Pendente', variant: 'warning', colorClass: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' },
@@ -41,10 +42,12 @@ export default function Dashboard() {
   const isDriverOrHelper = user?.role === 'motorista' || user?.role === 'ajudante'
   const isConferente = user?.role === 'conferente'
   const isMecanico = user?.role === 'mecanico'
+  const isVendedor = user?.role === 'vendedor' || user?.role === 'representante'
 
   const showLoads = isManager || isConferente
   const showDeliveries = isManager || isDriverOrHelper
   const showOS = isManager || isMecanico
+  const showSales = isManager || isVendedor
 
   const { data: operations = [], isLoading: isLoadingOp } = useQuery({
     queryKey: ['operations'],
@@ -319,91 +322,105 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-8 slide-in">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">Visão geral das operações logísticas</p>
-      </div>
+      {(showLoads || showDeliveries || showOS) && (
+        <>
+          {/* Header */}
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">Visão geral das operações logísticas</p>
+          </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {showLoads && (
-          <StatsCard 
-            title="Total de Cargas" 
-            value={loadStats.total} 
-            icon={Truck} 
-            iconBg="bg-primary" 
-            iconColor="text-white" 
-            trend="Hoje" 
-            trendColor="text-primary"
-          />
-        )}
-        {showLoads && (
-          <StatsCard 
-            title="Cargas Pendentes" 
-            value={loadStats.pending} 
-            icon={Clock} 
-            iconBg="bg-orange-500" 
-            iconColor="text-white" 
-            trend="Hoje" 
-            trendColor="text-orange-500"
-          />
-        )}
-        {showDeliveries && (
-          <StatsCard 
-            title="Entregas em Rota" 
-            value={deliveryStats.dispatched} 
-            icon={Truck} 
-            iconBg="bg-blue-500" 
-            iconColor="text-white" 
-            trend="Hoje" 
-            trendColor="text-blue-500"
-          />
-        )}
-        {showDeliveries && (
-          <StatsCard 
-            title="Entregas Finalizadas" 
-            value={deliveryStats.completed} 
-            icon={CheckCircle2} 
-            iconBg="bg-emerald-500" 
-            iconColor="text-white" 
-            trend="Hoje" 
-            trendColor="text-muted-foreground"
-          />
-        )}
-        {isManager && (
-          <StatsCard 
-            title="Estoque Baixo" 
-            value={lowStockProducts.length} 
-            icon={AlertTriangle} 
-            iconBg="bg-amber-500" 
-            iconColor="text-white" 
-            trend="Atenção" 
-            trendColor="text-amber-500"
-          />
-        )}
-      </div>
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {showLoads && (
+              <StatsCard 
+                title="Total de Cargas" 
+                value={loadStats.total} 
+                icon={Truck} 
+                iconBg="bg-primary" 
+                iconColor="text-white" 
+                trend="Hoje" 
+                trendColor="text-primary"
+              />
+            )}
+            {showLoads && (
+              <StatsCard 
+                title="Cargas Pendentes" 
+                value={loadStats.pending} 
+                icon={Clock} 
+                iconBg="bg-orange-500" 
+                iconColor="text-white" 
+                trend="Hoje" 
+                trendColor="text-orange-500"
+              />
+            )}
+            {showDeliveries && (
+              <StatsCard 
+                title="Entregas em Rota" 
+                value={deliveryStats.dispatched} 
+                icon={Truck} 
+                iconBg="bg-blue-500" 
+                iconColor="text-white" 
+                trend="Hoje" 
+                trendColor="text-blue-500"
+              />
+            )}
+            {showOS && (
+              <StatsCard 
+                title="OS em Andamento" 
+                value={osOrders.filter((o: any) => o.status === 'em_rota').length} 
+                icon={Wrench} 
+                iconBg="bg-purple-500" 
+                iconColor="text-white" 
+                trend="Hoje" 
+                trendColor="text-purple-500"
+              />
+            )}
+            {isManager && (
+              <StatsCard 
+                title="Estoque Baixo" 
+                value={lowStockProducts.length} 
+                icon={AlertTriangle} 
+                iconBg="bg-amber-500" 
+                iconColor="text-white" 
+                trend="Atenção" 
+                trendColor="text-amber-500"
+              />
+            )}
+          </div>
+        </>
+      )}
 
-      {/* Main Content Grid (Top Row) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left/Center Column (2/3 width) */}
-        <div className="lg:col-span-2">
-          {showLoads && CargasTable}
-          {!showLoads && showDeliveries && EntregasTable}
-          {!showLoads && !showDeliveries && showOS && OSTable}
+      {(showLoads || showDeliveries || showOS) && (
+        <>
+          {/* Main Content Grid (Top Row) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left/Center Column (2/3 width) */}
+            <div className="lg:col-span-2">
+              {showLoads && CargasTable}
+              {!showLoads && showDeliveries && EntregasTable}
+              {!showLoads && !showDeliveries && showOS && OSTable}
+            </div>
+
+            {/* Right Column (1/3 width) */}
+            <div className="lg:col-span-1">
+              {AlertasPanel}
+            </div>
+          </div>
+
+          {/* Bottom Content Grid (Remaining Tables) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {showLoads && showDeliveries && EntregasTable}
+            {(showLoads || showDeliveries) && showOS && OSTable}
+          </div>
+        </>
+      )}
+
+      {showSales && (
+        <div className="mt-8">
+          <SalesDashboard />
         </div>
-
-        {/* Right Column (1/3 width) */}
-        <div className="lg:col-span-1">
-          {AlertasPanel}
-        </div>
-      </div>
-
-      {/* Bottom Content Grid (Remaining Tables) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {showLoads && showDeliveries && EntregasTable}
-        {(showLoads || showDeliveries) && showOS && OSTable}
-      </div>
+      )}
 
     </div>
   )
