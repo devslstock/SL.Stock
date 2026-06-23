@@ -648,11 +648,11 @@ export default function ImportPriceTables() {
 
     setLoading(true);
     try {
-      const lines = rawData.trim().split('\\n').filter(l => l.trim() && !l.includes('descriçao'));
+      const lines = rawData.trim().split('\n').filter(l => l.trim() && !l.includes('descriçao'));
       
       const tablesToCreate = new Map();
       lines.forEach(line => {
-        const parts = line.split('\\t');
+        const parts = line.split('\t');
         if (parts.length >= 3) {
           const code = parts[1].trim();
           const name = parts[2].trim();
@@ -703,7 +703,7 @@ export default function ImportPriceTables() {
 
       // 3. Update customers
       for (const line of lines) {
-        const parts = line.split('\\t');
+        const parts = line.split('\t');
         if (parts.length < 3) continue;
         
         const docRaw = parts[0].trim();
@@ -731,7 +731,7 @@ export default function ImportPriceTables() {
         }
       }
 
-      toast.success(\`Importação concluída! \${updatedCount} atualizados. \${notFoundCount} não encontrados.\`);
+      toast.success(`Importação concluída! ${updatedCount} atualizados. ${notFoundCount} não encontrados.`);
 
     } catch (e: any) {
       console.error(e);
