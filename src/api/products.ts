@@ -1,16 +1,17 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, fetchAllRows } from '@/lib/supabase'
 import type { Product } from '@/types/database'
 
 
 export const productsApi = {
   async getProducts() {
     
-    const { data, error } = await supabase
+    const query = supabase
       .from('products')
       .select('*')
-      
       .order('description')
-    if (error) throw error
+      
+    const data = await fetchAllRows<Product>(query)
+    
     // Ensure codes keep leading zeros by converting to string
     const normalized = (data ?? []).map(p => ({
       ...p,

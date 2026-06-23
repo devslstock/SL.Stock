@@ -1,15 +1,14 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, fetchAllRows } from '@/lib/supabase'
 import type { Customer } from '@/types/database'
 
 export const customersApi = {
   async getCustomers() {
-        const { data, error } = await supabase
+    const query = supabase
       .from('customers')
       .select('*, region:region_id(*), sales_rep_obj:sales_rep_id(*), price_table:price_table_id(*)')
-      
       .order('nickname', { ascending: true })
-    if (error) throw error
-    return data as Customer[]
+      
+    return await fetchAllRows<Customer>(query)
   },
 
   async getCustomer(id: string) {

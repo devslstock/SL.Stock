@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, fetchAllRows } from '@/lib/supabase'
 import type { PaymentCondition, CustomerPaymentCondition, SalesOrder, SalesOrderItem } from '@/types/database'
 
 export const salesApi = {
@@ -88,7 +88,7 @@ export const salesApi = {
   // ============================================
   async getSalesOrders() {
     
-    const { data, error } = await supabase
+    const query = supabase
       .from('sales_orders')
       .select(`
         *,
@@ -97,11 +97,9 @@ export const salesApi = {
         payment_condition:payment_conditions(*),
         price_table:price_tables(*)
       `)
-      
       .order('created_at', { ascending: false })
 
-    if (error) throw error
-    return data as SalesOrder[]
+    return await fetchAllRows<SalesOrder>(query)
   },
 
   async getSalesOrder(id: string) {
