@@ -47,7 +47,7 @@ export const maxiprodApi = {
    * Valida se a chave inserida é funcional
    */
   async testConnection() {
-    await proxyFetch('/itens?limit=1', 'GET');
+    await proxyFetch('/Item?limit=1', 'GET');
     return true;
   },
 
@@ -85,7 +85,7 @@ export const maxiprodApi = {
       valor_total: order.net_amount
     }
 
-    const maxiprodRes = await proxyFetch('/SalesOrders', 'POST', payload);
+    const maxiprodRes = await proxyFetch('/PedidoDeVenda', 'POST', payload);
     return maxiprodRes;
   },
 
@@ -105,7 +105,7 @@ export const maxiprodApi = {
     try {
       // 1. Puxar Produtos (Itens) do Maxiprod via Proxy
       try {
-        const itensData = await proxyFetch('/itens?limit=500', 'GET');
+        const itensData = await proxyFetch('/Item?limit=500', 'GET');
         const itensList = Array.isArray(itensData) ? itensData : (itensData.itens || itensData.data || [])
         
         for (const item of itensList) {
