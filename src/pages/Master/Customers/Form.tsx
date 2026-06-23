@@ -228,7 +228,8 @@ export default function CustomerForm() {
     })
   }
 
-  const hasAccess = hasPermission('can_manage_customers')
+  const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
+  const hasAccess = hasPermission('can_manage_customers') || !isManager
 
   if (!hasAccess) {
     return <div className="p-8 text-center text-muted-foreground">Acesso restrito.</div>

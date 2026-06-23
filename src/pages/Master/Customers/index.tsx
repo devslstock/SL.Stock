@@ -360,9 +360,7 @@ export default function CustomersList() {
 
   const allSelected = paginatedCustomers.length > 0 && paginatedCustomers.every(c => selectedIds.has(c.id))
 
-  if (!isManager) {
-    return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
-  }
+  // Allow sellers to view the page, we will hide action buttons for them.
 
   // MultiSelect Component
   const MultiSelect = ({ label, options, selectedIds, onChange, placeholder }: any) => {
