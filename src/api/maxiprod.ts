@@ -31,7 +31,7 @@ async function proxyFetch(endpointPath: string, targetMethod: string = 'GET', pa
     // Extrai a mensagem exata do payload de erro do Maxiprod
     let errorMsg = `Erro ${data.status || res.status}: ${data.statusText || res.statusText}`
     if (data.data) {
-      errorMsg = data.data.mensagem || data.data.message || errorMsg;
+      errorMsg = data.data.mensagem || data.data.message || (typeof data.data === 'object' ? JSON.stringify(data.data) : errorMsg);
     } else if (data.error) {
       errorMsg = data.error;
       if (data.details) errorMsg += ` - ${data.details}`;
