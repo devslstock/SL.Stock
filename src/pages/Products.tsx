@@ -655,7 +655,7 @@ export default function Products() {
         </Table>
       </div>
 
-      {totalPages > 1 && (
+      {totalPages > 0 && (
         <div className="flex items-center justify-between px-2 pt-4">
           <div className="text-sm text-muted-foreground hidden sm:block">
             Mostrando {(currentPage - 1) * itemsPerPage + 1} a {Math.min(currentPage * itemsPerPage, sortedProducts.length)} de {sortedProducts.length} produtos
