@@ -452,7 +452,7 @@ export default function Conference() {
       addItemMutation.mutate(newItem)
       playBeep('error')
       if (isReceipt) {
-        toast.warning(`${matchedProduct.description} (${qtyToAdd}x) não estava na nota. Marcado como Divergente!`)
+        toast.warning(`${matchedProduct.description} (${qtyToAdd}x) não estava na nota. Marcado como Excedente!`)
       } else {
         toast.success(`${matchedProduct.description} (${qtyToAdd}x) adicionado à rota!`)
       }
@@ -481,7 +481,7 @@ export default function Conference() {
         toast.success(`${item.description}: Quantidade extra adicionada à rota!`)
       } else {
         playBeep('error')
-        toast.warning(`${item.description}: Quantidade extra bipada (${nq}/${item.quantity_expected}). Marcado como divergente!`)
+        toast.warning(`${item.description}: Quantidade extra bipada (${nq}/${item.quantity_expected}). Marcado como Excedente!`)
       }
     } else {
       const ns = nq >= nextExpected ? 'ok' : 'pending'
@@ -1017,7 +1017,9 @@ export default function Conference() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className={`font-medium truncate ${isDivergent ? 'text-red-600 dark:text-red-400' : done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.description}</p>
                         {isDivergent && (
-                          <span className="text-[10px] font-bold bg-red-500/20 text-red-600 px-1.5 py-0.5 rounded uppercase">Divergente</span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${op?.type === 'RECEIPT' && item.quantity_scanned > item.quantity_expected ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400' : 'bg-red-500/20 text-red-600'}`}>
+                            {op?.type === 'RECEIPT' && item.quantity_scanned > item.quantity_expected ? 'Excedente' : 'Divergente'}
+                          </span>
                         )}
                         {groupName && (
                           <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">
