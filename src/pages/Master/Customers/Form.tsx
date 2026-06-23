@@ -228,7 +228,6 @@ export default function CustomerForm() {
     })
   }
 
-  const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
   const hasAccess = hasPermission('can_manage_customers') || !isManager
 
   if (!hasAccess) {
