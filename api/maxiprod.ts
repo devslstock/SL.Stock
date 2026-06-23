@@ -74,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const url = `https://api.maxiprod.com.br/api/v3${endpointPath}`;
+    const url = `https://api.maxiprod.com.br/api${endpointPath}`;
     
     const options: RequestInit = {
       method: targetMethod,
