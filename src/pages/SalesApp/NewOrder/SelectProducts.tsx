@@ -121,15 +121,17 @@ export default function SelectProducts() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background pb-[140px]"> {/* Extra padding for the bottom bar */}
-      <header className="flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 -ml-2 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-          <h1 className="font-bold text-lg text-foreground">Adicionar Produtos</h1>
+    <div className="space-y-6 slide-in max-w-4xl mx-auto pb-40">
+      
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold gradient-text">Adicionar Produtos</h1>
+          <p className="text-sm text-muted-foreground">Selecione os produtos para este pedido</p>
         </div>
-      </header>
+      </div>
 
       {/* Tabs */}
       <div className="bg-card border-b border-border flex overflow-x-auto hide-scrollbar sticky top-[52px] z-10">
@@ -183,7 +185,7 @@ export default function SelectProducts() {
         </Button>
       </div>
 
-      <div className="flex-1 overflow-auto p-2">
+      <div className="overflow-auto pb-6">
         {loadingProducts ? (
           <div className="p-8 text-center text-muted-foreground">Carregando produtos...</div>
         ) : filteredProducts.length === 0 ? (

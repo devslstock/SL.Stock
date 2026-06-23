@@ -34,20 +34,24 @@ export default function SelectCustomer() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <header className="flex items-center gap-3 px-4 py-3 bg-card border-b border-border sticky top-0 z-10">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 -ml-2 text-foreground">
+    <div className="space-y-6 slide-in max-w-4xl mx-auto pb-20">
+      
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h1 className="font-bold text-lg text-foreground">Selecionar Cliente</h1>
-      </header>
+        <div>
+          <h1 className="text-2xl font-bold gradient-text">Selecionar Cliente</h1>
+          <p className="text-sm text-muted-foreground">Escolha o cliente para iniciar o pedido</p>
+        </div>
+      </div>
 
-      <div className="bg-card p-4 shadow-sm z-10">
+      <div className="glass-card p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input 
-            placeholder="Buscar por nome ou CNPJ" 
-            className="pl-10 h-12 bg-muted border-none text-base rounded-xl"
+            placeholder="Buscar por nome ou CNPJ..." 
+            className="pl-10 h-12 bg-background/50 border-border/50 focus:bg-background transition-colors text-base rounded-xl"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             autoFocus
@@ -55,7 +59,7 @@ export default function SelectCustomer() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-2">
+      <div className="overflow-auto pb-6">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground">Carregando clientes...</div>
         ) : filteredCustomers.length === 0 ? (

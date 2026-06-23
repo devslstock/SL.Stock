@@ -118,17 +118,19 @@ export default function CartReview() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background pb-[100px]">
-      <header className="flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 -ml-2">
-            <ArrowLeft className="h-6 w-6 text-foreground" />
-          </Button>
-          <h1 className="font-bold text-lg text-foreground">Revisar Pedido</h1>
+    <div className="space-y-6 slide-in max-w-4xl mx-auto pb-60">
+      
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold gradient-text">Revisar Pedido</h1>
+          <p className="text-sm text-muted-foreground">Confira os itens e finalize o pedido</p>
         </div>
-      </header>
+      </div>
 
-      <div className="flex-1 overflow-auto p-4 space-y-4">
+      <div className="space-y-4 px-2">
         
         {/* Cliente Info */}
         <div className="bg-card rounded-xl p-4 shadow-sm border border-border">

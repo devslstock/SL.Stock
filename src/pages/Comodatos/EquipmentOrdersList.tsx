@@ -17,8 +17,9 @@ import { generateContractPDF } from '@/utils/pdf'
 
 export default function EquipmentOrdersList() {
   const queryClient = useQueryClient()
-  const { hasPermission, user, company } = useAuth()
-  const canManage = hasPermission('can_manage_os') && user?.role !== 'mecanico'
+  const { hasPermission, user, company, isMaster } = useAuth()
+  const canManage = hasPermission('can_manage_os')
+  const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -101,6 +102,15 @@ export default function EquipmentOrdersList() {
     onError: (err: any) => toast.error(err.message)
   })
 
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => equipmentsApi.updateOrder(id, { status: 'pendente' }),
+    onSuccess: () => {
+      toast.success('Chamado aprovado e convertido em OS!')
+      queryClient.invalidateQueries({ queryKey: ['equipment_orders'] })
+    },
+    onError: (err: any) => toast.error(err.message)
+  })
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!customerId || !equipmentId || !type) {
@@ -108,13 +118,17 @@ export default function EquipmentOrdersList() {
       return
     }
 
-    const payload = {
+    const payload: Partial<EquipmentOrder> = {
       customer_id: customerId, 
       equipment_id: equipmentId, 
       type, 
       driver_id: driverId || null,
       scheduled_date: scheduledDate || null,
       notes 
+    }
+
+    if (!editingId) {
+      payload.status = isManager ? 'pendente' : 'chamado'
     }
 
     if (editingId) {
@@ -170,6 +184,7 @@ export default function EquipmentOrdersList() {
   )
 
   const statusOrder: Record<string, number> = {
+    'chamado': 0,
     'pendente': 1,
     'em_rota': 2,
     'concluido': 3,
@@ -267,7 +282,17 @@ export default function EquipmentOrdersList() {
                     </Button>
                   </>
                 )}
-                {order.status !== 'concluido' && order.status !== 'cancelado' && (
+                {order.status === 'chamado' && isManager && (
+                  <Button 
+                    size="sm" 
+                    className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white" 
+                    onClick={() => approveMutation.mutate(order.id)}
+                    disabled={approveMutation.isPending}
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-2" /> Aprovar Chamado
+                  </Button>
+                )}
+                {order.status !== 'chamado' && order.status !== 'concluido' && order.status !== 'cancelado' && (
                   <Button 
                     size="sm" 
                     className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white" 

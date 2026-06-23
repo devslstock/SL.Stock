@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { salesApi } from '@/api/sales'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,10 +8,24 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
 import { Banknote, Plus, Pencil, Search, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function PaymentConditions() {
   const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
+  const navigate = useNavigate()
+  const { user, isMaster } = useAuth()
+  const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
+
+  if (!isManager) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-bold text-red-500 mb-2">Acesso Negado</h2>
+        <p className="text-muted-foreground mb-4">Você não tem permissão para acessar o cadastro de condições de pagamento.</p>
+        <Button onClick={() => navigate(-1)}>Voltar</Button>
+      </div>
+    )
+  }
 
   const { data: conditions = [], isLoading } = useQuery({
     queryKey: ['payment_conditions'],

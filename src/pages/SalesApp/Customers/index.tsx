@@ -30,20 +30,30 @@ export default function SalesCustomers() {
   })
 
   return (
-    <div className="flex flex-col h-full bg-background pb-6">
-      <div className="bg-card p-4 border-b border-border shadow-sm sticky top-0 z-10">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar clientes por nome ou CNPJ" 
-            className="pl-10 h-12 bg-muted border-none text-base rounded-xl"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
+    <div className="space-y-6 slide-in max-w-6xl mx-auto pb-20">
+      
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
+            <Building2 className="h-6 w-6 text-primary" /> Clientes
+          </h1>
+          <p className="text-sm text-muted-foreground">Consulte a base de clientes</p>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-3">
+      <div className="glass-card p-4">
+        <div className="relative max-w-md">
+          <Input 
+            placeholder="Buscar clientes por nome ou CNPJ..." 
+            className="pl-10 h-10 bg-background/50 border-border/50 focus:bg-background transition-colors"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        </div>
+      </div>
+
+      <div className="overflow-auto pb-3">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground">Carregando clientes...</div>
         ) : filteredCustomers.length === 0 ? (

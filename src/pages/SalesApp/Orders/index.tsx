@@ -39,48 +39,40 @@ export default function SalesOrders() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="space-y-6 slide-in max-w-6xl mx-auto pb-20">
       
-      <div className="bg-card border-b border-border px-4 md:px-8 pt-4 flex gap-6 overflow-x-auto">
-        <div className="flex items-center gap-2 pb-3 border-b-2 border-primary text-primary font-bold text-xs tracking-wider cursor-pointer whitespace-nowrap">
-          <FileText className="h-4 w-4" /> PEDIDOS
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
+            <FileText className="h-6 w-6 text-primary" /> Meus Pedidos
+          </h1>
+          <p className="text-sm text-muted-foreground">Gerencie seus orçamentos e pedidos de venda</p>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-3">
+          <Link to="/vendas/novo-pedido/clientes">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4 h-10 shadow-sm rounded-md">
+              <Plus className="h-4 w-4 mr-2" /> Criar pedido / orçamento
+            </Button>
+          </Link>
+          
+          <Button variant="outline" className="text-primary border-border bg-background font-semibold px-4 h-10 rounded-md">
+            <Printer className="h-4 w-4 mr-2" /> Imprimir pedidos
+          </Button>
         </div>
       </div>
 
-      <div className="p-4 md:p-8 max-w-[1200px] w-full mx-auto">
-        
-        {/* Toolbar */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <Link to="/vendas/novo-pedido/clientes">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4 h-10 shadow-sm rounded-md">
-                <Plus className="h-4 w-4 mr-2" /> Criar pedido / orçamento
-              </Button>
-            </Link>
-            
-            <Button variant="outline" className="text-primary border-border bg-background font-semibold px-4 h-10 rounded-md">
-              <Printer className="h-4 w-4 mr-2" /> Imprimir pedidos
-            </Button>
-          </div>
-
-          <div className="relative w-full md:w-[320px]">
-            <Input 
-              placeholder="Pedido, cliente ou representada" 
-              className="pr-10 h-10 border-border bg-background rounded-md text-sm shadow-sm"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <div className="absolute -bottom-5 right-0 text-[9px] text-muted-foreground hidden md:block">
-              ▾ Pesquise por nota fiscal, data de emissão, etc.
-            </div>
-          </div>
+      <div className="glass-card p-4">
+        <div className="relative max-w-md">
+          <Input 
+            placeholder="Pedido, cliente ou representada..." 
+            className="pl-10 h-10 bg-background/50 border-border/50 focus:bg-background transition-colors"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         </div>
-
-        {/* Filters Summary */}
-        <div className="text-[11px] text-muted-foreground mb-8 mt-6 font-medium leading-relaxed">
-          Mostrando <span className="text-primary font-semibold cursor-pointer hover:underline">Pedidos ativos ▾</span> feitos por <span className="text-primary font-semibold cursor-pointer hover:underline">Todos os vendedores ▾</span> via <span className="text-primary font-semibold cursor-pointer hover:underline">Todas as plataformas ▾</span> Sem considerar o envio ▾ com <span className="text-primary font-semibold cursor-pointer hover:underline">Qualquer status ▾</span>
-        </div>
+      </div>
 
         {/* List */}
         {isLoading ? (
@@ -139,9 +131,6 @@ export default function SalesOrders() {
             </div>
           ))
         )}
-
-      </div>
-      
 
     </div>
   )

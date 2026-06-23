@@ -26,6 +26,10 @@ export default function CompanySettings() {
     enabled: !!company?.id && isManager
   })
 
+  if (!isManager) {
+    return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
+  }
+
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [erpToken, setErpToken] = useState('')
   const [erpLoading, setErpLoading] = useState(false)

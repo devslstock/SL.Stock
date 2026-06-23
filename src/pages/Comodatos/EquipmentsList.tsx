@@ -17,10 +17,9 @@ import { InternalMaintenanceModal } from './InternalMaintenanceModal'
 
 export default function EquipmentsList() {
   const queryClient = useQueryClient()
-  const { hasPermission, user } = useAuth()
+  const { hasPermission, user, isMaster } = useAuth()
   const hasAccess = hasPermission('can_manage_equipments')
-  const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
-  const canEdit = isManager
+  const canEdit = user?.role === 'admin' || user?.role === 'gestor' || isMaster
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)

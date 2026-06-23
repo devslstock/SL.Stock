@@ -14,8 +14,9 @@ import { useAuth } from '@/contexts/AuthContext'
 
 export default function CustomersList() {
   const queryClient = useQueryClient()
-  const { user } = useAuth()
-  const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
+  const { user, isMaster } = useAuth()
+  const canEdit = user?.role === 'admin' || user?.role === 'gestor' || isMaster
+  const isManager = canEdit
   const [isImporting, setIsImporting] = useState(false)
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [geocodeProgress, setGeocodeProgress] = useState({ current: 0, total: 0 })

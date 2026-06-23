@@ -253,7 +253,7 @@ export default function CustomerForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <fieldset disabled={!isManager} className="space-y-6">
+        <fieldset className="space-y-6" disabled={!isManager}>
         
         {/* Dados Principais */}
         <div className="glass-card p-6 border-t-4 border-t-primary">

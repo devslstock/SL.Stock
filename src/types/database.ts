@@ -520,7 +520,7 @@ export interface EquipmentOrder {
   delivery_route_id?: string | null
   delivery_sequence?: number
   type: 'entrega' | 'recolha' | 'troca' | 'manutencao'
-  status: 'pendente' | 'em_rota' | 'concluido' | 'cancelado'
+  status: 'chamado' | 'pendente' | 'em_rota' | 'concluido' | 'cancelado'
   driver_id: string | null
   scheduled_date: string | null
   completed_at: string | null

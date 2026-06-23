@@ -13,9 +13,9 @@ import type { Supply } from '@/types/database'
 
 export default function SuppliesList() {
   const queryClient = useQueryClient()
-  const { hasPermission, user } = useAuth()
-  const hasAccess = hasPermission('can_manage_supplies')
-  const canEdit = hasPermission('can_manage_supplies') && user?.role !== 'mecanico'
+  const { user, isMaster } = useAuth()
+  const hasAccess = user?.role === 'admin' || user?.role === 'gestor' || isMaster
+  const canEdit = hasAccess
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)

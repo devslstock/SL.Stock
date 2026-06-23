@@ -15,8 +15,8 @@ export default function PriceTableForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
-  const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
+  const { user, isMaster } = useAuth()
+  const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
   const isEditing = Boolean(id)
 
   const [formData, setFormData] = useState({

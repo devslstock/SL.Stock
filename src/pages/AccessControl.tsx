@@ -45,9 +45,10 @@ const defaultPermissions: Record<UserRole, UserPermissions> = {
 
 export default function AccessControl() {
   const queryClient = useQueryClient()
-  const { company } = useAuth()
+  const { company, user, isMaster } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [editing, setEditing] = useState<User | null>(null)
+  const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
 
   // Form State
   const [name, setName] = useState('')
@@ -58,8 +59,12 @@ export default function AccessControl() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users', company?.id],
     queryFn: () => usersApi.getUsers(company?.id),
-    enabled: !!company?.id,
+    enabled: !!company?.id && isManager,
   })
+
+  if (!isManager) {
+    return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
+  }
 
   const createMutation = useMutation({
     mutationFn: (data: Parameters<typeof usersApi.createUser>[0]) => usersApi.createUser(data),
