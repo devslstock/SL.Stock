@@ -20,7 +20,7 @@ export default function CustomerForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { user, company } = useAuth()
+  const { user, company, hasPermission } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   
   const isEditing = Boolean(id)

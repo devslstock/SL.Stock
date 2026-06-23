@@ -14,7 +14,7 @@ export default function PriceTablesList() {
   const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   const fileInputRef = useRef<HTMLInputElement>(null)
 
