@@ -47,7 +47,7 @@ export const maxiprodApi = {
    * Valida se a chave inserida é funcional
    */
   async testConnection() {
-    await proxyFetch('/PedidoDeVenda?limit=1', 'GET');
+    await proxyFetch('/itens?limit=1', 'GET');
     return true;
   },
 
@@ -85,7 +85,7 @@ export const maxiprodApi = {
       valor_total: order.net_amount
     }
 
-    const maxiprodRes = await proxyFetch('/PedidoDeVenda', 'POST', payload);
+    const maxiprodRes = await proxyFetch('/SalesOrders', 'POST', payload);
     return maxiprodRes;
   },
 
