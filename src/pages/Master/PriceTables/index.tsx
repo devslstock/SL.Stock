@@ -245,7 +245,9 @@ export default function PriceTablesList() {
     })
   }, [filteredTables, sortField, sortAsc])
 
-  if (!isManager) {
+  const hasAccess = hasPermission('can_manage_price_tables')
+
+  if (!hasAccess) {
     return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
   }
 
@@ -261,21 +263,25 @@ export default function PriceTablesList() {
         </div>
         
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <input
-            type="file"
-            accept=".xlsx, .xls, .csv"
-            className="hidden"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-          />
-          <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="w-full sm:w-auto shadow-sm hover:scale-105 transition-transform text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10">
-            <FileUp className="mr-2 h-4 w-4" /> Importar Excel (Nova Tabela)
-          </Button>
-          <Link to="/cadastros/tabelas-de-preco/nova">
-            <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
-              <Plus className="mr-2 h-4 w-4" /> Nova Tabela
-            </Button>
-          </Link>
+          {isManager && (
+            <>
+              <input
+                type="file"
+                accept=".xlsx, .xls, .csv"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+              />
+              <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="w-full sm:w-auto shadow-sm hover:scale-105 transition-transform text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10">
+                <FileUp className="mr-2 h-4 w-4" /> Importar Excel (Nova Tabela)
+              </Button>
+              <Link to="/cadastros/tabelas-de-preco/nova">
+                <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
+                  <Plus className="mr-2 h-4 w-4" /> Nova Tabela
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -330,18 +336,21 @@ export default function PriceTablesList() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <Link to={`/cadastros/tabelas-de-preco/${table.id}/editar`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
-                            <Edit2 className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10" title={isManager ? "Editar" : "Visualizar"}>
+                            {isManager ? <Edit2 className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                           </Button>
                         </Link>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleDelete(table.id, table.name)}
-                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isManager && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDelete(table.id, table.name)}
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>

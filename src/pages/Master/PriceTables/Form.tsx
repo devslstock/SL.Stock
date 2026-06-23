@@ -9,11 +9,14 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import type { PriceTableItem } from '@/types/database'
 import * as XLSX from 'xlsx'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function PriceTableForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   const isEditing = Boolean(id)
 
   const [formData, setFormData] = useState({
@@ -352,6 +355,7 @@ export default function PriceTableForm() {
               value={formData.code}
               onChange={e => setFormData({ ...formData, code: e.target.value })}
               placeholder="Ex: 01"
+              disabled={!isManager}
             />
           </div>
           <div className="space-y-2">
@@ -361,6 +365,7 @@ export default function PriceTableForm() {
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: TABELA GERAL"
+              disabled={!isManager}
             />
           </div>
         </div>
@@ -372,14 +377,17 @@ export default function PriceTableForm() {
               className="rounded border-input text-primary focus:ring-primary w-4 h-4"
               checked={formData.active}
               onChange={e => setFormData({ ...formData, active: e.target.checked })}
+              disabled={!isManager}
             />
             <span className="text-sm font-medium">Tabela Ativa</span>
           </label>
 
-          <Button type="submit" disabled={saveMutation.isPending} className="shadow-lg shadow-primary/20">
-            <Save className="h-4 w-4 mr-2" />
-            {saveMutation.isPending ? 'Salvando...' : 'Salvar Cabeçalho'}
-          </Button>
+          {isManager && (
+            <Button type="submit" disabled={saveMutation.isPending} className="shadow-lg shadow-primary/20">
+              <Save className="h-4 w-4 mr-2" />
+              {saveMutation.isPending ? 'Salvando...' : 'Salvar Cabeçalho'}
+            </Button>
+          )}
         </div>
       </form>
 
@@ -389,22 +397,26 @@ export default function PriceTableForm() {
           <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/10">
             <h2 className="text-lg font-semibold">Produtos/Serviços</h2>
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <input
-                type="file"
-                accept=".xlsx, .xls, .csv"
-                className="hidden"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-              />
-              <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="shadow-sm hover:scale-105 transition-transform flex-1 sm:flex-auto text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10">
-                <FileUp className="h-4 w-4 mr-2" /> Importar Excel
-              </Button>
-              <Button onClick={() => setIsImportModalOpen(true)} variant="secondary" size="sm" className="shadow-sm hover:scale-105 transition-transform flex-1 sm:flex-auto">
-                <DownloadCloud className="h-4 w-4 mr-2" /> Importar por Grupo
-              </Button>
-              <Button onClick={() => handleOpenItemModal()} size="sm" className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform flex-1 sm:flex-auto">
-                <Plus className="h-4 w-4 mr-2" /> Novo Produto
-              </Button>
+              {isManager && (
+                <>
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls, .csv"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                  />
+                  <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="shadow-sm hover:scale-105 transition-transform flex-1 sm:flex-auto text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10">
+                    <FileUp className="h-4 w-4 mr-2" /> Importar Excel
+                  </Button>
+                  <Button onClick={() => setIsImportModalOpen(true)} variant="secondary" size="sm" className="shadow-sm hover:scale-105 transition-transform flex-1 sm:flex-auto">
+                    <DownloadCloud className="h-4 w-4 mr-2" /> Importar por Grupo
+                  </Button>
+                  <Button onClick={() => handleOpenItemModal()} size="sm" className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform flex-1 sm:flex-auto">
+                    <Plus className="h-4 w-4 mr-2" /> Novo Produto
+                  </Button>
+                </>
+              )}
             </div>
           </div>
           
@@ -449,21 +461,23 @@ export default function PriceTableForm() {
                       <td className="px-4 py-3 text-center">{item.discount_percent ? `${item.discount_percent}%` : '-'}</td>
                       <td className="px-4 py-3 text-center">{item.max_discount_percent ? `${item.max_discount_percent}%` : '-'}</td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenItemModal(item)} className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => {
-                              if (window.confirm('Remover este item?. Esta ação não pode ser desfeita.')) deleteItemMutation.mutate(item.id)
-                            }}
-                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        {isManager && (
+                          <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenItemModal(item)} className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => {
+                                if (window.confirm('Remover este item?. Esta ação não pode ser desfeita.')) deleteItemMutation.mutate(item.id)
+                              }}
+                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))

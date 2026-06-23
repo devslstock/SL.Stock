@@ -19,7 +19,8 @@ export default function EquipmentsList() {
   const queryClient = useQueryClient()
   const { hasPermission, user } = useAuth()
   const hasAccess = hasPermission('can_manage_equipments')
-  const canEdit = user?.role !== 'mecanico'
+  const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
+  const canEdit = isManager
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
