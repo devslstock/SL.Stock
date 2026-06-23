@@ -16,6 +16,7 @@ import SaaSTeam from './pages/Master/Team'
 import SaaSCampanhas from './pages/Master/Campaigns'
 import SaaSNotes from './pages/Master/Notes'
 import SaaSLeads from './pages/Master/Leads'
+import ImportPriceTables from './pages/ImportPriceTables'
 import { ThemeProvider } from './components/ThemeProvider'
 import ChangePassword from './pages/ChangePassword'
 import ResetPasswordAuto from './pages/ResetPasswordAuto'
@@ -167,6 +168,7 @@ function App() {
             <Route path="/configuracoes/empresa" element={<CompanySettings />} />
             <Route path="/acesso" element={<AccessControl />} />
             <Route path="/ajuda" element={<HelpAndSupport />} />
+            <Route path="/importar-tabelas" element={<ImportPriceTables />} />
 
 
             <Route path="cadastros/clientes" element={<CustomersList />} />
