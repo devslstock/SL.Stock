@@ -418,7 +418,7 @@ export default function Dashboard() {
 
       {showSales && (
         <div className="mt-8">
-          {/* <SalesDashboard /> */}
+          <SalesDashboard />
         </div>
       )}
 
