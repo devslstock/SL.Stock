@@ -445,36 +445,40 @@ export default function CustomersList() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <label className="cursor-pointer">
-            <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm" disabled={isImporting} onClick={() => document.getElementById('csv-upload')?.click()}>
-              <UploadCloud className="mr-2 h-4 w-4" /> 
-              {isImporting ? 'Importando...' : 'Importar CSV'}
-            </Button>
-            <Input 
-              id="csv-upload"
-              type="file" 
-              accept=".csv" 
-              className="hidden" 
-              onChange={handleFileUpload}
-              disabled={isImporting}
-            />
-          </label>
-          <Button 
-            type="button" 
-            variant="outline" 
-            className="w-full sm:w-auto shadow-sm" 
-            disabled={isGeocoding} 
-            onClick={startGeocoding}
-            title="Atualizar coordenadas de clientes que estão sem Latitude e Longitude"
-          >
-            <MapPin className="mr-2 h-4 w-4" /> 
-            {isGeocoding ? `Atualizando (${geocodeProgress.current}/${geocodeProgress.total})...` : 'Atualizar Lat. Log.'}
-          </Button>
-          <Link to="/cadastros/clientes/novo" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
-              <Plus className="mr-2 h-4 w-4" /> Novo Cliente
-            </Button>
-          </Link>
+          {isManager && (
+            <>
+              <label className="cursor-pointer">
+                <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm" disabled={isImporting} onClick={() => document.getElementById('csv-upload')?.click()}>
+                  <UploadCloud className="mr-2 h-4 w-4" /> 
+                  {isImporting ? 'Importando...' : 'Importar CSV'}
+                </Button>
+                <Input 
+                  id="csv-upload"
+                  type="file" 
+                  accept=".csv" 
+                  className="hidden" 
+                  onChange={handleFileUpload}
+                  disabled={isImporting}
+                />
+              </label>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full sm:w-auto shadow-sm" 
+                disabled={isGeocoding} 
+                onClick={startGeocoding}
+                title="Atualizar coordenadas de clientes que estão sem Latitude e Longitude"
+              >
+                <MapPin className="mr-2 h-4 w-4" /> 
+                {isGeocoding ? `Atualizando (${geocodeProgress.current}/${geocodeProgress.total})...` : 'Atualizar Lat. Log.'}
+              </Button>
+              <Link to="/cadastros/clientes/novo" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
+                  <Plus className="mr-2 h-4 w-4" /> Novo Cliente
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -751,18 +755,21 @@ export default function CustomersList() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <Link to={`/cadastros/clientes/${customer.id}/editar`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
-                            <Edit2 className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10" title={isManager ? "Editar" : "Visualizar"}>
+                            {isManager ? <Edit2 className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                           </Button>
                         </Link>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleDelete(customer.id, customer.nickname || customer.fantasy_name || '')}
-                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isManager && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDelete(customer.id, customer.nickname || customer.fantasy_name || '')}
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>

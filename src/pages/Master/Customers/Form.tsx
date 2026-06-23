@@ -228,8 +228,10 @@ export default function CustomerForm() {
     })
   }
 
-  if (!isManager) {
-    return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
+  const hasAccess = hasPermission('can_manage_customers')
+
+  if (!hasAccess) {
+    return <div className="p-8 text-center text-muted-foreground">Acesso restrito.</div>
   }
 
   if (isEditing && isLoading) {
@@ -251,6 +253,7 @@ export default function CustomerForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <fieldset disabled={!isManager} className="space-y-6">
         
         {/* Dados Principais */}
         <div className="glass-card p-6 border-t-4 border-t-primary">
@@ -734,13 +737,16 @@ export default function CustomerForm() {
             </div>
           </div>
         )}
+        </fieldset>
 
         <div className="flex justify-end gap-3 sticky bottom-4 z-10 bg-background/80 p-4 backdrop-blur-md rounded-xl border border-border/50 shadow-lg">
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
-          <Button type="submit" className="min-w-[150px] shadow-lg shadow-primary/20" disabled={mutation.isPending}>
-            <Save className="h-4 w-4 mr-2" />
-            {mutation.isPending ? 'Salvando...' : 'Salvar Cliente'}
-          </Button>
+          <Button type="button" variant="outline" onClick={() => navigate(-1)}>Voltar</Button>
+          {isManager && (
+            <Button type="submit" className="min-w-[150px] shadow-lg shadow-primary/20" disabled={mutation.isPending}>
+              <Save className="h-4 w-4 mr-2" />
+              {mutation.isPending ? 'Salvando...' : 'Salvar Cliente'}
+            </Button>
+          )}
         </div>
       </form>
     </div>
