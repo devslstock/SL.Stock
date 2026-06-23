@@ -1,6 +1,6 @@
-# Estoque Fácil / Coletor Coruja - Plataforma de Gestão Completa 📦🦉
+# Estoque Fácil / LS Stock - Plataforma de Gestão Completa 📦
 
-Bem-vindo ao repositório oficial do **Estoque Fácil** (também conhecido como **Coletor Coruja** em seu módulo mobile).
+Bem-vindo ao repositório oficial do **Estoque Fácil** (também conhecido como **LS Stock** em seu módulo mobile).
 Esta é uma plataforma unificada que conecta as pontas soltas da logística, controle de comodatos e da operação comercial de empresas distribuidoras.
 
 ---
@@ -28,6 +28,7 @@ Os recursos logísticos são destravados de acordo com a assinatura de cada empr
 - **[Bronze]**: Focado no estoque interno (Dashboard, Produtos, Contagens e Recebimento).
 - **[Prata]**: Focado em Expedição (Montagem de Cargas/Rotas e Conferência de doca).
 - **[Ouro]**: Focado em Last-Mile (App do Motorista, Assinaturas Eletrônicas, Tracking GPS e Histórico de clientes).
+- **[Platina]**: Acesso integral a todas as ferramentas (incluindo módulos de Comodato avançados e Força de Vendas premium).
 
 ---
 
@@ -65,11 +66,10 @@ Desenhado para unificar a ponta comercial (vendedores em rota) com o backoffice 
 
 O sistema possui uma estrutura detalhada (`UserPermissions` no banco de dados) e perfis (Roles) principais:
 
-1. **`master` / `superadmin`:** Donos da plataforma SaaS. Visão sobre todas as empresas clientes (Tenants) e faturamento interno do sistema.
-2. **`admin` / `gestor`:** Donos/Gerentes da empresa cliente. Têm acesso total ao dashboard logístico e comercial, criação de regras e aprovação de alçadas.
-3. **`vendedor`:** Acesso ao CRM restrito (visualiza somente seus clientes, não pode excluir/editar livremente os clientes) e ao App de Força de Vendas.
-4. **`motorista` / `ajudante`:** Acesso bloqueado ao Painel Web. Só acessam o App Mobile para entregas.
-5. **`conferente`:** Operação de doca (App Mobile) para bipagem e inventários.
+1. **`admin` / `gestor`:** Donos/Gerentes da empresa cliente. Têm acesso total ao dashboard logístico e comercial, criação de regras e aprovação de alçadas.
+2. **`vendedor`:** Acesso ao CRM restrito (visualiza somente seus clientes, não pode excluir/editar livremente os clientes) e ao App de Força de Vendas.
+3. **`motorista` / `ajudante`:** Acesso bloqueado ao Painel Web. Só acessam o App Mobile para entregas.
+4. **`conferente`:** Operação de doca (App Mobile) para bipagem e inventários.
 
 ---
 
