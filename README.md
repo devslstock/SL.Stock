@@ -1,80 +1,107 @@
-# Estoque Fácil - Plataforma de Gestão Completa 📦
+# Estoque Fácil / Coletor Coruja - Plataforma de Gestão Completa 📦🦉
 
-O **Estoque Fácil** é uma plataforma unificada que conecta as pontas soltas da logística e da operação comercial de empresas distribuidoras. 
-
-O sistema provê duas grandes áreas:
-1. **Logística (ERP/WMS):** Toda a operação de centro de distribuição, contagem, conferência e rotas de entrega.
-2. **Força de Vendas (CRM/Vendas):** O módulo focado nos vendedores e representantes comerciais, unificando a cadeia (venda → separação → entrega).
+Bem-vindo ao repositório oficial do **Estoque Fácil** (também conhecido como **Coletor Coruja** em seu módulo mobile).
+Esta é uma plataforma unificada que conecta as pontas soltas da logística, controle de comodatos e da operação comercial de empresas distribuidoras.
 
 ---
 
+## 📚 Sumário
+- [Módulo Logístico e WMS](#1-módulo-logístico-e-wms)
+- [Módulo Força de Vendas e CRM](#2-módulo-força-de-vendas-crm-e-comodato)
+- [Stack Tecnológica](#-stack-tecnológica)
+- [Níveis de Acesso e Permissões](#-níveis-de-acesso-e-permissões-rbac)
+- [Estrutura do Repositório (Arquitetura)](#-estrutura-do-repositório-arquitetura)
+- [Como Rodar o Projeto](#-como-rodar-o-projeto)
 
-## ⚙️ 1. Funcionalidades Logísticas e Cadastros (Empresa Cliente)
+---
 
-### Bloqueio por Planos (Feature Toggling)
-Os recursos são destravados conforme a assinatura do cliente:
-- **[Bronze]**: Focado no estoque interno. Libera apenas Dashboard, Produtos, Contagens e Recebimento.
-- **[Prata]**: Focado em Expedição. Libera montagem de Cargas/Rotas e Conferência de doca.
-- **[Ouro]**: Focado em Last-Mile. Libera App do Motorista, Assinatura na tela, Tracking e Histórico de clientes.
+## ⚙️ 1. Módulo Logístico e WMS
 
-### Operação Logística
-- **Recebimentos:** Bipagem para confirmar chegada de material de fornecedores.
-- **Cargas e Entregas (Outbound):** Montagem visual de rotas.
-- **App do Motorista & Comprovantes (POD):** O motorista visualiza no celular a rota. Ele coleta assinaturas na tela do smartphone e as envia como prova de entrega.
-- **Liberações Remotas (Alçadas):** Se o operador bipar um item divergente, o app pede liberação online. O Gestor ou Admin verá um alerta na tela do Desktop e aprovará ou rejeitará o erro de longe.
+### Operação Logística e Last-Mile
+- **Recebimentos e Conferências:** Bipagem para confirmar chegada de material de fornecedores e auditoria cega de estoque.
+- **Cargas e Entregas (Outbound):** Montagem visual de rotas de entrega baseadas nas notas fiscais/pedidos.
+- **App do Motorista & Comprovantes (POD):** O motorista visualiza no celular a rota (PWA offline-first). Ele coleta assinaturas na tela do smartphone e as envia para a nuvem como prova de entrega.
+- **Liberações Remotas (Alçadas):** Caso o operador bipe um item divergente ou encontre problemas na entrega, o aplicativo pede liberação online. O Gestor vê o alerta no Desktop e aprova remotamente.
+
+### Bloqueio por Planos (SaaS Multi-tenant)
+Os recursos logísticos são destravados de acordo com a assinatura de cada empresa:
+- **[Bronze]**: Focado no estoque interno (Dashboard, Produtos, Contagens e Recebimento).
+- **[Prata]**: Focado em Expedição (Montagem de Cargas/Rotas e Conferência de doca).
+- **[Ouro]**: Focado em Last-Mile (App do Motorista, Assinaturas Eletrônicas, Tracking GPS e Histórico de clientes).
+
+---
+
+## 💼 2. Módulo Força de Vendas, CRM e Comodato
+
+Desenhado para unificar a ponta comercial (vendedores em rota) com o backoffice e a expedição.
+
+### Gestão de Vendas
+- **Criação Rápida de Pedidos:** Vendedores montam pedidos filtrando tabelas de preço exclusivas.
+- **Catálogo Offline-First:** Toda a estrutura PWA funciona sem internet (App Força de Vendas).
+- **Dashboard de Metas:** Painel com metas financeiras versus realizado, curva ABC de positivação, taxa de clientes inativos, gráficos de evolução de vendas em tempo real usando *Tailwind CSS*.
 
 ### CRM & Cadastros Base
-O sistema agora possui um núcleo base robusto para faturamento e pedidos:
-- Gestão completa de **Clientes**.
-- Gestão de **Representantes** e **Vendedores** (com criação automática de login).
-- Gestão de **Regiões**, **Tabelas de Preços** e **Condições de Pagamento**.
-- Configurações de API Key para integrações ERP (ex: Maxiprod).
+- **Cadastro Avançado de Clientes:** Vinculação com Regiões, Representantes, Tabelas de Preço, e Controle de Inadimplência. Proteção rigorosa para que Vendedores só vejam seus próprios clientes.
+- **Hierarquia Comercial:** Cadastros separados para Vendedores e Representantes com auto-geração de login.
+
+### Gestão de Equipamentos em Comodato
+- **Equipamentos e Patrimônios:** Controle rígido de Freezers, Geladeiras e Máquinas em poder dos clientes.
+- **Ordens de Serviço (OS):** O vendedor (ou gestor) abre chamados de manutenção para equipamentos defeituosos em campo com geolocalização e fotos da anomalia.
 
 ---
 
-## 💼 2. Força de Vendas (Sales App)
+## 💻 Stack Tecnológica
 
-O mais recente e poderoso módulo do Estoque Fácil, desenhado para fechar o ciclo desde a ponta comercial.
-
-### Gestão Comercial
-- **Visualização de Pedidos e Orçamentos:** Tela Desktop ultrarrápida, desenhada aos moldes do Mercos, com visão em funil.
-- **Painel de Acompanhamento:** Rascunhos de pedidos geram alertas para os vendedores concluírem o funil.
-- **Pedidos Via Inteligência Artificial (Em breve):** Preparação da infraestrutura para o vendedor criar pedidos conversando no WhatsApp.
-- **Filtros e Relatórios:** Rastreabilidade se o pedido foi faturado, cancelado ou está em rota, pois a força de vendas conversa com o módulo Logístico de forma nativa.
-
----
-
-## 🗄️ Arquitetura do Banco de Dados (Supabase / Postgres)
-
-### Camada Global (SaaS)
-- **`companies`**: `id`, `name`, `cnpj` (usado como slug), `max_users`, `plan`, `active`.
-- **`saas_plans`**: Tabela de preços base do Software.
-- **`company_payments`**: Controle financeiro para as assinaturas das empresas clientes.
-
-### Camada Local (Tenant)
-Tabelas que operam isoladas por `company_id`.
-- **`users`**: RBAC (Roles: Administrador, Gestor, Conferente, Motorista, Vendedor).
-- **`products`** e **`price_tables`**: Base para formação de preços do Força de Vendas.
-- **`operations`**, **`operation_items`**: O coração das rotas, inventários e recebimentos.
-- **`delivery_routes`** & **`delivery_clients`** & **`delivery_items`**.
+- **Frontend Core:** React 19 + TypeScript + Vite.
+- **Estilização UI:** Tailwind CSS (v4) + shadcn/ui + Radix Primitives.
+- **Offline & Mobile:** PWA (Vite PWA Plugin) + LocalForage / IndexedDB + Service Workers customizados para sincronização background.
+- **State Management:** TanStack Query (React Query) + Context API.
+- **Backend & Database:** Supabase (PostgreSQL, PostgREST, Row-Level Security, Supabase Auth).
+- **Deploy & Infraestrutura:** Vercel (CI/CD Automático via Github).
 
 ---
 
-## 🚀 Como Rodar o Projeto
+## 🔐 Níveis de Acesso e Permissões (RBAC)
 
-1. **Instalar Dependências:**
+O sistema possui uma estrutura detalhada (`UserPermissions` no banco de dados) e perfis (Roles) principais:
+
+1. **`master` / `superadmin`:** Donos da plataforma SaaS. Visão sobre todas as empresas clientes (Tenants) e faturamento interno do sistema.
+2. **`admin` / `gestor`:** Donos/Gerentes da empresa cliente. Têm acesso total ao dashboard logístico e comercial, criação de regras e aprovação de alçadas.
+3. **`vendedor`:** Acesso ao CRM restrito (visualiza somente seus clientes, não pode excluir/editar livremente os clientes) e ao App de Força de Vendas.
+4. **`motorista` / `ajudante`:** Acesso bloqueado ao Painel Web. Só acessam o App Mobile para entregas.
+5. **`conferente`:** Operação de doca (App Mobile) para bipagem e inventários.
+
+---
+
+## 📁 Estrutura do Repositório (Arquitetura)
+
+Para detalhes mais profundos sobre a engenharia, consulte:
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (Em construção/Detalhado)
+- [docs/CHANGELOG.md](docs/CHANGELOG.md) (Histórico de lógicas recentes)
+
+---
+
+## 🚀 Como Rodar o Projeto Localmente
+
+1. **Clonar e Instalar Dependências:**
 ```bash
+git clone https://github.com/lucaslopescoruja-debug/gerenciamento.git
+cd coletor
 npm install
 ```
 
-2. **Rodar Ambiente Local:**
+2. **Configurar Variáveis de Ambiente:**
+Crie o arquivo `.env` na raiz seguindo o `.env.example` e preencha a URL e a API Key anônima do Supabase.
+
+3. **Rodar Ambiente Local:**
 ```bash
 npm run dev
 ```
 
-3. **Gerar Build de Produção:**
+4. **Gerar Build de Produção (Teste de PWA):**
 ```bash
 npm run build
+npm run preview
 ```
 
 *(Todos os commits para a branch `main` ativam deploy automatizado na Vercel).*
