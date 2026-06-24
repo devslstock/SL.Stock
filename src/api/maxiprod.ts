@@ -127,25 +127,27 @@ export const maxiprodApi = {
     // 1. Mapear Produtos
     try {
       const itensData = await proxyFetch('/Item?limit=1000', 'GET');
-      const itensList = Array.isArray(itensData) ? itensData : (itensData.itens || itensData.data || []);
+      const itensList = Array.isArray(itensData) ? itensData : (itensData.itens || itensData.Itens || itensData.data || itensData.Data || []);
       
-      for (const item of itensList) {
-        if (!item.CodigoItem && !item.codigo) continue;
-        const code = item.CodigoItem || item.codigo;
-        const itemId = item.Id || item.id;
-        
-        if (code && itemId) {
-          await supabase.from('products')
-            .update({ maxiprod_id: itemId })
-            .eq('code', code)
-            .eq('company_id', comp.id);
+      const { data: supaProducts } = await supabase.from('products').select('id, code, external_code').eq('company_id', comp.id);
+      
+      if (supaProducts && supaProducts.length > 0) {
+        for (const item of itensList) {
+          const code = item.CodigoItem || item.codigo || item.Codigo;
+          const itemId = item.Id || item.id;
           
-          await supabase.from('products')
-            .update({ maxiprod_id: itemId })
-            .eq('external_code', code)
-            .eq('company_id', comp.id);
+          if (code && itemId) {
+            const codeStr = String(code).trim().toLowerCase();
+            const matched = supaProducts.find(p => 
+              (p.code && String(p.code).trim().toLowerCase() === codeStr) || 
+              (p.external_code && String(p.external_code).trim().toLowerCase() === codeStr)
+            );
             
-          syncStats.products++;
+            if (matched) {
+              await supabase.from('products').update({ maxiprod_id: itemId }).eq('id', matched.id);
+              syncStats.products++;
+            }
+          }
         }
       }
     } catch (e) {
@@ -154,28 +156,35 @@ export const maxiprodApi = {
 
     // 2. Mapear Clientes
     try {
-      // Usando o ListarMinhasEmpresas conforme documentação, ou Empresa?limit=1000
       let clientesList: any[] = [];
       try {
         const clientesData = await proxyFetch('/Empresa?limit=1000', 'GET');
-        clientesList = Array.isArray(clientesData) ? clientesData : (clientesData.itens || clientesData.data || []);
+        clientesList = Array.isArray(clientesData) ? clientesData : (clientesData.itens || clientesData.Itens || clientesData.data || clientesData.Data || []);
       } catch {
         const clientesDataAlt = await proxyFetch('/Empresa/ListarMinhasEmpresas', 'GET');
-        clientesList = Array.isArray(clientesDataAlt) ? clientesDataAlt : (clientesDataAlt.itens || clientesDataAlt.data || []);
+        clientesList = Array.isArray(clientesDataAlt) ? clientesDataAlt : (clientesDataAlt.itens || clientesDataAlt.Itens || clientesDataAlt.data || clientesDataAlt.Data || []);
       }
       
-      for (const emp of clientesList) {
-        const cnpj = emp.CnpjCpf || emp.cnpjCpf || emp.Cnpj || emp.cnpj;
-        const empId = emp.Id || emp.id;
-        
-        if (cnpj && empId) {
-          const cleanCnpj = cnpj.replace(/\D/g, '');
-          await supabase.from('customers')
-            .update({ maxiprod_id: empId })
-            .eq('document', cleanCnpj)
-            .eq('company_id', comp.id);
+      const { data: supaCustomers } = await supabase.from('customers').select('id, document').eq('company_id', comp.id);
+      
+      if (supaCustomers && supaCustomers.length > 0) {
+        for (const emp of clientesList) {
+          const cnpj = emp.CnpjCpf || emp.cnpjCpf || emp.Cnpj || emp.cnpj;
+          const empId = emp.Id || emp.id;
+          
+          if (cnpj && empId) {
+            const cleanMaxiCnpj = String(cnpj).replace(/\D/g, '');
+            const matched = supaCustomers.find(c => {
+              if (!c.document) return false;
+              const cleanSupaCnpj = String(c.document).replace(/\D/g, '');
+              return cleanSupaCnpj === cleanMaxiCnpj;
+            });
             
-          syncStats.customers++;
+            if (matched) {
+              await supabase.from('customers').update({ maxiprod_id: empId }).eq('id', matched.id);
+              syncStats.customers++;
+            }
+          }
         }
       }
     } catch (e) {
