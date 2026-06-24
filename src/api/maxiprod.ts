@@ -76,20 +76,18 @@ export const maxiprodApi = {
     if (error || !order) throw new Error('Pedido não encontrado')
 
     const payload = {
-      cliente: {
-        cnpj_cpf: order.customer.document || '',
-        razao_social: order.customer.legal_name || 'Consumidor',
-        nome_fantasia: order.customer.fantasy_name || 'Consumidor'
-      },
-      itens: order.items.map((i: any) => ({
-        codigo_item: i.product.external_code || i.product.code,
-        quantidade: i.quantity,
-        preco_unitario: i.unit_price,
-        desconto_percentual: i.discount_percent || 0
-      })),
-      observacoes: order.notes || '',
-      desconto_total: order.total_discount || 0,
-      valor_total: order.net_amount
+      ClienteId: order.customer.document ? order.customer.document.replace(/\D/g, '') : '',
+      MoedaId: 1, // Tentando o padrão 1 (Real)
+      OperacaoFiscalId: 1, // Tentando o padrão 1
+      Observacoes: order.notes || '',
+      DescontoTotal: order.total_discount || 0,
+      ValorTotal: order.net_amount,
+      ItensDoPedidoDeVenda: order.items.map((i: any) => ({
+        ItemId: i.product.external_code || i.product.code,
+        Quantidade: i.quantity,
+        ValorUnitario: i.unit_price,
+        DescontoPercentual: i.discount_percent || 0
+      }))
     }
 
     const maxiprodRes = await proxyFetch('/PedidoDeVenda', 'POST', payload);
