@@ -206,5 +206,57 @@ export const salesApi = {
     }
 
     return data as SalesOrderItem[]
+  },
+
+  async updateSalesOrderItem(id: string, updates: Partial<SalesOrderItem>) {
+    const { data: oldItem } = await supabase
+      .from('sales_order_items')
+      .select('product_id, quantity')
+      .eq('id', id)
+      .single()
+
+    const { data, error } = await supabase
+      .from('sales_order_items')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Adjust reserved stock if quantity changed
+    if (oldItem && updates.quantity !== undefined && oldItem.quantity !== updates.quantity) {
+      const delta = updates.quantity - oldItem.quantity
+      await supabase.rpc('increment_reserved_stock', {
+        p_product_id: oldItem.product_id,
+        p_delta: delta
+      })
+    }
+
+    return data as SalesOrderItem
+  },
+
+  async deleteSalesOrderItem(id: string) {
+    const { data: item } = await supabase
+      .from('sales_order_items')
+      .select('product_id, quantity')
+      .eq('id', id)
+      .single()
+
+    const { error } = await supabase
+      .from('sales_order_items')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    if (item) {
+      await supabase.rpc('increment_reserved_stock', {
+        p_product_id: item.product_id,
+        p_delta: -item.quantity
+      })
+    }
+
+    return true
   }
 }

@@ -95,9 +95,7 @@ import ClientHistory from './pages/ClientHistory'
 import SalesManagement from './pages/SalesManagement/index'
 import SalesOrders from './pages/SalesApp/Orders/index'
 import SalesCustomers from './pages/SalesApp/Customers/index'
-import SelectCustomer from './pages/SalesApp/NewOrder/SelectCustomer'
-import SelectProducts from './pages/SalesApp/NewOrder/SelectProducts'
-import CartReview from './pages/SalesApp/NewOrder/Cart'
+import NewOrder from '@/pages/SalesApp/NewOrder'
 import { PlanGuard } from './components/PlanGuard'
 
 function App() {
@@ -164,9 +162,7 @@ function App() {
             <Route path="/vendas/clientes" element={<SalesCustomers />} />
             
             {/* New Order Flow */}
-            <Route path="/vendas/novo-pedido/clientes" element={<SelectCustomer />} />
-            <Route path="/vendas/novo-pedido/produtos" element={<SelectProducts />} />
-            <Route path="/vendas/novo-pedido/carrinho" element={<CartReview />} />
+            <Route path="/vendas/novo-pedido" element={<NewOrder />} />
 
             <Route path="/configuracoes/empresa" element={<CompanySettings />} />
             <Route path="/acesso" element={<AccessControl />} />

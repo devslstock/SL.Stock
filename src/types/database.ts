@@ -223,7 +223,7 @@ export interface SalesOrder {
   id: string
   order_number: number
   company_id: string
-  customer_id: string
+  customer_id: string | null
   sales_rep_id: string | null
   price_table_id: string | null
   payment_condition_id: string | null

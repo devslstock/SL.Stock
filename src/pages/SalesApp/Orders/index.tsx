@@ -64,7 +64,7 @@ export default function SalesOrders() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-          <Link to="/vendas/novo-pedido/clientes">
+          <Link to="/vendas/novo-pedido">
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4 h-10 shadow-sm rounded-md">
               <Plus className="h-4 w-4 mr-2" /> Criar pedido / orçamento
             </Button>

@@ -100,7 +100,7 @@ export default function SalesCustomers() {
                   <div className="text-xs font-semibold text-muted-foreground">
                     Tabela: <span className="text-foreground">{customer.price_table?.name || 'Padrão'}</span>
                   </div>
-                  <Link to={`/vendas/novo-pedido/carrinho?cliente=${customer.id}`}>
+                  <Link to={`/vendas/novo-pedido?cliente=${customer.id}`}>
                     <button 
                       disabled={!customer.active}
                       className={`text-xs font-bold px-4 py-2 rounded-lg transition-colors ${
