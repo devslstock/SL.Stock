@@ -9,6 +9,7 @@ import { Search, ArrowLeft, ShoppingCart, Filter, History, Tag, Star, X, LayoutG
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/utils/formatters'
+import { toast } from '@/components/ui/toaster'
 
 export default function SelectProducts() {
   const navigate = useNavigate()
@@ -103,7 +104,8 @@ export default function SelectProducts() {
     const availableStock = Math.max(0, (product.stock || 0) - (product.reserved_stock || 0))
     if (product.cartQuantity === 0) {
       if (1 > availableStock) {
-        return // O botão já estará desabilitado, mas por segurança
+        toast.error('Saldo previsto insuficiente!')
+        return
       }
       addItem({
         product_id: product.id,
@@ -115,7 +117,8 @@ export default function SelectProducts() {
       })
     } else {
       if (product.cartQuantity + 1 > availableStock) {
-        return // Limita o botão de +
+        toast.error('Limite máximo do saldo previsto atingido!')
+        return
       }
       updateQuantity(product.id, product.cartQuantity + 1)
     }
@@ -210,8 +213,8 @@ export default function SelectProducts() {
                     <h3 className="font-bold text-sm text-foreground leading-tight mb-1">{product.description}</h3>
                     <div className="flex items-center gap-3 mt-1.5">
                       <span className="font-bold text-emerald-600">{formatCurrency(product.finalPrice)}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm ${isOutOfStock ? 'bg-red-500/10 text-red-500' : 'bg-muted text-muted-foreground'}`}>
-                        Disp: {availableStock}
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm ${isOutOfStock ? 'bg-red-500/10 text-red-500' : 'bg-muted text-muted-foreground'}`} title="Saldo Previsto (Físico - Reservas)">
+                        Previsto: {availableStock}
                       </span>
                     </div>
                   </div>
