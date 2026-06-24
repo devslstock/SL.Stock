@@ -61,6 +61,9 @@ export interface Company {
   garage_lng?: number | null
   maxiprod_api_token?: string | null
   maxiprod_last_sync?: string | null
+  maxiprod_moeda_id?: number | null
+  maxiprod_operacao_id?: number | null
+  maxiprod_unidade_id?: number | null
   created_at: string
 }
 
@@ -141,6 +144,7 @@ export interface Customer {
   allow_unit_price_change: boolean | null
   region_id: string | null
   sales_rep_id: string | null
+  maxiprod_id?: number | null
   created_at: string
   updated_at: string
   equipments?: CustomerEquipment[]
@@ -276,6 +280,7 @@ export interface Product {
   description: string
   group_name?: string
   stock: number
+  maxiprod_id?: number | null
   min_stock_alert?: number
   batch?: string
   unit_weight?: number

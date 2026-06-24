@@ -75,20 +75,32 @@ export const maxiprodApi = {
 
     if (error || !order) throw new Error('Pedido não encontrado')
 
+    const { data: comp } = await supabase.from('companies').select('*').eq('id', order.company_id).single();
+    if (!comp) throw new Error('Configurações da empresa não encontradas');
+
+    if (!order.customer.maxiprod_id) {
+       throw new Error(`Cliente ${order.customer.legal_name || order.customer.fantasy_name || 'selecionado'} não possui ID do Maxiprod mapeado. Por favor, execute a Sincronização de IDs no menu Configurações.`);
+    }
+
+    const missingItems = order.items.filter((i: any) => !i.product.maxiprod_id);
+    if (missingItems.length > 0) {
+       throw new Error(`Existem ${missingItems.length} produto(s) sem ID do Maxiprod mapeado. Por favor, execute a Sincronização de IDs no menu Configurações.`);
+    }
+
     const payload = {
-      ClienteId: order.customer.document ? order.customer.document.replace(/\D/g, '') : '',
-      MoedaId: 1, // Tentando o padrão 1 (Real)
-      OperacaoFiscalId: 1, // Tentando o padrão 1
+      ClienteId: order.customer.maxiprod_id,
+      MoedaId: comp.maxiprod_moeda_id || 1, // Se não tiver configurado, tenta 1
+      OperacaoFiscalId: comp.maxiprod_operacao_id || 1, 
       Observacoes: order.notes || '',
       DescontoTotal: order.total_discount || 0,
       ValorTotal: order.net_amount,
       ItensDoPedidoDeVenda: order.items.map((i: any) => ({
-        ItemId: i.product.external_code || i.product.code,
+        ItemId: i.product.maxiprod_id,
         Quantidade: i.quantity,
         ValorUnitario: i.unit_price,
         DescontoPercentual: i.discount_percent || 0,
-        UnidadeId: 1, // Exigido pelo ERP (Inteiro aceito)
-        PagamentoCom: false // Booleano: Pagamento de Comissão
+        UnidadeId: comp.maxiprod_unidade_id || 1, 
+        PagamentoCom: false
       }))
     }
 
@@ -103,6 +115,76 @@ export const maxiprodApi = {
   /**
    * Sincroniza dados pré-definidos (Clientes e Produtos)
    */
+  /**
+   * Sincronização Leve: Busca apenas os IDs do Maxiprod e salva no Supabase (não altera dados)
+   */
+  async syncMaxiprodIds() {
+    const { data: comp } = await supabase.from('companies').select('id').limit(1).single();
+    if (!comp) throw new Error("Empresa não encontrada");
+
+    let syncStats = { products: 0, customers: 0 }
+
+    // 1. Mapear Produtos
+    try {
+      const itensData = await proxyFetch('/Item?limit=1000', 'GET');
+      const itensList = Array.isArray(itensData) ? itensData : (itensData.itens || itensData.data || []);
+      
+      for (const item of itensList) {
+        if (!item.CodigoItem && !item.codigo) continue;
+        const code = item.CodigoItem || item.codigo;
+        const itemId = item.Id || item.id;
+        
+        if (code && itemId) {
+          await supabase.from('products')
+            .update({ maxiprod_id: itemId })
+            .eq('code', code)
+            .eq('company_id', comp.id);
+          
+          await supabase.from('products')
+            .update({ maxiprod_id: itemId })
+            .eq('external_code', code)
+            .eq('company_id', comp.id);
+            
+          syncStats.products++;
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao sincronizar IDs de produtos:', e);
+    }
+
+    // 2. Mapear Clientes
+    try {
+      // Usando o ListarMinhasEmpresas conforme documentação, ou Empresa?limit=1000
+      let clientesList: any[] = [];
+      try {
+        const clientesData = await proxyFetch('/Empresa?limit=1000', 'GET');
+        clientesList = Array.isArray(clientesData) ? clientesData : (clientesData.itens || clientesData.data || []);
+      } catch {
+        const clientesDataAlt = await proxyFetch('/Empresa/ListarMinhasEmpresas', 'GET');
+        clientesList = Array.isArray(clientesDataAlt) ? clientesDataAlt : (clientesDataAlt.itens || clientesDataAlt.data || []);
+      }
+      
+      for (const emp of clientesList) {
+        const cnpj = emp.CnpjCpf || emp.cnpjCpf || emp.Cnpj || emp.cnpj;
+        const empId = emp.Id || emp.id;
+        
+        if (cnpj && empId) {
+          const cleanCnpj = cnpj.replace(/\D/g, '');
+          await supabase.from('customers')
+            .update({ maxiprod_id: empId })
+            .eq('document', cleanCnpj)
+            .eq('company_id', comp.id);
+            
+          syncStats.customers++;
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao sincronizar IDs de clientes:', e);
+    }
+
+    return syncStats;
+  },
+
   async syncAllData() {
     const { data: comp } = await supabase.from('companies').select('id').limit(1).single();
     if (!comp) throw new Error("Empresa não encontrada");
