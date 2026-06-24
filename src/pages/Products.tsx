@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from '@/components/ui/toaster'
-import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight, ScanLine, ArrowUpDown, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight, ScanLine, ArrowUpDown, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
@@ -34,7 +34,7 @@ export default function Products() {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 100
+  const itemsPerPage = 50
 
   const { user, isMaster, hasPermission } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
@@ -188,6 +188,12 @@ export default function Products() {
 
   // Pagination Logic
   const totalPages = Math.ceil(sortedProducts.length / itemsPerPage)
+  
+  // Ensure current page is valid after filtering
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(totalPages)
+  }
+
   const paginatedProducts = sortedProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const renderSortIcon = (field: 'code' | 'description' | 'group_name' | 'stock') => {
@@ -567,6 +573,51 @@ export default function Products() {
           </div>
         )}
       </div>
+      {/* Barra de Ferramentas / Paginação Topo */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-muted/20 p-2 rounded-lg border border-border/50">
+        <div className="text-sm font-medium pl-2">
+          {/* We can leave this empty or put something here later */}
+        </div>
+        
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-muted-foreground">
+            Exibindo itens {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filtered.length)} de {filtered.length}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentPage(1)} disabled={currentPage === 1}
+            >
+              <span className="sr-only">Primeira</span>
+              <span className="text-xs font-bold">|&lt;</span>
+            </Button>
+            <Button 
+              variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <span className="px-2 font-medium">
+              {currentPage} de {totalPages || 1}
+            </span>
+
+            <Button 
+              variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0}
+            >
+              <span className="sr-only">Última</span>
+              <span className="text-xs font-bold">&gt;|</span>
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <div className="glass-card overflow-hidden">
         <Table>
@@ -656,34 +707,6 @@ export default function Products() {
         </Table>
       </div>
 
-      {totalPages > 0 && (
-        <div className="flex items-center justify-between px-2 pt-4">
-          <div className="text-sm text-muted-foreground hidden sm:block">
-            Mostrando {(currentPage - 1) * itemsPerPage + 1} a {Math.min(currentPage * itemsPerPage, sortedProducts.length)} de {sortedProducts.length} produtos
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              Anterior
-            </Button>
-            <div className="text-sm font-medium px-2">
-              Página {currentPage} de {totalPages}
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages}
-            >
-              Próxima
-            </Button>
-          </div>
-        </div>
-      )}
 
 
 
