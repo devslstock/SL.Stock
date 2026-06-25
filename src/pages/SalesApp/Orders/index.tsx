@@ -73,6 +73,27 @@ export default function SalesOrders() {
           <Button variant="outline" className="text-primary border-border bg-background font-semibold px-4 h-10 rounded-md">
             <Printer className="h-4 w-4 mr-2" /> Imprimir pedidos
           </Button>
+
+          <Button 
+            onClick={async () => {
+              if (window.confirm('Tem certeza que deseja apagar TODOS os pedidos do sistema?')) {
+                const { supabase } = await import('@/lib/supabase');
+                const { data: orders } = await supabase.from('sales_orders').select('id');
+                if (orders && orders.length > 0) {
+                  for (const order of orders) {
+                    await supabase.from('sales_order_items').delete().eq('sales_order_id', order.id);
+                    await supabase.from('sales_orders').delete().eq('id', order.id);
+                  }
+                  window.location.reload();
+                } else {
+                  alert('Nenhum pedido encontrado.');
+                }
+              }
+            }} 
+            className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 h-10 shadow-sm rounded-md"
+          >
+            <Trash2 className="h-4 w-4 mr-2" /> Limpar Todos
+          </Button>
         </div>
       </div>
 
