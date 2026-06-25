@@ -16,6 +16,7 @@ interface ProductSelectModalProps {
 
 export function ProductSelectModal({ isOpen, onClose, onAddProducts, currentItems }: ProductSelectModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('')
   const [activeTab, setActiveTab] = useState<'repositions' | 'promotions' | 'highlights'>('repositions')
 
   // We maintain a local cart state so the user can freely use +/- without saving to DB on every click
@@ -38,15 +39,29 @@ export function ProductSelectModal({ isOpen, onClose, onAddProducts, currentItem
     enabled: isOpen
   })
 
+  const categories = useMemo(() => {
+    const cats = new Set(products.map((p: any) => p.group_name).filter(Boolean))
+    return Array.from(cats).sort() as string[]
+  }, [products])
+
   const filteredProducts = useMemo(() => {
-    if (!searchTerm) return products.slice(0, 50) // limit initial load to 50 for performance
-    const term = searchTerm.toLowerCase()
-    return products.filter((p: any) => 
-      p.description?.toLowerCase().includes(term) ||
-      p.code?.toLowerCase().includes(term) ||
-      p.ean?.includes(term)
-    ).slice(0, 50)
-  }, [products, searchTerm])
+    let filtered = products
+    
+    if (selectedCategory) {
+      filtered = filtered.filter((p: any) => p.group_name === selectedCategory)
+    }
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      filtered = filtered.filter((p: any) => 
+        p.description?.toLowerCase().includes(term) ||
+        p.code?.toLowerCase().includes(term) ||
+        p.ean?.includes(term)
+      )
+    }
+    
+    return filtered.slice(0, 50) // limit initial load to 50 for performance
+  }, [products, searchTerm, selectedCategory])
 
   const handleUpdateQuantity = (productId: string, delta: number) => {
     setLocalCart(prev => {
@@ -115,8 +130,20 @@ export function ProductSelectModal({ isOpen, onClose, onAddProducts, currentItem
           <div className="flex items-center justify-between p-3 border-b border-border">
             <Button variant="ghost" className="text-muted-foreground" onClick={onClose}>Cancelar</Button>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-muted-foreground"><Filter className="h-5 w-5" /></Button>
-              <Button variant="ghost" size="icon" className="text-muted-foreground"><Search className="h-5 w-5" /></Button>
+              <div className="relative">
+                <Button variant="ghost" size="icon" className={selectedCategory ? "text-primary bg-primary/10" : "text-muted-foreground"}>
+                  <Filter className="h-5 w-5" />
+                </Button>
+                <select 
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  value={selectedCategory}
+                  onChange={e => setSelectedCategory(e.target.value)}
+                  title="Filtrar por categoria"
+                >
+                  <option value="">Todas Categorias</option>
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
               <Button variant="ghost" className="text-primary font-semibold" onClick={handleSave}>Concluir</Button>
             </div>
           </div>
