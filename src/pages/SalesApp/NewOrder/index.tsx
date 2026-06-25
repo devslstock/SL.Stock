@@ -272,7 +272,7 @@ export default function NewOrder() {
                 />
                 
                 {showCustomerResults && customerSearch.length > 1 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
                     {filteredCustomers.length > 0 ? (
                       filteredCustomers.map((c: any) => (
                         <div 
@@ -326,7 +326,7 @@ export default function NewOrder() {
             />
             
             {showProductResults && productSearch.length > 1 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((p: any) => (
                     <div 
