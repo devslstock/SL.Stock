@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { ProductSelectModal } from './ProductSelectModal'
+import { OrderDetailsModal } from '@/components/Sales/OrderDetailsModal'
+import { ChevronDown, Copy, Mail, Ban, CreditCard } from 'lucide-react'
 
 export default function NewOrder() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -33,7 +35,18 @@ export default function NewOrder() {
     }
   })
 
+  const { data: paymentConditions = [] } = useQuery({
+    queryKey: ['payment_conditions'],
+    queryFn: async () => {
+      const { salesApi } = await import('@/api/sales')
+      return salesApi.getPaymentConditions()
+    }
+  })
+
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [showOptionsTop, setShowOptionsTop] = useState(false)
+  const [showOptionsBottom, setShowOptionsBottom] = useState(false)
 
   const filteredCustomers = customerSearch.length > 1 
     ? customers.filter((c: any) => 
@@ -232,12 +245,33 @@ export default function NewOrder() {
           <Button onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
             <Save className="h-4 w-4 mr-2" /> Gerar pedido
           </Button>
-          <Button variant="outline" className="h-9 font-medium border-border">
+          <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setIsDetailsModalOpen(true)}>
             <Eye className="h-4 w-4 mr-2" /> Visualizar
           </Button>
-          <Button variant="outline" className="h-9 font-medium border-border">
-            <Send className="h-4 w-4 mr-2" /> Enviar por e-mail
-          </Button>
+          
+          <div className="relative">
+            <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setShowOptionsTop(!showOptionsTop)}>
+              Mais opções <ChevronDown className="h-4 w-4 ml-2" />
+            </Button>
+            {showOptionsTop && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowOptionsTop(false)} />
+                <div className="absolute top-full right-0 mt-1 w-48 bg-card border border-border shadow-lg rounded-md flex flex-col z-50 py-1">
+                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsTop(false); toast.info('Em breve!') }}>
+                    <Copy className="h-4 w-4" /> Duplicar
+                  </button>
+                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsTop(false); toast.info('Em breve!') }}>
+                    <Mail className="h-4 w-4" /> Enviar por e-mail
+                  </button>
+                  <div className="h-px bg-border my-1" />
+                  <button className="px-4 py-2 text-sm text-left hover:bg-muted text-red-500 flex items-center gap-2" onClick={() => { setShowOptionsTop(false); handleUpdate({ status: 'Cancelado' }) }}>
+                    <Ban className="h-4 w-4" /> Cancelar pedido
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          
           <Button variant="ghost" onClick={() => navigate('/vendas/pedidos')} className="h-9 text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4 mr-2" /> Fechar
           </Button>
@@ -323,16 +357,9 @@ export default function NewOrder() {
           
           <Button 
             onClick={() => setIsProductModalOpen(true)}
-            className="w-full bg-[#2a2540] hover:bg-[#1a1530] text-white py-6 text-lg font-semibold rounded-xl"
+            className="w-full bg-[#2a2540] hover:bg-[#1a1530] text-white py-6 text-lg font-semibold rounded-xl mt-4"
           >
             Adicionar produtos
-          </Button>
-          
-          <Button 
-            variant="outline"
-            className="w-full mt-3 border-primary/20 text-primary py-6 text-lg font-semibold rounded-xl hover:bg-primary/5"
-          >
-            Definir descontos e acréscimos
           </Button>
 
           {order.items && order.items.length > 0 ? (
@@ -447,6 +474,67 @@ export default function NewOrder() {
             />
           </div>
         </section>
+
+        {/* BLOCO 4: PAGAMENTO */}
+        <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4 text-muted-foreground">
+            <CreditCard className="h-5 w-5" />
+            <h2 className="text-sm font-bold uppercase tracking-wider">Pagamento</h2>
+          </div>
+
+          <div className="max-w-md mt-2">
+            <label className="text-xs text-muted-foreground font-medium mb-1 block">* Condição de pagamento</label>
+            <select 
+              className="w-full border border-border bg-background rounded-md h-9 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+              value={order.payment_condition_id || ''}
+              onChange={(e) => handleUpdate({ payment_condition_id: e.target.value || null })}
+            >
+              <option value="">---------</option>
+              {paymentConditions.map((pc: any) => (
+                <option key={pc.id} value={pc.id}>{pc.name}</option>
+              ))}
+            </select>
+          </div>
+        </section>
+      </div>
+
+      {/* AÇÕES RODAPÉ */}
+      <div className="bg-card border-t border-border -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row gap-4 items-center justify-end mt-8 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
+            <Save className="h-4 w-4 mr-2" /> Gerar pedido
+          </Button>
+          <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setIsDetailsModalOpen(true)}>
+            <Eye className="h-4 w-4 mr-2" /> Visualizar
+          </Button>
+          
+          <div className="relative">
+            <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setShowOptionsBottom(!showOptionsBottom)}>
+              Mais opções <ChevronDown className="h-4 w-4 ml-2" />
+            </Button>
+            {showOptionsBottom && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowOptionsBottom(false)} />
+                <div className="absolute bottom-full right-0 mb-1 w-48 bg-card border border-border shadow-lg rounded-md flex flex-col z-50 py-1">
+                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); toast.info('Em breve!') }}>
+                    <Copy className="h-4 w-4" /> Duplicar
+                  </button>
+                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); toast.info('Em breve!') }}>
+                    <Mail className="h-4 w-4" /> Enviar por e-mail
+                  </button>
+                  <div className="h-px bg-border my-1" />
+                  <button className="px-4 py-2 text-sm text-left hover:bg-muted text-red-500 flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); handleUpdate({ status: 'Cancelado' }) }}>
+                    <Ban className="h-4 w-4" /> Cancelar pedido
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          
+          <Button variant="ghost" onClick={() => navigate('/vendas/pedidos')} className="h-9 text-muted-foreground hover:text-foreground">
+            <X className="h-4 w-4 mr-2" /> Fechar
+          </Button>
+        </div>
       </div>
 
       <ProductSelectModal 
@@ -455,6 +543,12 @@ export default function NewOrder() {
         onAddProducts={handleSaveProductsFromModal}
         currentItems={order.items?.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity })) || []}
         priceTableId={order.customer?.price_table_id}
+      />
+      
+      <OrderDetailsModal 
+        orderId={orderId}
+        isOpen={isDetailsModalOpen}
+        onOpenChange={setIsDetailsModalOpen}
       />
     </div>
     </>
