@@ -246,12 +246,32 @@ export default function NewOrder() {
     }
     
     try {
-      await salesApi.updateSalesOrder(orderId, { status: 'Enviado' })
-      toast.success('Pedido gerado e enviado com sucesso!')
+      await salesApi.updateSalesOrder(orderId, { status: 'Orçamento' })
+      toast.success('Orçamento salvo com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       navigate('/vendas/pedidos')
     } catch (e: any) {
       toast.error('Erro ao gerar pedido: ' + e.message)
+    }
+  }
+
+  const handleFinishOrder = async () => {
+    if (!order.customer_id) {
+      toast.error('Selecione um cliente para concluir o pedido')
+      return
+    }
+    if (!order.items || order.items.length === 0) {
+      toast.error('Adicione pelo menos um produto')
+      return
+    }
+    
+    try {
+      await salesApi.updateSalesOrder(orderId, { status: 'Concluído' })
+      toast.success('Pedido concluído com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      navigate('/vendas/pedidos')
+    } catch (e: any) {
+      toast.error('Erro ao concluir pedido: ' + e.message)
     }
   }
 
@@ -278,8 +298,11 @@ export default function NewOrder() {
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
-            <Save className="h-4 w-4 mr-2" /> Gerar pedido
+          <Button onClick={handleGenerateOrder} variant="outline" className="border-primary text-primary hover:bg-primary/5 font-bold h-9">
+            <Save className="h-4 w-4 mr-2" /> Salvar
+          </Button>
+          <Button onClick={handleFinishOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
+            <Send className="h-4 w-4 mr-2" /> Concluir pedido
           </Button>
           <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setIsDetailsModalOpen(true)}>
             <Eye className="h-4 w-4 mr-2" /> Visualizar
@@ -558,9 +581,14 @@ export default function NewOrder() {
               Avançar
             </Button>
           ) : (
-            <Button onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-              <Save className="h-4 w-4 mr-2" /> Finalizar
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleGenerateOrder} variant="outline" className="border-primary text-primary hover:bg-primary/5 font-bold">
+                <Save className="h-4 w-4 mr-2" /> Salvar Orçamento
+              </Button>
+              <Button onClick={handleFinishOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+                <Send className="h-4 w-4 mr-2" /> Concluir
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -568,8 +596,11 @@ export default function NewOrder() {
       {/* AÇÕES RODAPÉ */}
       <div className="bg-card border-t border-border -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row gap-4 items-center justify-end mt-8 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
-            <Save className="h-4 w-4 mr-2" /> Gerar pedido
+          <Button onClick={handleGenerateOrder} variant="outline" className="border-primary text-primary hover:bg-primary/5 font-bold h-9">
+            <Save className="h-4 w-4 mr-2" /> Salvar Orçamento
+          </Button>
+          <Button onClick={handleFinishOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
+            <Send className="h-4 w-4 mr-2" /> Concluir Pedido
           </Button>
           <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setIsDetailsModalOpen(true)}>
             <Eye className="h-4 w-4 mr-2" /> Visualizar
@@ -887,10 +918,14 @@ export default function NewOrder() {
                 className="resize-none h-24 rounded-lg"
               />
             </div>
-            
-            <Button onClick={handleGenerateOrder} className="w-full h-12 text-base bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl mt-4">
-              <Save className="h-5 w-5 mr-2" /> Salvar Pedido Definitivo
-            </Button>
+            <div className="flex flex-col gap-3 mt-6">
+              <Button onClick={handleGenerateOrder} variant="outline" className="w-full h-12 text-base border-primary text-primary hover:bg-primary/5 font-bold rounded-xl">
+                <Save className="h-5 w-5 mr-2" /> Salvar Orçamento
+              </Button>
+              <Button onClick={handleFinishOrder} className="w-full h-12 text-base bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">
+                <Send className="h-5 w-5 mr-2" /> Concluir Pedido
+              </Button>
+            </div>
           </div>
         </section>
 
