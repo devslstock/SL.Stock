@@ -82,9 +82,9 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
       pdf.save(`pedido_${details?.order_number || 'novo'}.pdf`)
       
       toast.success('PDF gerado com sucesso!')
-    } catch (error) {
-      console.error(error)
-      toast.error('Erro ao gerar o PDF')
+    } catch (error: any) {
+      console.error("ERRO PDF:", error)
+      toast.error(`Erro ao gerar PDF: ${error?.message || JSON.stringify(error) || 'Desconhecido'}`)
     } finally {
       setIsGeneratingPdf(false)
     }
