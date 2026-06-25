@@ -195,7 +195,12 @@ export function ProductSearchInline({ priceTableId, currentItems, onUpdateQuanti
                   <div className="flex-1 flex flex-col justify-between py-0.5">
                     <div>
                       <div className="font-semibold text-sm leading-tight line-clamp-2">{product.description}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">Cód: {product.code}</div>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                        <div className="text-xs text-muted-foreground">Cód: {product.code}</div>
+                        <div className="text-xs font-medium text-emerald-600/80 bg-emerald-500/10 px-1.5 rounded">
+                          Estoque: {(product.stock || 0) - (product.reserved_stock || 0)}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="font-bold text-emerald-600">{formatCurrency(product.finalPrice)}</span>
