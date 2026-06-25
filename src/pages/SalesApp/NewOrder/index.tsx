@@ -5,7 +5,7 @@ import { salesApi } from '@/api/sales'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
-import { FileText, Save, Send, Eye, X, Search, Phone, Building2, ChevronLeft, Plus, Trash2, ShoppingCart } from 'lucide-react'
+import { FileText, Save, Send, Eye, X, Search, Phone, Building2, ChevronLeft, Plus, Trash2, ShoppingCart, Download, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,7 +13,11 @@ import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { ProductSearchInline } from './ProductSearchInline'
 import { OrderDetailsModal } from '@/components/Sales/OrderDetailsModal'
+import { InvoicePrintTemplate } from '@/components/Sales/InvoicePrintTemplate'
 import { ChevronDown, Copy, Mail, Ban, CreditCard } from 'lucide-react'
+import jsPDF from 'jspdf'
+import { toPng } from 'html-to-image'
+import { Share } from '@capacitor/share'
 
 export default function NewOrder() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -56,6 +60,8 @@ export default function NewOrder() {
   const [showOptionsBottom, setShowOptionsBottom] = useState(false)
   const [discountPercent, setDiscountPercent] = useState('')
   const [currentStep, setCurrentStep] = useState(1)
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const printRef = useRef<HTMLDivElement>(null)
 
   const filteredCustomers = customerSearch.length > 1 
     ? customers.filter((c: any) => 
@@ -88,6 +94,12 @@ export default function NewOrder() {
       }
     }
   }, [order?.total_discount, order?.items])
+
+  useEffect(() => {
+    if (order?.customer_id && currentStep === 1) {
+      setCurrentStep(2)
+    }
+  }, [order?.customer_id, currentStep])
 
   // Create Draft Order Mutation
   const createDraftMutation = useMutation({
@@ -235,6 +247,67 @@ export default function NewOrder() {
     }
   }
 
+  const generatePdfFile = async () => {
+    if (!printRef.current) throw new Error("Elemento PDF não encontrado");
+    setIsGeneratingPdf(true);
+    try {
+      const imgData = await toPng(printRef.current, {
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2
+      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const margin = 10;
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth, pdfHeight);
+      return pdf;
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      const pdf = await generatePdfFile();
+      pdf.save(`pedido_${order?.order_number || 'novo'}.pdf`);
+      toast.success('PDF baixado com sucesso!');
+    } catch (e: any) {
+      toast.error('Erro ao gerar PDF: ' + e.message);
+    }
+  };
+
+  const handleShareWhatsapp = async () => {
+    try {
+      const pdf = await generatePdfFile();
+      // Generate blob for capacitor share
+      const pdfBlob = pdf.output('blob');
+      
+      try {
+        const file = new File([pdfBlob], `pedido_${order?.order_number || 'novo'}.pdf`, { type: 'application/pdf' });
+        
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: `Pedido ${order?.order_number || ''}`,
+            text: `Segue o pedido gerado via Força de Vendas.`,
+            files: [file]
+          });
+          toast.success('Compartilhado com sucesso!');
+        } else {
+          // Fallback if system share not supported (like on some desktop browsers)
+          toast.error("O compartilhamento de arquivo não é suportado pelo seu navegador.");
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          toast.error("Erro ao compartilhar: " + err.message);
+        }
+      }
+    } catch (e: any) {
+      toast.error('Erro ao gerar PDF para WhatsApp: ' + e.message);
+    }
+  };
+
   const handleGenerateOrder = async () => {
     if (!order.customer_id) {
       toast.error('Selecione um cliente para gerar o pedido')
@@ -246,7 +319,14 @@ export default function NewOrder() {
     }
     
     try {
-      await salesApi.updateSalesOrder(orderId, { status: 'Rascunho' })
+      const calcSubtotal = order.items?.reduce((acc: number, item: any) => acc + (item.quantity * item.unit_price), 0) || 0;
+      const calcNet = calcSubtotal - (order.total_discount || 0);
+
+      await salesApi.updateSalesOrder(orderId, { 
+        status: 'Rascunho',
+        total_amount: calcSubtotal,
+        net_amount: calcNet
+      })
       toast.success('Orçamento salvo com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       navigate('/vendas/pedidos')
@@ -266,7 +346,14 @@ export default function NewOrder() {
     }
     
     try {
-      await salesApi.updateSalesOrder(orderId, { status: 'Enviado' })
+      const calcSubtotal = order.items?.reduce((acc: number, item: any) => acc + (item.quantity * item.unit_price), 0) || 0;
+      const calcNet = calcSubtotal - (order.total_discount || 0);
+
+      await salesApi.updateSalesOrder(orderId, { 
+        status: 'Enviado',
+        total_amount: calcSubtotal,
+        net_amount: calcNet
+      })
       toast.success('Pedido concluído com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       navigate('/vendas/pedidos')
@@ -828,14 +915,30 @@ export default function NewOrder() {
           )}
 
           {/* Opções extras na tela de Pedido */}
-          <div className="mt-8 space-y-3">
-            <Button variant="outline" className="w-full justify-between h-12 rounded-xl bg-card border-border" onClick={() => setCurrentStep(4)}>
-              <span className="font-medium">Pagamento e Observações</span>
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+          <div className="mt-8 flex flex-col gap-3">
+            <Button variant="outline" className="w-full justify-between h-12 rounded-xl bg-card border-primary text-primary hover:bg-primary/5" onClick={() => setCurrentStep(4)}>
+              <span className="font-bold">Pagamento e Observações (obrigatório)</span>
+              <ChevronDown className="h-5 w-5" />
             </Button>
-            <Button variant="outline" className="w-full justify-between h-12 rounded-xl bg-card border-border text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDeleteOrder}>
-              <span className="font-medium">Cancelar Orçamento</span>
-              <Ban className="h-5 w-5" />
+
+            <Button onClick={handleGenerateOrder} variant="outline" className="w-full h-12 text-base border-primary text-primary hover:bg-primary/5 font-bold rounded-xl mt-2">
+              <Save className="h-5 w-5 mr-2" /> Salvar Orçamento
+            </Button>
+
+            <Button onClick={handleFinishOrder} className="w-full h-12 text-base bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">
+              <Send className="h-5 w-5 mr-2" /> Gerar Pedido
+            </Button>
+
+            <Button onClick={handleDownloadPDF} disabled={isGeneratingPdf} variant="outline" className="w-full h-12 text-base border-border font-bold rounded-xl">
+              <Download className="h-5 w-5 mr-2 text-primary" /> {isGeneratingPdf ? 'Gerando PDF...' : 'Exportar PDF'}
+            </Button>
+
+            <Button onClick={handleShareWhatsapp} disabled={isGeneratingPdf} variant="outline" className="w-full h-12 text-base border-border font-bold rounded-xl">
+              <Share2 className="h-5 w-5 mr-2 text-green-500" /> Compartilhar no WhatsApp
+            </Button>
+
+            <Button variant="outline" className="w-full justify-between h-12 rounded-xl bg-card border-red-200 text-red-500 hover:text-red-600 hover:bg-red-50 mt-2" onClick={handleDeleteOrder}>
+              <span className="font-bold w-full text-center">Cancelar Orçamento</span>
             </Button>
           </div>
         </section>
@@ -918,14 +1021,6 @@ export default function NewOrder() {
                 className="resize-none h-24 rounded-lg"
               />
             </div>
-            <div className="flex flex-col gap-3 mt-6">
-              <Button onClick={handleGenerateOrder} variant="outline" className="w-full h-12 text-base border-primary text-primary hover:bg-primary/5 font-bold rounded-xl">
-                <Save className="h-5 w-5 mr-2" /> Salvar Orçamento
-              </Button>
-              <Button onClick={handleFinishOrder} className="w-full h-12 text-base bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">
-                <Send className="h-5 w-5 mr-2" /> Concluir Pedido
-              </Button>
-            </div>
           </div>
         </section>
 
@@ -943,6 +1038,17 @@ export default function NewOrder() {
           </Button>
         </div>
       </div>
+      
+      {/* Hidden Invoice Template for PDF Generation */}
+      <div className="hidden">
+        <InvoicePrintTemplate ref={printRef} details={{
+          ...order,
+          customer: customers.find((c: any) => c.id === order.customer_id) || order.customer,
+          payment_condition: paymentConditions.find((pc: any) => pc.id === order.payment_condition_id) || order.payment_condition,
+          sales_rep: salesReps.find((sr: any) => sr.id === order.sales_rep_id) || order.sales_rep
+        }} />
+      </div>
+
     </div>
   )
       </div>
