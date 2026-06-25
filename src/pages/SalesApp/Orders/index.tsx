@@ -49,7 +49,7 @@ export default function SalesOrders() {
     if (status === 'Rascunho') {
       return <span className="bg-yellow-200 text-yellow-800 text-[11px] font-bold px-3 py-1 rounded-full">Em orçamento</span>
     }
-    return <span className="bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">Concluído</span>
+    return <span className="bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">Enviado</span>
   }
 
   return (

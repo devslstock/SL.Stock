@@ -354,7 +354,7 @@ export default function NewOrder() {
         total_amount: calcSubtotal,
         net_amount: calcNet
       })
-      toast.success('Pedido concluído com sucesso!')
+      toast.success('Pedido enviado com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       navigate('/vendas/pedidos')
     } catch (e: any) {
@@ -832,6 +832,25 @@ export default function NewOrder() {
         {/* TELA 2: RESUMO DO PEDIDO */}
         <section className={`${currentStep === 2 ? 'block' : 'hidden md:block'} md:order-2 max-w-2xl mx-auto w-full`}>
           
+          {order.customer_id && (
+            <div className="md:hidden bg-card border border-border shadow-sm rounded-xl p-3 mb-4 flex justify-between items-center">
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-[10px] uppercase text-muted-foreground font-semibold">Cliente Selecionado</span>
+                <span className="text-sm font-bold text-foreground truncate">
+                  {customers.find((c: any) => c.id === order.customer_id)?.fantasy_name || customers.find((c: any) => c.id === order.customer_id)?.legal_name || order.customer?.fantasy_name || order.customer?.legal_name || 'Desconhecido'}
+                </span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentStep(1)}
+                className="h-7 text-[10px] px-2 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 font-bold shrink-0 ml-2"
+              >
+                Trocar
+              </Button>
+            </div>
+          )}
+
           <div className="bg-card border border-border shadow-sm rounded-xl overflow-hidden mb-6">
             <div className="bg-muted/50 p-4 border-b border-border flex justify-between items-center">
               <div>
@@ -1040,7 +1059,7 @@ export default function NewOrder() {
       </div>
       
       {/* Hidden Invoice Template for PDF Generation */}
-      <div className="hidden">
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', width: '800px' }}>
         <InvoicePrintTemplate ref={printRef} details={{
           ...order,
           customer: customers.find((c: any) => c.id === order.customer_id) || order.customer,
