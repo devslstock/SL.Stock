@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
+import { ProductSelectModal } from './ProductSelectModal'
 
 export default function NewOrder() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -32,24 +33,7 @@ export default function NewOrder() {
     }
   })
 
-  const [productSearch, setProductSearch] = useState('')
-  const [showProductResults, setShowProductResults] = useState(false)
-
-  const { data: products = [] } = useQuery({
-    queryKey: ['products'],
-    queryFn: async () => {
-      const { productsApi } = await import('@/api/products')
-      return productsApi.getProducts()
-    }
-  })
-
-  const filteredProducts = productSearch.length > 1 
-    ? products.filter((p: any) => 
-        p.description?.toLowerCase().includes(productSearch.toLowerCase()) ||
-        p.code?.toLowerCase().includes(productSearch.toLowerCase()) ||
-        p.ean?.includes(productSearch)
-      ).slice(0, 5)
-    : []
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false)
 
   const filteredCustomers = customerSearch.length > 1 
     ? customers.filter((c: any) => 
@@ -132,22 +116,47 @@ export default function NewOrder() {
     return <div className="text-center py-20">Pedido não encontrado.</div>
   }
 
-  const handleAddProduct = async (product: any) => {
+  const handleSaveProductsFromModal = async (productsFromModal: { productId: string, quantity: number, price: number }[]) => {
     try {
       const { salesApi } = await import('@/api/sales')
-      await salesApi.addSalesOrderItems([{
-        sales_order_id: orderId!,
-        product_id: product.id,
-        quantity: 1,
-        unit_price: product.price || 0,
-        discount_percent: 0,
-        net_price: product.price || 0,
-        total_price: product.price || 0
-      }])
+      
+      const currentItems = order.items || []
+      
+      for (const item of currentItems) {
+        const found = productsFromModal.find(p => p.productId === item.product_id)
+        if (!found || found.quantity === 0) {
+          await salesApi.deleteSalesOrderItem(item.id)
+        }
+      }
+      
+      for (const newP of productsFromModal) {
+        if (newP.quantity > 0) {
+          const existing = currentItems.find(i => i.product_id === newP.productId)
+          if (existing) {
+            if (existing.quantity !== newP.quantity) {
+              await salesApi.updateSalesOrderItem(existing.id, {
+                quantity: newP.quantity,
+                total_price: newP.quantity * newP.price
+              })
+            }
+          } else {
+            await salesApi.addSalesOrderItems([{
+              sales_order_id: orderId!,
+              product_id: newP.productId,
+              quantity: newP.quantity,
+              unit_price: newP.price,
+              discount_percent: 0,
+              net_price: newP.price,
+              total_price: newP.quantity * newP.price
+            }])
+          }
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
-      toast.success(`${product.description} adicionado!`)
+      toast.success(`Produtos atualizados!`)
     } catch (e: any) {
-      toast.error('Erro ao adicionar produto: ' + e.message)
+      toast.error('Erro ao salvar produtos: ' + e.message)
     }
   }
 
@@ -311,52 +320,19 @@ export default function NewOrder() {
             </div>
           </div>
           
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Digite o código ou o nome do produto para adicionar ao pedido..." 
-              className="pl-9 border-primary/30 focus-visible:ring-primary/30"
-              value={productSearch}
-              onChange={e => {
-                setProductSearch(e.target.value)
-                setShowProductResults(true)
-              }}
-              onFocus={() => setShowProductResults(true)}
-              onBlur={() => setTimeout(() => setShowProductResults(false), 200)}
-            />
-            
-            {showProductResults && productSearch.length > 1 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map((p: any) => (
-                    <div 
-                      key={p.id} 
-                      className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-0 flex justify-between items-center"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        handleAddProduct(p)
-                        setProductSearch('')
-                        setShowProductResults(false)
-                      }}
-                    >
-                      <div>
-                        <div className="font-medium text-sm">{p.description}</div>
-                        <div className="text-xs text-muted-foreground mt-1 flex gap-3">
-                          <span>Cód: {p.code}</span>
-                          <span className={p.stock > 0 ? "text-emerald-600" : "text-red-500"}>Estoque: {p.stock || 0}</span>
-                        </div>
-                      </div>
-                      <div className="font-bold text-primary">
-                        {formatCurrency(p.price)}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-3 text-sm text-muted-foreground text-center">Nenhum produto encontrado</div>
-                )}
-              </div>
-            )}
-          </div>
+          <Button 
+            onClick={() => setIsProductModalOpen(true)}
+            className="w-full bg-[#2a2540] hover:bg-[#1a1530] text-white py-6 text-lg font-semibold rounded-xl"
+          >
+            Adicionar produtos
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="w-full mt-3 border-primary/20 text-primary py-6 text-lg font-semibold rounded-xl hover:bg-primary/5"
+          >
+            Definir descontos e acréscimos
+          </Button>
 
           {order.items && order.items.length > 0 ? (
             <div className="border border-border rounded-lg overflow-hidden mt-6">
@@ -383,27 +359,37 @@ export default function NewOrder() {
                         <div className="text-[10px] text-muted-foreground">Saldo previsto: {(item.product?.stock || 0) - (item.product?.reserved_stock || 0)}</div>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Input 
-                            type="number" 
-                            min="1"
-                            className="w-20 h-8 text-right px-2"
-                            value={item.quantity}
-                            onChange={(e) => {
-                              const val = parseInt(e.target.value) || 1
-                              // Validar saldo previsto
-                              const saldoPrevisto = (item.product?.stock || 0) - (item.product?.reserved_stock || 0)
-                              // Se aumentou a quantidade alem do saldo previsto, bloqueia (saldoPrevisto não inclui a quantidade que JA ESTA neste item se for rascunho. Para simplificar, o saldo previsto do produto já tem essa reserva subtraída)
-                              // Para ser perfeitamente correto: o saldo disponível total é `saldoPrevisto + item.quantity` (já que o item atual reservou essa quantity).
-                              const saldoDisponivelReal = saldoPrevisto + item.quantity
-                              if (val > saldoDisponivelReal) {
-                                toast.error(`Quantidade indisponível. Saldo máximo: ${saldoDisponivelReal}`)
-                                handleUpdateItem(item.id, saldoDisponivelReal, item.unit_price)
-                              } else {
-                                handleUpdateItem(item.id, val, item.unit_price)
-                              }
-                            }}
-                          />
+                        <div className="flex items-center justify-end">
+                          <div className="flex overflow-hidden rounded shadow-sm border border-border">
+                            <button 
+                              className="px-3 bg-muted hover:bg-muted/80 h-8 flex items-center justify-center border-r border-border transition-colors disabled:opacity-50"
+                              onClick={() => {
+                                const val = item.quantity - 1
+                                if (val > 0) handleUpdateItem(item.id, val, item.unit_price)
+                                else handleDeleteItem(item.id)
+                              }}
+                            >
+                              <span className="font-bold">-</span>
+                            </button>
+                            <div className="px-3 h-8 flex items-center justify-center font-bold min-w-[40px] bg-background">
+                              {item.quantity}
+                            </div>
+                            <button 
+                              className="px-3 bg-[#1a1530] hover:bg-[#2a2540] text-white h-8 flex items-center justify-center transition-colors"
+                              onClick={() => {
+                                const val = item.quantity + 1
+                                const saldoPrevisto = (item.product?.stock || 0) - (item.product?.reserved_stock || 0)
+                                const saldoDisponivelReal = saldoPrevisto + item.quantity
+                                if (val > saldoDisponivelReal) {
+                                  toast.error(`Quantidade indisponível. Saldo máximo: ${saldoDisponivelReal}`)
+                                } else {
+                                  handleUpdateItem(item.id, val, item.unit_price)
+                                }
+                              }}
+                            >
+                              <span className="font-bold">+</span>
+                            </button>
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">{formatCurrency(item.unit_price)}</td>
@@ -460,7 +446,15 @@ export default function NewOrder() {
             />
           </div>
         </section>
+        </section>
       </div>
+
+      <ProductSelectModal 
+        isOpen={isProductModalOpen}
+        onClose={() => setIsProductModalOpen(false)}
+        onAddProducts={handleSaveProductsFromModal}
+        currentItems={order.items?.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity })) || []}
+      />
     </div>
   )
 }
