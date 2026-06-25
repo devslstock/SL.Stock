@@ -366,6 +366,7 @@ export default function NewOrder() {
 
   const totalItems = order.items?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0
   const subtotal = order.items?.reduce((acc: number, item: any) => acc + (item.quantity * item.unit_price), 0) || 0
+  const finalTotal = subtotal - (order.total_discount || 0)
 
   return (
     <>
@@ -855,7 +856,7 @@ export default function NewOrder() {
             <div className="bg-muted/50 p-4 border-b border-border flex justify-between items-center">
               <div>
                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Resumo Total</p>
-                <div className="font-black text-2xl text-primary">{formatCurrency(order.net_amount || 0)}</div>
+                <div className="font-black text-2xl text-primary">{formatCurrency(finalTotal)}</div>
               </div>
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-emerald-200">Em Orçamento</Badge>
             </div>
@@ -1050,7 +1051,7 @@ export default function NewOrder() {
         <div className="flex justify-between items-center max-w-2xl mx-auto">
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground">{totalItems} itens adicionados</span>
-            <span className="font-bold text-lg text-primary">Total: {formatCurrency(order.net_amount || 0)}</span>
+            <span className="font-bold text-lg text-primary">Total: {formatCurrency(finalTotal)}</span>
           </div>
           <Button onClick={() => setCurrentStep(2)} className="bg-primary text-primary-foreground font-bold px-6 rounded-full shadow-md">
             Ver Pedido
