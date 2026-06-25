@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import { supabase } from '@/lib/supabase'
+import { Printer, Download } from 'lucide-react'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
+import { toast } from '@/components/ui/toaster'
 
 interface OrderDetailsModalProps {
   orderId: string | null;
@@ -13,6 +18,8 @@ interface OrderDetailsModalProps {
 export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetailsModalProps) {
   const [details, setDetails] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isOpen && orderId) {
@@ -50,17 +57,68 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
     }
   }
 
+  const handleDownloadPDF = async () => {
+    if (!contentRef.current) return
+    
+    setIsGeneratingPdf(true)
+    try {
+      const canvas = await html2canvas(contentRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      })
+      
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+      pdf.save(`pedido_${details?.order_number || 'novo'}.pdf`)
+      
+      toast.success('PDF gerado com sucesso!')
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao gerar o PDF')
+    } finally {
+      setIsGeneratingPdf(false)
+    }
+  }
+
+  const handlePrint = () => {
+    window.print()
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] p-0 flex flex-col overflow-hidden w-[95vw]">
-        <DialogHeader className="px-6 py-4 border-b border-border shrink-0">
-          <DialogTitle>Resumo do Pedido {details?.order_number ? `#${details.order_number}` : ''}</DialogTitle>
-          <DialogDescription>
-            Detalhes dos itens e valores deste pedido.
-          </DialogDescription>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden w-[95vw]">
+        <DialogHeader className="px-6 py-4 border-b border-border shrink-0 bg-muted/30">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <DialogTitle className="text-xl">Resumo do Pedido {details?.order_number ? `#${details.order_number}` : ''}</DialogTitle>
+              <DialogDescription>
+                Detalhes dos itens e valores deste pedido.
+              </DialogDescription>
+            </div>
+            {details && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handlePrint} className="h-9 hidden sm:flex">
+                  <Printer className="h-4 w-4 mr-2" /> Imprimir
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleDownloadPDF} disabled={isGeneratingPdf} className="h-9">
+                  <Download className="h-4 w-4 mr-2" /> {isGeneratingPdf ? 'Gerando...' : 'Download PDF'}
+                </Button>
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
-        <div className="px-6 py-4 overflow-y-auto flex-1">
+        <div className="px-6 py-6 overflow-y-auto flex-1 bg-background" ref={contentRef}>
           {isLoading ? (
             <div className="py-8 text-center text-muted-foreground">Carregando detalhes...</div>
           ) : details ? (

@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
-import { ProductSelectModal } from './ProductSelectModal'
+import { ProductSearchInline } from './ProductSearchInline'
 import { OrderDetailsModal } from '@/components/Sales/OrderDetailsModal'
 import { ChevronDown, Copy, Mail, Ban, CreditCard } from 'lucide-react'
 
@@ -43,7 +43,6 @@ export default function NewOrder() {
     }
   })
 
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [showOptionsTop, setShowOptionsTop] = useState(false)
   const [showOptionsBottom, setShowOptionsBottom] = useState(false)
@@ -129,47 +128,36 @@ export default function NewOrder() {
     return <div className="text-center py-20">Pedido não encontrado.</div>
   }
 
-  const handleSaveProductsFromModal = async (productsFromModal: { productId: string, quantity: number, price: number }[]) => {
+  const handleUpdateQuantityFromSearch = async (productId: string, quantity: number, price: number) => {
     try {
       const { salesApi } = await import('@/api/sales')
+      const existing = order.items?.find((i: any) => i.product_id === productId)
       
-      const currentItems = order.items || []
-      
-      for (const item of currentItems) {
-        const found = productsFromModal.find(p => p.productId === item.product_id)
-        if (!found || found.quantity === 0) {
-          await salesApi.deleteSalesOrderItem(item.id)
+      if (quantity === 0) {
+        if (existing) {
+          await salesApi.deleteSalesOrderItem(existing.id)
         }
-      }
-      
-      for (const newP of productsFromModal) {
-        if (newP.quantity > 0) {
-          const existing = currentItems.find(i => i.product_id === newP.productId)
-          if (existing) {
-            if (existing.quantity !== newP.quantity) {
-              await salesApi.updateSalesOrderItem(existing.id, {
-                quantity: newP.quantity,
-                total_price: newP.quantity * newP.price
-              })
-            }
-          } else {
-            await salesApi.addSalesOrderItems([{
-              sales_order_id: orderId!,
-              product_id: newP.productId,
-              quantity: newP.quantity,
-              unit_price: newP.price,
-              discount_percent: 0,
-              net_price: newP.price,
-              total_price: newP.quantity * newP.price
-            }])
-          }
+      } else if (existing) {
+        if (existing.quantity !== quantity) {
+          await salesApi.updateSalesOrderItem(existing.id, {
+            quantity,
+            total_price: quantity * price
+          })
         }
+      } else {
+        await salesApi.addSalesOrderItems([{
+          sales_order_id: orderId!,
+          product_id: productId,
+          quantity,
+          unit_price: price,
+          discount_percent: 0,
+          net_price: price,
+          total_price: quantity * price
+        }])
       }
-
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
-      toast.success(`Produtos atualizados!`)
     } catch (e: any) {
-      toast.error('Erro ao salvar produtos: ' + e.message)
+      toast.error('Erro ao atualizar produto: ' + e.message)
     }
   }
 
@@ -346,21 +334,23 @@ export default function NewOrder() {
           </div>
         </section>
 
-        {/* BLOCO 2: PRODUTOS */}
-        <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
+        {/* BLOCO 2: BUSCA DE PRODUTOS INLINE */}
+        <section className="mt-8">
+          <ProductSearchInline 
+            currentItems={order.items?.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity })) || []}
+            priceTableId={order.customer?.price_table_id}
+            onUpdateQuantity={handleUpdateQuantityFromSearch}
+          />
+        </section>
+
+        {/* BLOCO 3: CARRINHO (ITENS ADICIONADOS) */}
+        <section className="bg-card border border-border rounded-xl p-5 shadow-sm mt-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 text-muted-foreground">
               <FileText className="h-5 w-5" />
-              <h2 className="text-sm font-bold uppercase tracking-wider">Produtos</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider">Itens Adicionados</h2>
             </div>
           </div>
-          
-          <Button 
-            onClick={() => setIsProductModalOpen(true)}
-            className="w-full bg-[#2a2540] hover:bg-[#1a1530] text-white py-6 text-lg font-semibold rounded-xl mt-4"
-          >
-            Adicionar produtos
-          </Button>
 
           {order.items && order.items.length > 0 ? (
             <div className="border border-border rounded-lg overflow-hidden mt-6">
@@ -536,14 +526,6 @@ export default function NewOrder() {
           </Button>
         </div>
       </div>
-
-      <ProductSelectModal 
-        isOpen={isProductModalOpen}
-        onClose={() => setIsProductModalOpen(false)}
-        onAddProducts={handleSaveProductsFromModal}
-        currentItems={order.items?.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity })) || []}
-        priceTableId={order.customer?.price_table_id}
-      />
       
       <OrderDetailsModal 
         orderId={orderId}
