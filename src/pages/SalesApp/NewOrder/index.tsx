@@ -215,6 +215,7 @@ export default function NewOrder() {
   }
 
   return (
+    <>
     <div className="max-w-6xl mx-auto pb-20 space-y-6 slide-up">
       {/* HEADER TIPO MERCOS */}
       <div className="bg-card border-b border-border -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 sticky top-0 z-30 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -446,7 +447,6 @@ export default function NewOrder() {
             />
           </div>
         </section>
-        </section>
       </div>
 
       <ProductSelectModal 
@@ -456,5 +456,6 @@ export default function NewOrder() {
         currentItems={order.items?.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity })) || []}
       />
     </div>
+    </>
   )
 }
