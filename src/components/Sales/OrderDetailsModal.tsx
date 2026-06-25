@@ -94,6 +94,13 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
     window.print()
   }
 
+  // Computed values since the DB aggregates might be zero if there is no trigger
+  const computedSubtotal = details?.items?.reduce((acc: number, item: any) => acc + (item.quantity * item.unit_price), 0) || 0;
+  const computedItemsDiscount = details?.items?.reduce((acc: number, item: any) => acc + (item.quantity * item.unit_price - item.total_price), 0) || 0;
+  const computedOrderDiscount = details?.total_discount || 0;
+  const totalDiscount = computedItemsDiscount + computedOrderDiscount;
+  const computedNetAmount = computedSubtotal - totalDiscount;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden w-[95vw]">
@@ -175,15 +182,17 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
               <div className="flex flex-col items-end space-y-2 bg-muted/20 p-4 rounded-lg">
                 <div className="flex justify-between w-full sm:w-64 text-sm">
                   <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="font-medium">{formatCurrency((details.net_amount || 0) + (details.total_discount || 0))}</span>
+                  <span className="font-medium">{formatCurrency(computedSubtotal)}</span>
                 </div>
-                <div className="flex justify-between w-full sm:w-64 text-sm text-red-500">
-                  <span>Descontos:</span>
-                  <span>- {formatCurrency(details.total_discount || 0)}</span>
-                </div>
+                {totalDiscount > 0 && (
+                  <div className="flex justify-between w-full sm:w-64 text-sm text-red-500">
+                    <span>Descontos:</span>
+                    <span>- {formatCurrency(totalDiscount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between w-full sm:w-64 text-base font-bold pt-2 border-t border-border">
                   <span>Total Líquido:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(details.net_amount || 0)}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(computedNetAmount)}</span>
                 </div>
               </div>
 

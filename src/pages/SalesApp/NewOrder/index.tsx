@@ -43,9 +43,18 @@ export default function NewOrder() {
     }
   })
 
+  const { data: salesReps = [] } = useQuery({
+    queryKey: ['sales_reps'],
+    queryFn: async () => {
+      const { data } = await supabase.from('sales_reps').select('id, nickname, legal_name').eq('active', true).order('nickname')
+      return data || []
+    }
+  })
+
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [showOptionsTop, setShowOptionsTop] = useState(false)
   const [showOptionsBottom, setShowOptionsBottom] = useState(false)
+  const [discountPercent, setDiscountPercent] = useState('')
 
   const filteredCustomers = customerSearch.length > 1 
     ? customers.filter((c: any) => 
@@ -58,9 +67,26 @@ export default function NewOrder() {
   // Fetch current order if ID exists
   const { data: order, isLoading } = useQuery({
     queryKey: ['sales_order', orderId],
-    queryFn: () => salesApi.getSalesOrder(orderId!),
-    enabled: !!orderId,
+    queryFn: async () => {
+      const { salesApi } = await import('@/api/sales')
+      return salesApi.getSalesOrder(orderId!)
+    },
+    enabled: !!orderId
   })
+
+  useEffect(() => {
+    if (order && order.items) {
+      const subtotal = order.items.reduce((acc: any, item: any) => acc + (item.quantity * item.unit_price), 0)
+      const totalItemsDiscount = order.items.reduce((acc: any, item: any) => acc + (item.quantity * item.unit_price - item.total_price), 0)
+      const amountAfterItemsDiscount = subtotal - totalItemsDiscount
+      
+      if (amountAfterItemsDiscount > 0 && order.total_discount > 0) {
+        setDiscountPercent(((order.total_discount / amountAfterItemsDiscount) * 100).toFixed(2))
+      } else if (order.total_discount === 0) {
+        setDiscountPercent('')
+      }
+    }
+  }, [order?.total_discount, order?.items])
 
   // Create Draft Order Mutation
   const createDraftMutation = useMutation({
@@ -192,6 +218,19 @@ export default function NewOrder() {
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
     } catch (e: any) {
       toast.error('Erro ao remover item: ' + e.message)
+    }
+  }
+
+  const handleDeleteOrder = async () => {
+    if (confirm('Tem certeza que deseja apagar este pedido permanentemente?')) {
+      try {
+        const { salesApi } = await import('@/api/sales')
+        await salesApi.deleteSalesOrder(orderId!)
+        toast.success('Pedido apagado com sucesso!')
+        navigate('/vendas/pedidos')
+      } catch (e: any) {
+        toast.error('Erro ao apagar pedido: ' + e.message)
+      }
     }
   }
 
@@ -445,7 +484,16 @@ export default function NewOrder() {
             </div>
             <div>
               <label className="text-xs text-muted-foreground font-medium mb-1 block">Vendedor</label>
-              <div className="font-medium">{order.sales_rep?.nickname || user?.name || '---'}</div>
+              <select 
+                className="w-full border border-border bg-background rounded-md h-9 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                value={order.sales_rep_id || ''}
+                onChange={(e) => handleUpdate({ sales_rep_id: e.target.value || null })}
+              >
+                <option value="">Selecione...</option>
+                {salesReps.map((rep: any) => (
+                  <option key={rep.id} value={rep.id}>{rep.nickname || rep.legal_name}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-xs text-muted-foreground font-medium mb-1 block">Cond. de pagamento</label>
@@ -475,18 +523,41 @@ export default function NewOrder() {
             <h2 className="text-sm font-bold uppercase tracking-wider">Pagamento</h2>
           </div>
 
-          <div className="max-w-md mt-2">
-            <label className="text-xs text-muted-foreground font-medium mb-1 block">* Condição de pagamento</label>
-            <select 
-              className="w-full border border-border bg-background rounded-md h-9 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
-              value={order.payment_condition_id || ''}
-              onChange={(e) => handleUpdate({ payment_condition_id: e.target.value || null })}
-            >
-              <option value="">---------</option>
-              {paymentConditions.map((pc: any) => (
-                <option key={pc.id} value={pc.id}>{pc.name}</option>
-              ))}
-            </select>
+          <div className="flex gap-4 max-w-md mt-2">
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">* Condição de pagamento</label>
+              <select 
+                className="w-full border border-border bg-background rounded-md h-9 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                value={order.payment_condition_id || ''}
+                onChange={(e) => handleUpdate({ payment_condition_id: e.target.value || null })}
+              >
+                <option value="">---------</option>
+                {paymentConditions.map((pc: any) => (
+                  <option key={pc.id} value={pc.id}>{pc.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="w-24">
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">Desconto (%)</label>
+              <Input 
+                type="number"
+                min="0"
+                max="100"
+                className="h-9"
+                value={discountPercent}
+                onChange={(e) => {
+                  setDiscountPercent(e.target.value)
+                }}
+                onBlur={(e) => {
+                  const perc = parseFloat(e.target.value) || 0
+                  const subtotal = order.items?.reduce((acc: any, item: any) => acc + (item.quantity * item.unit_price), 0) || 0
+                  const totalItemsDiscount = order.items?.reduce((acc: any, item: any) => acc + (item.quantity * item.unit_price - item.total_price), 0) || 0
+                  const amountAfterItemsDiscount = subtotal - totalItemsDiscount
+                  const newDiscount = amountAfterItemsDiscount * (perc / 100)
+                  handleUpdate({ total_discount: newDiscount })
+                }}
+              />
+            </div>
           </div>
         </section>
       </div>
@@ -516,8 +587,8 @@ export default function NewOrder() {
                     <Mail className="h-4 w-4" /> Enviar por e-mail
                   </button>
                   <div className="h-px bg-border my-1" />
-                  <button className="px-4 py-2 text-sm text-left hover:bg-muted text-red-500 flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); handleUpdate({ status: 'Cancelado' }) }}>
-                    <Ban className="h-4 w-4" /> Cancelar pedido
+                  <button className="px-4 py-2 text-sm text-left hover:bg-muted text-red-500 flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); handleDeleteOrder() }}>
+                    <Ban className="h-4 w-4" /> Cancelar (Apagar)
                   </button>
                 </div>
               </>
