@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { customersApi } from '@/api/customers'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 
 interface CustomerSelectModalProps {
@@ -62,7 +61,7 @@ export function CustomerSelectModal({ isOpen, onClose, onSelectCustomer }: Custo
         </div>
 
         {/* LIST */}
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">Carregando clientes...</div>
           ) : filteredCustomers.length === 0 ? (
@@ -117,7 +116,7 @@ export function CustomerSelectModal({ isOpen, onClose, onSelectCustomer }: Custo
               </div>
             </div>
           )}
-        </ScrollArea>
+        </div>
 
         {/* BOTTOM NAV BAR (Mock) */}
         <div className="bg-card border-t border-border flex items-center justify-around h-[60px] pb-safe z-10">

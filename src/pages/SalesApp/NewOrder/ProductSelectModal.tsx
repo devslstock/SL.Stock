@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency } from '@/utils/formatters'
 import { productsApi } from '@/api/products'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface ProductSelectModalProps {
   isOpen: boolean
@@ -86,7 +85,7 @@ export function ProductSelectModal({ isOpen, onClose, onAddProducts, currentItem
     // The parent component should probably replace the entire order items or merge them.
     // For simplicity, we just pass the new localCart mapped to array.
     const newItems = Object.keys(localCart).map(productId => {
-      const product = products.find(p => p.id === productId)
+      const product = products.find(p => p.id === productId) as any
       return {
         productId,
         quantity: localCart[productId],
@@ -99,7 +98,7 @@ export function ProductSelectModal({ isOpen, onClose, onAddProducts, currentItem
 
   const totalItems = Object.values(localCart).reduce((a, b) => a + b, 0)
   const totalValue = Object.entries(localCart).reduce((sum, [productId, quantity]) => {
-    const product = products.find(p => p.id === productId)
+    const product = products.find(p => p.id === productId) as any
     return sum + ((product?.price || 0) * quantity)
   }, 0)
 
@@ -158,7 +157,7 @@ export function ProductSelectModal({ isOpen, onClose, onAddProducts, currentItem
         </div>
 
         {/* LISTA DE PRODUTOS */}
-        <ScrollArea className="flex-1 bg-muted/10">
+        <div className="flex-1 bg-muted/10 overflow-y-auto">
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">Carregando produtos...</div>
           ) : filteredProducts.length === 0 ? (
@@ -231,7 +230,7 @@ export function ProductSelectModal({ isOpen, onClose, onAddProducts, currentItem
               })}
             </div>
           )}
-        </ScrollArea>
+        </div>
 
         {/* FOOTER FIXO (Resumo) */}
         <div className="bg-card border-t border-border p-4 flex items-center justify-between z-10">
