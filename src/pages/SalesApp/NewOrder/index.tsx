@@ -5,14 +5,13 @@ import { salesApi } from '@/api/sales'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
-import { FileText, Save, Send, Eye, X, Search, Phone, Building2 } from 'lucide-react'
+import { FileText, Save, Send, Eye, X, Search, Phone, Building2, ChevronLeft, Plus, Trash2, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { ProductSearchInline } from './ProductSearchInline'
-import { OrderDetailsModal } from '@/components/Sales/OrderDetailsModal'
 import { ChevronDown, Copy, Mail, Ban, CreditCard } from 'lucide-react'
 
 export default function NewOrder() {
@@ -51,10 +50,10 @@ export default function NewOrder() {
     }
   })
 
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [showOptionsTop, setShowOptionsTop] = useState(false)
-  const [showOptionsBottom, setShowOptionsBottom] = useState(false)
   const [discountPercent, setDiscountPercent] = useState('')
+  
+  // Steps: 1 = Clientes, 2 = Resumo (Itens), 3 = Busca de Produtos, 4 = Finalização (Detalhes)
   const [currentStep, setCurrentStep] = useState(1)
 
   const filteredCustomers = customerSearch.length > 1 
@@ -62,10 +61,9 @@ export default function NewOrder() {
         c.legal_name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
         c.fantasy_name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
         c.document?.includes(customerSearch)
-      ).slice(0, 5)
+      ).slice(0, 10)
     : []
 
-  // Fetch current order if ID exists
   const { data: order, isLoading } = useQuery({
     queryKey: ['sales_order', orderId],
     queryFn: async () => {
@@ -86,19 +84,21 @@ export default function NewOrder() {
       } else if (order.total_discount === 0) {
         setDiscountPercent('')
       }
+      
+      // Auto-advance logic for initial load
+      if (order.customer_id && currentStep === 1) {
+        setCurrentStep(2)
+      }
     }
-  }, [order?.total_discount, order?.items])
+  }, [order?.total_discount, order?.items, order?.customer_id])
 
-  // Create Draft Order Mutation
   const createDraftMutation = useMutation({
     mutationFn: async () => {
-      // Default to user's company (or first company if not available in context)
       const { data: companies } = await supabase.from('companies').select('id').limit(1)
       const companyId = companies?.[0]?.id
 
       if (!companyId) throw new Error('Nenhuma empresa encontrada para o vendedor')
 
-      // Find the correct sales_rep_id from sales_reps table based on user name
       let salesRepId = null
       if (user?.name) {
         const { data: reps } = await supabase
@@ -134,7 +134,6 @@ export default function NewOrder() {
     }
   })
 
-  // Run once on mount if no orderId
   useEffect(() => {
     if (!orderId && !creatingRef.current) {
       creatingRef.current = true
@@ -197,21 +196,6 @@ export default function NewOrder() {
     }
   }
 
-  const handleUpdateItem = async (itemId: string, quantity: number, price: number) => {
-    try {
-      if (quantity < 1) return handleDeleteItem(itemId)
-      
-      const { salesApi } = await import('@/api/sales')
-      await salesApi.updateSalesOrderItem(itemId, {
-        quantity,
-        total_price: quantity * price
-      })
-      queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
-    } catch (e: any) {
-      toast.error('Erro ao atualizar item: ' + e.message)
-    }
-  }
-
   const handleDeleteItem = async (itemId: string) => {
     try {
       const { salesApi } = await import('@/api/sales')
@@ -238,10 +222,12 @@ export default function NewOrder() {
   const handleGenerateOrder = async () => {
     if (!order.customer_id) {
       toast.error('Selecione um cliente para gerar o pedido')
+      setCurrentStep(1)
       return
     }
     if (!order.items || order.items.length === 0) {
       toast.error('Adicione pelo menos um produto')
+      setCurrentStep(3)
       return
     }
     
@@ -255,130 +241,207 @@ export default function NewOrder() {
     }
   }
 
+  // --- RENDERING MOBILE SCREENS ---
+
+  const totalItems = order.items?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0
+  const subtotal = order.items?.reduce((acc: number, item: any) => acc + (item.quantity * item.unit_price), 0) || 0
+
   return (
-    <>
-    <div className="max-w-6xl mx-auto pb-20 space-y-6 slide-up">
-      {/* HEADER TIPO MERCOS */}
-      <div className="bg-card border-b border-border -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 sticky top-0 z-30 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="font-bold text-xl text-primary">
-            #{order.order_number || '---'}
-          </div>
-          <Badge variant={order.status === 'Rascunho' ? 'secondary' : 'default'} className="uppercase text-[10px]">
-            {order.status === 'Rascunho' ? 'Em Orçamento' : order.status}
-          </Badge>
+    <div className="max-w-6xl mx-auto pb-24 space-y-6 slide-in bg-background min-h-screen">
+      
+      {/* HEADER PRINCIPAL (Mobile App Style) */}
+      <div className="bg-card border-b border-border sticky top-0 z-40 shadow-sm px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => {
+            if (currentStep > 1 && currentStep !== 2) setCurrentStep(2)
+            else navigate('/vendas/pedidos')
+          }} className="h-8 w-8 -ml-2">
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <span className="font-bold text-lg">
+            {currentStep === 1 ? 'Selecionar Cliente' : 
+             currentStep === 2 ? 'Pedido' : 
+             currentStep === 3 ? 'Adicionar Produtos' : 'Orçamento / Finalizar'}
+          </span>
         </div>
         
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
-            <Save className="h-4 w-4 mr-2" /> Gerar pedido
-          </Button>
-          <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setIsDetailsModalOpen(true)}>
-            <Eye className="h-4 w-4 mr-2" /> Visualizar
-          </Button>
-          
-          <div className="relative">
-            <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setShowOptionsTop(!showOptionsTop)}>
-              Mais opções <ChevronDown className="h-4 w-4 ml-2" />
+        <div className="flex items-center gap-2">
+          {currentStep > 1 && (
+            <Button size="sm" onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 px-3 rounded-full text-xs">
+              Salvar
             </Button>
-            {showOptionsTop && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowOptionsTop(false)} />
-                <div className="absolute top-full right-0 mt-1 w-48 bg-card border border-border shadow-lg rounded-md flex flex-col z-50 py-1">
-                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsTop(false); toast.info('Em breve!') }}>
-                    <Copy className="h-4 w-4" /> Duplicar
-                  </button>
-                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsTop(false); toast.info('Em breve!') }}>
-                    <Mail className="h-4 w-4" /> Enviar por e-mail
-                  </button>
-                  <div className="h-px bg-border my-1" />
-                  <button className="px-4 py-2 text-sm text-left hover:bg-muted text-red-500 flex items-center gap-2" onClick={() => { setShowOptionsTop(false); handleDeleteOrder() }}>
-                    <Ban className="h-4 w-4" /> Cancelar pedido
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-          
-          <Button variant="ghost" onClick={() => navigate('/vendas/pedidos')} className="h-9 text-muted-foreground hover:text-foreground">
-            <X className="h-4 w-4 mr-2" /> Fechar
-          </Button>
+          )}
         </div>
       </div>
 
-      <div className="flex flex-col gap-8 mt-6">
-        {/* BLOCO 1: CLIENTE (Step 2) */}
-        <section className={`bg-card border border-border rounded-xl p-5 shadow-sm order-2 md:order-none ${currentStep === 2 ? 'block' : 'hidden md:block'}`}>
-          <div className="flex items-center gap-2 mb-4 text-muted-foreground">
+      <div className="flex flex-col gap-6 mt-4 px-4 md:px-0">
+        
+        {/* TELA 1: CLIENTES */}
+        <section className={`${currentStep === 1 ? 'block' : 'hidden md:block'} md:order-1`}>
+          <div className="hidden md:flex items-center gap-2 mb-4 text-muted-foreground">
             <Building2 className="h-5 w-5" />
             <h2 className="text-sm font-bold uppercase tracking-wider">Cliente</h2>
           </div>
           
-          <div className="relative max-w-2xl">
-            {order.customer ? (
-              <div className="flex justify-between items-center p-3 border border-primary/20 bg-primary/5 rounded-lg">
+          <div className="relative max-w-2xl mx-auto w-full">
+            {order.customer && currentStep !== 1 ? (
+              <div className="flex justify-between items-center p-4 bg-card border border-border shadow-sm rounded-xl">
                 <div>
-                  <p className="font-bold">{order.customer.legal_name || order.customer.fantasy_name}</p>
-                  <p className="text-xs text-muted-foreground flex gap-3 mt-1">
-                    <span>{order.customer.document}</span>
-                    {order.customer.phone1 && <span className="flex items-center gap-1"><Phone className="h-3 w-3"/> {order.customer.phone1}</span>}
+                  <p className="font-bold text-foreground">{order.customer.legal_name || order.customer.fantasy_name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {order.customer.document}
                   </p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => handleUpdate({ customer_id: null })} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)} className="text-primary hover:bg-primary/10">
                   Trocar
                 </Button>
               </div>
             ) : (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Digite o nome ou CNPJ/CPF do cliente e selecione..." 
-                  className="pl-9"
-                  value={customerSearch}
-                  onChange={e => {
-                    setCustomerSearch(e.target.value)
-                    setShowCustomerResults(true)
-                  }}
-                  onFocus={() => setShowCustomerResults(true)}
-                  onBlur={() => setTimeout(() => setShowCustomerResults(false), 200)}
-                />
+              <div className="bg-card border border-border shadow-sm rounded-xl p-4">
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input 
+                    placeholder="Buscar cliente por nome ou CNPJ..." 
+                    className="pl-10 h-12 text-base bg-background"
+                    value={customerSearch}
+                    onChange={e => {
+                      setCustomerSearch(e.target.value)
+                      setShowCustomerResults(true)
+                    }}
+                  />
+                </div>
                 
-                {showCustomerResults && customerSearch.length > 1 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
-                    {filteredCustomers.length > 0 ? (
-                      filteredCustomers.map((c: any) => (
-                        <div 
-                          key={c.id} 
-                          className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-0"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleUpdate({ customer_id: c.id })
-                            setCustomerSearch('')
-                            setShowCustomerResults(false)
-                          }}
-                        >
-                          <div className="font-medium text-sm">{c.legal_name || c.fantasy_name}</div>
-                          <div className="text-xs text-muted-foreground flex justify-between mt-1">
-                            <span>{c.document}</span>
-                            <span>{c.city && c.state ? `${c.city}/${c.state}` : ''}</span>
-                          </div>
+                <div className="space-y-2">
+                  {filteredCustomers.length > 0 ? (
+                    filteredCustomers.map((c: any) => (
+                      <div 
+                        key={c.id} 
+                        className="p-4 hover:bg-muted cursor-pointer border border-border rounded-lg bg-background transition-colors"
+                        onClick={() => {
+                          handleUpdate({ customer_id: c.id })
+                          setCustomerSearch('')
+                          setShowCustomerResults(false)
+                          setCurrentStep(2)
+                        }}
+                      >
+                        <div className="font-bold text-sm text-foreground">{c.legal_name || c.fantasy_name}</div>
+                        <div className="text-xs text-muted-foreground flex justify-between mt-1.5">
+                          <span>{c.document}</span>
+                          <span>{c.city && c.state ? `${c.city}/${c.state}` : ''}</span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="p-3 text-sm text-muted-foreground text-center">Nenhum cliente encontrado</div>
-                    )}
-                  </div>
-                )}
+                      </div>
+                    ))
+                  ) : customerSearch.length > 1 ? (
+                    <div className="p-8 text-sm text-muted-foreground text-center bg-muted/30 rounded-lg">Nenhum cliente encontrado com esse nome.</div>
+                  ) : (
+                    <div className="p-8 text-sm text-muted-foreground text-center bg-muted/30 rounded-lg">Digite o nome do cliente para buscar.</div>
+                  )}
+                </div>
               </div>
             )}
           </div>
         </section>
 
-        {/* BLOCO 2: BUSCA DE PRODUTOS INLINE (Step 3) */}
-        <section className={`order-3 md:order-none ${currentStep === 3 ? 'block' : 'hidden md:block'}`}>
-          <div className="flex items-center gap-2 text-muted-foreground mb-4 px-1">
-            <h2 className="text-sm font-bold uppercase tracking-wider">Adicionar Produtos</h2>
+        {/* TELA 2: RESUMO DO PEDIDO */}
+        <section className={`${currentStep === 2 ? 'block' : 'hidden md:block'} md:order-2 max-w-2xl mx-auto w-full`}>
+          
+          <div className="bg-card border border-border shadow-sm rounded-xl overflow-hidden mb-6">
+            <div className="bg-muted/50 p-4 border-b border-border flex justify-between items-center">
+              <div>
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Resumo Total</p>
+                <div className="font-black text-2xl text-primary">{formatCurrency(order.net_amount || 0)}</div>
+              </div>
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-emerald-200">Em Orçamento</Badge>
+            </div>
+            
+            <div className="p-4 space-y-3 text-sm">
+              <div className="flex justify-between border-b border-border/50 pb-2">
+                <span className="text-muted-foreground">Itens no pedido</span>
+                <span className="font-medium">{order.items?.length || 0}</span>
+              </div>
+              <div className="flex justify-between border-b border-border/50 pb-2">
+                <span className="text-muted-foreground">Quantidade total</span>
+                <span className="font-medium">{totalItems}</span>
+              </div>
+              <div className="flex justify-between border-b border-border/50 pb-2">
+                <span className="text-muted-foreground">Subtotal em produtos</span>
+                <span className="font-medium">{formatCurrency(subtotal)}</span>
+              </div>
+              {order.total_discount > 0 && (
+                <div className="flex justify-between border-b border-border/50 pb-2 text-red-500">
+                  <span>Descontos</span>
+                  <span>- {formatCurrency(order.total_discount)}</span>
+                </div>
+              )}
+            </div>
           </div>
+
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-foreground text-lg">Itens Adicionados</h3>
+            <Button onClick={() => setCurrentStep(3)} size="sm" className="bg-primary text-white rounded-full">
+              <Plus className="h-4 w-4 mr-1" /> Produtos
+            </Button>
+          </div>
+
+          {order.items && order.items.length > 0 ? (
+            <div className="space-y-3">
+              {order.items.map((item: any) => (
+                <div key={item.id} className="bg-card border border-border rounded-xl p-4 shadow-sm relative">
+                  <div className="pr-8">
+                    <div className="font-bold text-sm text-foreground mb-1 leading-tight">{item.product?.description}</div>
+                    <div className="text-[11px] text-muted-foreground mb-3">Cód: {item.product?.code}</div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs text-muted-foreground">Valor Unit.</div>
+                        <div className="font-medium text-sm">{formatCurrency(item.unit_price)}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground">Qtde</div>
+                        <div className="font-bold text-sm bg-muted px-3 py-1 rounded-md">{item.quantity} un</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-muted-foreground">Subtotal</div>
+                        <div className="font-bold text-primary">{formatCurrency(item.total_price)}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button onClick={() => handleDeleteItem(item.id)} className="absolute top-4 right-4 text-muted-foreground hover:text-red-500 transition-colors p-1">
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </div>
+              ))}
+              
+              <Button onClick={() => setCurrentStep(3)} variant="outline" className="w-full py-6 mt-4 border-dashed border-2 rounded-xl text-muted-foreground hover:text-primary hover:border-primary hover:bg-primary/5">
+                <Plus className="h-5 w-5 mr-2" /> Tocar aqui para adicionar mais produtos
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-12 px-4 border-2 border-dashed border-border rounded-xl bg-muted/10 flex flex-col items-center">
+              <ShoppingCart className="h-10 w-10 text-muted-foreground/30 mb-3" />
+              <p className="text-sm text-muted-foreground mb-4">Seu pedido ainda está vazio.</p>
+              <Button onClick={() => setCurrentStep(3)} className="bg-primary rounded-full px-6 shadow-md">
+                <Plus className="h-4 w-4 mr-2" /> Ver Catálogo de Produtos
+              </Button>
+            </div>
+          )}
+
+          {/* Opções extras na tela de Pedido */}
+          <div className="mt-8 space-y-3">
+            <Button variant="outline" className="w-full justify-between h-12 rounded-xl bg-card border-border" onClick={() => setCurrentStep(4)}>
+              <span className="font-medium">Pagamento e Observações</span>
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            </Button>
+            <Button variant="outline" className="w-full justify-between h-12 rounded-xl bg-card border-border text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDeleteOrder}>
+              <span className="font-medium">Cancelar Orçamento</span>
+              <Ban className="h-5 w-5" />
+            </Button>
+          </div>
+        </section>
+
+        {/* TELA 3: PRODUTOS */}
+        <section className={`${currentStep === 3 ? 'block' : 'hidden md:block'} md:order-3 max-w-2xl mx-auto w-full`}>
           <ProductSearchInline 
             currentItems={order.items?.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity })) || []}
             priceTableId={order.customer?.price_table_id}
@@ -386,74 +449,19 @@ export default function NewOrder() {
           />
         </section>
 
-        {/* BLOCO 3 E 4: RESUMO E PAGAMENTO (Step 4) */}
-        <div className={`order-4 md:order-none ${currentStep === 4 ? 'flex flex-col gap-8' : 'hidden md:flex md:flex-col md:gap-8'}`}>
-          <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-muted-foreground">
+        {/* TELA 4: FINALIZACAO E PAGAMENTO */}
+        <section className={`${currentStep === 4 ? 'block' : 'hidden md:block'} md:order-4 max-w-2xl mx-auto w-full`}>
+          <div className="bg-card border border-border rounded-xl p-5 shadow-sm space-y-6">
+            
+            <div className="flex items-center gap-2 text-primary border-b border-border pb-3">
               <FileText className="h-5 w-5" />
-              <h2 className="text-sm font-bold uppercase tracking-wider">Resumo do Pedido</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider">Detalhes Finais</h2>
             </div>
-          </div>
 
-          {order.items && order.items.length > 0 ? (
-            <div className="border border-border rounded-lg overflow-hidden mt-6">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-muted/50 text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Produto</th>
-                    <th className="px-4 py-3 font-medium text-right w-32">Qtd</th>
-                    <th className="px-4 py-3 font-medium text-right w-32">Preço Unit.</th>
-                    <th className="px-4 py-3 font-medium text-right w-32">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {order.items.map(item => (
-                    <tr key={item.id} className="hover:bg-muted/30">
-                      <td className="px-4 py-3">
-                        <div className="font-medium">
-                          <span>{item.product?.description}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">Cód: {item.product?.code}</div>
-                        <div className="text-[10px] text-muted-foreground">Saldo previsto: {(item.product?.stock || 0) - (item.product?.reserved_stock || 0)}</div>
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium">
-                        {item.quantity} un
-                      </td>
-                      <td className="px-4 py-3 text-right">{formatCurrency(item.unit_price)}</td>
-                      <td className="px-4 py-3 text-right font-medium">{formatCurrency(item.total_price)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-             <div className="text-center py-8 text-muted-foreground text-sm border border-dashed border-border rounded-lg bg-muted/10">
-               Nenhum produto adicionado ao pedido ainda.
-             </div>
-          )}
-        </section>
-
-        {/* BLOCO 5: DETALHES DO PEDIDO (Step 1) */}
-        <section className={`bg-card border border-border rounded-xl p-5 shadow-sm order-1 md:order-none ${currentStep === 1 ? 'block' : 'hidden md:block'}`}>
-          <div className="flex items-center gap-2 mb-4 text-muted-foreground">
-            <FileText className="h-5 w-5" />
-            <h2 className="text-sm font-bold uppercase tracking-wider">Detalhes do Pedido</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
             <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">Nº do pedido</label>
-              <div className="font-medium">{order.order_number || '---'}</div>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">Data da emissão</label>
-              <div className="font-medium">{new Date(order.created_at).toLocaleDateString('pt-BR')}</div>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">Vendedor</label>
+              <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Vendedor</label>
               <select 
-                className="w-full border border-border bg-background rounded-md h-9 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="w-full border border-input bg-background rounded-lg h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 value={order.sales_rep_id || ''}
                 onChange={(e) => handleUpdate({ sales_rep_id: e.target.value || null })}
               >
@@ -463,145 +471,74 @@ export default function NewOrder() {
                 ))}
               </select>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Condição de Pagamento</label>
+                <select 
+                  className="w-full border border-input bg-background rounded-lg h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  value={order.payment_condition_id || ''}
+                  onChange={(e) => handleUpdate({ payment_condition_id: e.target.value || null })}
+                >
+                  <option value="">Selecione...</option>
+                  {paymentConditions.map((pc: any) => (
+                    <option key={pc.id} value={pc.id}>{pc.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Desconto Geral (%)</label>
+                <Input 
+                  type="number"
+                  min="0"
+                  max="100"
+                  className="h-11 rounded-lg"
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(e.target.value)}
+                  onBlur={(e) => {
+                    const perc = parseFloat(e.target.value) || 0
+                    const amountAfterItemsDiscount = subtotal
+                    const newDiscount = amountAfterItemsDiscount * (perc / 100)
+                    handleUpdate({ total_discount: newDiscount })
+                  }}
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">Cond. de pagamento</label>
-              <div className="font-medium">{order.payment_condition?.name || 'A definir'}</div>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs text-muted-foreground font-medium mb-2 block">Informações Adicionais</label>
-            <Textarea 
-              placeholder="Digite aqui observações para a nota fiscal ou entrega..." 
-              defaultValue={order.notes || ''}
-              onBlur={(e) => {
-                if (e.target.value !== order.notes) {
-                  handleUpdate({ notes: e.target.value })
-                }
-              }}
-              className="resize-none h-20"
-            />
-          </div>
-        </section>
-
-        {/* BLOCO 6: PAGAMENTO (Step 4 - continues) */}
-        <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4 text-muted-foreground">
-            <CreditCard className="h-5 w-5" />
-            <h2 className="text-sm font-bold uppercase tracking-wider">Pagamento</h2>
-          </div>
-
-          <div className="flex gap-4 max-w-md mt-2">
-            <div className="flex-1">
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">* Condição de pagamento</label>
-              <select 
-                className="w-full border border-border bg-background rounded-md h-9 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
-                value={order.payment_condition_id || ''}
-                onChange={(e) => handleUpdate({ payment_condition_id: e.target.value || null })}
-              >
-                <option value="">---------</option>
-                {paymentConditions.map((pc: any) => (
-                  <option key={pc.id} value={pc.id}>{pc.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="w-24">
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">Desconto (%)</label>
-              <Input 
-                type="number"
-                min="0"
-                max="100"
-                className="h-9"
-                value={discountPercent}
-                onChange={(e) => {
-                  setDiscountPercent(e.target.value)
-                }}
+              <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Informações Adicionais</label>
+              <Textarea 
+                placeholder="Observações para a nota fiscal, endereço de entrega especial, etc..." 
+                defaultValue={order.notes || ''}
                 onBlur={(e) => {
-                  const perc = parseFloat(e.target.value) || 0
-                  const subtotal = order.items?.reduce((acc: any, item: any) => acc + (item.quantity * item.unit_price), 0) || 0
-                  const totalItemsDiscount = order.items?.reduce((acc: any, item: any) => acc + (item.quantity * item.unit_price - item.total_price), 0) || 0
-                  const amountAfterItemsDiscount = subtotal - totalItemsDiscount
-                  const newDiscount = amountAfterItemsDiscount * (perc / 100)
-                  handleUpdate({ total_discount: newDiscount })
+                  if (e.target.value !== order.notes) {
+                    handleUpdate({ notes: e.target.value })
+                  }
                 }}
+                className="resize-none h-24 rounded-lg"
               />
             </div>
+            
+            <Button onClick={handleGenerateOrder} className="w-full h-12 text-base bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl mt-4">
+              <Save className="h-5 w-5 mr-2" /> Salvar Pedido Definitivo
+            </Button>
           </div>
         </section>
-        </div>
 
-        {/* CONTROLES DO WIZARD MOBILE */}
-        <div className="md:hidden flex items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm sticky bottom-4 z-40 order-last mt-4">
-          <Button 
-            variant="outline" 
-            disabled={currentStep === 1}
-            onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
-          >
-            Voltar
-          </Button>
-          <div className="text-sm font-medium text-muted-foreground">
-            Passo {currentStep} de 4
-          </div>
-          {currentStep < 4 ? (
-            <Button 
-              className="bg-primary text-primary-foreground"
-              onClick={() => setCurrentStep(prev => Math.min(4, prev + 1))}
-            >
-              Avançar
-            </Button>
-          ) : (
-            <Button onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-              <Save className="h-4 w-4 mr-2" /> Finalizar
-            </Button>
-          )}
-        </div>
       </div>
 
-      {/* AÇÕES RODAPÉ */}
-      <div className="bg-card border-t border-border -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row gap-4 items-center justify-end mt-8 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
-            <Save className="h-4 w-4 mr-2" /> Gerar pedido
-          </Button>
-          <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setIsDetailsModalOpen(true)}>
-            <Eye className="h-4 w-4 mr-2" /> Visualizar
-          </Button>
-          
-          <div className="relative">
-            <Button variant="outline" className="h-9 font-medium border-border" onClick={() => setShowOptionsBottom(!showOptionsBottom)}>
-              Mais opções <ChevronDown className="h-4 w-4 ml-2" />
-            </Button>
-            {showOptionsBottom && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowOptionsBottom(false)} />
-                <div className="absolute bottom-full right-0 mb-1 w-48 bg-card border border-border shadow-lg rounded-md flex flex-col z-50 py-1">
-                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); toast.info('Em breve!') }}>
-                    <Copy className="h-4 w-4" /> Duplicar
-                  </button>
-                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); toast.info('Em breve!') }}>
-                    <Mail className="h-4 w-4" /> Enviar por e-mail
-                  </button>
-                  <div className="h-px bg-border my-1" />
-                  <button className="px-4 py-2 text-sm text-left hover:bg-muted text-red-500 flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); handleDeleteOrder() }}>
-                    <Ban className="h-4 w-4" /> Cancelar (Apagar)
-                  </button>
-                </div>
-              </>
-            )}
+      {/* FLOAT BOTTOM BAR FOR PRODUCTS PAGE (Mobile Only) */}
+      <div className={`md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-[0_-4px_15px_rgba(0,0,0,0.05)] p-4 z-50 transition-transform ${currentStep === 3 ? 'translate-y-0' : 'translate-y-full opacity-0 pointer-events-none'}`}>
+        <div className="flex justify-between items-center max-w-2xl mx-auto">
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground">{totalItems} itens adicionados</span>
+            <span className="font-bold text-lg text-primary">Total: {formatCurrency(order.net_amount || 0)}</span>
           </div>
-          
-          <Button variant="ghost" onClick={() => navigate('/vendas/pedidos')} className="h-9 text-muted-foreground hover:text-foreground">
-            <X className="h-4 w-4 mr-2" /> Fechar
+          <Button onClick={() => setCurrentStep(2)} className="bg-primary text-primary-foreground font-bold px-6 rounded-full shadow-md">
+            Ver Pedido
           </Button>
         </div>
       </div>
-      
-      <OrderDetailsModal 
-        orderId={orderId}
-        isOpen={isDetailsModalOpen}
-        onOpenChange={setIsDetailsModalOpen}
-      />
     </div>
-    </>
   )
 }

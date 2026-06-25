@@ -104,7 +104,7 @@ export function ProductSearchInline({ priceTableId, currentItems, onUpdateQuanti
   }
 
   return (
-    <div className="flex flex-col bg-card border border-border rounded-xl shadow-sm overflow-hidden h-[600px] max-h-[70vh]">
+    <div className="flex flex-col bg-background h-full min-h-screen pb-24">
       {/* TABS */}
       <div className="flex w-full text-xs font-bold text-muted-foreground bg-muted/10 border-b border-border overflow-x-auto hide-scrollbar">
         <div 
