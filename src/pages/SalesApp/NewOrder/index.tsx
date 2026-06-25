@@ -21,6 +21,44 @@ export default function NewOrder() {
   const orderId = searchParams.get('id')
   const creatingRef = useRef(false)
 
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [showCustomerResults, setShowCustomerResults] = useState(false)
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const { customersApi } = await import('@/api/customers')
+      return customersApi.getCustomers()
+    }
+  })
+
+  const [productSearch, setProductSearch] = useState('')
+  const [showProductResults, setShowProductResults] = useState(false)
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const { productsApi } = await import('@/api/products')
+      return productsApi.getProducts()
+    }
+  })
+
+  const filteredProducts = productSearch.length > 1 
+    ? products.filter((p: any) => 
+        p.description?.toLowerCase().includes(productSearch.toLowerCase()) ||
+        p.code?.toLowerCase().includes(productSearch.toLowerCase()) ||
+        p.ean?.includes(productSearch)
+      ).slice(0, 5)
+    : []
+
+  const filteredCustomers = customerSearch.length > 1 
+    ? customers.filter((c: any) => 
+        c.legal_name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+        c.fantasy_name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+        c.document?.includes(customerSearch)
+      ).slice(0, 5)
+    : []
+
   // Fetch current order if ID exists
   const { data: order, isLoading } = useQuery({
     queryKey: ['sales_order', orderId],
@@ -37,10 +75,23 @@ export default function NewOrder() {
 
       if (!companyId) throw new Error('Nenhuma empresa encontrada para o vendedor')
 
+      // Find the correct sales_rep_id from sales_reps table based on user name
+      let salesRepId = null
+      if (user?.name) {
+        const { data: reps } = await supabase
+          .from('sales_reps')
+          .select('id')
+          .or(`nickname.eq."${user.name}",legal_name.eq."${user.name}"`)
+          .limit(1)
+        if (reps && reps.length > 0) {
+          salesRepId = reps[0].id
+        }
+      }
+
       return salesApi.createSalesOrder({
         company_id: companyId,
         customer_id: null,
-        sales_rep_id: user?.id || null,
+        sales_rep_id: salesRepId,
         price_table_id: null,
         payment_condition_id: null,
         status: 'Rascunho',
@@ -81,12 +132,56 @@ export default function NewOrder() {
     return <div className="text-center py-20">Pedido não encontrado.</div>
   }
 
+  const handleAddProduct = async (product: any) => {
+    try {
+      const { salesApi } = await import('@/api/sales')
+      await salesApi.addSalesOrderItems([{
+        sales_order_id: orderId!,
+        product_id: product.id,
+        quantity: 1,
+        unit_price: product.price || 0,
+        discount_percent: 0,
+        net_price: product.price || 0,
+        total_price: product.price || 0
+      }])
+      queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
+      toast.success(`${product.description} adicionado!`)
+    } catch (e: any) {
+      toast.error('Erro ao adicionar produto: ' + e.message)
+    }
+  }
+
   const handleUpdate = async (updates: any) => {
     try {
       await salesApi.updateSalesOrder(orderId, updates)
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
     } catch (e: any) {
       toast.error('Erro ao atualizar: ' + e.message)
+    }
+  }
+
+  const handleUpdateItem = async (itemId: string, quantity: number, price: number) => {
+    try {
+      if (quantity < 1) return handleDeleteItem(itemId)
+      
+      const { salesApi } = await import('@/api/sales')
+      await salesApi.updateSalesOrderItem(itemId, {
+        quantity,
+        total_price: quantity * price
+      })
+      queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
+    } catch (e: any) {
+      toast.error('Erro ao atualizar item: ' + e.message)
+    }
+  }
+
+  const handleDeleteItem = async (itemId: string) => {
+    try {
+      const { salesApi } = await import('@/api/sales')
+      await salesApi.deleteSalesOrderItem(itemId)
+      queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
+    } catch (e: any) {
+      toast.error('Erro ao remover item: ' + e.message)
     }
   }
 
@@ -167,8 +262,41 @@ export default function NewOrder() {
                 <Input 
                   placeholder="Digite o nome ou CNPJ/CPF do cliente e selecione..." 
                   className="pl-9"
-                  onClick={() => toast.info('Auto-complete de cliente será implementado na próxima etapa')}
+                  value={customerSearch}
+                  onChange={e => {
+                    setCustomerSearch(e.target.value)
+                    setShowCustomerResults(true)
+                  }}
+                  onFocus={() => setShowCustomerResults(true)}
+                  onBlur={() => setTimeout(() => setShowCustomerResults(false), 200)}
                 />
+                
+                {showCustomerResults && customerSearch.length > 1 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
+                    {filteredCustomers.length > 0 ? (
+                      filteredCustomers.map((c: any) => (
+                        <div 
+                          key={c.id} 
+                          className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-0"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleUpdate({ customer_id: c.id })
+                            setCustomerSearch('')
+                            setShowCustomerResults(false)
+                          }}
+                        >
+                          <div className="font-medium text-sm">{c.legal_name || c.fantasy_name}</div>
+                          <div className="text-xs text-muted-foreground flex justify-between mt-1">
+                            <span>{c.document}</span>
+                            <span>{c.city && c.state ? `${c.city}/${c.state}` : ''}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-3 text-sm text-muted-foreground text-center">Nenhum cliente encontrado</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -183,17 +311,55 @@ export default function NewOrder() {
             </div>
           </div>
           
-          <div className="relative mb-6">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Digite o código ou o nome do produto para adicionar ao pedido..." 
               className="pl-9 border-primary/30 focus-visible:ring-primary/30"
-              onClick={() => toast.info('Auto-complete de produto será implementado na próxima etapa')}
+              value={productSearch}
+              onChange={e => {
+                setProductSearch(e.target.value)
+                setShowProductResults(true)
+              }}
+              onFocus={() => setShowProductResults(true)}
+              onBlur={() => setTimeout(() => setShowProductResults(false), 200)}
             />
+            
+            {showProductResults && productSearch.length > 1 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((p: any) => (
+                    <div 
+                      key={p.id} 
+                      className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-0 flex justify-between items-center"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleAddProduct(p)
+                        setProductSearch('')
+                        setShowProductResults(false)
+                      }}
+                    >
+                      <div>
+                        <div className="font-medium text-sm">{p.description}</div>
+                        <div className="text-xs text-muted-foreground mt-1 flex gap-3">
+                          <span>Cód: {p.code}</span>
+                          <span className={p.stock_quantity > 0 ? "text-emerald-600" : "text-red-500"}>Estoque: {p.stock_quantity || 0}</span>
+                        </div>
+                      </div>
+                      <div className="font-bold text-primary">
+                        {formatCurrency(p.price)}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3 text-sm text-muted-foreground text-center">Nenhum produto encontrado</div>
+                )}
+              </div>
+            )}
           </div>
 
           {order.items && order.items.length > 0 ? (
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden mt-6">
               <table className="w-full text-sm text-left">
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
@@ -207,10 +373,39 @@ export default function NewOrder() {
                   {order.items.map(item => (
                     <tr key={item.id} className="hover:bg-muted/30">
                       <td className="px-4 py-3">
-                        <div className="font-medium">{item.product?.description}</div>
-                        <div className="text-xs text-muted-foreground">Cód: {item.product?.code}</div>
+                        <div className="font-medium flex items-center justify-between">
+                          <span>{item.product?.description}</span>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 opacity-50 hover:opacity-100" onClick={() => handleDeleteItem(item.id)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">Cód: {item.product?.code}</div>
+                        <div className="text-[10px] text-muted-foreground">Saldo previsto: {(item.product?.stock_quantity || 0) - (item.product?.reserved_quantity || 0)}</div>
                       </td>
-                      <td className="px-4 py-3 text-right">{item.quantity}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Input 
+                            type="number" 
+                            min="1"
+                            className="w-20 h-8 text-right px-2"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 1
+                              // Validar saldo previsto
+                              const saldoPrevisto = (item.product?.stock_quantity || 0) - (item.product?.reserved_quantity || 0)
+                              // Se aumentou a quantidade alem do saldo previsto, bloqueia (saldoPrevisto não inclui a quantidade que JA ESTA neste item se for rascunho. Para simplificar, o saldo previsto do produto já tem essa reserva subtraída)
+                              // Para ser perfeitamente correto: o saldo disponível total é `saldoPrevisto + item.quantity` (já que o item atual reservou essa quantity).
+                              const saldoDisponivelReal = saldoPrevisto + item.quantity
+                              if (val > saldoDisponivelReal) {
+                                toast.error(`Quantidade indisponível. Saldo máximo: ${saldoDisponivelReal}`)
+                                handleUpdateItem(item.id, saldoDisponivelReal, item.unit_price)
+                              } else {
+                                handleUpdateItem(item.id, val, item.unit_price)
+                              }
+                            }}
+                          />
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-right">{formatCurrency(item.unit_price)}</td>
                       <td className="px-4 py-3 text-right font-medium">{formatCurrency(item.total_price)}</td>
                     </tr>
