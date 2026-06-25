@@ -6,7 +6,7 @@ import { formatCurrency, formatDate } from '@/utils/formatters'
 import { supabase } from '@/lib/supabase'
 import { Printer, Download } from 'lucide-react'
 import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+import { toPng } from 'html-to-image'
 import { toast } from '@/components/ui/toaster'
 
 interface OrderDetailsModalProps {
@@ -62,21 +62,22 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
     
     setIsGeneratingPdf(true)
     try {
-      const canvas = await html2canvas(contentRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false
+      // Usar html-to-image no lugar de html2canvas para suportar oklch()
+      const imgData = await toPng(contentRef.current, {
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2
       })
       
-      const imgData = canvas.toDataURL('image/png')
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       })
       
+      const imgProps = pdf.getImageProperties(imgData)
       const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
       pdf.save(`pedido_${details?.order_number || 'novo'}.pdf`)
@@ -103,8 +104,23 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden w-[95vw]">
-        <DialogHeader className="px-6 py-4 border-b border-border shrink-0 bg-muted/30">
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden w-[95vw] print:!max-w-none print:!w-full print:!h-auto print:!max-h-none print:!p-0 print:!m-0 print:!shadow-none print:!border-none print:!translate-x-0 print:!translate-y-0 print:!left-0 print:!top-0 print:overflow-visible">
+        <style type="text/css" media="print">
+          {`
+            @page { size: auto; margin: 10mm; }
+            body * { visibility: hidden; }
+            #printable-order-details, #printable-order-details * { visibility: visible; }
+            #printable-order-details {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+            }
+            .print-hide { display: none !important; }
+            div[class*="bg-black/60"] { display: none !important; }
+          `}
+        </style>
+        <DialogHeader className="px-6 py-4 border-b border-border shrink-0 bg-muted/30 print-hide">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <DialogTitle className="text-xl">Resumo do Pedido {details?.order_number ? `#${details.order_number}` : ''}</DialogTitle>
@@ -125,8 +141,8 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
           </div>
         </DialogHeader>
 
-        <div className="px-6 py-6 overflow-y-auto flex-1 bg-background">
-          <div ref={contentRef} className="bg-background">
+        <div className="px-6 py-6 overflow-y-auto flex-1 bg-background print:!overflow-visible print:!p-0">
+          <div ref={contentRef} id="printable-order-details" className="bg-background print:!block print:!w-full print:!h-full">
             {isLoading ? (
               <div className="py-8 text-center text-muted-foreground">Carregando detalhes...</div>
             ) : details ? (
