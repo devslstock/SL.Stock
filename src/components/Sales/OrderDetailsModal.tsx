@@ -8,6 +8,7 @@ import { Printer, Download } from 'lucide-react'
 import jsPDF from 'jspdf'
 import { toPng } from 'html-to-image'
 import { toast } from '@/components/ui/toaster'
+import { InvoicePrintTemplate } from './InvoicePrintTemplate'
 
 interface OrderDetailsModalProps {
   orderId: string | null;
@@ -19,7 +20,7 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
   const [details, setDetails] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const printRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isOpen && orderId) {
@@ -58,12 +59,12 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
   }
 
   const handleDownloadPDF = async () => {
-    if (!contentRef.current) return
+    if (!printRef.current) return
     
     setIsGeneratingPdf(true)
     try {
       // Usar html-to-image no lugar de html2canvas para suportar oklch()
-      const imgData = await toPng(contentRef.current, {
+      const imgData = await toPng(printRef.current, {
         cacheBust: true,
         backgroundColor: '#ffffff',
         pixelRatio: 2
@@ -107,7 +108,7 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden w-[95vw] print:!max-w-none print:!w-full print:!h-auto print:!max-h-none print:!p-0 print:!m-0 print:!shadow-none print:!border-none print:!translate-x-0 print:!translate-y-0 print:!left-0 print:!top-0 print:overflow-visible">
         <style type="text/css" media="print">
           {`
-            @page { size: auto; margin: 10mm; }
+            @page { size: A4 portrait; margin: 10mm; }
             body * { visibility: hidden; }
             #printable-order-details, #printable-order-details * { visibility: visible; }
             #printable-order-details {
@@ -120,6 +121,14 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
             div[class*="bg-black/60"] { display: none !important; }
           `}
         </style>
+
+        {/* Hidden off-screen wrapper for HTML-to-Image AND Print */}
+        <div className="absolute top-[-9999px] left-[-9999px] print:static print:top-auto print:left-auto print:block w-[210mm]">
+          <div id="printable-order-details">
+            <InvoicePrintTemplate details={details} ref={printRef} />
+          </div>
+        </div>
+
         <DialogHeader className="px-6 py-4 border-b border-border shrink-0 bg-muted/30 print-hide">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -141,8 +150,8 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
           </div>
         </DialogHeader>
 
-        <div className="px-6 py-6 overflow-y-auto flex-1 bg-background print:!overflow-visible print:!p-0">
-          <div ref={contentRef} id="printable-order-details" className="bg-background print:!block print:!w-full print:!h-full">
+        <div className="px-6 py-6 overflow-y-auto flex-1 bg-background print-hide">
+          <div className="bg-background">
             {isLoading ? (
               <div className="py-8 text-center text-muted-foreground">Carregando detalhes...</div>
             ) : details ? (
