@@ -105,32 +105,36 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
   const computedNetAmount = computedSubtotal - totalDiscount;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden w-[95vw] print:!max-w-none print:!w-full print:!h-auto print:!max-h-none print:!p-0 print:!m-0 print:!shadow-none print:!border-none print:!translate-x-0 print:!translate-y-0 print:!left-0 print:!top-0 print:overflow-visible">
-        <style type="text/css" media="print">
-          {`
-            @page { size: A4 portrait; margin: 10mm; }
-            body * { visibility: hidden; }
-            #printable-order-details, #printable-order-details * { visibility: visible; }
-            #printable-order-details {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-            }
-            .print-hide { display: none !important; }
-            div[class*="bg-black/60"] { display: none !important; }
-          `}
-        </style>
+    <>
+      <style type="text/css" media="print">
+        {`
+          @page { size: auto; margin: 10mm; }
+          body { overflow: visible !important; }
+          body * { visibility: hidden; }
+          #printable-order-details, #printable-order-details * { visibility: visible; }
+          #printable-order-details {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .print-hide { display: none !important; }
+          div[class*="bg-black/60"] { display: none !important; }
+        `}
+      </style>
 
-        {/* Hidden off-screen wrapper for HTML-to-Image AND Print */}
-        <div className="absolute top-[-9999px] left-[-9999px] print:static print:top-auto print:left-auto print:block print:w-full print:h-auto overflow-visible">
-          <div id="printable-order-details">
-            <InvoicePrintTemplate details={details} ref={printRef} />
-          </div>
+      {/* Hidden off-screen wrapper for HTML-to-Image AND Print */}
+      <div className="absolute top-[-9999px] left-[-9999px] print:static print:top-auto print:left-auto print:block print:w-full print:h-auto overflow-visible">
+        <div id="printable-order-details">
+          <InvoicePrintTemplate details={details} ref={printRef} />
         </div>
+      </div>
 
-        <DialogHeader className="px-6 py-4 border-b border-border shrink-0 bg-muted/30 print-hide">
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden w-[95vw] print-hide">
+          <DialogHeader className="px-6 py-4 border-b border-border shrink-0 bg-muted/30">
+
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <DialogTitle className="text-xl">Resumo do Pedido {details?.order_number ? `#${details.order_number}` : ''}</DialogTitle>
@@ -239,5 +243,6 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
         </div>
       </DialogContent>
     </Dialog>
+    </>
   )
 }
