@@ -1,5 +1,5 @@
 -- ==============================================================================
--- COLETOR IA (ESTOQUE FÃCIL) - SQL CONSOLIDADO DO BANCO DE DADOS
+-- LS Stokc (ESTOQUE FÃCIL) - SQL CONSOLIDADO DO BANCO DE DADOS
 -- ==============================================================================
 -- Este script cria todas as tabelas, relacionamentos, chaves estrangeiras,
 -- restriÃ§Ãµes e polÃ­ticas de seguranÃ§a (RLS) para o projeto Estoque FÃ¡cil WMS/SaaS.
