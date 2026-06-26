@@ -154,7 +154,7 @@ export default function EquipmentOrdersList() {
   const openEdit = (order: EquipmentOrder) => {
     setEditingId(order.id)
     setType(order.type as any)
-    setCustomerId(order.customer_id)
+    setCustomerId(order.customer_id || '')
     const customer = customersList.find(c => c.id === order.customer_id)
     setCustomerSearchInput(customer ? `${customer.legal_name || customer.fantasy_name} (${customer.document})` : '')
     
