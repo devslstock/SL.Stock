@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { operationsApi } from '@/api/operations'
 import { deliveriesApi } from '@/api/deliveries'
@@ -26,12 +26,15 @@ export default function Conference() {
   const { user } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   
+  const [searchParams] = useSearchParams()
+  const isRetorno = searchParams.get('retorno') === 'true'
+
   const [scanInput, setScanInput] = useState('')
   const [manualQty, setManualQty] = useState<number | ''>(1)
-  const [activeTab, setActiveTab] = useState('scan')
+  const [activeTab, setActiveTab] = useState(isRetorno ? 'resumo' : 'scan')
   const [lastScanned, setLastScanned] = useState<OperationItem | null>(null)
   const [isCameraOpen, setIsCameraOpen] = useState(false)
-  const [isLoadedListOpen, setIsLoadedListOpen] = useState(true)
+  const [isLoadedListOpen, setIsLoadedListOpen] = useState(!isRetorno)
   const [isReturnListOpen, setIsReturnListOpen] = useState(true)
   
   // Return state: maps product_code to quantity returned
