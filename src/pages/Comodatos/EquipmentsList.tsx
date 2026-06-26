@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
 import { Plus, Search, Box, Edit2, History, AlertCircle, Trash2, ArrowUp, ArrowDown, Settings, ClipboardList } from 'lucide-react'
 import type { Equipment } from '@/types/database'
 
