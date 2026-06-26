@@ -41,6 +41,7 @@ export default function EquipmentOrdersList() {
   // Form
   const [type, setType] = useState<'entrega' | 'recolha' | 'troca' | 'manutencao'>('entrega')
   const [customerId, setCustomerId] = useState('')
+  const [customerSearchInput, setCustomerSearchInput] = useState('')
   const [equipmentId, setEquipmentId] = useState('')
   const [driverId, setDriverId] = useState('')
   const [scheduledDate, setScheduledDate] = useState('')
@@ -142,6 +143,7 @@ export default function EquipmentOrdersList() {
     setEditingId(null)
     setType('entrega')
     setCustomerId('')
+    setCustomerSearchInput('')
     setEquipmentId('')
     setDriverId('')
     setScheduledDate('')
@@ -151,11 +153,14 @@ export default function EquipmentOrdersList() {
 
   const openEdit = (order: EquipmentOrder) => {
     setEditingId(order.id)
-    setType(order.type)
-    setCustomerId(order.customer_id || '')
+    setType(order.type as any)
+    setCustomerId(order.customer_id)
+    const customer = customersList.find(c => c.id === order.customer_id)
+    setCustomerSearchInput(customer ? `${customer.legal_name || customer.fantasy_name} (${customer.document})` : '')
+    
     setEquipmentId(order.equipment_id)
     setDriverId(order.driver_id || '')
-    setScheduledDate(order.scheduled_date || '')
+    setScheduledDate(order.scheduled_date ? order.scheduled_date.split('T')[0] : '')
     setNotes(order.notes || '')
     setIsModalOpen(true)
   }
@@ -374,17 +379,27 @@ export default function EquipmentOrdersList() {
 
               <div className="space-y-2">
                 <Label>Cliente *</Label>
-                <select 
-                  value={customerId} 
-                  onChange={e => setCustomerId(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                <Input 
+                  list="customers-list"
+                  placeholder="Selecione ou digite para buscar..." 
+                  value={customerSearchInput}
+                  onChange={e => {
+                    const val = e.target.value
+                    setCustomerSearchInput(val)
+                    const matched = customersList.find(c => `${c.legal_name || c.fantasy_name} (${c.document})` === val)
+                    if (matched) {
+                      setCustomerId(matched.id)
+                    } else {
+                      setCustomerId('')
+                    }
+                  }}
                   required
-                >
-                  <option value="">Selecione o cliente...</option>
+                />
+                <datalist id="customers-list">
                   {customersList.map(c => (
-                    <option key={c.id} value={c.id}>{c.legal_name || c.fantasy_name} ({c.document})</option>
+                    <option key={c.id} value={`${c.legal_name || c.fantasy_name} (${c.document})`} />
                   ))}
-                </select>
+                </datalist>
               </div>
             </div>
 
