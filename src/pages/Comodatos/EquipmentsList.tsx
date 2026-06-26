@@ -41,7 +41,10 @@ export default function EquipmentsList() {
   const [type, setType] = useState('Freezer')
   const [model, setModel] = useState('')
   const [size, setSize] = useState('')
+  const [voltage, setVoltage] = useState<'127v' | '220v' | ''>('')
+  const [notes, setNotes] = useState('')
   const [status, setStatus] = useState<'Teste' | 'Disponível' | 'Em Manutenção' | 'Danificado' | 'No Cliente' | 'Equipamento de Estoque'>('Disponível')
+  const [voltageFilter, setVoltageFilter] = useState<'Todos' | '127v' | '220v'>('Todos')
   const [currentCustomerId, setCurrentCustomerId] = useState('')
   const [customerSearch, setCustomerSearch] = useState('')
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
@@ -136,9 +139,9 @@ export default function EquipmentsList() {
     }
 
     if (editing) {
-      updateMutation.mutate({ patrimony: patrimony.trim(), type, model, size, status, current_customer_id: status === 'No Cliente' ? currentCustomerId : null })
+      updateMutation.mutate({ patrimony: patrimony.trim(), type, model, size, voltage, notes, status, current_customer_id: status === 'No Cliente' ? currentCustomerId : null })
     } else {
-      createMutation.mutate({ patrimony: patrimony.trim(), type, model, size, status, current_customer_id: status === 'No Cliente' ? currentCustomerId : null })
+      createMutation.mutate({ patrimony: patrimony.trim(), type, model, size, voltage, notes, status, current_customer_id: status === 'No Cliente' ? currentCustomerId : null })
     }
   }
 
@@ -148,6 +151,8 @@ export default function EquipmentsList() {
     setType('Freezer')
     setModel('')
     setSize('')
+    setVoltage('')
+    setNotes('')
     setStatus('Disponível')
     setCurrentCustomerId('')
     setCustomerSearch('')
@@ -160,6 +165,8 @@ export default function EquipmentsList() {
     setType(eq.type)
     setModel(eq.model)
     setSize(eq.size || '')
+    setVoltage(eq.voltage as any || '')
+    setNotes(eq.notes || '')
     setStatus(eq.status as any)
     setCurrentCustomerId(eq.current_customer_id || '')
     setCustomerSearch(eq.customer ? (eq.customer.legal_name || eq.customer.fantasy_name || '') : '')
@@ -182,9 +189,10 @@ export default function EquipmentsList() {
 
   const filtered = equipments
     .filter(eq => 
-      eq.patrimony.toLowerCase().includes(search.toLowerCase()) ||
+      (eq.patrimony.toLowerCase().includes(search.toLowerCase()) ||
       eq.model.toLowerCase().includes(search.toLowerCase()) ||
-      eq.customer?.fantasy_name?.toLowerCase().includes(search.toLowerCase())
+      eq.customer?.fantasy_name?.toLowerCase().includes(search.toLowerCase())) &&
+      (voltageFilter === 'Todos' || eq.voltage === voltageFilter)
     )
     .sort((a, b) => {
       let aVal = ''
@@ -241,6 +249,18 @@ export default function EquipmentsList() {
           />
         </div>
         <div className="flex items-center gap-2">
+          <Label className="whitespace-nowrap hidden sm:block">Voltagem:</Label>
+          <select 
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm sm:w-[120px]"
+            value={voltageFilter}
+            onChange={e => setVoltageFilter(e.target.value as any)}
+          >
+            <option value="Todos">Todos</option>
+            <option value="127v">127v</option>
+            <option value="220v">220v</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
           <Label className="whitespace-nowrap hidden sm:block">Ordenar:</Label>
           <select 
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm sm:w-[200px]"
@@ -286,8 +306,12 @@ export default function EquipmentsList() {
                 <TableRow key={eq.id}>
                   <TableCell className="font-mono text-xs">{eq.patrimony}</TableCell>
                   <TableCell>
-                    <div className="font-bold">{eq.type} {eq.model}</div>
-                    {eq.size && <div className="text-xs text-muted-foreground">{eq.size}</div>}
+                    <div className="font-medium">{eq.model} - {eq.type}</div>
+                    {eq.notes && <div className="text-xs text-muted-foreground line-clamp-1" title={eq.notes}>Obs: {eq.notes}</div>}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{eq.size || '-'}</div>
+                    <div className="text-xs text-muted-foreground">{eq.voltage || '-'}</div>
                   </TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${
@@ -371,8 +395,10 @@ export default function EquipmentsList() {
               <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-base text-foreground truncate">{eq.model} - {eq.type}</div>
-                  {eq.size && <div className="text-sm text-foreground mt-0.5">{eq.size}</div>}
+                  {eq.size && <span className="text-sm text-foreground mt-0.5">{eq.size}</span>}
+                  {eq.voltage && <span className="text-sm text-foreground mt-0.5 ml-2">({eq.voltage})</span>}
                   <div className="font-mono text-xs text-muted-foreground mt-0.5">Patri.: {eq.patrimony}</div>
+                  {eq.notes && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">Obs: {eq.notes}</div>}
                 </div>
                 <Badge variant="outline" className={`whitespace-nowrap shrink-0 ${
                     eq.status === 'Disponível' ? 'bg-green-100 text-green-700 border-green-200' :
@@ -473,6 +499,24 @@ export default function EquipmentsList() {
             </div>
 
             <div className="space-y-2">
+              <Label>Voltagem</Label>
+              <div className="flex items-center gap-4 mt-2">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="voltage" value="127v" checked={voltage === '127v'} onChange={e => setVoltage(e.target.value as any)} className="cursor-pointer" />
+                  127v
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="voltage" value="220v" checked={voltage === '220v'} onChange={e => setVoltage(e.target.value as any)} className="cursor-pointer" />
+                  220v
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="voltage" value="" checked={voltage === ''} onChange={e => setVoltage(e.target.value as any)} className="cursor-pointer" />
+                  Nenhuma / Bivolt
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <Label>Situação / Status *</Label>
               <select 
                 value={status} 
@@ -486,6 +530,16 @@ export default function EquipmentsList() {
                 <option value="No Cliente">No Cliente</option>
                 <option value="Equipamento de Estoque">Equipamento de Estoque</option>
               </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Observação</Label>
+              <textarea 
+                value={notes} 
+                onChange={e => setNotes(e.target.value)} 
+                placeholder="Observações gerais sobre o equipamento..."
+                className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
             </div>
 
             {status === 'No Cliente' && (

@@ -513,6 +513,8 @@ export interface Equipment {
   type: string
   model: string
   size: string | null
+  voltage: string | null
+  notes: string | null
   status: 'Teste' | 'Disponível' | 'Em Manutenção' | 'Danificado' | 'No Cliente' | 'Equipamento de Estoque'
   current_customer_id: string | null
   created_at: string
