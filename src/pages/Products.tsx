@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from '@/components/ui/toaster'
-import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight, ScanLine, ArrowUpDown, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight, ScanLine, ArrowUpDown, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
@@ -616,6 +616,18 @@ export default function Products() {
                 value={filters.externalCode}
                 onChange={(e) => setFilters(f => ({ ...f, externalCode: e.target.value }))}
               />
+            </div>
+
+            <div className="col-span-full flex justify-end mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setFilters({ group: 'Todos', stockStatus: 'Todos', factoryCode: '', externalCode: '' })}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Limpar Filtros
+              </Button>
             </div>
           </div>
         )}

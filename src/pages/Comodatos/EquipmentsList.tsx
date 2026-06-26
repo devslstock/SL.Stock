@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Box, Edit2, History, AlertCircle, Trash2, ArrowUp, ArrowDown, Settings, ClipboardList } from 'lucide-react'
+import { Plus, Edit2, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, History, CheckCircle, Clock, Save, Copy, FileText, Settings, Settings2, ShieldCheck, MapPin, X } from 'lucide-react'
 import type { Equipment } from '@/types/database'
 
 import { InternalMaintenanceModal } from './InternalMaintenanceModal'
@@ -397,6 +397,18 @@ export default function EquipmentsList() {
                   <option value="Bivolt">Bivolt</option>
                 </select>
               </div>
+            </div>
+
+            <div className="col-span-full flex justify-end mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setFilters(defaultFilters)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Limpar Filtros
+              </Button>
             </div>
           </div>
         )}

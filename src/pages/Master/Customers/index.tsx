@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Search, Plus, Edit2, Trash2, Building2, UploadCloud, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Filter, MapPin, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, Building2, UploadCloud, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Filter, MapPin, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
 import Papa from 'papaparse'
 import { customersApi } from '@/api/customers'
 import { regionsApi } from '@/api/regions'
@@ -661,7 +661,9 @@ export default function CustomersList() {
                 variant="outline" 
                 size="sm"
                 onClick={() => setFilters(defaultFilters)}
+                className="text-muted-foreground hover:text-foreground"
               >
+                <X className="h-4 w-4 mr-2" />
                 Limpar Filtros
               </Button>
             </div>
