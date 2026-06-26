@@ -370,9 +370,9 @@ export default function EquipmentsList() {
             <Card key={eq.id} className="p-4 space-y-4 shadow-sm">
               <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-base text-foreground truncate">{eq.type} {eq.model}</div>
-                  <div className="font-mono text-xs text-muted-foreground mt-0.5">S/N: {eq.patrimony}</div>
-                  {eq.size && <div className="text-xs text-muted-foreground mt-0.5">{eq.size}</div>}
+                  <div className="font-bold text-base text-foreground truncate">{eq.model} - {eq.type}</div>
+                  {eq.size && <div className="text-sm text-foreground mt-0.5">{eq.size}</div>}
+                  <div className="font-mono text-xs text-muted-foreground mt-0.5">Patri.: {eq.patrimony}</div>
                 </div>
                 <Badge variant="outline" className={`whitespace-nowrap shrink-0 ${
                     eq.status === 'Disponível' ? 'bg-green-100 text-green-700 border-green-200' :
