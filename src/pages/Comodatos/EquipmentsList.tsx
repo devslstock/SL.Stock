@@ -221,7 +221,7 @@ export default function EquipmentsList() {
           </h1>
           <p className="text-sm text-muted-foreground">Gerencie o parque de equipamentos em comodato</p>
         </div>
-        {canEdit && (
+        {hasAccess && (
           <Button onClick={openNew}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Equipamento
