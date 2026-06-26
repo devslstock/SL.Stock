@@ -232,7 +232,7 @@ export default function EquipmentsList() {
   const filtered = equipments
     .filter(eq => 
       applyFilter(eq.patrimony, filters.patrimonio, filters.patrimonioType) &&
-      applyFilter(`${eq.type} ${eq.model}`, filters.modelo, filters.modeloType) &&
+      applyFilter(`${eq.type} ${eq.model} ${eq.size || ''}`, filters.modelo, filters.modeloType) &&
       applyFilter(eq.customer?.fantasy_name || eq.customer?.legal_name || '', filters.cliente, filters.clienteType) &&
       (filters.status === 'Todos' || eq.status === filters.status) &&
       (filters.voltagem === 'Todos' || eq.voltage === filters.voltagem) &&
@@ -324,7 +324,7 @@ export default function EquipmentsList() {
             {/* Modelo */}
             <div className="flex gap-2 items-end">
               <div className="flex-1 space-y-1">
-                <label className="text-xs text-muted-foreground font-medium">Marca / Modelo</label>
+                <label className="text-xs text-muted-foreground font-medium">Marca / Modelo / Tamanho</label>
                 <div className="flex gap-1">
                   <select 
                     className="h-9 rounded-md border border-input bg-background px-2 text-xs"
