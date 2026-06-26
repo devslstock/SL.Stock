@@ -13,7 +13,7 @@ import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, Arrow
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
-
+import { supabase } from '@/lib/supabase'
 export default function Products() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -118,6 +118,44 @@ export default function Products() {
     onError: (e: any) => {
       toast.error(`Erro ao ajustar estoque: ${e.message}`)
     }
+  })
+
+  const fixReservedStockMutation = useMutation({
+    mutationFn: async () => {
+      const { data: prods, error: pErr } = await supabase.from('products').select('id, reserved_stock')
+      if (pErr) throw pErr
+      
+      const { data: orders, error: oErr } = await supabase.from('sales_orders').select('id, status, sales_order_items(product_id, quantity)')
+      if (oErr) throw oErr
+
+      const productReservations: Record<string, number> = {}
+
+      orders.forEach((order: any) => {
+        if (order.status === 'Rascunho' || order.status === 'Enviado') {
+          order.sales_order_items?.forEach((item: any) => {
+            if (!productReservations[item.product_id]) {
+              productReservations[item.product_id] = 0
+            }
+            productReservations[item.product_id] += item.quantity
+          })
+        }
+      })
+
+      let updates = 0
+      for (const product of prods) {
+        const expected = productReservations[product.id] || 0
+        if (product.reserved_stock !== expected) {
+          await supabase.from('products').update({ reserved_stock: expected }).eq('id', product.id)
+          updates++
+        }
+      }
+      return updates
+    },
+    onSuccess: (updates) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success(`Estoque previsto corrigido! ${updates} produtos atualizados.`)
+    },
+    onError: (e: any) => toast.error(`Erro ao corrigir: ${e.message}`)
   })
 
   const groups = useMemo(() => {
@@ -445,6 +483,15 @@ export default function Products() {
           <p className="text-sm text-muted-foreground mt-1">{products.length} produtos no estoque</p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
+          {isManager && (
+            <Button variant="outline" onClick={() => {
+              if (window.confirm('Tem certeza que deseja recalcular o estoque previsto de todos os produtos com base nos pedidos em rascunho/enviados?')) {
+                fixReservedStockMutation.mutate()
+              }
+            }} disabled={fixReservedStockMutation.isPending}>
+              {fixReservedStockMutation.isPending ? 'Corrigindo...' : 'Corrigir Estoque Previsto'}
+            </Button>
+          )}
           {canDoConference && (
             <>
               <Link to="/contagens">
