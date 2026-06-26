@@ -249,7 +249,7 @@ export default function AppLayout() {
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-40">
         <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity">
           <img src="/logo.png" alt="Logo" className="h-8 w-8 object-contain drop-shadow-md" />
-          <span className="font-bold text-lg gradient-text whitespace-nowrap">Estoque Fácil</span>
+          <span className="font-bold text-lg gradient-text whitespace-nowrap">Estoque Fácil <span className="text-[10px] text-green-500 ml-1">v2</span></span>
         </Link>
         <div className="flex items-center gap-1">
           {!isOnline && (
