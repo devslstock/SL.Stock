@@ -287,32 +287,35 @@ export default function EquipmentsList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="cursor-pointer whitespace-nowrap" onClick={() => handleSort('patrimony')}>
-                  Nº Série / Patrimônio <SortIcon field="patrimony" />
+                <TableHead className="w-[120px] cursor-pointer whitespace-nowrap" onClick={() => handleSort('patrimony')}>
+                  Nº Série <SortIcon field="patrimony" />
                 </TableHead>
                 <TableHead className="cursor-pointer whitespace-nowrap" onClick={() => handleSort('model')}>
-                  Marca / Modelo <SortIcon field="model" />
+                  Equipamento <SortIcon field="model" />
                 </TableHead>
-                <TableHead className="cursor-pointer whitespace-nowrap" onClick={() => handleSort('status')}>
+                <TableHead className="w-[140px] whitespace-nowrap">
+                  Especificações
+                </TableHead>
+                <TableHead className="w-[160px] cursor-pointer whitespace-nowrap" onClick={() => handleSort('status')}>
                   Situação <SortIcon field="status" />
                 </TableHead>
                 <TableHead className="cursor-pointer whitespace-nowrap" onClick={() => handleSort('customer')}>
                   Cliente Atual <SortIcon field="customer" />
                 </TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="w-[140px] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map(eq => (
                 <TableRow key={eq.id}>
-                  <TableCell className="font-mono text-xs">{eq.patrimony}</TableCell>
+                  <TableCell className="font-mono text-sm font-semibold text-muted-foreground">{eq.patrimony}</TableCell>
                   <TableCell>
-                    <div className="font-medium">{eq.model} - {eq.type}</div>
-                    {eq.notes && <div className="text-xs text-muted-foreground line-clamp-1" title={eq.notes}>Obs: {eq.notes}</div>}
+                    <div className="font-bold text-base text-foreground">{eq.type} <span className="font-medium text-foreground/80">- {eq.model}</span></div>
+                    {eq.notes && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1" title={eq.notes}>Obs: {eq.notes}</div>}
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">{eq.size || '-'}</div>
-                    <div className="text-xs text-muted-foreground">{eq.voltage || '-'}</div>
+                    <div className="text-sm font-medium">{eq.size || '-'}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{eq.voltage || '-'}</div>
                   </TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${
@@ -344,7 +347,7 @@ export default function EquipmentsList() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex gap-2">
+                    <div className="flex justify-end gap-1">
                       <Button variant="ghost" size="icon" onClick={() => openHistory(eq)} title="Histórico">
                         <History className="h-4 w-4" />
                       </Button>
