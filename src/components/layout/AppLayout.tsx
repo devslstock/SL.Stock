@@ -19,6 +19,9 @@ import { ProfileModal } from '@/components/ProfileModal'
 import { TesterNotes } from '@/components/TesterNotes'
 import type { LucideIcon } from 'lucide-react'
 
+// ATUALIZE ESTA VERSÃO PARA TESTAR SE O APLICATIVO ATUALIZOU NOS DISPOSITIVOS
+const APP_VERSION = 'v1.0.1'
+
 interface NavItem {
   label: string;
   icon: LucideIcon;
@@ -508,6 +511,11 @@ export default function AppLayout() {
               <HelpCircle className={cn("h-4.5 w-4.5", location.pathname === '/ajuda' && "text-primary")} />
               Ajuda e Suporte
             </Link>
+            <div className="px-3 pt-2 text-center pb-2">
+              <span className="text-[10px] text-muted-foreground/50 font-medium select-all">
+                Versão {APP_VERSION}
+              </span>
+            </div>
           </div>
         </nav>
       </aside>
