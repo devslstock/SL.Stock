@@ -133,7 +133,7 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
       </div>
 
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden overflow-x-hidden w-[95vw] print-hide">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden w-[95vw] print-hide">
           <DialogHeader className="px-6 py-4 border-b border-border shrink-0 bg-muted/30">
 
 
@@ -155,7 +155,7 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
           </div>
         </DialogHeader>
 
-        <div className="px-6 py-6 overflow-y-auto flex-1 bg-background print-hide">
+        <div className="px-6 py-6 overflow-y-auto flex-1 min-h-0 bg-background print-hide">
           <div className="bg-background">
             {isLoading ? (
               <div className="py-8 text-center text-muted-foreground">Carregando detalhes...</div>
