@@ -88,7 +88,12 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
           continue
         }
 
-        if (row[1] === '#' && row[2] === 'CÃ³digo' && row[3] === 'Item') {
+        const r1 = String(row[1] || '').trim()
+        const r2 = String(row[2] || '').trim()
+        const r3 = String(row[3] || '').trim()
+        
+        // Use includes to avoid exact accent matching issues
+        if (r1 === '#' && r2.includes('digo') && r3.includes('Item')) {
           parsingItems = true
           continue
         }
@@ -108,7 +113,8 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
           }
         }
 
-        if (row[1] === 'ObservaÃ§Ãµes:') {
+        // Avoid exact match due to potential encoding issues in row[1]
+        if (r1.includes('Observa')) {
           let obsRowIndex = i + 1
           while (obsRowIndex < rows.length && (!rows[obsRowIndex] || !rows[obsRowIndex][1])) {
             obsRowIndex++
@@ -167,7 +173,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
       const customer = customers?.find((c: any) => c.document === order.customerCnpj)
       if (!customer) {
         order.isValid = false
-        order.error = 'Cliente nÃ£o encontrado pelo CNPJ.'
+        order.error = 'Cliente não encontrado pelo CNPJ.'
         continue
       }
       
@@ -178,7 +184,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
 
       if (!order.priceTableId) {
         order.isValid = false
-        order.error = 'Cliente sem tabela de preÃ§os.'
+        order.error = 'Cliente sem tabela de preços.'
         continue
       }
 
@@ -193,7 +199,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
         if (!product) {
           item.isValid = false
           order.isValid = false
-          order.error = `Produto ${item.code} nÃ£o encontrado.`
+          order.error = `Produto ${item.code} não encontrado.`
           continue
         }
         item.productId = product.id
@@ -206,7 +212,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
         if (!priceItem) {
           item.isValid = false
           order.isValid = false
-          order.error = `Produto ${item.code} sem preÃ§o na tabela do cliente.`
+          order.error = `Produto ${item.code} sem preço na tabela do cliente.`
           continue
         }
 
@@ -221,7 +227,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
   const importMutation = useMutation({
     mutationFn: async () => {
       const validOrders = parsedOrders.filter(o => o.isValid)
-      if (validOrders.length === 0) throw new Error('Nenhum pedido vÃ¡lido para importar')
+      if (validOrders.length === 0) throw new Error('Nenhum pedido válido para importar')
 
       const { data: session } = await supabase.auth.getSession()
       const userRes = await supabase.from('users').select('company_id').eq('id', session.session?.user.id).single()
@@ -316,9 +322,9 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
           {parsedOrders.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-sm">PrÃ©-visualizaÃ§Ã£o dos Pedidos</h3>
+                <h3 className="font-semibold text-sm">Pré-visualização dos Pedidos</h3>
                 <span className="text-sm text-muted-foreground">
-                  {validCount} de {parsedOrders.length} vÃ¡lidos
+                  {validCount} de {parsedOrders.length} válidos
                 </span>
               </div>
 
@@ -326,7 +332,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>NÂº Pedido</TableHead>
+                      <TableHead>Nº Pedido</TableHead>
                       <TableHead>Cliente</TableHead>
                       <TableHead>Qtd Itens</TableHead>
                       <TableHead>Status</TableHead>
@@ -347,7 +353,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
                             </span>
                           ) : (
                             <span className="flex items-center text-red-600 text-sm font-medium" title={order.error}>
-                              <AlertCircle className="h-4 w-4 mr-1" /> InvÃ¡lido
+                              <AlertCircle className="h-4 w-4 mr-1" /> Inválido
                             </span>
                           )}
                         </TableCell>
@@ -373,5 +379,3 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
     </Dialog>
   )
 }
-
-
