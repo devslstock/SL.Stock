@@ -677,7 +677,7 @@ export default function RouteClients() {
                 className="shrink-0 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary"
                 onClick={() => {
                   toast.info('Gerando PDF...', { duration: 3000 });
-                  generateRouteReportPDF(route, clients, routeOrders, company, true, checklistData).catch(err => {
+                  generateRouteReportPDF(route, clients, routeOrders, company, true, checklist).catch(err => {
                     console.error(err);
                     toast.error('Erro ao gerar relatório com comprovantes.');
                   });
@@ -879,7 +879,7 @@ export default function RouteClients() {
                             className="justify-start gap-3 w-full text-left font-normal"
                             onClick={() => { 
                               setShowMenu(false); 
-                              generateRouteReportPDF(route, clients, routeOrders, company, false, checklistData).catch(err => {
+                              generateRouteReportPDF(route, clients, routeOrders, company, false, checklist).catch(err => {
                                 toast.error('Erro ao gerar relatório: ' + err.message);
                               });
                             }}
