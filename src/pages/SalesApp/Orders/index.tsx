@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { salesApi } from '@/api/sales'
 import { formatCurrency, formatDate } from '@/utils/formatters'
-import { Search, Plus, Printer, Settings, FileText, Store, Calendar, DollarSign, MessageSquare, FileDigit, Trash2, Boxes } from 'lucide-react'
+import { Search, Plus, Printer, Settings, FileText, Store, Calendar, DollarSign, MessageSquare, FileDigit, Trash2, Boxes, Upload } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
 import { OrderDetailsModal } from '@/components/Sales/OrderDetailsModal'
+import { ImportOrdersModal } from './ImportOrdersModal'
 
 export default function SalesOrders() {
   const navigate = useNavigate()
@@ -15,6 +16,7 @@ export default function SalesOrders() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>('')
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const { user, company, isMaster } = useAuth()
 
   const { data: orderGroups = [] } = useQuery({
@@ -100,6 +102,14 @@ export default function SalesOrders() {
               <Boxes className="h-4 w-4 mr-2" /> Importar Grupo
             </Button>
           </Link>
+
+          <Button 
+            variant="outline" 
+            className="text-blue-600 border-blue-500 hover:bg-blue-50 font-bold px-4 h-10 shadow-sm rounded-md"
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            <Upload className="h-4 w-4 mr-2" /> Importar Planilha
+          </Button>
           
           <Button variant="outline" className="text-primary border-border bg-background font-semibold px-4 h-10 rounded-md">
             <Printer className="h-4 w-4 mr-2" /> Imprimir pedidos
@@ -216,6 +226,11 @@ export default function SalesOrders() {
         isOpen={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
         orderId={selectedOrderId}
+      />
+
+      <ImportOrdersModal 
+        isOpen={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
       />
     </div>
   )

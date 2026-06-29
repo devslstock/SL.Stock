@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { deliveriesApi } from '@/api/deliveries'
+import { ImportLoadModal } from './ImportLoadModal'
 import {
   Truck,
   Search,
@@ -20,7 +21,8 @@ import {
   CheckCircle2,
   Trash2,
   Factory,
-  Undo2
+  Undo2,
+  Boxes
 } from 'lucide-react'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success'; icon: typeof Clock }> = {
@@ -47,6 +49,7 @@ export default function AllLoads() {
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   const navigate = useNavigate()
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [selectedRouteId, setSelectedRouteId] = useState('')
 
   const { data: deliveryRoutes = [], isLoading: isRoutesLoading } = useQuery({
@@ -101,9 +104,12 @@ export default function AllLoads() {
         </div>
         {isManager && (
           <div className="flex gap-2">
+            <Button variant="outline" className="gap-2 text-emerald-600 border-emerald-500 hover:bg-emerald-50" onClick={() => setIsImportModalOpen(true)}>
+              <Boxes className="h-4 w-4" /> Importar Rota
+            </Button>
             <Link to="/nova-carga">
               <Button className="gap-2">
-                <Plus className="h-4 w-4" /> Nova Rota
+                <Plus className="h-4 w-4" /> Nova Carga
               </Button>
             </Link>
           </div>
@@ -237,6 +243,10 @@ export default function AllLoads() {
           </div>
         </DialogContent>
       </Dialog>
+      <ImportLoadModal 
+        isOpen={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+      />
     </div>
   )
 }

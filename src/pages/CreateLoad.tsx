@@ -687,16 +687,10 @@ export default function CreateLoad() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <User className="h-4 w-4 text-primary" />Itens da Carga
             </CardTitle>
-            <div>
-              <input type="file" accept=".csv,.txt,.xls,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-1.5" /> Importar Planilha
-              </Button>
-            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
