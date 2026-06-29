@@ -133,7 +133,7 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
       </div>
 
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-y-auto overflow-x-hidden w-[95vw] print-hide">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden overflow-x-hidden w-[95vw] print-hide">
           <DialogHeader className="px-6 py-4 border-b border-border shrink-0 bg-muted/30">
 
 
