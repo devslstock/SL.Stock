@@ -245,22 +245,7 @@ export default function SalesRepsList() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          {isManager && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="w-full sm:w-auto shadow-sm text-indigo-500 hover:text-indigo-600 border-indigo-200" 
-              disabled={isCreatingUsers} 
-              onClick={() => {
-                if (window.confirm('Isto irá criar logins automaticamente (nome@delicius.com) para todos os representantes que ainda não tem acesso. Deseja continuar?')) {
-                  createUsersMutation.mutate()
-                }
-              }}
-            >
-              <Key className="mr-2 h-4 w-4" /> 
-              {isCreatingUsers ? 'Criando...' : 'Gerar Logins de Acesso'}
-            </Button>
-          )}
+
 
           <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200">
             <Users className="h-4 w-4" />

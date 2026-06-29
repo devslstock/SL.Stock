@@ -473,6 +473,19 @@ export default function Products() {
     toast.success('Relatório exportado com sucesso!')
   }
 
+  const downloadTemplate = () => {
+    const headers = ['Codigo', 'Descricao', 'Codigo_Externo', 'Grupo', 'Quantidade', 'Lote', 'Peso']
+    const csvContent = headers.join(';')
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `modelo_importacao_produtos.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -775,11 +788,16 @@ export default function Products() {
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">Cole a sua planilha ou importe o arquivo (.csv, .txt, .xlsx).<br />Formato esperado: <b>Cod. | Descrição | Cod Externo (opcional) | Grupo (opcional) | Quantidade (opcional) | Lote (opcional)</b></p>
             <Input type="file" accept=".csv,.txt,.xls,.xlsx" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsImportOpen(false)}>Cancelar</Button>
-              <Button onClick={() => executeImport('new')} disabled={!selectedFile || isImporting}>
-                {isImporting ? 'Processando...' : 'Importar'}
+            <div className="flex justify-between gap-2 pt-2">
+              <Button type="button" variant="outline" className="text-primary border-primary hover:bg-primary/10" onClick={downloadTemplate}>
+                <FileDown className="h-4 w-4 mr-2" /> Baixar Modelo
               </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsImportOpen(false)}>Cancelar</Button>
+                <Button onClick={() => executeImport('new')} disabled={!selectedFile || isImporting}>
+                  {isImporting ? 'Processando...' : 'Importar'}
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

@@ -157,8 +157,8 @@ export default function EquipmentsList() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!patrimony || !type || !model) {
-      toast.error('Preencha os campos obrigatórios')
+    if (!patrimony || !type || !model || !voltage) {
+      toast.error('Preencha os campos obrigatórios (Patrimônio, Tipo, Modelo e Voltagem)')
       return
     }
 
@@ -679,7 +679,7 @@ export default function EquipmentsList() {
             </div>
 
             <div className="space-y-2">
-              <Label>Voltagem</Label>
+              <Label>Voltagem *</Label>
               <div className="flex items-center gap-4 mt-2">
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                   <input type="radio" name="voltage" value="127v" checked={voltage === '127v'} onChange={e => setVoltage(e.target.value as any)} className="cursor-pointer" />

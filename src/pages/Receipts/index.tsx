@@ -17,6 +17,7 @@ import {
   PackageCheck,
   CheckCircle2,
   Trash2,
+  ArrowLeft,
 } from 'lucide-react'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success'; icon: typeof Clock }> = {
@@ -77,13 +78,20 @@ export default function ReceiptsList() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
-            <Package className="h-6 w-6 text-primary" /> Recebimentos
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {filtered.length} recebimentos encontrados
-          </p>
+        <div className="flex items-center gap-3">
+          <Link to="/produtos">
+            <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
+              <Package className="h-6 w-6 text-primary" /> Recebimentos
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {filtered.length} recebimentos encontrados
+            </p>
+          </div>
         </div>
         {isManager && (
           <Link to="/recebimentos/novo">

@@ -648,42 +648,12 @@ export default function CompanySettings() {
               <p className="text-[11px] text-muted-foreground mt-2 mb-4">
                 O aplicativo enviará os pedidos para o Maxiprod automaticamente. 
               </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-muted/30 p-3 rounded-md border border-border">
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Moeda Padrão ID</label>
-                  <Input type="number" placeholder="Ex: 1" value={erpMoeda} onChange={e => setErpMoeda(e.target.value)} className="h-9 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Operação Fiscal ID</label>
-                  <Input type="number" placeholder="Ex: 1" value={erpOperacao} onChange={e => setErpOperacao(e.target.value)} className="h-9 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Unidade Medida ID</label>
-                  <Input type="number" placeholder="Ex: 1" value={erpUnidade} onChange={e => setErpUnidade(e.target.value)} className="h-9 text-sm" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="pt-4 border-t border-border mt-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-bold text-sm text-foreground">1. Mapeamento de IDs</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Cruza o CNPJ e o Código para salvar os IDs do Maxiprod localmente, sem importar os dados antigos.
-                  </p>
-                </div>
-                <Button variant="default" onClick={handleSyncIds} disabled={isSyncingIds || !erpToken} type="button" className="shrink-0 bg-purple-600 hover:bg-purple-700 text-white">
-                  <RefreshCw className={`mr-2 h-4 w-4 ${isSyncingIds ? 'animate-spin' : ''}`} />
-                  {isSyncingIds ? 'Sincronizando IDs...' : 'Sincronizar IDs Maxiprod'}
-                </Button>
-              </div>
             </div>
 
             <div className="pt-4 border-t border-border mt-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="font-bold text-sm text-foreground">2. Sincronização Total (Legado)</h4>
+                  <h4 className="font-bold text-sm text-foreground">Sincronização Total (Legado)</h4>
                   <p className="text-xs text-muted-foreground">
                     Puxe clientes, produtos e tabelas de preço do Maxiprod para o Estoque Fácil (substitui dados).
                   </p>

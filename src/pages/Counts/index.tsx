@@ -1,12 +1,17 @@
 import { Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ClipboardList, ArrowRight, Map } from 'lucide-react'
+import { ClipboardList, ArrowRight, Map, ArrowLeft } from 'lucide-react'
 
 export default function CountsMenu() {
   return (
     <div className="space-y-6 slide-in max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <Link to="/produtos">
+          <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight gradient-text">Módulo de Contagens</h1>
           <p className="text-muted-foreground mt-1 text-sm">

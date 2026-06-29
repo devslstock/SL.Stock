@@ -70,7 +70,7 @@ export default function EquipmentOrdersList() {
 
   // Filter available equipments for delivery, or customer equipments for collection/maintenance
   const availableEquipments = equipmentsList.filter(e => type === 'entrega' ? e.status === 'Disponível' : (e.current_customer_id === customerId))
-  const mechanicsAndDrivers = usersList.filter(u => ['mecanico', 'motorista', 'ajudante'].includes(u.role))
+  const mechanicsAndDrivers = usersList
 
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -430,7 +430,7 @@ export default function EquipmentOrdersList() {
                   onChange={e => setDriverId(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="">Selecione o motorista/mecânico...</option>
+                  <option value="">Selecione o responsável...</option>
                   {mechanicsAndDrivers.map(m => (
                     <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
                   ))}

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Search, Plus, Edit2, Trash2, Building2, UploadCloud, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Filter, MapPin, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, Building2, UploadCloud, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Filter, MapPin, ArrowUpDown, ArrowUp, ArrowDown, X, FileDown } from 'lucide-react'
 import Papa from 'papaparse'
 import { customersApi } from '@/api/customers'
 import { regionsApi } from '@/api/regions'
@@ -105,6 +105,19 @@ export default function CustomersList() {
       setIsImporting(false)
     }
   })
+
+  const downloadTemplate = () => {
+    const headers = ['Apelido', 'Razão social/Nome', 'CNPJ_OU_CPF', 'Telefone 1', 'Endereço', 'Número', 'Bairro', 'CEP', 'Município', 'UF', 'Região', 'Tabela de Preços', 'Representante/Vendedor', 'Email']
+    const csvContent = headers.join(';')
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `modelo_importacao_clientes.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -477,6 +490,9 @@ export default function CustomersList() {
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           {isManager && (
             <>
+              <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm text-primary border-primary hover:bg-primary/10" onClick={downloadTemplate}>
+                <FileDown className="mr-2 h-4 w-4" /> Baixar Modelo
+              </Button>
               <label className="cursor-pointer">
                 <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm" disabled={isImporting} onClick={() => document.getElementById('csv-upload')?.click()}>
                   <UploadCloud className="mr-2 h-4 w-4" /> 
@@ -491,26 +507,7 @@ export default function CustomersList() {
                   disabled={isImporting}
                 />
               </label>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full sm:w-auto shadow-sm" 
-                disabled={isGeocoding} 
-                onClick={startGeocoding}
-                title="Atualizar coordenadas de clientes que estão sem Latitude e Longitude"
-              >
-                <MapPin className="mr-2 h-4 w-4" /> 
-                {isGeocoding ? `Atualizando (${geocodeProgress.current}/${geocodeProgress.total})...` : 'Atualizar Lat. Log.'}
-              </Button>
-              <Button 
-                type="button" 
-                variant="destructive" 
-                className="w-full sm:w-auto shadow-sm" 
-                disabled={isFixing} 
-                onClick={handleFixReps}
-              >
-                {isFixing ? 'Corrigindo...' : 'Corrigir Vendedores'}
-              </Button>
+
               <Link to="/cadastros/clientes/novo" className="w-full sm:w-auto">
                 <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
                   <Plus className="mr-2 h-4 w-4" /> Novo Cliente

@@ -1009,19 +1009,45 @@ export default function Conference() {
               }
 
               const hasAlert = hasStockAlert(item)
-              const isDivergent = item.status === 'divergent' || (op?.type === 'RECEIPT' && item.quantity_scanned > item.quantity_expected)
+              const isExcedente = op?.type === 'RECEIPT' && item.quantity_scanned > item.quantity_expected
+              const isFalta = op?.type === 'RECEIPT' && item.status === 'divergent' && item.quantity_scanned < item.quantity_expected
+              const isDivergent = item.status === 'divergent' || isExcedente
               const matchedProduct = allProducts.find(p => p.id === item.product_id || normalizeCode(p.code) === normalizeCode(item.product_code))
               const groupName = matchedProduct?.group_name
 
+              const cardClass = isExcedente 
+                ? 'border-yellow-500/40 bg-yellow-500/5' 
+                : isFalta || item.status === 'divergent'
+                ? 'border-red-500/40 bg-red-500/5' 
+                : done 
+                ? 'border-emerald-500/20' 
+                : hasAlert 
+                ? 'border-amber-500/30 bg-amber-500/5' 
+                : ''
+
+              const textClass = isExcedente
+                ? 'text-yellow-600 dark:text-yellow-400'
+                : isFalta || item.status === 'divergent'
+                ? 'text-red-600 dark:text-red-400'
+                : done
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-foreground'
+
+              const badgeClass = isExcedente
+                ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                : 'bg-red-500/20 text-red-600'
+
+              const badgeText = isExcedente ? 'Excedente' : isFalta ? 'Falta' : 'Divergente'
+
               return (
-                <div key={item.id} className={`glass-card p-3 flex flex-col gap-2 slide-up transition-all ${isDivergent ? 'border-red-500/40 bg-red-500/5' : done ? 'border-emerald-500/20' : hasAlert ? 'border-amber-500/30 bg-amber-500/5' : ''}`} style={{ animationDelay: `${i * 10}ms` }}>
+                <div key={item.id} className={`glass-card p-3 flex flex-col gap-2 slide-up transition-all ${cardClass}`} style={{ animationDelay: `${i * 10}ms` }}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`font-medium truncate ${isDivergent ? 'text-red-600 dark:text-red-400' : done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.description}</p>
+                        <p className={`font-medium truncate ${textClass}`}>{item.description}</p>
                         {isDivergent && (
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${op?.type === 'RECEIPT' && item.quantity_scanned > item.quantity_expected ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400' : 'bg-red-500/20 text-red-600'}`}>
-                            {op?.type === 'RECEIPT' && item.quantity_scanned > item.quantity_expected ? 'Excedente' : 'Divergente'}
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${badgeClass}`}>
+                            {badgeText}
                           </span>
                         )}
                         {groupName && (
@@ -1034,7 +1060,7 @@ export default function Conference() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
-                        <span className={`text-lg font-bold font-mono ${isDivergent ? 'text-red-600 dark:text-red-400' : done ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>{item.quantity_scanned || 0}</span>
+                        <span className={`text-lg font-bold font-mono ${textClass}`}>{item.quantity_scanned || 0}</span>
                         <span className="text-muted-foreground text-sm">/{item.quantity_expected}</span>
                       </div>
                       {op.status !== 'dispatched' && op.status !== 'completed' ? (

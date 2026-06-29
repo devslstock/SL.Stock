@@ -26,6 +26,7 @@ interface SalesCartStore {
   updateQuantity: (productId: string, quantity: number) => void
   setNotes: (notes: string) => void
   clearCart: () => void
+  loadOrder: (orderData: Partial<SalesCartStore>) => void
   
   // Computed
   getTotal: () => number
@@ -82,6 +83,11 @@ export const useSalesCart = create<SalesCartStore>()(
         items: [],
         notes: ''
       }),
+
+      loadOrder: (orderData: Partial<SalesCartStore>) => set((state: SalesCartStore) => ({
+        ...state,
+        ...orderData
+      })),
 
       getTotal: () => {
         const { items } = get()

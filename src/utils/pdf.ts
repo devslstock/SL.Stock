@@ -517,7 +517,7 @@ Porto Seguro, ${new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 
   }
 }
 
-export async function generateRouteReportPDF(route: any, clients: any[], routeOrders: any[], company: any, includeProofs: boolean = false): Promise<void> {
+export async function generateRouteReportPDF(route: any, clients: any[], routeOrders: any[], company: any, includeProofs: boolean = false, checklist: any = null): Promise<void> {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -598,6 +598,43 @@ export async function generateRouteReportPDF(route: any, clients: any[], routeOr
   doc.setLineWidth(0.2)
   doc.line(15, y, 195, y)
   y += 8
+
+  // Checklist
+  if (checklist) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(100, 116, 139)
+    doc.text('CHECKLIST DE VEÍCULO', 15, y)
+
+    y += 6
+    doc.setFontSize(9)
+    doc.setTextColor(15, 23, 42)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`KM Inicial:`, 15, y)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`${checklist.initial_km || 'N/A'}`, 35, y)
+
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Temp. Inicial:`, 70, y)
+    doc.setFont('helvetica', 'normal')
+    doc.text(checklist.initial_temp ? `${checklist.initial_temp}°C` : 'N/A', 95, y)
+
+    y += 5
+    doc.setFont('helvetica', 'bold')
+    doc.text(`KM Final:`, 15, y)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`${checklist.final_km || 'N/A'}`, 32, y)
+
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Temp. Final:`, 70, y)
+    doc.setFont('helvetica', 'normal')
+    doc.text(checklist.final_temp ? `${checklist.final_temp}°C` : 'N/A', 92, y)
+
+    y += 8
+    doc.setLineWidth(0.2)
+    doc.line(15, y, 195, y)
+    y += 8
+  }
 
   // Clients List
   doc.setFont('helvetica', 'bold')

@@ -4,12 +4,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import { supabase } from '@/lib/supabase'
-import { Printer, Download } from 'lucide-react'
+import { Printer, Download, Copy } from 'lucide-react'
 import jsPDF from 'jspdf'
 import { toPng } from 'html-to-image'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
 import { InvoicePrintTemplate } from './InvoicePrintTemplate'
+import { useNavigate } from 'react-router-dom'
+import { useSalesCart } from '@/stores/salesCart'
 
 interface OrderDetailsModalProps {
   orderId: string | null;
@@ -23,6 +25,8 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const printRef = useRef<HTMLDivElement>(null)
   const { company } = useAuth()
+  const navigate = useNavigate()
+  const loadOrder = useSalesCart(state => state.loadOrder)
 
   useEffect(() => {
     if (isOpen && orderId) {
@@ -72,19 +76,13 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
         pixelRatio: 2
       })
       
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      })
-      
-      const margin = 10 // 10mm margin
+      const pdf = new jsPDF('p', 'mm', 'a4', true)
       const imgProps = pdf.getImageProperties(imgData)
-      const pdfWidth = pdf.internal.pageSize.getWidth() - margin * 2
+      const pdfWidth = pdf.internal.pageSize.getWidth() - 20
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
-      
-      pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth, pdfHeight)
-      pdf.save(`pedido_${details?.order_number || 'novo'}.pdf`)
+
+      pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight, undefined, 'FAST')
+      pdf.save(`Pedido_${details.order_number}.pdf`)
       
       toast.success('PDF gerado com sucesso!')
     } catch (error: any) {
@@ -93,6 +91,33 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
     } finally {
       setIsGeneratingPdf(false)
     }
+  }
+
+  const handleDuplicate = () => {
+    if (!details) return
+    
+    // Mount cart items
+    const items = details.items.map((i: any) => ({
+      product_id: i.product_id,
+      name: i.product?.name || 'Produto',
+      code: i.product?.sku || '',
+      price: i.unit_price,
+      quantity: i.quantity,
+      stock: 999, // We don't have exact stock here, but it will be validated
+      discount_perc: ((i.unit_price * i.quantity - i.total_price) / (i.unit_price * i.quantity)) * 100 || 0
+    }))
+
+    loadOrder({
+      customer_id: details.customer_id,
+      payment_condition_id: details.payment_condition_id,
+      price_table_id: details.price_table_id,
+      notes: details.notes || '',
+      items
+    })
+
+    onOpenChange(false)
+    toast.success('Pedido duplicado para o carrinho!')
+    navigate('/vendas/novo')
   }
 
   const handlePrint = () => {
@@ -133,7 +158,7 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
       </div>
 
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden w-[95vw] print-hide">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-y-auto overflow-x-hidden w-[95vw] print-hide">
           <DialogHeader className="px-6 py-4 border-b border-border shrink-0 bg-muted/30">
 
 
@@ -146,8 +171,8 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
             </div>
             {details && (
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handlePrint} className="h-9 hidden sm:flex">
-                  <Printer className="h-4 w-4 mr-2" /> Imprimir
+                <Button variant="outline" size="sm" onClick={handleDuplicate} className="h-9 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                  <Copy className="h-4 w-4 mr-2" /> Duplicar Pedido
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleDownloadPDF} disabled={isGeneratingPdf} className="h-9">
                   <Download className="h-4 w-4 mr-2" /> {isGeneratingPdf ? 'Gerando...' : 'Download PDF'}
