@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { salesApi } from '@/api/sales'
@@ -61,7 +61,7 @@ export default function SalesOrders() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Rascunho':
-        return <span className="bg-yellow-200 text-yellow-800 text-[11px] font-bold px-3 py-1 rounded-full">Orçamento</span>
+        return <span className="bg-yellow-200 text-yellow-800 text-[11px] font-bold px-3 py-1 rounded-full">OrÃ§amento</span>
       case 'Pedido Criado':
         return <span className="bg-blue-100 text-blue-800 text-[11px] font-bold px-3 py-1 rounded-full">Pedido Criado</span>
       case 'Faturado':
@@ -87,13 +87,13 @@ export default function SalesOrders() {
           <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
             <FileText className="h-6 w-6 text-primary" /> Meus Pedidos
           </h1>
-          <p className="text-sm text-muted-foreground">Gerencie seus orçamentos e pedidos de venda</p>
+          <p className="text-sm text-muted-foreground">Gerencie seus orÃ§amentos e pedidos de venda</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
           <Link to="/vendas/novo-pedido">
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4 h-10 shadow-sm rounded-md">
-              <Plus className="h-4 w-4 mr-2" /> Criar pedido / orçamento
+              <Plus className="h-4 w-4 mr-2" /> Criar pedido / orÃ§amento
             </Button>
           </Link>
           
@@ -103,13 +103,7 @@ export default function SalesOrders() {
             </Button>
           </Link>
 
-          <Button 
-            variant="outline" 
-            className="text-blue-600 border-blue-500 hover:bg-blue-50 font-bold px-4 h-10 shadow-sm rounded-md"
-            onClick={() => setIsImportModalOpen(true)}
-          >
-            <Upload className="h-4 w-4 mr-2" /> Importar Planilha
-          </Button>
+
           
           <Button variant="outline" className="text-primary border-border bg-background font-semibold px-4 h-10 rounded-md">
             <Printer className="h-4 w-4 mr-2" /> Imprimir pedidos
@@ -235,3 +229,4 @@ export default function SalesOrders() {
     </div>
   )
 }
+
