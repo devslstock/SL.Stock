@@ -274,7 +274,8 @@ export default function NewOrder() {
           quantity: item.quantity,
           unit_price: item.unit_price,
           total_price: item.total_price,
-          discount_percent: item.discount_percent
+          discount_percent: item.discount_percent,
+          net_price: item.net_price || item.total_price
         }))
         await salesApi.addSalesOrderItems(newItems)
       }
