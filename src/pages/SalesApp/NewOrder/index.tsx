@@ -249,6 +249,44 @@ export default function NewOrder() {
     }
   }
 
+  const handleDuplicateOrder = async () => {
+    if (!order) return
+    try {
+      const { salesApi } = await import('@/api/sales')
+      const newOrder = await salesApi.createSalesOrder({
+        company_id: order.company_id,
+        customer_id: order.customer_id,
+        sales_rep_id: order.sales_rep_id,
+        price_table_id: order.price_table_id,
+        payment_condition_id: order.payment_condition_id,
+        status: 'Rascunho',
+        total_amount: order.total_amount,
+        total_discount: order.total_discount,
+        net_amount: order.net_amount,
+        notes: order.notes,
+        delivery_date: order.delivery_date
+      })
+      
+      if (order.items && order.items.length > 0) {
+        const newItems = order.items.map((item: any) => ({
+          sales_order_id: newOrder.id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          discount_percent: item.discount_percent
+        }))
+        await salesApi.addSalesOrderItems(newItems)
+      }
+      
+      toast.success('Pedido duplicado com sucesso!')
+      setShowOptionsTop(false)
+      setSearchParams({ id: newOrder.id })
+    } catch (e: any) {
+      toast.error('Erro ao duplicar pedido: ' + e.message)
+    }
+  }
+
   const generatePdfFile = async () => {
     if (!printRef.current) throw new Error("Elemento PDF não encontrado");
     setIsGeneratingPdf(true);
@@ -406,7 +444,7 @@ export default function NewOrder() {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowOptionsTop(false)} />
                 <div className="absolute top-full right-0 mt-1 w-48 bg-card border border-border shadow-lg rounded-md flex flex-col z-50 py-1">
-                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsTop(false); toast.info('Em breve!') }}>
+                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={handleDuplicateOrder}>
                     <Copy className="h-4 w-4" /> Duplicar
                   </button>
                   <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsTop(false); toast.info('Em breve!') }}>
@@ -704,7 +742,7 @@ export default function NewOrder() {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowOptionsBottom(false)} />
                 <div className="absolute bottom-full right-0 mb-1 w-48 bg-card border border-border shadow-lg rounded-md flex flex-col z-50 py-1">
-                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); toast.info('Em breve!') }}>
+                  <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={handleDuplicateOrder}>
                     <Copy className="h-4 w-4" /> Duplicar
                   </button>
                   <button className="px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2" onClick={() => { setShowOptionsBottom(false); toast.info('Em breve!') }}>
