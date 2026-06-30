@@ -17,7 +17,8 @@ import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check
 import { useAuth } from '@/contexts/AuthContext'
 import * as XLSX from 'xlsx'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
-import { ShortageResolverModal, Shortage } from '@/components/ShortageResolverModal'
+import { ShortageResolverModal } from '@/components/ShortageResolverModal'
+import type { Shortage } from '@/components/ShortageResolverModal'
 
 export default function Conference() {
   const { id } = useParams()
