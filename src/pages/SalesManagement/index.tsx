@@ -46,7 +46,7 @@ export default function SalesManagement() {
   const [filterOrderNumber, setFilterOrderNumber] = useState('')
   const [filterSalesRep, setFilterSalesRep] = useState('all')
   const [filterRegion, setFilterRegion] = useState('all')
-  const [filterOrderGroup, setFilterOrderGroup] = useState('all')
+  const [filterOrderGroup, setFilterOrderGroup] = useState('')
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['sales_orders'],
@@ -85,14 +85,6 @@ export default function SalesManagement() {
     return Array.from(regions.entries()).map(([id, name]) => ({ id, name }))
   }, [orders])
 
-  const uniqueGroups = useMemo(() => {
-    const groups = new Set<string>()
-    orders.forEach(o => {
-      if (o.order_group_id) groups.add(o.order_group_id)
-    })
-    return Array.from(groups)
-  }, [orders])
-
   const filteredOrders = useMemo(() => {
     return orders.filter(o => {
       const searchMatch = 
@@ -107,7 +99,7 @@ export default function SalesManagement() {
       if (filterOrderNumber && String(o.order_number) !== filterOrderNumber.trim()) return false
       if (filterSalesRep !== 'all' && o.sales_rep_id !== filterSalesRep) return false
       if (filterRegion !== 'all' && o.customer?.region?.id !== filterRegion) return false
-      if (filterOrderGroup !== 'all' && o.order_group_id !== filterOrderGroup) return false
+      if (filterOrderGroup && !o.order_group_id?.toLowerCase().includes(filterOrderGroup.toLowerCase())) return false
       
       if (filterDateFrom || filterDateTo) {
         const orderDate = new Date(o.created_at)
@@ -311,16 +303,11 @@ export default function SalesManagement() {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Grupo de Pedido</label>
-              <select 
-                className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              <Input 
+                placeholder="Pesquisar grupo..." 
                 value={filterOrderGroup}
                 onChange={e => setFilterOrderGroup(e.target.value)}
-              >
-                <option value="all">Todos</option>
-                {uniqueGroups.map(group => (
-                  <option key={group} value={group}>{group}</option>
-                ))}
-              </select>
+              />
             </div>
           </div>
         )}
