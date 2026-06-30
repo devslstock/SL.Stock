@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { salesApi } from '@/api/sales'
 import { Card, CardContent } from '@/components/ui/card'
@@ -154,7 +154,7 @@ export default function SalesManagement() {
         <div>
           <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
             <FileText className="h-7 w-7 text-primary" />
-            GestÃƒÆ’Ã‚Â£o de Pedidos
+            Gestão de Pedidos
           </h1>
           <p className="text-muted-foreground mt-1">Acompanhe e fature os pedidos enviados pelos vendedores.</p>
         </div>
@@ -206,12 +206,12 @@ export default function SalesManagement() {
                   Vendedor {renderSortIcon('sales_rep')}
                 </th>
                 <th className="px-4 py-3 font-medium text-right cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('net_amount')}>
-                  Valor LÃƒÆ’Ã‚Â­quido {renderSortIcon('net_amount')}
+                  Valor Líquido {renderSortIcon('net_amount')}
                 </th>
                 <th className="px-4 py-3 font-medium text-center cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('status')}>
                   Status {renderSortIcon('status')}
                 </th>
-                <th className="px-4 py-3 font-medium text-right">AÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes</th>
+                <th className="px-4 py-3 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -272,7 +272,7 @@ export default function SalesManagement() {
                             salesApi.deleteSalesOrder(order.id)
                               .then(() => {
                                 queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
-                                toast.success('Pedido excluÃƒÆ’Ã‚Â­do com sucesso')
+                                toast.success('Pedido excluído com sucesso')
                               })
                               .catch((e: any) => toast.error('Erro ao excluir pedido: ' + e.message))
                           }
@@ -328,7 +328,7 @@ export default function SalesManagement() {
                     <TableRow>
                       <TableHead>Produto</TableHead>
                       <TableHead className="text-right w-24">Qtd</TableHead>
-                      <TableHead className="text-right w-32">PreÃƒÆ’Ã‚Â§o Unit.</TableHead>
+                      <TableHead className="text-right w-32">Preço Unit.</TableHead>
                       <TableHead className="text-right w-24">Desc. %</TableHead>
                       <TableHead className="text-right w-32">Total</TableHead>
                     </TableRow>
@@ -338,7 +338,7 @@ export default function SalesManagement() {
                       <TableRow key={item.id}>
                         <TableCell>
                           <div className="font-medium text-sm">{item.product?.description}</div>
-                          <div className="text-xs text-muted-foreground">CÃƒÆ’Ã‚Â³d: {item.product?.code}</div>
+                          <div className="text-xs text-muted-foreground">Cód: {item.product?.code}</div>
                         </TableCell>
                         <TableCell className="text-right">{item.quantity}</TableCell>
                         <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
@@ -362,14 +362,14 @@ export default function SalesManagement() {
                   <span>- {formatCurrency(selectedOrderDetails.total_discount || 0)}</span>
                 </div>
                 <div className="flex justify-between w-full sm:w-64 text-base font-bold pt-2 border-t border-border">
-                  <span>Total LÃƒÆ’Ã‚Â­quido:</span>
+                  <span>Total Líquido:</span>
                   <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(selectedOrderDetails.net_amount || 0)}</span>
                 </div>
               </div>
 
               {selectedOrderDetails.notes && (
                 <div>
-                  <p className="text-sm font-medium mb-1">ObservaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes:</p>
+                  <p className="text-sm font-medium mb-1">Observações:</p>
                   <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md border border-border/50">
                     {selectedOrderDetails.notes}
                   </p>
