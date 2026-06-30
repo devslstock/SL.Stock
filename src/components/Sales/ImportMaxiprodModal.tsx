@@ -160,7 +160,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
     if (priceTableIds.length > 0) {
       const ptiQuery = supabase
         .from('price_table_items')
-        .select('price_table_id, product_id, unit_price')
+        .select('price_table_id, product_id, price')
         .in('price_table_id', priceTableIds)
       
       const pti = await fetchAllRows(ptiQuery)
@@ -225,7 +225,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
           continue
         }
 
-        item.unitPrice = priceItem.unit_price
+        item.unitPrice = priceItem.price
         item.isValid = true
       }
     }
