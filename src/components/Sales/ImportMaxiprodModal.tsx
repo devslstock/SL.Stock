@@ -255,7 +255,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
           total_amount: totalAmount,
           total_discount: 0,
           net_amount: totalAmount,
-          notes: order.observations,
+          notes: order.observations ? `${order.observations}\n\n[Origem: Importação Planilha]` : '[Origem: Importação Planilha]',
           delivery_date: null,
           price_table_id: order.priceTableId || null,
           payment_condition_id: null,

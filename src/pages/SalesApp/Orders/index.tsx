@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { salesApi } from '@/api/sales'
@@ -32,6 +32,11 @@ export default function SalesOrders() {
   const isVendedor = user?.role === 'vendedor' || user?.role === 'representante'
 
   const filteredOrders = orders.filter(o => {
+    // Esconde os pedidos importados via planilha do App Força de Vendas
+    if (o.notes?.includes('[Origem: Importação Planilha]')) {
+      return false
+    }
+
     if (isVendedor && !isMaster) {
       const repName = o.sales_rep?.nickname || o.sales_rep?.legal_name
       if (repName !== user?.name) {
