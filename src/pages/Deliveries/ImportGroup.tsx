@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
 import { Boxes, ArrowLeft, Send, CheckCircle2 } from 'lucide-react'
 import type { OrderGroup, SalesOrder } from '@/types/database'
+import { supabase } from '@/lib/supabase'
 
 export default function ImportGroup() {
   const navigate = useNavigate()
@@ -39,6 +40,12 @@ export default function ImportGroup() {
       const group = orderGroups.find((g: OrderGroup) => g.id === selectedGroupId)
       if (!group) throw new Error('Group not found')
       
+      const orderIds = groupOrders.map((o: SalesOrder) => o.id)
+      const { data: allItems } = await supabase
+        .from('sales_order_items')
+        .select('*, product:products(*)')
+        .in('sales_order_id', orderIds)
+
       // 1. Create Route
       const route = await deliveriesApi.createDeliveryRoute(
         null, // No operation_id
@@ -60,9 +67,8 @@ export default function ImportGroup() {
           }
         }
         acc[custId].orders.push(order)
-        if (order.items) {
-          acc[custId].items.push(...order.items)
-        }
+        const orderItems = allItems?.filter(i => i.sales_order_id === order.id) || []
+        acc[custId].items.push(...orderItems)
         return acc
       }, {})
 
