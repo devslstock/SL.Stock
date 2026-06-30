@@ -270,7 +270,6 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
           quantity: item.quantity,
           unit_price: item.unitPrice!,
           discount_percent: 0,
-          discount_amount: 0,
           net_price: item.unitPrice!,
           total_price: item.quantity * item.unitPrice!
         }))
