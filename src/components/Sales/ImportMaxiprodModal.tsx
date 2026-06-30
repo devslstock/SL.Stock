@@ -23,6 +23,7 @@ interface ParsedOrder {
   customerId?: string
   priceTableId?: string
   salesRepId?: string
+  companyId?: string
   customerName?: string
   isValid?: boolean
   error?: string
@@ -183,6 +184,7 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
       order.customerId = customer.id
       order.priceTableId = customer.price_table_id
       order.salesRepId = customer.sales_rep_id
+      order.companyId = customer.company_id
       order.customerName = customer.fantasy_name
 
       if (!order.priceTableId) {
@@ -246,16 +248,16 @@ export function ImportMaxiprodModal({ isOpen, onOpenChange }: ImportMaxiprodModa
         const totalAmount = order.items.reduce((sum, item) => sum + (item.quantity * (item.unitPrice || 0)), 0)
 
         const createdOrder = await salesApi.createSalesOrder({
-          company_id: companyId || '',
+          company_id: order.companyId || companyId || undefined,
           customer_id: order.customerId!,
-          sales_rep_id: order.salesRepId!,
+          sales_rep_id: order.salesRepId || null,
           status: 'Pedido Criado',
           total_amount: totalAmount,
           total_discount: 0,
           net_amount: totalAmount,
           notes: order.observations,
           delivery_date: null,
-          price_table_id: order.priceTableId,
+          price_table_id: order.priceTableId || null,
           payment_condition_id: null,
           order_group_id: null
         } as any)
