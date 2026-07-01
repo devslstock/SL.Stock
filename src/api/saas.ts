@@ -282,14 +282,12 @@ export const saasApi = {
 
     // Then attempt to write to Supabase
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('system_leads')
         .insert([newLead])
-        .select()
-        .single()
       
-      if (!error && data) {
-        return data as any
+      if (error) {
+        console.error('Supabase system_leads insert error:', error)
       }
     } catch (e) {
       console.warn('Supabase system_leads insert failed:', e)
