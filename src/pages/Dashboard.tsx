@@ -383,10 +383,11 @@ export default function Dashboard() {
           </div>
 
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="flex flex-wrap gap-4">
             {showLoads && (
-              <StatsCard 
-                title="Total de Cargas" 
+              <div className="flex-1 min-w-[200px]">
+                <StatsCard 
+                  title="Total de Cargas" 
                 value={loadStats.total} 
                 icon={Truck} 
                 iconBg="bg-primary" 
@@ -396,48 +397,43 @@ export default function Dashboard() {
               />
             )}
             {showLoads && (
-              <StatsCard 
-                title="Cargas Pendentes" 
-                value={loadStats.pending} 
-                icon={Clock} 
-                iconBg="bg-orange-500" 
-                iconColor="text-white" 
-                trend="Hoje" 
-                trendColor="text-orange-500"
-              />
+              <div className="flex-1 min-w-[200px]">
+                <StatsCard 
+                  title="Cargas Pendentes" 
+                  value={loadStats.pending} 
+                  icon={Clock} 
+                  iconBg="bg-orange-500" 
+                  iconColor="text-white" 
+                  trend="Hoje" 
+                  trendColor="text-orange-500"
+                />
+              </div>
             )}
             {showDeliveries && (
-              <StatsCard 
-                title="Entregas em Rota" 
-                value={deliveryStats.dispatched} 
-                icon={Truck} 
-                iconBg="bg-blue-500" 
-                iconColor="text-white" 
-                trend="Hoje" 
-                trendColor="text-blue-500"
-              />
+              <div className="flex-1 min-w-[200px]">
+                <StatsCard 
+                  title="Entregas em Rota" 
+                  value={deliveryStats.dispatched} 
+                  icon={Truck} 
+                  iconBg="bg-blue-500" 
+                  iconColor="text-white" 
+                  trend="Hoje" 
+                  trendColor="text-blue-500"
+                />
+              </div>
             )}
             {showOS && (
-              <StatsCard 
-                title="OS em Andamento" 
-                value={osOrders.filter((o: any) => o.status === 'em_rota').length} 
-                icon={Wrench} 
-                iconBg="bg-purple-500" 
-                iconColor="text-white" 
-                trend="Hoje" 
-                trendColor="text-purple-500"
-              />
-            )}
-            {isManager && (
-              <StatsCard 
-                title="Estoque Baixo" 
-                value={lowStockProducts.length} 
-                icon={AlertTriangle} 
-                iconBg="bg-amber-500" 
-                iconColor="text-white" 
-                trend="Atenção" 
-                trendColor="text-amber-500"
-              />
+              <div className="flex-1 min-w-[200px]">
+                <StatsCard 
+                  title="OS em Andamento" 
+                  value={osOrders.filter((o: any) => o.status === 'em_rota').length} 
+                  icon={Wrench} 
+                  iconBg="bg-purple-500" 
+                  iconColor="text-white" 
+                  trend="Hoje" 
+                  trendColor="text-purple-500"
+                />
+              </div>
             )}
           </div>
         </>
