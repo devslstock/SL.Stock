@@ -36,18 +36,24 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'warnin
 }
 
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, company } = useAuth()
   const navigate = useNavigate()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   const isDriverOrHelper = user?.role === 'motorista' || user?.role === 'ajudante'
   const isConferente = user?.role === 'conferente'
   const isMecanico = user?.role === 'mecanico'
   const isVendedor = user?.role === 'vendedor' || user?.role === 'representante'
+  const isMaster = user?.role === 'master'
 
-  const showLoads = isManager || isConferente
-  const showDeliveries = isManager || isDriverOrHelper
-  const showOS = isManager || isMecanico
-  const showSales = isManager || isVendedor
+  const plan = company?.plan || 'platina'
+  const hasPrata = isMaster || ['prata', 'ouro', 'platina'].includes(plan)
+  const hasOuro = isMaster || ['ouro', 'platina'].includes(plan)
+  const hasPlatina = isMaster || plan === 'platina'
+
+  const showLoads = hasPrata && (isManager || isConferente)
+  const showDeliveries = hasOuro && (isManager || isDriverOrHelper)
+  const showOS = hasOuro && (isManager || isMecanico)
+  const showSales = hasPlatina && (isManager || isVendedor)
 
   const { data: operations = [], isLoading: isLoadingOp } = useQuery({
     queryKey: ['operations'],
