@@ -81,7 +81,11 @@ export default function Dashboard() {
   })
 
   const lowStockProducts = useMemo(() => {
-    return products.filter((p: any) => p.min_stock_alert !== undefined && p.min_stock_alert > 0 && p.stock <= p.min_stock_alert)
+    return products.filter((p: any) => {
+      const minStock = Number(p.min_stock_alert || 0);
+      const currentStock = Number(p.stock || 0);
+      return minStock > 0 && currentStock <= minStock;
+    });
   }, [products])
 
   const totalStockItems = useMemo(() => {
