@@ -81,8 +81,7 @@ const navGroups: NavGroup[] = [
     title: 'SISTEMA',
     items: [
       { label: 'Minha Empresa', icon: Building2, path: '/configuracoes/empresa', permission: 'can_manage_company' },
-      { label: 'Acessos', icon: ShieldCheck, path: '/acesso', permission: 'can_manage_users' },
-      { label: 'Integração ERP', icon: RefreshCw, path: '/integracao', permission: 'can_manage_integrations' }
+      { label: 'Acessos', icon: ShieldCheck, path: '/acesso', permission: 'can_manage_users' }
     ]
   }
 ]
@@ -247,8 +246,6 @@ export default function AppLayout() {
     // SISTEMA
     if (path === '/configuracoes/empresa') return 'bronze'
     if (path === '/acesso') return 'bronze'
-    // Integração ERP if path exists in future
-    if (path === '/integracao') return 'platina'
 
     return 'bronze'
   }
