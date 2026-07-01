@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
-import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Upload, Edit, Eye, Filter, ChevronDown, ChevronUp } from 'lucide-react'
+import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Upload, Edit, Eye, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { ImportMaxiprodModal } from '@/components/Sales/ImportMaxiprodModal'
 import type { SalesOrder } from '@/types/database'
 
@@ -47,6 +47,9 @@ export default function SalesManagement() {
   const [filterSalesRep, setFilterSalesRep] = useState('all')
   const [filterRegion, setFilterRegion] = useState('all')
   const [filterOrderGroup, setFilterOrderGroup] = useState('')
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['sales_orders'],
@@ -174,6 +177,19 @@ export default function SalesManagement() {
       return 0
     })
   }, [filteredOrders, sortField, sortAsc])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filteredOrders])
+
+  const totalItems = sortedOrders.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1
+  
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    const end = start + itemsPerPage
+    return sortedOrders.slice(start, end)
+  }, [sortedOrders, currentPage])
 
   const handleUpdateStatus = (id: string, currentStatus: string, newStatus: SalesOrder['status']) => {
     if (window.confirm(`Tem certeza que deseja alterar o status de "${currentStatus}" para "${newStatus}"?`)) {
@@ -340,10 +356,10 @@ export default function SalesManagement() {
             <tbody className="divide-y divide-border">
               {isLoading ?
                 <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando pedidos...</td></tr>
-               : sortedOrders.length === 0 ? 
+               : paginatedOrders.length === 0 ? 
                 <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhum pedido encontrado.</td></tr>
                : (
-                sortedOrders.map(order => (
+                paginatedOrders.map(order => (
                   <tr key={order.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 font-bold text-primary">
                       #{order.order_number || order.id.slice(0, 5).toUpperCase()}
@@ -413,6 +429,55 @@ export default function SalesManagement() {
             </tbody>
           </table>
         </div>
+        
+        {totalItems > 0 && (
+          <div className="border-t border-border p-4 flex items-center justify-between text-sm">
+            <div className="text-muted-foreground">
+              Exibindo itens {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems}
+            </div>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="mx-2 font-medium">
+                {currentPage} de {totalPages}
+              </span>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
