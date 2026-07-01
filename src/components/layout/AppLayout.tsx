@@ -131,7 +131,11 @@ export default function AppLayout() {
   useEffect(() => {
     // Ao mudar de rota, abre o menu atual e fecha todos os outros
     const activeGroup = navGroups.find(g => 
-      g.items.some(item => location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path)))
+      g.items.some(item => location.pathname === item.path || (
+        item.path !== '/dashboard' && 
+        location.pathname.startsWith(item.path) &&
+        !(item.path === '/vendas' && (location.pathname.startsWith('/vendas/gestao') || location.pathname.startsWith('/vendas/grupos')))
+      ))
     )
 
     if (activeGroup?.title) {
@@ -214,9 +218,37 @@ export default function AppLayout() {
   }
 
   const getPlanRequirement = (path: string) => {
+    // App Força de Vendas
+    if (path === '/vendas') return 'platina'
+    
+    // OPERAÇÕES
+    if (path === '/vendas/gestao') return 'ouro'
     if (path === '/cargas') return 'prata'
     if (path === '/entregas') return 'ouro'
-    if (path.startsWith('/vendas') || path.startsWith('/cadastros')) return 'platina'
+    
+    // ESTOQUE
+    if (path === '/produtos') return 'bronze' // Estoque (Produtos)
+    if (path === '/cadastros/tabelas-de-preco') return 'ouro'
+    if (path === '/cadastros/condicoes-pagamento') return 'platina'
+    
+    // COMODATOS
+    if (path === '/comodatos') return 'ouro'
+    if (path === '/comodatos/os') return 'ouro'
+    if (path === '/comodatos/insumos') return 'ouro'
+    if (path === '/comodatos/solicitacoes') return 'ouro'
+    
+    // CRM & CADASTROS
+    if (path === '/cadastros/clientes') return 'ouro'
+    if (path === '/vendas/grupos') return 'platina'
+    if (path === '/cadastros/representantes') return 'platina'
+    if (path === '/cadastros/regioes') return 'ouro'
+    
+    // SISTEMA
+    if (path === '/configuracoes/empresa') return 'bronze'
+    if (path === '/acesso') return 'bronze'
+    // Integração ERP if path exists in future
+    if (path === '/integracao') return 'platina'
+
     return 'bronze'
   }
 
@@ -374,7 +406,7 @@ export default function AppLayout() {
                     const isActive = location.pathname === item.path || (
                       item.path !== '/dashboard' && 
                       location.pathname.startsWith(item.path) &&
-                      !(item.path === '/vendas' && location.pathname.startsWith('/vendas/gestao'))
+                      !(item.path === '/vendas' && (location.pathname.startsWith('/vendas/gestao') || location.pathname.startsWith('/vendas/grupos')))
                     );
                     const isLocked = isFeatureLocked(item.path);
 
