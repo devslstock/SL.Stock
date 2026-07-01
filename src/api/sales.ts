@@ -92,7 +92,7 @@ export const salesApi = {
       .from('sales_orders')
       .select(`
         *,
-        customer:customers(*),
+        customer:customers(*, region:regions(*)),
         sales_rep:sales_reps(*),
         payment_condition:payment_conditions(*),
         price_table:price_tables(*),
