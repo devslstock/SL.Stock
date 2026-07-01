@@ -13,7 +13,8 @@ import {
   PackageMinus,
   BarChart3,
   PackageCheck,
-  Wrench
+  Wrench,
+  Boxes
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useQuery } from '@tanstack/react-query'
@@ -82,6 +83,12 @@ export default function Dashboard() {
   const lowStockProducts = useMemo(() => {
     return products.filter((p: any) => p.min_stock_alert !== undefined && p.min_stock_alert > 0 && p.stock <= p.min_stock_alert)
   }, [products])
+
+  const totalStockItems = useMemo(() => {
+    return products.reduce((acc: number, p: any) => acc + (p.stock || 0), 0)
+  }, [products])
+
+  const totalProducts = products.length
 
   const loadStats = useMemo(() => {
     return {
@@ -326,14 +333,53 @@ export default function Dashboard() {
     </Card>
   );
 
+  const StockDashboard = isManager ? (
+    <div className="mb-8">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard Geral</h1>
+        <p className="text-sm text-muted-foreground mt-1 mb-6">Visão geral do sistema e estoque</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatsCard 
+          title="Produtos Cadastrados" 
+          value={totalProducts} 
+          icon={PackageCheck} 
+          iconBg="bg-blue-500" 
+          iconColor="text-white" 
+          trend="Total" 
+          trendColor="text-blue-500"
+        />
+        <StatsCard 
+          title="Itens em Estoque" 
+          value={totalStockItems} 
+          icon={Boxes} 
+          iconBg="bg-emerald-500" 
+          iconColor="text-white" 
+          trend="Quantidade" 
+          trendColor="text-emerald-500"
+        />
+        <StatsCard 
+          title="Estoque Baixo" 
+          value={lowStockProducts.length} 
+          icon={AlertTriangle} 
+          iconBg="bg-amber-500" 
+          iconColor="text-white" 
+          trend="Atenção" 
+          trendColor="text-amber-500"
+        />
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-8 slide-in">
+      {StockDashboard}
+
       {(showLoads || showDeliveries || showOS) && (
         <>
-          {/* Header */}
+          {/* Header Operações */}
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">Visão geral das operações logísticas</p>
+            <h2 className="text-2xl font-bold text-foreground">Operações Logísticas</h2>
           </div>
 
           {/* KPI Cards */}
