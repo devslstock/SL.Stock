@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/Pagination'
 import { toast } from '@/components/ui/toaster'
 import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight, ScanLine, ArrowUpDown, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -646,50 +647,14 @@ export default function Products() {
         )}
       </div>
       {/* Barra de Ferramentas / Paginação Topo */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-muted/20 p-2 rounded-lg border border-border/50">
-        <div className="text-sm font-medium pl-2">
-          {/* We can leave this empty or put something here later */}
-        </div>
-        
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-muted-foreground">
-            Exibindo itens {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filtered.length)} de {filtered.length}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(1)} disabled={currentPage === 1}
-            >
-              <span className="sr-only">Primeira</span>
-              <span className="text-xs font-bold">|&lt;</span>
-            </Button>
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <span className="px-2 font-medium">
-              {currentPage} de {totalPages || 1}
-            </span>
-
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <span className="sr-only">Última</span>
-              <span className="text-xs font-bold">&gt;|</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filtered.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mb-4"
+      />
 
       <div className="glass-card overflow-hidden">
         <Table>
@@ -778,6 +743,15 @@ export default function Products() {
           </TableBody>
         </Table>
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filtered.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mt-4"
+      />
 
 
 

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
+import { Pagination } from '@/components/ui/Pagination'
 
 export default function RegionsList() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -93,6 +94,14 @@ export default function RegionsList() {
     })
   }, [filteredRegions, sortField, sortAsc])
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
+
+  const totalPages = Math.ceil(sortedRegions.length / itemsPerPage)
+  if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages)
+  
+  const paginatedRegions = sortedRegions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   if (!isManager) {
     return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
   }
@@ -127,6 +136,15 @@ export default function RegionsList() {
         </div>
       </div>
 
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedRegions.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mb-4"
+      />
+
       <div className="glass-card overflow-hidden border border-border/50">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -144,10 +162,10 @@ export default function RegionsList() {
             <tbody className="divide-y divide-border/50">
               {isLoading ? (
                 <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">Carregando regiões...</td></tr>
-              ) : sortedRegions.length === 0 ? (
+              ) : paginatedRegions.length === 0 ? (
                 <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">Nenhuma região encontrada.</td></tr>
               ) : (
-                sortedRegions.map(region => (
+                paginatedRegions.map(region => (
                   <tr key={region.id} className="hover:bg-muted/30 transition-colors group">
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
@@ -184,11 +202,16 @@ export default function RegionsList() {
             </tbody>
           </table>
         </div>
-        
-        <div className="p-4 border-t border-border/50 text-xs text-muted-foreground flex justify-between items-center bg-muted/20">
-          <span>Total: <strong>{sortedRegions.length}</strong> regiões</span>
-        </div>
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedRegions.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mt-4"
+      />
     </div>
   )
 }

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
 import { Banknote, Plus, Pencil, Search, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-
+import { Pagination } from '@/components/ui/Pagination'
 export default function PaymentConditions() {
   const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
@@ -106,6 +106,14 @@ export default function PaymentConditions() {
     })
   }, [filteredConditions, sortField, sortAsc])
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
+
+  const totalPages = Math.ceil(sortedConditions.length / itemsPerPage)
+  if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages)
+  
+  const paginatedConditions = sortedConditions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   const handleDelete = (id: string) => {
     if (window.confirm('Tem certeza que deseja remover esta condição de pagamento? Ela pode estar sendo usada por clientes.. Esta ação não pode ser desfeita.')) {
       deleteMutation.mutate(id)
@@ -142,6 +150,15 @@ export default function PaymentConditions() {
         </div>
       </div>
 
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedConditions.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mb-4"
+      />
+
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -162,10 +179,10 @@ export default function PaymentConditions() {
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>
-              ) : sortedConditions.length === 0 ? (
+              ) : paginatedConditions.length === 0 ? (
                 <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Nenhuma condição encontrada.</td></tr>
               ) : (
-                sortedConditions.map(condition => (
+                paginatedConditions.map(condition => (
                   <tr key={condition.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 font-medium">{condition.name}</td>
                     <td className="px-4 py-3 text-center">{condition.installments}x</td>
@@ -193,6 +210,15 @@ export default function PaymentConditions() {
           </table>
         </div>
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedConditions.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mt-4"
+      />
     </div>
   )
 }

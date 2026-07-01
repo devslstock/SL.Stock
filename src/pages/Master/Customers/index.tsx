@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
+import { Pagination } from '@/components/ui/Pagination'
 
 export default function CustomersList() {
   const queryClient = useQueryClient()
@@ -669,49 +670,17 @@ export default function CustomersList() {
       </div>
 
       {/* Barra de Ferramentas / Paginação Topo */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-muted/20 p-2 rounded-lg border border-border/50">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-muted/20 p-2 rounded-lg border border-border/50 mb-4">
         <div className="text-sm font-medium pl-2">
           {selectedIds.size > 0 && <span className="text-primary">{selectedIds.size} selecionados</span>}
         </div>
-        
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-muted-foreground">
-            Exibindo itens {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredCustomers.length)} de {filteredCustomers.length}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(1)} disabled={currentPage === 1}
-            >
-              <span className="sr-only">Primeira</span>
-              <span className="text-xs font-bold">|&lt;</span>
-            </Button>
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <span className="px-2 font-medium">
-              {currentPage} de {totalPages || 1}
-            </span>
-
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <span className="sr-only">Última</span>
-              <span className="text-xs font-bold">&gt;|</span>
-            </Button>
-          </div>
-        </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredCustomers.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Listagem */}
@@ -817,6 +786,15 @@ export default function CustomersList() {
           </table>
         </div>
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredCustomers.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mt-4"
+      />
     </div>
   )
 }

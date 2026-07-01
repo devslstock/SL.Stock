@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
 import * as XLSX from 'xlsx'
-
+import { Pagination } from '@/components/ui/Pagination'
 export default function PriceTablesList() {
   const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
@@ -246,6 +246,14 @@ export default function PriceTablesList() {
     })
   }, [filteredTables, sortField, sortAsc])
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
+
+  const totalPages = Math.ceil(sortedTables.length / itemsPerPage)
+  if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages)
+  
+  const paginatedTables = sortedTables.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   const hasAccess = hasPermission('can_manage_price_tables')
 
   if (!hasAccess) {
@@ -298,6 +306,15 @@ export default function PriceTablesList() {
         </div>
       </div>
 
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedTables.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mb-4"
+      />
+
       <div className="glass-card overflow-hidden border border-border/50">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -318,10 +335,10 @@ export default function PriceTablesList() {
             <tbody className="divide-y divide-border/50">
               {isLoading ? (
                 <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Carregando tabelas de preço...</td></tr>
-              ) : sortedTables.length === 0 ? (
+              ) : paginatedTables.length === 0 ? (
                 <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Nenhuma tabela encontrada.</td></tr>
               ) : (
-                sortedTables.map(table => (
+                paginatedTables.map(table => (
                   <tr key={table.id} className="hover:bg-muted/30 transition-colors group">
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
@@ -360,11 +377,16 @@ export default function PriceTablesList() {
             </tbody>
           </table>
         </div>
-        
-        <div className="p-4 border-t border-border/50 text-xs text-muted-foreground flex justify-between items-center bg-muted/20">
-          <span>Total: <strong>{sortedTables.length}</strong> tabelas</span>
-        </div>
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedTables.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mt-4"
+      />
     </div>
   )
 }

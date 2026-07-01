@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Pagination } from '@/components/ui/Pagination'
 import { Plus, Edit2, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, History, CheckCircle, Clock, Save, Copy, FileText, Settings, Settings2, ShieldCheck, MapPin, X, Box, AlertCircle, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Equipment } from '@/types/database'
 
@@ -472,6 +473,14 @@ export default function EquipmentsList() {
       </div>
 
       <Card className="hidden md:block">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          className="border-b border-border/50 bg-muted/20 rounded-t-xl"
+        />
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -574,50 +583,26 @@ export default function EquipmentsList() {
             </TableBody>
           </Table>
         </div>
-        {filtered.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 p-4 border-t border-border/50 bg-muted/20 rounded-b-xl">
-              <span className="text-sm text-muted-foreground">
-                Exibindo itens {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filtered.length)} de {filtered.length}
-              </span>
-              <div className="flex items-center gap-1">
-                <Button 
-                  variant="outline" size="icon" className="h-8 w-8"
-                  onClick={() => setCurrentPage(1)} disabled={currentPage === 1}
-                >
-                  <span className="sr-only">Primeira</span>
-                  <span className="text-xs font-bold">|&lt;</span>
-                </Button>
-                <Button 
-                  variant="outline" size="icon" className="h-8 w-8"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                
-                <span className="px-3 text-sm font-medium">
-                  {currentPage} de {totalPages || 1}
-                </span>
-
-                <Button 
-                  variant="outline" size="icon" className="h-8 w-8"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="outline" size="icon" className="h-8 w-8"
-                  onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0}
-                >
-                  <span className="sr-only">Última</span>
-                  <span className="text-xs font-bold">&gt;|</span>
-                </Button>
-              </div>
-            </div>
-          )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          className="border-t border-border/50 bg-muted/20 rounded-b-xl"
+        />
       </Card>
 
       {/* Mobile Layout */}
       <div className="md:hidden flex flex-col gap-4">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          className="bg-muted/20 rounded-xl"
+        />
         {filtered.length === 0 ? (
           <Card className="p-8 text-center text-muted-foreground">
             Nenhum equipamento encontrado.
@@ -683,46 +668,14 @@ export default function EquipmentsList() {
         )}
       </div>
 
-      {filtered.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 p-4 border-t border-border/50 bg-muted/20 rounded-b-xl md:hidden">
-          <span className="text-sm text-muted-foreground">
-            Exibindo itens {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filtered.length)} de {filtered.length}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(1)} disabled={currentPage === 1}
-            >
-              <span className="sr-only">Primeira</span>
-              <span className="text-xs font-bold">|&lt;</span>
-            </Button>
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <span className="px-3 text-sm font-medium">
-              {currentPage} de {totalPages || 1}
-            </span>
-
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" size="icon" className="h-8 w-8"
-              onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <span className="sr-only">Última</span>
-              <span className="text-xs font-bold">&gt;|</span>
-            </Button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filtered.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="md:hidden bg-muted/20 rounded-xl mb-4"
+      />
 
       <InternalMaintenanceModal 
         isOpen={isMaintenanceModalOpen}

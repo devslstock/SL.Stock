@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Banknote, Plus, CheckCircle2, Clock, AlertCircle, Trash2, RefreshCw, Edit2, Shield, Settings2, Users, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { Pagination } from '@/components/ui/Pagination';
 import type { CompanyPayment, SaaSPlan } from '@/types/database';
 
 export default function SaaSFinance() {
@@ -248,6 +249,14 @@ export default function SaaSFinance() {
     });
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+
+  const totalPages = Math.ceil(payments.length / itemsPerPage);
+  if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
+  
+  const paginatedPayments = payments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const getCompanyDetails = (id: string) => companies.find(c => c.id === id);
 
   const getStatusBadge = (status: CompanyPayment['status']) => {
@@ -374,15 +383,24 @@ export default function SaaSFinance() {
         </div>
       </div>
 
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={payments.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mb-4"
+      />
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {isLoading ? (
           <div className="col-span-full py-10 text-center text-muted-foreground">Carregando pagamentos...</div>
-        ) : payments.length === 0 ? (
+        ) : paginatedPayments.length === 0 ? (
           <div className="col-span-full py-10 text-center text-muted-foreground border-2 border-dashed rounded-xl">
             Nenhuma cobrança registrada.
           </div>
         ) : (
-          payments.map((payment) => {
+          paginatedPayments.map((payment) => {
             const comp = getCompanyDetails(payment.company_id);
             return (
               <Card key={payment.id}>
@@ -442,6 +460,15 @@ export default function SaaSFinance() {
           })
         )}
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={payments.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mt-4"
+      />
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-md">

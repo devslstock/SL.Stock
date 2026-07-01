@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
 import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Upload, Edit, Eye, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { ImportMaxiprodModal } from '@/components/Sales/ImportMaxiprodModal'
+import { Pagination } from '@/components/ui/Pagination'
 import type { SalesOrder } from '@/types/database'
 
 const formatCurrency = (value: number) => {
@@ -330,6 +331,15 @@ export default function SalesManagement() {
         )}
       </div>
 
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="mb-4 bg-card rounded-xl border border-border shadow-sm"
+      />
+
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -431,54 +441,14 @@ export default function SalesManagement() {
           </table>
         </div>
         
-        {totalItems > 0 && (
-          <div className="border-t border-border p-4 flex items-center justify-between text-sm">
-            <div className="text-muted-foreground">
-              Exibindo itens {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems}
-            </div>
-            <div className="flex items-center gap-1">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronsLeft className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="mx-2 font-medium">
-                {currentPage} de {totalPages}
-              </span>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          className="border-t border-border"
+        />
       </div>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>

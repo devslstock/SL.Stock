@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
 import { OrderDetailsModal } from '@/components/Sales/OrderDetailsModal'
 import { ImportOrdersModal } from './ImportOrdersModal'
+import { Pagination } from '@/components/ui/Pagination'
 
 export default function SalesOrders() {
   const navigate = useNavigate()
@@ -58,9 +59,17 @@ export default function SalesOrders() {
     return true
   })
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
+  
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   // Group by date logic (mocking "HOJE" for all to match the design)
   const groupedOrders = {
-    'HOJE': filteredOrders
+    'HOJE': paginatedOrders
   }
 
   const getStatusBadge = (status: string) => {
@@ -135,6 +144,15 @@ export default function SalesOrders() {
           </div>
         </div>
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredOrders.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mb-4"
+      />
 
         {/* List */}
         {isLoading ? (
@@ -215,6 +233,15 @@ export default function SalesOrders() {
           ))
         )}
 
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredOrders.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        className="bg-muted/20 p-2 rounded-lg border border-border/50 mt-4"
+      />
+      
       <OrderDetailsModal 
         isOpen={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
