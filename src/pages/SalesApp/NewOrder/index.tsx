@@ -391,11 +391,7 @@ export default function NewOrder() {
       toast.error('Adicione pelo menos um produto')
       return
     }
-    
-    if (!order.order_group_id) {
-      toast.error('Selecione um Grupo de Pedidos')
-      return
-    }
+
 
     try {
       const calcSubtotal = order.items?.reduce((acc: number, item: any) => acc + (item.quantity * item.unit_price), 0) || 0;
@@ -662,19 +658,6 @@ export default function NewOrder() {
               <label className="text-xs text-muted-foreground font-medium mb-1 block">Cond. de pagamento</label>
               <div className="font-medium">{order.payment_condition?.name || 'A definir'}</div>
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">* Grupo de Pedidos</label>
-              <select 
-                className="w-full border border-border bg-background rounded-md h-9 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 border-emerald-500/50"
-                value={order.order_group_id || ''}
-                onChange={(e) => handleUpdate({ order_group_id: e.target.value || null })}
-              >
-                <option value="">Selecione um grupo...</option>
-                {orderGroups.filter((g: any) => g.active || g.id === order.order_group_id).map((group: any) => (
-                  <option key={group.id} value={group.id}>{group.name}</option>
-                ))}
-              </select>
-            </div>
           </div>
 
           <div>
@@ -739,19 +722,6 @@ export default function NewOrder() {
                 }}
               />
             </div>
-          </div>
-          <div className="mt-4">
-            <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">* Grupo de Pedidos</label>
-            <select 
-              className="w-full border border-border bg-background rounded-md h-12 px-3 focus:outline-none focus:ring-1 focus:ring-primary/50 text-base border-emerald-500/50"
-              value={order.order_group_id || ''}
-              onChange={(e) => handleUpdate({ order_group_id: e.target.value || null })}
-            >
-              <option value="">Selecione um grupo...</option>
-              {orderGroups.filter((g: any) => g.active || g.id === order.order_group_id).map((group: any) => (
-                <option key={group.id} value={group.id}>{group.name}</option>
-              ))}
-            </select>
           </div>
         </section>
         </div>
