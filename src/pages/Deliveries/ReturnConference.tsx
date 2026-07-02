@@ -337,7 +337,6 @@ export default function ReturnConference() {
               <Input 
                 ref={inputRef}
                 type="text"
-                inputMode="none"
                 placeholder="Cod. de Barras"
                 value={scannedCode}
                 onChange={(e) => setScannedCode(e.target.value)}
