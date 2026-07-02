@@ -437,7 +437,43 @@ export default function NewOrder() {
     }
   }
 
-
+  const groupSelectorElement = (
+    <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-2">
+      <span className="text-[10px] sm:text-xs text-muted-foreground font-semibold uppercase tracking-wider hidden sm:inline-block">Grupo:</span>
+      <select
+        className="border border-border bg-background rounded-md h-8 md:h-9 px-1 sm:px-2 text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 max-w-[120px] sm:max-w-[180px] truncate"
+        value={order.order_group_id || ''}
+        onChange={async (e) => {
+          if (e.target.value === 'new') {
+            const name = window.prompt('Nome do novo Grupo de Pedidos:')
+            if (name && name.trim()) {
+              try {
+                const { salesApi } = await import('@/api/sales')
+                const { data: companies } = await supabase.from('companies').select('id').limit(1)
+                const companyId = companies?.[0]?.id
+                if (!companyId) return toast.error('Empresa não encontrada')
+                
+                const newGroup = await salesApi.createOrderGroup({ name: name.trim(), active: true, company_id: companyId })
+                await queryClient.invalidateQueries({ queryKey: ['order_groups'] })
+                handleUpdate({ order_group_id: newGroup.id })
+                toast.success('Grupo criado e selecionado!')
+              } catch (err: any) {
+                toast.error('Erro ao criar grupo: ' + err.message)
+              }
+            }
+          } else {
+            handleUpdate({ order_group_id: e.target.value || null })
+          }
+        }}
+      >
+        <option value="">Sem grupo</option>
+        {orderGroups.filter((g: any) => g.active || g.id === order.order_group_id).map((group: any) => (
+          <option key={group.id} value={group.id}>{group.name}</option>
+        ))}
+        <option value="new" className="font-semibold text-primary">+ Criar Novo...</option>
+      </select>
+    </div>
+  )
 
   const totalItems = order.items?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0
   const subtotal = order.items?.reduce((acc: number, item: any) => acc + (item.quantity * item.unit_price), 0) || 0
@@ -461,6 +497,7 @@ export default function NewOrder() {
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
+          {groupSelectorElement}
           <Button onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
             <Save className="h-4 w-4 mr-2" /> Salvar Pedido
           </Button>
@@ -831,6 +868,7 @@ export default function NewOrder() {
         </div>
         
         <div className="flex items-center gap-2">
+          {groupSelectorElement}
           {currentStep > 1 && (
             <Button size="sm" onClick={handleGenerateOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 px-3 rounded-full text-xs">
               Salvar
