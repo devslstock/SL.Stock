@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import type { SalesRep } from '@/types/database'
 import { usersApi } from '@/api/users'
+import { useAuth } from '@/contexts/AuthContext'
 
 
 export default function SalesRepForm() {
+  const { company } = useAuth()
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -83,7 +85,7 @@ export default function SalesRepForm() {
             can_do_delivery: false
           },
           active: true
-        })
+        }, company?.id)
       }
 
       if (isEditing) return salesRepsApi.updateSalesRep(id!, data, regionIds)
