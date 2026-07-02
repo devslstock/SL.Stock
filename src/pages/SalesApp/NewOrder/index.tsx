@@ -1068,6 +1068,25 @@ export default function NewOrder() {
               </select>
             </div>
 
+            <div>
+              <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Informações Adicionais</label>
+              <Textarea 
+                placeholder="Digite aqui observações para a nota fiscal ou entrega..." 
+                defaultValue={order.notes?.replace(/\s*\[Origem: Importação Planilha\]\s*/g, '').trim() || ''}
+                onBlur={(e) => {
+                  const isImported = order.notes?.includes('[Origem: Importação Planilha]')
+                  let newNotes = e.target.value
+                  if (isImported && !newNotes.includes('[Origem: Importação Planilha]')) {
+                    newNotes = newNotes ? `${newNotes}\n\n[Origem: Importação Planilha]` : '[Origem: Importação Planilha]'
+                  }
+                  if (newNotes !== order.notes) {
+                    handleUpdate({ notes: newNotes })
+                  }
+                }}
+                className="resize-none h-24 rounded-lg"
+              />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Condição de Pagamento</label>
@@ -1099,25 +1118,6 @@ export default function NewOrder() {
                   }}
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Informações Adicionais</label>
-              <Textarea 
-                placeholder="Digite aqui observações para a nota fiscal ou entrega..." 
-                defaultValue={order.notes?.replace(/\s*\[Origem: Importação Planilha\]\s*/g, '').trim() || ''}
-                onBlur={(e) => {
-                  const isImported = order.notes?.includes('[Origem: Importação Planilha]')
-                  let newNotes = e.target.value
-                  if (isImported && !newNotes.includes('[Origem: Importação Planilha]')) {
-                    newNotes = newNotes ? `${newNotes}\n\n[Origem: Importação Planilha]` : '[Origem: Importação Planilha]'
-                  }
-                  if (newNotes !== order.notes) {
-                    handleUpdate({ notes: newNotes })
-                  }
-                }}
-                className="resize-none h-24 rounded-lg"
-              />
             </div>
           </div>
         </section>
