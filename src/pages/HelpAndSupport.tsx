@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 
 export default function HelpAndSupport() {
   const handleWhatsApp = () => {
-    window.open('https://wa.me/5573999476822', '_blank') 
+    window.open('https://wa.me/message/O6LYT6ROKXS5C1', '_blank') 
   }
 
   const handleEmail = () => {

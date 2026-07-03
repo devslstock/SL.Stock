@@ -64,7 +64,7 @@ export function PlanGuard({ children, requiredPlan }: PlanGuardProps) {
 
           <Button 
             className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white font-bold h-12 text-lg shadow-lg shadow-purple-500/25"
-            onClick={() => window.open('https://api.whatsapp.com/send?phone=559999999999&text=Ol%C3%A1!%20Gostaria%20de%20fazer%20o%20upgrade%20do%20meu%20plano%20no%20Estoque%20F%C3%A1cil.', '_blank')}
+            onClick={() => window.open('https://wa.me/message/O6LYT6ROKXS5C1', '_blank')}
           >
             Falar com o Comercial
           </Button>
