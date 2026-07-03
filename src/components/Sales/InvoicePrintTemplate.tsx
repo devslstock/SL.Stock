@@ -133,7 +133,8 @@ export const InvoicePrintTemplate = React.forwardRef<HTMLDivElement, InvoicePrin
               Assinatura<br/>
               {details.receiver_name && <span>Recebedor: {details.receiver_name}<br/></span>}
               {details.receiver_doc && <span>Doc: {details.receiver_doc}<br/></span>}
-              <span className="whitespace-nowrap">Declaro que recebi as mercadorias acima mencionadas.</span>
+              <span className="whitespace-nowrap">Declaro que recebi as mercadorias acima mencionadas.</span><br/>
+              <span className="text-[8px] font-normal text-gray-500 block mt-0.5">documento assinado digitalmente</span>
             </div>
           </div>
         </div>
