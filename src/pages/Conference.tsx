@@ -13,19 +13,20 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check, FileSignature, Zap, Truck, Plus, Trash2, Pencil, Download, PackageCheck, Undo2, PenTool, ChevronDown, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ScanLine, CheckCircle2, AlertTriangle, Camera, Search, Check, FileSignature, Zap, Truck, Plus, Trash2, Pencil, Download, PackageCheck, Undo2, PenTool, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import * as XLSX from 'xlsx'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
 import { ShortageResolverModal } from '@/components/ShortageResolverModal'
 import type { Shortage } from '@/components/ShortageResolverModal'
+import { SyncGroupModal } from '@/components/SyncGroupModal'
 
 export default function Conference() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const scanRef = useRef<HTMLInputElement>(null)
-  const { user } = useAuth()
+  const { user, company } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   
   const [searchParams] = useSearchParams()
@@ -41,6 +42,7 @@ export default function Conference() {
   
   const [isShortageResolverOpen, setIsShortageResolverOpen] = useState(false)
   const [pendingShortages, setPendingShortages] = useState<Shortage[]>([])
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false)
   
   // Return state: maps product_code to quantity returned
   const [returnedItems, setReturnedItems] = useState<Record<string, number>>({})
@@ -845,6 +847,15 @@ export default function Conference() {
           )}
           {isManager && (
             <div className="flex gap-2 shrink-0">
+              {op.type === 'LOAD' && (op.status === 'pending' || op.status === 'in_progress') && (
+                <Button 
+                  variant="outline"
+                  className="gap-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 h-10 px-3"
+                  onClick={() => setIsSyncModalOpen(true)}
+                >
+                  <RefreshCw className="h-4 w-4" /> Sincronizar Grupo
+                </Button>
+              )}
               {(!op.type || op.type === 'LOAD') && (op.status === 'dispatched' || op.status === 'completed') && (
                 <Button 
                   variant="outline"
@@ -1490,6 +1501,21 @@ export default function Conference() {
           }}
           shortages={pendingShortages}
           operationId={op.id}
+        />
+      )}
+
+      {op && (
+        <SyncGroupModal
+          isOpen={isSyncModalOpen}
+          onClose={() => setIsSyncModalOpen(false)}
+          operationId={op.id}
+          currentClientName={op.client_name || ''}
+          companyId={company?.id || ''}
+          currentItems={items}
+          currentClients={clients}
+          route={route}
+          allProducts={allProducts}
+          onSyncComplete={() => {}}
         />
       )}
     </div>
