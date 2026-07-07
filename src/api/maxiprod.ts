@@ -123,26 +123,35 @@ export const maxiprodApi = {
 
     // 1. Mapear Produtos
     try {
-      const itensData = await proxyFetch('/Item?limit=1000', 'GET');
-      const itensList = Array.isArray(itensData) ? itensData : (itensData.itens || itensData.Itens || itensData.data || itensData.Data || []);
-      
       const { data: supaProducts } = await supabase.from('products').select('id, code, external_code').eq('company_id', comp.id);
       
       if (supaProducts && supaProducts.length > 0) {
-        for (const item of itensList) {
-          const code = item.CodigoItem || item.codigo || item.Codigo;
-          const itemId = item.Id || item.id;
+        const codes = Array.from(new Set(
+          supaProducts
+            .flatMap(p => [p.code, p.external_code])
+            .filter(Boolean)
+            .map(c => String(c).trim())
+        ));
+
+        if (codes.length > 0) {
+          const mappedIds = await proxyFetch('/Item/ObterIdsPorCodigos', 'POST', codes);
           
-          if (code && itemId) {
-            const codeStr = String(code).trim().toLowerCase();
-            const matched = supaProducts.find(p => 
-              (p.code && String(p.code).trim().toLowerCase() === codeStr) || 
-              (p.external_code && String(p.external_code).trim().toLowerCase() === codeStr)
-            );
-            
-            if (matched) {
-              await supabase.from('products').update({ maxiprod_id: itemId }).eq('id', matched.id);
-              syncStats.products++;
+          if (Array.isArray(mappedIds)) {
+            for (const item of mappedIds) {
+              const codeStr = String(item.valor).trim().toLowerCase();
+              const itemId = item.id;
+              
+              if (codeStr && itemId) {
+                const matched = supaProducts.find(p => 
+                  (p.code && String(p.code).trim().toLowerCase() === codeStr) || 
+                  (p.external_code && String(p.external_code).trim().toLowerCase() === codeStr)
+                );
+                
+                if (matched) {
+                  await supabase.from('products').update({ maxiprod_id: itemId }).eq('id', matched.id);
+                  syncStats.products++;
+                }
+              }
             }
           }
         }
@@ -153,36 +162,42 @@ export const maxiprodApi = {
 
     // 2. Mapear Clientes
     try {
-      let clientesList: any[] = [];
-      try {
-        const clientesData = await proxyFetch('/Empresa?limit=1000', 'GET');
-        clientesList = Array.isArray(clientesData) ? clientesData : (clientesData.itens || clientesData.Itens || clientesData.data || clientesData.Data || []);
-      } catch {
-        const clientesDataAlt = await proxyFetch('/Empresa/ListarMinhasEmpresas', 'GET');
-        clientesList = Array.isArray(clientesDataAlt) ? clientesDataAlt : (clientesDataAlt.itens || clientesDataAlt.Itens || clientesDataAlt.data || clientesDataAlt.Data || []);
-      }
+      const clientesData = await proxyFetch('/Empresa/ListaSimplesMinhasEmpresas?exibirCpfCnpj=true', 'GET');
+      const clientesList = Array.isArray(clientesData) ? clientesData : (clientesData.itens || clientesData.Itens || clientesData.data || clientesData.Data || []);
       
       const { data: supaCustomers } = await supabase.from('customers').select('id, document, legal_name, fantasy_name').eq('company_id', comp.id);
       
-      if (supaCustomers && supaCustomers.length > 0) {
+      if (supaCustomers && supaCustomers.length > 0 && clientesList.length > 0) {
         for (const emp of clientesList) {
-          const cnpj = emp.CnpjCpf || emp.cnpjCpf || emp.Cnpj || emp.cnpj;
-          const empId = emp.Id || emp.id;
-          const maxiName = emp.RazaoSocial || emp.razaoSocial || emp.Nome || emp.nome || emp.NomeFantasia || emp.nomeFantasia || '';
+          const empId = emp.valor;
+          const desc = emp.descricao || '';
           
-          if (empId) {
+          if (empId && desc) {
+            const cleanDescDigits = desc.replace(/\D/g, '');
+            
+            const cleanDescName = desc
+              .replace(/\(\d+\)/g, '')
+              .replace(/\d+/g, '')
+              .replace(/[\(\)\-\[\]]/g, '')
+              .trim()
+              .toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "");
+            
             const matched = supaCustomers.find(c => {
-              if (cnpj && c.document) {
+              if (c.document && cleanDescDigits.length >= 11) {
                 const cleanSupaCnpj = String(c.document).replace(/\D/g, '');
-                const cleanMaxiCnpj = String(cnpj).replace(/\D/g, '');
-                if (cleanSupaCnpj && cleanMaxiCnpj && cleanSupaCnpj === cleanMaxiCnpj) return true;
+                if (cleanSupaCnpj && cleanDescDigits.includes(cleanSupaCnpj)) {
+                  return true;
+                }
               }
-              // Fallback to name matching
+              
               const supaName = c.legal_name || c.fantasy_name || '';
-              if (supaName && maxiName) {
+              if (supaName && cleanDescName) {
                 const cleanSupaName = supaName.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                const cleanMaxiName = maxiName.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (cleanSupaName === cleanMaxiName) return true;
+                if (cleanSupaName === cleanDescName || cleanSupaName.includes(cleanDescName) || cleanDescName.includes(cleanSupaName)) {
+                  return true;
+                }
               }
               return false;
             });
