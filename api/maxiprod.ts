@@ -27,7 +27,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    let authToken = token;
+    let authToken = token.trim();
+    if (authToken.toLowerCase().startsWith('bearer ')) {
+      authToken = authToken.substring(7).trim();
+    }
     
     // Suporte temporário para login com email e senha no formato "email:senha"
     if (token.includes(':') && token.includes('@')) {
