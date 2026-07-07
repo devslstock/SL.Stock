@@ -24,9 +24,11 @@ import {
   Bell,
   Pencil,
   CalendarDays,
-  Boxes
+  Boxes,
+  GitMerge
 } from 'lucide-react'
 import type { DeliveryRoute } from '@/types/database'
+import { MergeRoutesModal } from '@/components/MergeRoutesModal'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success'; icon: typeof Clock }> = {
   pending: { label: 'Aguardando', variant: 'warning', icon: Clock },
@@ -45,6 +47,7 @@ export default function DeliveriesList() {
   const [editDate, setEditDate] = useState('')
   const [editDriver, setEditDriver] = useState('')
   const [editHelper, setEditHelper] = useState('')
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false)
 
   const { data: routes = [], isLoading } = useQuery({
     queryKey: ['delivery_routes'],
@@ -146,6 +149,14 @@ export default function DeliveriesList() {
                 <Boxes className="h-5 w-5 sm:h-4 sm:w-4" /> Importar Grupo
               </Button>
             </Link>
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={() => setIsMergeModalOpen(true)}
+              className="gap-2 w-full sm:w-auto h-12 sm:h-10 text-lg sm:text-sm border-indigo-500 text-indigo-600 hover:bg-indigo-50"
+            >
+              <GitMerge className="h-5 w-5 sm:h-4 sm:w-4" /> Mesclar Rotas
+            </Button>
             <Link to="/entregas/nova">
               <Button className="gap-2 w-full sm:w-auto h-12 sm:h-10 text-lg sm:text-sm">
                 <Plus className="h-5 w-5 sm:h-4 sm:w-4" /> Criar Rota
@@ -305,6 +316,12 @@ export default function DeliveriesList() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <MergeRoutesModal
+        isOpen={isMergeModalOpen}
+        onClose={() => setIsMergeModalOpen(false)}
+        routes={routes}
+      />
     </div>
   )
 }
