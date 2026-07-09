@@ -480,7 +480,7 @@ export default function SalesManagement() {
         />
       </div>
 
-      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen} className="items-start pt-10 sm:pt-16 overflow-y-auto">
         <DialogContent className="max-w-3xl max-h-[85vh] p-0 flex flex-col overflow-hidden">
           <DialogHeader className="px-6 py-4 border-b border-border shrink-0">
             <DialogTitle>Resumo do Pedido</DialogTitle>
