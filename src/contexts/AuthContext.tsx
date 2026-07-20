@@ -93,6 +93,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!profile) { setUser(null); setCompany(null); return; }
 
+    // ====== VERIFICAÇÃO DE EMPRESA DEVEDORA (CONTA EM ATRASO > 7 DIAS) ======
+    if (!profile.is_super_admin && profile.company_id && navigator.onLine) {
+      const { data: compData } = await supabase
+        .from('companies')
+        .select('active')
+        .eq('id', profile.company_id)
+        .single();
+
+      const isCompanyActive = compData ? compData.active : true;
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const limitDateStr = sevenDaysAgo.toISOString().split('T')[0];
+
+      const { data: unpaidPayments } = await supabase
+        .from('company_payments')
+        .select('id')
+        .eq('company_id', profile.company_id)
+        .neq('status', 'pago')
+        .lt('due_date', limitDateStr);
+
+      const hasOverdueDebt = unpaidPayments && unpaidPayments.length > 0;
+
+      if (!isCompanyActive || hasOverdueDebt) {
+        // Se tem débitos há mais de 7 dias, inativa a empresa no banco de forma preventiva
+        if (hasOverdueDebt && isCompanyActive) {
+          await supabase
+            .from('companies')
+            .update({ active: false })
+            .eq('id', profile.company_id);
+        }
+
+        await supabase.auth.signOut();
+        setUser(null);
+        setCompany(null);
+        localStorage.removeItem('offline_user_profile');
+        toast.error('Acesso bloqueado! Sua empresa está inativa ou possui mensalidades pendentes de pagamento há mais de 7 dias. Entre em contato com a administração.');
+        return;
+      }
+    }
+
+
     // ====== FORÇA LOGOUT DO MASTER EM F5/RELOAD ======
     // Se for master e não fez login na aba atual (ex: recarregou a página ou duplicou a aba), forçar logout
     if (profile.is_super_admin && !isMasterSessionActive) {

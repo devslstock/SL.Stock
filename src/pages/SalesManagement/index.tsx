@@ -49,6 +49,8 @@ export default function SalesManagement() {
   const [filterRegion, setFilterRegion] = useState('all')
   const [filterOrderGroup, setFilterOrderGroup] = useState('')
   const [sendingOrderId, setSendingOrderId] = useState<string | null>(null)
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([])
+  const [isBatchSending, setIsBatchSending] = useState(false)
   
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
@@ -219,6 +221,59 @@ export default function SalesManagement() {
     }
   }
 
+  const handleBatchSendToMaxiprod = async () => {
+    if (selectedOrderIds.length === 0) return
+    
+    if (!window.confirm(`Deseja transmitir os ${selectedOrderIds.length} pedidos selecionados para o Maxiprod?`)) {
+      return
+    }
+
+    setIsBatchSending(true)
+    let successCount = 0
+    let failCount = 0
+    
+    try {
+      const { maxiprodApi } = await import('@/api/maxiprod')
+      
+      toast.info(`Iniciando transmissão de ${selectedOrderIds.length} pedidos...`, { duration: 4000 })
+
+      for (const orderId of selectedOrderIds) {
+        try {
+          const ord = orders.find(o => o.id === orderId)
+          if (!ord) continue
+
+          if (ord.status === 'Faturado') {
+            successCount++
+            continue
+          }
+
+          // Envia para o Maxiprod
+          await maxiprodApi.sendSalesOrder(orderId)
+
+          // Atualiza status local para Faturado
+          await salesApi.updateSalesOrder(orderId, { status: 'Faturado' })
+          successCount++
+        } catch (e: any) {
+          console.error(`Erro ao enviar pedido ${orderId}:`, e)
+          failCount++
+        }
+      }
+
+      setSelectedOrderIds([])
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+
+      if (failCount > 0) {
+        toast.error(`Transmissão concluída. ${successCount} pedidos enviados com sucesso, ${failCount} falharam.`)
+      } else {
+        toast.success(`Todos os ${successCount} pedidos foram enviados com sucesso para o Maxiprod!`)
+      }
+    } catch (e: any) {
+      toast.error(`Erro na transmissão em lote: ${e.message}`)
+    } finally {
+      setIsBatchSending(false)
+    }
+  }
+
   const openDetails = (id: string) => {
     setSelectedOrderId(id)
     setIsDetailsOpen(true)
@@ -245,13 +300,24 @@ export default function SalesManagement() {
           </h1>
           <p className="text-muted-foreground mt-1">Acompanhe e fature os pedidos enviados pelos vendedores.</p>
         </div>
-        <Button 
-          variant="outline" 
-          className="text-blue-600 border-blue-500 hover:bg-blue-50 font-bold px-4 h-10 shadow-sm rounded-md"
-          onClick={() => setIsImportModalOpen(true)}
-        >
-          <Upload className="h-4 w-4 mr-2" /> Importar Planilha
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedOrderIds.length > 0 && (
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-10 px-4 shadow-sm rounded-md animate-in fade-in zoom-in-95"
+              onClick={handleBatchSendToMaxiprod}
+              disabled={isBatchSending}
+            >
+              {isBatchSending ? 'Transmitindo...' : `Transmitir Selecionados (${selectedOrderIds.length})`}
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            className="text-blue-600 border-blue-500 hover:bg-blue-50 font-bold px-4 h-10 shadow-sm rounded-md"
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            <Upload className="h-4 w-4 mr-2" /> Importar Planilha
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card rounded-xl border border-border p-4 shadow-sm space-y-4">
@@ -366,6 +432,25 @@ export default function SalesManagement() {
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>
+                <th className="px-4 py-3 font-medium w-12 text-center">
+                  <input
+                    type="checkbox"
+                    checked={
+                      paginatedOrders.filter(o => o.status === 'Enviado').length > 0 &&
+                      paginatedOrders.filter(o => o.status === 'Enviado').every(o => selectedOrderIds.includes(o.id))
+                    }
+                    onChange={e => {
+                      const sendableIds = paginatedOrders.filter(o => o.status === 'Enviado').map(o => o.id)
+                      if (e.target.checked) {
+                        const newSelection = Array.from(new Set([...selectedOrderIds, ...sendableIds]))
+                        setSelectedOrderIds(newSelection)
+                      } else {
+                        setSelectedOrderIds(selectedOrderIds.filter(id => !sendableIds.includes(id)))
+                      }
+                    }}
+                    className="rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">Pedido</th>
                 <th className="px-4 py-3 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('created_at')}>
                   Data {renderSortIcon('created_at')}
@@ -387,12 +472,28 @@ export default function SalesManagement() {
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading ?
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando pedidos...</td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Carregando pedidos...</td></tr>
                : paginatedOrders.length === 0 ? 
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhum pedido encontrado.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Nenhum pedido encontrado.</td></tr>
                : (
                 paginatedOrders.map(order => (
                   <tr key={order.id} className={`transition-colors hover:bg-muted/30 ${order.status === 'Retornou' ? 'bg-red-50 dark:bg-red-950/20' : ''}`}>
+                    <td className="px-4 py-3 text-center w-12">
+                      {order.status === 'Enviado' && (
+                        <input
+                          type="checkbox"
+                          checked={selectedOrderIds.includes(order.id)}
+                          onChange={e => {
+                            if (e.target.checked) {
+                              setSelectedOrderIds([...selectedOrderIds, order.id])
+                            } else {
+                              setSelectedOrderIds(selectedOrderIds.filter(id => id !== order.id))
+                            }
+                          }}
+                          className="rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                        />
+                      )}
+                    </td>
                     <td className="px-4 py-3 font-bold text-primary">
                       #{order.order_number || order.id.slice(0, 5).toUpperCase()}
                     </td>
