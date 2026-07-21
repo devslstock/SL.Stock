@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save, Building2, MapPin, Phone, Wallet, Briefcase, Plus, Trash2, Box, History, ClipboardList, FileText } from 'lucide-react'
+import { ArrowLeft, Save, Building2, MapPin, Phone, Wallet, Briefcase, Plus, Trash2, Box, History, ClipboardList, FileText, Search, RefreshCw } from 'lucide-react'
 import { customersApi } from '@/api/customers'
 import { salesRepsApi } from '@/api/salesReps'
 import { regionsApi } from '@/api/regions'
@@ -176,6 +176,47 @@ export default function CustomerForm() {
     }
   })
 
+  const [isFetchingCnpj, setIsFetchingCnpj] = useState(false);
+
+  const handleFetchCnpj = async () => {
+    if (formData.document_type !== 'CNPJ') return;
+    const cnpj = formData.document.replace(/\D/g, '');
+    if (cnpj.length !== 14) {
+      toast.error('CNPJ inválido para consulta');
+      return;
+    }
+    
+    setIsFetchingCnpj(true);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+      const data = await res.json();
+      
+      if (res.ok) {
+        setFormData(prev => ({
+          ...prev,
+          legal_name: data.razao_social || prev.legal_name,
+          fantasy_name: data.nome_fantasia || data.razao_social || prev.fantasy_name,
+          nickname: !prev.nickname ? (data.nome_fantasia || data.razao_social) : prev.nickname,
+          cep: data.cep ? data.cep.replace('.', '') : prev.cep,
+          address: data.logradouro || prev.address,
+          number: data.numero || prev.number,
+          complement: data.complemento || prev.complement,
+          neighborhood: data.bairro || prev.neighborhood,
+          city: data.municipio || prev.city,
+          state: data.uf || prev.state,
+          phone1: data.ddd_telefone_1 || prev.phone1
+        }));
+        toast.success('Dados da empresa preenchidos!');
+      } else {
+        toast.error('Erro ao consultar CNPJ: ' + (data.message || 'Desconhecido'));
+      }
+    } catch (err) {
+      toast.error('Erro de conexão ao consultar CNPJ');
+    } finally {
+      setIsFetchingCnpj(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -303,11 +344,24 @@ export default function CustomerForm() {
             </div>
             <div className="md:col-span-9">
               <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">{formData.document_type}</label>
-              <Input 
-                value={formData.document} 
-                onChange={e => setFormData({...formData, document: e.target.value})} 
-                placeholder={formData.document_type === 'CNPJ' ? '00.000.000/0000-00' : '000.000.000-00'}
-              />
+              <div className="flex gap-2">
+                <Input 
+                  value={formData.document} 
+                  onChange={e => setFormData({...formData, document: e.target.value})} 
+                  placeholder={formData.document_type === 'CNPJ' ? '00.000.000/0000-00' : '000.000.000-00'}
+                />
+                {formData.document_type === 'CNPJ' && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleFetchCnpj} 
+                    disabled={isFetchingCnpj}
+                  >
+                    {isFetchingCnpj ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+                    {isFetchingCnpj ? '' : 'Consultar'}
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="md:col-span-12">

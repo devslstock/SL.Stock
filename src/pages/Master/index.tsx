@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Plus, Users, Power, LogIn, Edit2, LogOut, Trash2 } from 'lucide-react';
+import { Building2, Plus, Users, Power, LogIn, Edit2, LogOut, Trash2, Search, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/toaster';
 import { useNavigate } from 'react-router-dom';
@@ -127,6 +127,33 @@ export default function MasterPanel() {
 
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
   const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
+
+  const [isFetchingCnpj, setIsFetchingCnpj] = useState(false);
+
+  const handleFetchCnpj = async () => {
+    const document = cnpj.replace(/\D/g, '');
+    if (document.length !== 14) {
+      toast.error('O CNPJ deve ter 14 dígitos para a consulta.');
+      return;
+    }
+    
+    setIsFetchingCnpj(true);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${document}`);
+      const data = await res.json();
+      
+      if (res.ok) {
+        if (!name) setName(data.nome_fantasia || data.razao_social || name);
+        toast.success('Dados encontrados! Razão social/Nome Fantasia preenchido.');
+      } else {
+        toast.error('Erro ao consultar CNPJ: ' + (data.message || 'Desconhecido'));
+      }
+    } catch (err) {
+      toast.error('Erro de conexão ao consultar CNPJ');
+    } finally {
+      setIsFetchingCnpj(false);
+    }
+  };
 
   const handleSaveCompany = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -391,7 +418,18 @@ export default function MasterPanel() {
               </div>
               <div className="space-y-2">
                 <Label>CNPJ ou CPF *</Label>
-                <Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" required />
+                <div className="flex gap-2">
+                  <Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" required />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleFetchCnpj} 
+                    disabled={isFetchingCnpj || !cnpj}
+                    title="Consultar CNPJ"
+                  >
+                    {isFetchingCnpj ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
