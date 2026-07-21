@@ -12,6 +12,7 @@ import { maxiprodApi } from '@/api/maxiprod'
 import { backupApi } from '@/api/backup'
 import { saasApi } from '@/api/saas'
 import { Database, Download, Upload, Crown, Star, CheckCircle2, ArrowUpCircle, Image as ImageIcon } from 'lucide-react'
+import { isValidCPFOrCNPJ } from '@/utils/documentValidation'
 
 export default function CompanySettings() {
   const queryClient = useQueryClient()
@@ -148,6 +149,12 @@ export default function CompanySettings() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (formData.cnpj && !isValidCPFOrCNPJ(formData.cnpj)) {
+      toast.error('CNPJ/CPF inválido. Verifique o número digitado.')
+      return
+    }
+
     const payload = {
       ...formData,
       garage_address: `${formData.garage_street}, ${formData.garage_number}, ${formData.garage_neighborhood}, ${formData.garage_city} - ${formData.garage_state}`,

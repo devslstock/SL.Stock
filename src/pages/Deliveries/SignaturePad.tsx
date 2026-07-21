@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { ArrowLeft, CheckCircle2, Eraser, PenTool } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
+import { isValidCPFOrCNPJ } from '@/utils/documentValidation'
 
 export default function SignaturePad() {
   const { clientId } = useParams()
@@ -62,6 +63,11 @@ export default function SignaturePad() {
       }
       if (!receiverDoc || !receiverDoc.trim()) {
         toast.error('Informe o CPF/Documento de quem recebeu a entrega.')
+        return
+      }
+      
+      if (!isValidCPFOrCNPJ(receiverDoc)) {
+        toast.error('O CPF do recebedor é inválido. Verifique o número digitado.')
         return
       }
 

@@ -15,6 +15,7 @@ import { toast } from '@/components/ui/toaster';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import type { Company } from '@/types/database';
+import { isValidCPFOrCNPJ } from '@/utils/documentValidation';
 
 export default function MasterPanel() {
   const { isMaster, switchCompany, exitCompany, company: currentCompany } = useAuth();
@@ -131,6 +132,11 @@ export default function MasterPanel() {
     e.preventDefault();
     if (!name || !cnpj || !adminName || !adminUsername) {
       toast.error('Preencha os campos obrigatórios');
+      return;
+    }
+
+    if (!isValidCPFOrCNPJ(cnpj)) {
+      toast.error('CNPJ ou CPF inválido');
       return;
     }
 

@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import { geocodeAddress } from '@/api/routing'
 import { generateContractPDF } from '@/utils/pdf'
+import { isValidCPFOrCNPJ } from '@/utils/documentValidation'
 
 export default function CustomerForm() {
   const { id } = useParams()
@@ -177,6 +178,12 @@ export default function CustomerForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (formData.document && !isValidCPFOrCNPJ(formData.document)) {
+      toast.error('O número de CNPJ ou CPF informado é inválido.')
+      return
+    }
+
     mutation.mutate(formData)
   }
 

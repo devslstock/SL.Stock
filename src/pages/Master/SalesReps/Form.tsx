@@ -10,7 +10,7 @@ import { toast } from '@/components/ui/toaster'
 import type { SalesRep } from '@/types/database'
 import { usersApi } from '@/api/users'
 import { useAuth } from '@/contexts/AuthContext'
-
+import { isValidCPFOrCNPJ } from '@/utils/documentValidation'
 
 export default function SalesRepForm() {
   const { company } = useAuth()
@@ -108,7 +108,12 @@ export default function SalesRepForm() {
       return
     }
     if (!isEditing && createLogin && !username) {
-      toast.error('Informe o usuário de login para o vendedor')
+      toast.error('Informe um usuário para login')
+      return
+    }
+
+    if (formData.document && !isValidCPFOrCNPJ(formData.document)) {
+      toast.error('O número de CNPJ ou CPF informado é inválido.')
       return
     }
     saveMutation.mutate(formData)
