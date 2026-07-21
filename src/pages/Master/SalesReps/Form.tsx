@@ -10,7 +10,7 @@ import { toast } from '@/components/ui/toaster'
 import type { SalesRep } from '@/types/database'
 import { usersApi } from '@/api/users'
 import { useAuth } from '@/contexts/AuthContext'
-import { isValidCPFOrCNPJ } from '@/utils/documentValidation'
+import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation'
 
 export default function SalesRepForm() {
   const { company } = useAuth()
