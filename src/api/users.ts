@@ -19,8 +19,13 @@ export const usersApi = {
   },
 
   async createUser(user: Omit<User, 'id' | 'created_at' | 'company_id'>, forceCompanyId?: string) {
+    const { data: { session } } = await supabase.auth.getSession()
+    
     const { data, error } = await supabase.functions.invoke('create-company-user', {
-      body: { user, forceCompanyId }
+      body: { user, forceCompanyId },
+      headers: {
+        Authorization: session?.access_token ? `Bearer ${session.access_token}` : ''
+      }
     })
     
     if (error) {
@@ -36,8 +41,13 @@ export const usersApi = {
 
   async updateUser(id: string, updates: Partial<User> & { force_password_reset?: boolean }) {
     if (updates.force_password_reset) {
+      const { data: { session } } = await supabase.auth.getSession()
+      
       const { data, error } = await supabase.functions.invoke('update-company-user', {
-        body: { id, updates }
+        body: { id, updates },
+        headers: {
+          Authorization: session?.access_token ? `Bearer ${session.access_token}` : ''
+        }
       })
 
       if (error) throw new Error(error.message || 'Erro ao atualizar usuário.')
