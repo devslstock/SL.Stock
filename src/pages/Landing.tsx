@@ -90,12 +90,10 @@ export default function Landing() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <div className="h-10 w-10 flex items-center justify-center">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              <div className="flex items-center font-bold italic tracking-tighter text-2xl">
+                <span className="text-white">SL</span>
+                <span className="text-[#0073E6] font-normal not-italic">.Stock</span>
               </div>
-              <span className="font-bold text-xl tracking-tight text-white">
-                Estoque Fácil
-              </span>
             </div>
 
             {/* Desktop Nav */}
@@ -152,7 +150,7 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg lg:text-xl text-slate-400 max-w-xl leading-relaxed">
-              O Estoque Fácil conecta estoque, expedição, entregas e força de vendas em uma única plataforma integrada.
+              O SL Stock conecta estoque, expedição, entregas e força de vendas em uma única plataforma integrada.
             </p>
             
             <div className="flex flex-wrap items-center gap-4 pt-4">
@@ -267,7 +265,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-20">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Uma plataforma completa para sua operação</h2>
-            <p className="text-slate-400 text-lg">O Estoque Fácil centraliza toda a gestão operacional da empresa em um único ambiente conectado.</p>
+            <p className="text-slate-400 text-lg">O SL Stock centraliza toda a gestão operacional da empresa em um único ambiente conectado.</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -499,9 +497,9 @@ export default function Landing() {
       {/* FOOTER */}
       <footer className="bg-[#0B1120] py-12 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <Box className="h-6 w-6 text-blue-500" />
-            <span className="text-white font-bold text-lg">Estoque Fácil</span>
+          <div className="flex items-center gap-2 font-bold italic tracking-tighter text-xl">
+            <span className="text-white">SL</span>
+            <span className="text-[#0073E6] font-normal not-italic">.Stock</span>
           </div>
           <p className="text-slate-500 text-sm">
             © 2025 SL Stock. Todos os direitos reservados.
@@ -525,7 +523,7 @@ export default function Landing() {
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-white">Solicitar Demonstração</DialogTitle>
             <DialogDescription className="text-slate-400">
-              Preencha os dados abaixo e entraremos em contato para mostrar como o Estoque Fácil se adequa à sua operação.
+              Preencha os dados abaixo e entraremos em contato para mostrar como o SL Stock se adequa à sua operação.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleDemoSubmit} className="space-y-4 mt-4">

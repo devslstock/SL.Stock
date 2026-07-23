@@ -151,21 +151,21 @@ export default function Login() {
             
             {/* Logo Section */}
             <div className="mb-8 flex flex-col items-center mt-4">
-              <div className="relative w-24 h-24 mb-4 flex items-center justify-center">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              <div className="relative mb-4 flex items-center justify-center">
+                <div className="flex items-center gap-1 font-bold italic tracking-tighter" style={{ fontSize: '3.5rem' }}>
+                  <span className="text-white">SL</span>
+                  <span className="text-[#0073E6] font-normal not-italic text-3xl mt-2">.Stock</span>
+                </div>
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-white mb-1">
-                Estoque <span className="text-[#9D71FF]">Fácil</span>
-              </h1>
-              <p className="text-[#9D71FF] text-sm tracking-widest font-medium uppercase">
-                Logística Inteligente
+              <p className="text-[#0073E6] text-xs tracking-[0.2em] font-semibold uppercase mt-[-10px]">
+                Smart Logistics Stock
               </p>
             </div>
 
             {/* Typography Section */}
             <div className="mb-10 mt-auto">
               <h2 className="text-2xl font-bold leading-snug mb-4">
-                Controle sua operação do <span className="text-[#9D71FF]">estoque</span> até a <span className="text-[#9D71FF]">entrega.</span>
+                Controle sua operação do <span className="text-[#0073E6]">estoque</span> até a <span className="text-[#0073E6]">entrega.</span>
               </h2>
               <p className="text-white/70 text-sm leading-relaxed max-w-[280px] mx-auto">
                 A plataforma completa que integra estoque, expedição, entregas e força de vendas em um único sistema.
@@ -215,8 +215,7 @@ export default function Login() {
           
           {/* Mobile Logo (Visible only on small screens) */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <img src="/logo.png" alt="Logo" className="h-10 w-10 object-contain" />
-            <span className="font-bold text-xl text-[#0A0520]">Estoque Fácil</span>
+            <span className="font-bold text-xl italic text-[#0A192F]">SL<span className="text-[#0073E6] not-italic font-medium">.Stock</span></span>
           </div>
 
           <div className="w-full max-w-[380px]">

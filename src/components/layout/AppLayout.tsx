@@ -336,8 +336,11 @@ export default function AppLayout() {
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-40">
         <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity">
-          <img src="/logo.png" alt="Logo" className="h-8 w-8 object-contain drop-shadow-md" />
-          <span className="font-bold text-lg gradient-text whitespace-nowrap">Estoque Fácil <span className="text-[10px] text-green-500 ml-1">{APP_VERSION.split('.')[0]}</span></span>
+          <span className="font-bold text-xl italic tracking-tighter whitespace-nowrap">
+            <span className="text-foreground">SL</span>
+            <span className="text-[#0073E6] font-medium not-italic">.Stock</span>
+            <span className="text-[10px] text-green-500 ml-1 not-italic">{APP_VERSION.split('.')[0]}</span>
+          </span>
         </Link>
         <div className="flex items-center gap-1">
           {!isOnline && (
@@ -406,10 +409,13 @@ export default function AppLayout() {
       >
         {/* Logo */}
         <Link to="/dashboard" className="h-16 px-5 border-b border-border hidden md:flex items-center gap-3 shrink-0 cursor-pointer hover:bg-muted/30 transition-colors">
-          <img src="/logo.png" alt="Logo" className="h-10 w-10 object-contain drop-shadow-md" />
           <div>
-            <h1 className="font-bold text-sm gradient-text flex items-baseline gap-1">Estoque Fácil <span className="text-[10px] text-green-500">{APP_VERSION.split('.')[0]}</span></h1>
-            <p className="text-xs text-muted-foreground">{company?.name || (isMaster ? 'Painel Master' : 'Carregando...')}</p>
+            <h1 className="font-bold text-lg italic tracking-tighter flex items-baseline gap-1">
+              <span className="text-foreground">SL</span>
+              <span className="text-[#0073E6] font-medium not-italic">.Stock</span>
+              <span className="text-[10px] text-green-500 not-italic ml-1">{APP_VERSION.split('.')[0]}</span>
+            </h1>
+            <p className="text-xs text-muted-foreground mt-[-2px]">{company?.name || (isMaster ? 'Painel Master' : 'Carregando...')}</p>
           </div>
         </Link>
 
