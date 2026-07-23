@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Building, MapPin, Save, Phone, Mail, FileText, Info, Link, Key, RefreshCw } from 'lucide-react'
 import { geocodeAddress } from '@/api/routing'
-import { maxiprodApi } from '@/api/maxiprod'
+
 import { backupApi } from '@/api/backup'
 import { saasApi } from '@/api/saas'
 import { supabase } from '@/lib/supabase'
@@ -33,16 +33,6 @@ export default function CompanySettings() {
   }
 
   const [isGeocoding, setIsGeocoding] = useState(false)
-  const [erpToken, setErpToken] = useState('')
-  const [erpLoading, setErpLoading] = useState(false)
-  const [isSyncing, setIsSyncing] = useState(false)
-  const [isSyncingIds, setIsSyncingIds] = useState(false)
-  const [lastSync, setLastSync] = useState<string | null>(null)
-  
-  const [erpMoeda, setErpMoeda] = useState('')
-  const [erpOperacao, setErpOperacao] = useState('')
-  const [erpUnidade, setErpUnidade] = useState('')
-
   // Backup & Restore
   const [isBackingUp, setIsBackingUp] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
@@ -99,11 +89,7 @@ export default function CompanySettings() {
         additional_info: companyData.additional_info || '',
         logo_url: companyData.logo_url || ''
       })
-      setErpToken(companyData.maxiprod_api_token || '')
-      setLastSync(companyData.maxiprod_last_sync || null)
-      setErpMoeda(companyData.maxiprod_moeda_id ? companyData.maxiprod_moeda_id.toString() : '')
-      setErpOperacao(companyData.maxiprod_operacao_id ? companyData.maxiprod_operacao_id.toString() : '')
-      setErpUnidade(companyData.maxiprod_unidade_id ? companyData.maxiprod_unidade_id.toString() : '')
+
 
       setFiscalToken(companyData.focusnfe_token || '')
       setFiscalEnv(companyData.focusnfe_env || 'homologacao')
@@ -177,73 +163,7 @@ export default function CompanySettings() {
     updateMutation.mutate(payload as any)
   }
 
-  async function handleSaveERP() {
-    if (!company?.id) return
-    setErpLoading(true)
-    try {
-      await companiesApi.updateCompany(company.id, { 
-        maxiprod_api_token: erpToken,
-        maxiprod_moeda_id: erpMoeda ? parseInt(erpMoeda) : null,
-        maxiprod_operacao_id: erpOperacao ? parseInt(erpOperacao) : null,
-        maxiprod_unidade_id: erpUnidade ? parseInt(erpUnidade) : null,
-      })
-      
-      try {
-        await maxiprodApi.testConnection()
-        toast.success('Configurações do Maxiprod salvas com sucesso!')
-      } catch (err: any) {
-        toast.error(`Falha na conexão: ${err.message}`)
-      }
-      
-    } catch (error: any) {
-      toast.error('Erro ao salvar configurações: ' + error.message)
-    } finally {
-      setErpLoading(false)
-    }
-  }
 
-  async function handleSyncIds() {
-    if (!erpToken) {
-      toast.error('Por favor, salve o token do Maxiprod primeiro.')
-      return
-    }
-    
-    setIsSyncingIds(true)
-    toast.success('Iniciando Sincronização Leve de IDs...')
-    
-    try {
-      const stats = await maxiprodApi.syncMaxiprodIds()
-      toast.success(`Sincronização concluída! IDs atualizados: ${stats.products} produtos, ${stats.customers} clientes.`)
-      // Refresh to update last_sync if we had one, but this just gets IDs.
-    } catch (err: any) {
-      toast.error(`Erro ao sincronizar IDs: ${err.message}`)
-    } finally {
-      setIsSyncingIds(false)
-    }
-  }
-
-  async function handleSyncERP() {
-    if (!erpToken) {
-      toast.error('Por favor, salve o token do Maxiprod primeiro.')
-      return
-    }
-    
-    setIsSyncing(true)
-    toast.success('Iniciando sincronização com Maxiprod...')
-    
-    try {
-      const res = await maxiprodApi.syncAllData()
-      if (res.success) {
-        toast.success('Sincronização concluída com sucesso!')
-        setLastSync(res.timestamp)
-        queryClient.invalidateQueries({ queryKey: ['company_settings'] })
-      }
-    } catch (e: any) {
-      toast.error(e.message || 'Erro ao sincronizar dados')
-    } finally {
-      setIsSyncing(false)
-    }
-  }
 
   async function handleExportBackup() {
     if (!company?.id) return
@@ -685,82 +605,7 @@ export default function CompanySettings() {
           </div>
         </div>
 
-        {/* Integração ERP */}
-        <div className="glass-card p-6 border-t-4 border-t-purple-500">
-          <div className="flex items-center gap-2 mb-4 text-lg font-bold text-foreground">
-            <Link className="h-5 w-5 text-purple-500" />
-            Integração ERP (Maxiprod)
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Configure as credenciais da API do Maxiprod para sincronização automática de estoque e pedidos.
-          </p>
 
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Token de Acesso (API Key)</label>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    placeholder="Cole seu Bearer Token aqui..."
-                    className="pl-9 h-10"
-                    value={erpToken}
-                    onChange={e => setErpToken(e.target.value)}
-                  />
-                </div>
-                <Button onClick={handleSaveERP} disabled={erpLoading} type="button" className="shrink-0 h-10">
-                  {erpLoading ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  Salvar ERP
-                </Button>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-2 mb-4">
-                O aplicativo enviará os pedidos para o Maxiprod automaticamente. 
-              </p>
-            </div>
-
-            <div className="pt-4 border-t border-border mt-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-bold text-sm text-foreground">Mapeamento de IDs (Recomendado)</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Vincula produtos e clientes do Estoque Fácil aos cadastros do Maxiprod (por Código e CPF/CNPJ). Obrigatório para poder transmitir pedidos.
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  onClick={handleSyncIds} 
-                  disabled={isSyncingIds || !erpToken} 
-                  type="button" 
-                  className="shrink-0 border-indigo-200 hover:bg-indigo-50 text-indigo-700 h-10"
-                >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${isSyncingIds ? 'animate-spin' : ''}`} />
-                  {isSyncingIds ? 'Mapeando IDs...' : 'Sincronizar IDs (Vincular)'}
-                </Button>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-border mt-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-bold text-sm text-foreground">Sincronização Total (Legado)</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Puxe clientes, produtos e tabelas de preço do Maxiprod para o Estoque Fácil (substitui dados).
-                  </p>
-                </div>
-                <Button variant="outline" onClick={handleSyncERP} disabled={isSyncing || !erpToken} type="button" className="shrink-0 border-purple-200 hover:bg-purple-50 text-purple-700">
-                  <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                  {isSyncing ? 'Importando Tudo...' : 'Importação Total (Perigoso)'}
-                </Button>
-              </div>
-              {lastSync && (
-                <p className="text-[11px] text-muted-foreground mt-2 text-right">
-                  Última sincronização: {new Date(lastSync).toLocaleString()}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Configuração Fiscal (Focus NFe) */}
         <div className="glass-card p-6 border-t-4 border-t-orange-400">
