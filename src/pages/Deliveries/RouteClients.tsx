@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, User, MapPin, FileSpreadsheet, Trash2, ChevronRight, AlertTriangle, Search, Plus, Map as MapIcon, ListOrdered, Menu, FileDown, CheckSquare, Truck, DownloadCloud, GitMerge } from 'lucide-react'
+import { ArrowLeft, User, MapPin, FileSpreadsheet, Trash2, ChevronRight, AlertTriangle, Search, Plus, Map as MapIcon, ListOrdered, Menu, FileDown, CheckSquare, Truck, DownloadCloud, GitMerge, Receipt, RefreshCw } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import * as XLSX from 'xlsx'
@@ -136,6 +136,48 @@ export default function RouteClients() {
     queryKey: ['delivery_route', id],
     queryFn: () => deliveriesApi.getDeliveryRoute(id!),
     enabled: !!id,
+  })
+
+  // MDF-e State
+  const { data: mdfeRecord, refetch: refetchMdfe, isLoading: isLoadingMdfe } = useQuery({
+    queryKey: ['mdfe_record', id],
+    queryFn: async () => {
+      const { data } = await supabase.from('mdfe_records').select('*').eq('delivery_route_id', id).maybeSingle()
+      return data || null
+    },
+    enabled: !!id,
+  })
+
+  const emitMdfeMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('emit-mdfe', {
+        body: { deliveryRouteId: id }
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      return data
+    },
+    onSuccess: () => {
+      toast.success('Emissão de MDF-e iniciada!')
+      refetchMdfe()
+    },
+    onError: (e: any) => toast.error(`Erro ao emitir MDF-e: ${e.message}`)
+  })
+
+  const checkMdfeStatusMutation = useMutation({
+    mutationFn: async (mdfeId: string) => {
+      const { data, error } = await supabase.functions.invoke(`get-mdfe-status?id=${mdfeId}`, {
+        method: 'GET'
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      return data
+    },
+    onSuccess: () => {
+      refetchMdfe()
+      toast.success('Status atualizado')
+    },
+    onError: (e: any) => toast.error(`Erro ao verificar status: ${e.message}`)
   })
 
   const { data: routeOrders = [], isLoading: isLoadingOrders } = useQuery({
@@ -842,6 +884,70 @@ export default function RouteClients() {
             )}
           </div>
         </div>
+
+        {/* MDF-e Panel */}
+        {isManager && (
+          <div className="w-full bg-orange-50/50 border border-orange-200/50 dark:bg-orange-950/10 dark:border-orange-900/30 p-4 rounded-lg flex flex-col sm:flex-row gap-4 justify-between items-center slide-up">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg shrink-0">
+                <Receipt className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-orange-800 dark:text-orange-300 flex items-center gap-2">
+                  Manifesto de Carga (MDF-e)
+                  {mdfeRecord && (
+                    <Badge variant={mdfeRecord.status === 'autorizado' ? 'success' : mdfeRecord.status === 'erro' || mdfeRecord.status === 'erro_autorizacao' ? 'destructive' : 'warning'} className="text-[10px] h-4">
+                      {mdfeRecord.status.toUpperCase()}
+                    </Badge>
+                  )}
+                </h3>
+                <p className="text-xs text-orange-600/80 dark:text-orange-400/80 mt-1 max-w-xl">
+                  {mdfeRecord?.status === 'autorizado' 
+                    ? 'O manifesto de transporte eletrônico está autorizado e acoplado à carga.' 
+                    : mdfeRecord?.error_message 
+                      ? mdfeRecord.error_message
+                      : 'O MDF-e reúne as notas fiscais transportadas no veículo, necessário para validade fiscal na viagem.'}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 shrink-0">
+              {!mdfeRecord && (
+                <Button 
+                  className="bg-orange-600 hover:bg-orange-700 text-white" 
+                  size="sm"
+                  onClick={() => emitMdfeMutation.mutate()}
+                  disabled={emitMdfeMutation.isPending}
+                >
+                  {emitMdfeMutation.isPending ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Receipt className="h-4 w-4 mr-2" />}
+                  Emitir MDF-e
+                </Button>
+              )}
+              {mdfeRecord && mdfeRecord.status !== 'autorizado' && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-orange-200 text-orange-700"
+                  onClick={() => checkMdfeStatusMutation.mutate(mdfeRecord.id)}
+                  disabled={checkMdfeStatusMutation.isPending}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${checkMdfeStatusMutation.isPending ? 'animate-spin' : ''}`} />
+                  Consultar Status
+                </Button>
+              )}
+              {mdfeRecord?.pdf_url && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-orange-500 text-orange-700 hover:bg-orange-50"
+                  onClick={() => window.open(mdfeRecord.pdf_url!, '_blank')}
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  DAMDFE (PDF)
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Botoes de Checklist */}
         {!isLoadingChecklist && (

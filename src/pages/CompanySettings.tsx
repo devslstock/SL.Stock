@@ -11,7 +11,8 @@ import { geocodeAddress } from '@/api/routing'
 import { maxiprodApi } from '@/api/maxiprod'
 import { backupApi } from '@/api/backup'
 import { saasApi } from '@/api/saas'
-import { Database, Download, Upload, Crown, Star, CheckCircle2, ArrowUpCircle, Image as ImageIcon } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { Database, Download, Upload, Crown, Star, CheckCircle2, ArrowUpCircle, Image as ImageIcon, Receipt, Key as KeyIcon, ShieldCheck } from 'lucide-react'
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation'
 
 export default function CompanySettings() {
@@ -46,6 +47,15 @@ export default function CompanySettings() {
   const [isBackingUp, setIsBackingUp] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
   const [restoreProgress, setRestoreProgress] = useState('')
+  
+  // Fiscal Config
+  const [fiscalToken, setFiscalToken] = useState('')
+  const [fiscalEnv, setFiscalEnv] = useState('homologacao')
+  const [isSavingFiscal, setIsSavingFiscal] = useState(false)
+  const [certFile, setCertFile] = useState<File | null>(null)
+  const [certPassword, setCertPassword] = useState('')
+  const [isUploadingCert, setIsUploadingCert] = useState(false)
+
   const fileInputRef = import('react').then(m => m.useRef<HTMLInputElement>(null))
   // Resolving useRef synchronously since it's inside component:
   // Actually, we can just use React.useRef. We already import { useState, useEffect, useRef } from 'react' if we add it.
@@ -94,6 +104,9 @@ export default function CompanySettings() {
       setErpMoeda(companyData.maxiprod_moeda_id ? companyData.maxiprod_moeda_id.toString() : '')
       setErpOperacao(companyData.maxiprod_operacao_id ? companyData.maxiprod_operacao_id.toString() : '')
       setErpUnidade(companyData.maxiprod_unidade_id ? companyData.maxiprod_unidade_id.toString() : '')
+
+      setFiscalToken(companyData.focusnfe_token || '')
+      setFiscalEnv(companyData.focusnfe_env || 'homologacao')
     }
   }, [companyData])
 
@@ -301,6 +314,55 @@ export default function CompanySettings() {
       setIsRestoring(false)
       setRestoreProgress('')
       if (e.target) e.target.value = '' // reset file input
+    }
+  }
+
+  async function handleSaveFiscalSettings() {
+    if (!company?.id) return
+    setIsSavingFiscal(true)
+    try {
+      await companiesApi.updateCompany(company.id, { 
+        focusnfe_token: fiscalToken,
+        focusnfe_env: fiscalEnv as any
+      } as any)
+      toast.success('Configurações Fiscais salvas com sucesso!')
+    } catch (err: any) {
+      toast.error(`Erro ao salvar configurações fiscais: ${err.message}`)
+    } finally {
+      setIsSavingFiscal(false)
+    }
+  }
+
+  async function handleUploadCertificate() {
+    if (!certFile || !certPassword) {
+      toast.error('Selecione o arquivo do certificado e informe a senha.');
+      return;
+    }
+
+    setIsUploadingCert(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(certFile);
+      });
+
+      const { data, error } = await supabase.functions.invoke('upload-certificate', {
+        body: { arquivo: base64, senha: certPassword }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Certificado Digital A1 importado e salvo no cofre da Focus NFe!');
+      setCertFile(null);
+      setCertPassword('');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Erro ao fazer upload do certificado: ${err.message}`);
+    } finally {
+      setIsUploadingCert(false);
     }
   }
 
@@ -696,6 +758,100 @@ export default function CompanySettings() {
                   Última sincronização: {new Date(lastSync).toLocaleString()}
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Configuração Fiscal (Focus NFe) */}
+        <div className="glass-card p-6 border-t-4 border-t-orange-400">
+          <div className="flex items-center gap-2 mb-4 text-lg font-bold text-foreground">
+            <Receipt className="h-5 w-5 text-orange-400" />
+            Configuração Fiscal (NF-e / MDF-e)
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Configure seu emissor fiscal (Focus NFe) e envie seu Certificado Digital A1.
+          </p>
+
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Token da API (Focus NFe)</label>
+                <div className="relative">
+                  <KeyIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Seu token de produção ou homologação..."
+                    className="pl-9"
+                    value={fiscalToken}
+                    onChange={e => setFiscalToken(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Ambiente</label>
+                <select 
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={fiscalEnv}
+                  onChange={e => setFiscalEnv(e.target.value)}
+                >
+                  <option value="homologacao">Homologação (Testes)</option>
+                  <option value="producao">Produção (Validade Jurídica)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button onClick={handleSaveFiscalSettings} disabled={isSavingFiscal} type="button" className="h-10 bg-orange-500 hover:bg-orange-600 text-white">
+                {isSavingFiscal ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Salvar Dados Fiscais
+              </Button>
+            </div>
+
+            <div className="pt-4 border-t border-border mt-4">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex-1">
+                  <h4 className="font-bold text-sm text-foreground flex items-center gap-2 mb-1">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    Upload de Certificado Digital A1
+                  </h4>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Seu certificado (.pfx ou .p12) será enviado de forma segura e direta para o cofre da Focus NFe. Nossa plataforma não armazena o arquivo nem a senha no nosso banco de dados.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <div>
+                      <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Arquivo .PFX / .P12</label>
+                      <Input 
+                        type="file" 
+                        accept=".pfx,.p12" 
+                        onChange={e => setCertFile(e.target.files?.[0] || null)}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Senha do Certificado</label>
+                      <Input 
+                        type="password" 
+                        placeholder="Senha do arquivo"
+                        value={certPassword}
+                        onChange={e => setCertPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-end shrink-0">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleUploadCertificate} 
+                    disabled={isUploadingCert || !certFile || !certPassword || !fiscalToken} 
+                    type="button" 
+                    className="w-full md:w-auto border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                  >
+                    {isUploadingCert ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                    {isUploadingCert ? 'Enviando ao Cofre...' : 'Enviar Certificado'}
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

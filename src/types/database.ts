@@ -67,7 +67,35 @@ export interface Company {
   maxiprod_moeda_id?: number | null
   maxiprod_operacao_id?: number | null
   maxiprod_unidade_id?: number | null
+  focusnfe_token?: string | null
+  focusnfe_env?: 'producao' | 'homologacao' | null
   created_at: string
+}
+
+export interface NfeRecord {
+  id: string
+  company_id: string
+  sales_order_id: string | null
+  focus_reference: string
+  status: string
+  xml_url: string | null
+  pdf_url: string | null
+  error_message: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MdfeRecord {
+  id: string
+  company_id: string
+  delivery_route_id: string
+  focus_reference: string
+  status: string
+  xml_url: string | null
+  pdf_url: string | null
+  error_message: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface CompanyPayment {
@@ -108,6 +136,7 @@ export interface User {
   username: string
   email?: string
   phone?: string
+  cpf?: string
   avatar_url?: string
   role: UserRole
   active: boolean

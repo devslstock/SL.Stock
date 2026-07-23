@@ -53,6 +53,7 @@ export default function AccessControl() {
   // Form State
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
+  const [cpf, setCpf] = useState('')
   const [role, setRole] = useState<UserRole>('conferente')
   const [perms, setPerms] = useState<UserPermissions>(defaultPermissions.conferente)
 
@@ -107,6 +108,7 @@ export default function AccessControl() {
     setEditing(null)
     setName('')
     setUsername('')
+    setCpf('')
     setRole('conferente')
     setPerms(defaultPermissions.conferente)
     setIsOpen(true)
@@ -116,6 +118,7 @@ export default function AccessControl() {
     setEditing(user)
     setName(user.name)
     setUsername(user.username)
+    setCpf(user.cpf || '')
     setRole(user.role)
     setPerms(user.permissions || defaultPermissions[user.role])
     setIsOpen(true)
@@ -142,6 +145,7 @@ export default function AccessControl() {
     const baseData: Partial<User> = {
       name,
       username,
+      cpf,
       role,
       permissions: perms
     }
@@ -250,14 +254,28 @@ export default function AccessControl() {
           <form onSubmit={handleSubmit} className="space-y-4 mt-2">
             
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-2 col-span-2 sm:col-span-1">
                 <Label>Nome Completo *</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} required />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 col-span-2 sm:col-span-1">
                 <Label>E-mail de Login *</Label>
                 <Input type="email" value={username} onChange={e => setUsername(e.target.value)} required placeholder="email@exemplo.com" />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>CPF {role === 'motorista' ? '*' : '(Opcional)'}</Label>
+              <Input 
+                value={cpf} 
+                onChange={e => {
+                  const val = e.target.value.replace(/[^\d]/g, '')
+                  setCpf(val)
+                }} 
+                placeholder="Apenas números. Necessário para emissão de MDF-e se for motorista." 
+                required={role === 'motorista'}
+                maxLength={11}
+              />
             </div>
 
             <div className="space-y-2">

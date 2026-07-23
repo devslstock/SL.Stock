@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { InvoicePrintTemplate } from './InvoicePrintTemplate'
 import { useNavigate } from 'react-router-dom'
 import { useSalesCart } from '@/stores/salesCart'
+import { FileText, RefreshCw } from 'lucide-react'
 
 interface OrderDetailsModalProps {
   orderId: string | null;
@@ -24,6 +25,8 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
   const [isLoading, setIsLoading] = useState(false)
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [isSending, setIsSending] = useState(false)
+  const [isEmittingNfe, setIsEmittingNfe] = useState(false)
+  const [isCheckingNfe, setIsCheckingNfe] = useState(false)
   const printRef = useRef<HTMLDivElement>(null)
   const { company } = useAuth()
   const navigate = useNavigate()
@@ -50,7 +53,8 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
           items:sales_order_items(
             *,
             product:products(*)
-          )
+          ),
+          nfe_records(*)
         `)
         .eq('id', id)
         .single()
@@ -117,6 +121,54 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
     }
   }
 
+  const handleEmitNfe = async () => {
+    if (!orderId) return;
+    setIsEmittingNfe(true);
+    toast.info('Solicitando emissão de NF-e...', { duration: 3000 });
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('emit-nfe', {
+        body: { salesOrderId: orderId }
+      });
+      
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      toast.success('NF-e enviada para processamento!');
+      loadDetails(orderId);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Erro ao emitir NF-e: ${e.message || 'Desconhecido'}`);
+    } finally {
+      setIsEmittingNfe(false);
+    }
+  }
+
+  const handleCheckNfeStatus = async (nfeId: string) => {
+    setIsCheckingNfe(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-nfe-status', {
+        body: {}, // Deno function looks at search params or body? Ah, wait, in edge function I wrote url.searchParams.get("id")
+      });
+      // But edge functions invoke uses POST by default if body is passed. Let's adjust how we call it.
+      // Wait, let's call it like this:
+      const { data: statusData, error: statusError } = await supabase.functions.invoke(`get-nfe-status?id=${nfeId}`, {
+        method: 'GET'
+      });
+      
+      if (statusError) throw statusError;
+      if (statusData?.error) throw new Error(statusData.error);
+      
+      toast.success('Status da NF-e atualizado!');
+      loadDetails(orderId!);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Erro ao consultar NF-e: ${e.message || 'Desconhecido'}`);
+    } finally {
+      setIsCheckingNfe(false);
+    }
+  }
+
   const handlePrint = () => {
     window.print()
   }
@@ -178,6 +230,39 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
                     <Send className="h-4 w-4" /> {isSending ? 'Enviando...' : 'Enviar Maxiprod'}
                   </Button>
                 )}
+                
+                {/* Lógica do Botão NFe */}
+                {(!details.nfe_records || details.nfe_records.length === 0) ? (
+                  <Button 
+                    onClick={handleEmitNfe} 
+                    disabled={isEmittingNfe || !company?.focusnfe_token} 
+                    variant="default"
+                    className="bg-orange-500 hover:bg-orange-600 text-white h-9 text-xs font-bold gap-1.5"
+                  >
+                    <FileText className="h-4 w-4" /> {isEmittingNfe ? 'Emitindo...' : 'Emitir NF-e'}
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold px-2 py-1 bg-muted rounded">
+                      NFe: {details.nfe_records[0].status}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      className="h-9 w-9"
+                      onClick={() => handleCheckNfeStatus(details.nfe_records[0].id)}
+                      disabled={isCheckingNfe}
+                    >
+                      <RefreshCw className={`h-4 w-4 ${isCheckingNfe ? 'animate-spin' : ''}`} />
+                    </Button>
+                    {details.nfe_records[0].pdf_url && (
+                      <Button variant="outline" size="sm" className="h-9 text-xs gap-1.5" onClick={() => window.open(`https://api.focusnfe.com.br${details.nfe_records[0].pdf_url}`, '_blank')}>
+                        DANFE
+                      </Button>
+                    )}
+                  </div>
+                )}
+
                 <Button variant="outline" size="sm" onClick={handleDownloadPDF} disabled={isGeneratingPdf} className="h-9">
                   <Download className="h-4 w-4 mr-2" /> {isGeneratingPdf ? 'Gerando...' : 'Download PDF'}
                 </Button>
