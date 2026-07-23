@@ -19,35 +19,42 @@ export const usersApi = {
   },
 
   async createUser(user: Omit<User, 'id' | 'created_at' | 'company_id'>, forceCompanyId?: string) {
-    const response = await fetch('/api/create-company-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user, forceCompanyId })
-    });
+    const { data, error } = await supabase.functions.invoke('create-company-user', {
+      body: { user, forceCompanyId }
+    })
     
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Erro ao criar usuário. Tente novamente.');
+    if (error) {
+      throw new Error(error.message || 'Erro ao criar usuário. Tente novamente.')
     }
     
-    const data = await response.json();
+    if (data?.error) {
+      throw new Error(data.error || 'Erro ao criar usuário. Tente novamente.')
+    }
     
     return data as User
   },
 
-  async updateUser(id: string, updates: Partial<User>) {
-    const response = await fetch('/api/update-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, updates })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Erro ao atualizar usuário. Tente novamente.');
+  async updateUser(id: string, updates: Partial<User> & { force_password_reset?: boolean }) {
+    if (updates.force_password_reset) {
+      const { data, error } = await supabase.functions.invoke('update-company-user', {
+        body: { id, updates }
+      })
+
+      if (error) throw new Error(error.message || 'Erro ao atualizar usuário.')
+      if (data?.error) throw new Error(data.error || 'Erro ao atualizar usuário.')
+      
+      return data as User;
     }
-    
-    const data = await response.json();
+
+    // Normal update via Supabase Client (RLS covers it)
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message || 'Erro ao atualizar usuário.');
     return data as User;
   },
 
