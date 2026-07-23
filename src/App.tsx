@@ -62,6 +62,20 @@ function ProtectedRoute() {
   return <Outlet />;
 }
 
+import type { UserPermissions } from '@/types/database'
+
+function RequirePermission({ perm }: { perm: keyof UserPermissions }) {
+  const { hasPermission } = useAuth();
+  if (!hasPermission(perm)) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
+}
+
+function RequireMaster() {
+  const { isMaster } = useAuth();
+  if (!isMaster) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
+}
+
 import CountsMenu from './pages/Counts'
 import AdhocCount from './pages/Counts/AdhocCount'
 import PlannedInventoriesList from './pages/Counts/Planned/List'
@@ -168,8 +182,10 @@ function App() {
             {/* New Order Flow */}
             <Route path="/vendas/novo-pedido" element={<NewOrder />} />
 
-            <Route path="/configuracoes/empresa" element={<CompanySettings />} />
-            <Route path="/acesso" element={<AccessControl />} />
+            <Route element={<RequirePermission perm="can_manage_company" />}>
+              <Route path="/configuracoes/empresa" element={<CompanySettings />} />
+              <Route path="/acesso" element={<AccessControl />} />
+            </Route>
              <Route path="/ajuda" element={<HelpAndSupport />} />
              <Route path="/importar-tabelas" element={<ImportPriceTables />} />
 
@@ -196,13 +212,15 @@ function App() {
 
 
             {/* SaaS Master Routes */}
-            <Route path="/saas" element={<MasterPanel />} />
-            <Route path="/saas/empresas" element={<MasterPanel />} />
-            <Route path="/saas/financeiro" element={<SaaSFinance />} />
-            <Route path="/saas/acessos" element={<SaaSTeam />} />
-            <Route path="/saas/campanhas" element={<SaaSCampanhas />} />
-            <Route path="/saas/anotacoes" element={<SaaSNotes />} />
-            <Route path="/saas/leads" element={<SaaSLeads />} />
+            <Route element={<RequireMaster />}>
+              <Route path="/saas" element={<MasterPanel />} />
+              <Route path="/saas/empresas" element={<MasterPanel />} />
+              <Route path="/saas/financeiro" element={<SaaSFinance />} />
+              <Route path="/saas/acessos" element={<SaaSTeam />} />
+              <Route path="/saas/campanhas" element={<SaaSCampanhas />} />
+              <Route path="/saas/anotacoes" element={<SaaSNotes />} />
+              <Route path="/saas/leads" element={<SaaSLeads />} />
+            </Route>
           </Route>
         </Route>
       </Routes>

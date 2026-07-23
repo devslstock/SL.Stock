@@ -13,7 +13,7 @@ export function PlanGuard({ children, requiredPlan }: PlanGuardProps) {
   
   if (!company) return null
 
-  const plan = company.plan || 'platina'
+  const plan = company.plan ?? 'bronze'
 
   let isAllowed = true
   if (requiredPlan === 'prata' && plan === 'bronze') isAllowed = false
@@ -46,18 +46,18 @@ export function PlanGuard({ children, requiredPlan }: PlanGuardProps) {
                 </>
               )}
               {requiredPlan === 'ouro' && (
-                <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1 mb-6">
+                <>
                   <li>Rotas e Entregas (Mobile)</li>
                   <li>Assinatura Digital</li>
                   <li>Motoristas e Ajudantes</li>
-                </ul>
+                </>
               )}
               {requiredPlan === 'platina' && (
-                <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1 mb-6">
+                <>
                   <li>Força de Vendas e CRM</li>
                   <li>Sincronização com ERP Maxiprod</li>
                   <li>Representantes Comerciais</li>
-                </ul>
+                </>
               )}
             </ul>
           </div>
