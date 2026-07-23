@@ -17,6 +17,10 @@ serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    if (!serviceRoleKey) {
+      throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set in the Edge Function environment. Please add it via secrets.");
+    }
 
     // Client usando token do usuário chamador para verificar quem está chamando
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
