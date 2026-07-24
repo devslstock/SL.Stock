@@ -89,6 +89,7 @@ serve(async (req: Request) => {
       permissions: newUser.permissions || {},
       active: true,
       must_change_password: true,
+      password_hash: 'migrated_to_auth',
     };
 
     const { data: createdProfile, error: dbError } = await adminClient
