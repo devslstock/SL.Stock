@@ -86,6 +86,7 @@ serve(async (req: Request) => {
 
     // Se houver outras atualizações sensíveis que precisem passar pelo adminClient, faríamos aqui.
     // O fallback atualiza apenas a tabela public.users
+    // Garantir que cpf seja extraído caso tenha sido enviado nas atualizações (o rest spread do Deno/Supabase funciona bem)
     const { data: updatedProfile, error: updateError } = await adminClient
       .from('users')
       .update(updates)

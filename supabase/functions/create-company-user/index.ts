@@ -86,6 +86,7 @@ serve(async (req: Request) => {
       company_id: targetCompanyId,
       name: newUser.name,
       username: newUser.username.trim().toLowerCase(),
+      cpf: newUser.cpf,
       email,
       role: newUser.role || 'conferente',
       permissions: newUser.permissions || {},
