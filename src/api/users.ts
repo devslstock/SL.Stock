@@ -30,14 +30,14 @@ export const usersApi = {
     
     if (error) {
       if (error.message?.includes('Bearer token')) {
-        throw new Error('A Edge Function não tem acesso à SUPABASE_SERVICE_ROLE_KEY. Configure este secret no Supabase CLI.')
+        throw new Error('A Edge Function não tem acesso à MY_SERVICE_ROLE_KEY. Configure este secret no Supabase Dashboard.')
       }
       throw new Error(error.message || 'Erro ao criar usuário. Tente novamente.')
     }
     
     if (data?.error) {
       if (data.error.includes('Bearer token')) {
-        throw new Error('A Edge Function (create-company-user) está sem a Service Role Key válida. Rode: supabase secrets set SUPABASE_SERVICE_ROLE_KEY="sua_chave"')
+        throw new Error('A Edge Function (create-company-user) está sem a Service Role Key válida. Adicione no dashboard como MY_SERVICE_ROLE_KEY.')
       }
       throw new Error(data.error || 'Erro ao criar usuário. Tente novamente.')
     }
@@ -58,13 +58,13 @@ export const usersApi = {
 
       if (error) {
         if (error.message?.includes('Bearer token')) {
-          throw new Error('A Edge Function não tem acesso à SUPABASE_SERVICE_ROLE_KEY. Configure este secret no Supabase CLI.')
+          throw new Error('A Edge Function não tem acesso à MY_SERVICE_ROLE_KEY. Configure este secret no Supabase Dashboard.')
         }
         throw new Error(error.message || 'Erro ao atualizar usuário.')
       }
       if (data?.error) {
         if (data.error.includes('Bearer token')) {
-          throw new Error('A Edge Function (update-company-user) está sem a Service Role Key válida. Rode: supabase secrets set SUPABASE_SERVICE_ROLE_KEY="sua_chave"')
+          throw new Error('A Edge Function (update-company-user) está sem a Service Role Key válida. Adicione no dashboard como MY_SERVICE_ROLE_KEY.')
         }
         throw new Error(data.error || 'Erro ao atualizar usuário.')
       }

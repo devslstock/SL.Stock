@@ -16,10 +16,10 @@ serve(async (req: Request) => {
     if (!authHeader) throw new Error("Missing Authorization header");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const serviceRoleKey = Deno.env.get("MY_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     if (!serviceRoleKey) {
-      throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set in the Edge Function environment. Please add it via secrets.");
+      throw new Error("MY_SERVICE_ROLE_KEY is not set in the Edge Function environment. Please add it via secrets.");
     }
 
     // Client usando token do usuário chamador para verificar quem está chamando
