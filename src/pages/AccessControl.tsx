@@ -261,6 +261,9 @@ export default function AccessControl() {
               <div className="space-y-2 col-span-2 sm:col-span-1">
                 <Label>E-mail de Login *</Label>
                 <Input type="email" value={username} onChange={e => setUsername(e.target.value)} required placeholder="email@exemplo.com" />
+                {!editing && (
+                  <p className="text-xs text-muted-foreground mt-1 text-primary">A senha inicial será: <strong>Trocar@123</strong> (Será exigida a troca no primeiro acesso)</p>
+                )}
               </div>
             </div>
 

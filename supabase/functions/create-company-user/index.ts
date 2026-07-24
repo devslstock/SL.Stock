@@ -59,8 +59,10 @@ serve(async (req: Request) => {
     }
 
     // Gerar e-mail temporário e senha provisória se não vier email
-    const defaultDomain = 'estoquefacil.local';
-    const email = newUser.email || `${newUser.username.trim().toLowerCase().replace(/[^a-z0-9]/g, '')}@${defaultDomain}`;
+    const rawUsername = newUser.username.trim().toLowerCase();
+    const isEmail = rawUsername.includes('@');
+    
+    const email = newUser.email || (isEmail ? rawUsername : `${rawUsername.replace(/[^a-z0-9]/g, '')}@${defaultDomain}`);
     const password = 'Trocar@123'; // Padrão forçado
 
     // Criar no Auth
