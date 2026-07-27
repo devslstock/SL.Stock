@@ -36,13 +36,14 @@ serve(async (req: Request) => {
 
     if (profileError || !callerProfile) throw new Error("Caller profile not found");
 
-    const { salesOrderId } = await req.json();
+    const { salesOrderId, fiscalOperationId } = await req.json();
     if (!salesOrderId) throw new Error("salesOrderId is required");
+    if (!fiscalOperationId) throw new Error("fiscalOperationId is required");
 
     // Get Company info for Focus NFe token
     const { data: company, error: companyError } = await adminClient
       .from('companies')
-      .select('focusnfe_token, focusnfe_env, cnpj, name, garage_address, garage_number, garage_neighborhood, garage_city, garage_state, garage_cep')
+      .select('focusnfe_token, focusnfe_env, tax_regime, cnpj, name, garage_address, garage_number, garage_neighborhood, garage_city, garage_state, garage_cep')
       .eq('id', callerProfile.company_id)
       .single();
 
@@ -66,8 +67,18 @@ serve(async (req: Request) => {
 
     if (orderError || !order) throw new Error("Sales order not found");
 
-    // TODO: This is a simplified NF-e payload. It needs to be adjusted 
-    // according to Focus NFe requirements (NCM, CFOP, Taxes, etc.)
+    // Get Fiscal Operation
+    const { data: fiscalOp, error: fiscalOpError } = await adminClient
+      .from('fiscal_operations')
+      .select('*')
+      .eq('id', fiscalOperationId)
+      .single();
+
+    if (fiscalOpError || !fiscalOp) throw new Error("Fiscal operation not found");
+
+    const isInterState = company.garage_state !== order.customer.state;
+    const cfop = isInterState ? fiscalOp.cfop_inter : fiscalOp.cfop_intra;
+    const isSimplesNacional = company.tax_regime === 'simples_nacional' || !company.tax_regime;
     const referenceId = crypto.randomUUID();
 
     const nfePayload = {
@@ -105,19 +116,37 @@ serve(async (req: Request) => {
         uf: order.customer.state,
         cep: order.customer.cep?.replace(/\D/g, '')
       },
-      itens: order.items.map((item: any, index: number) => ({
-        numero_item: index + 1,
-        codigo_produto: item.product.code,
-        descricao: item.product.description,
-        cfop: "5102", // Precisa ser parametrizado
-        unidade_comercial: item.product.unit_measure || "UN",
-        quantidade_comercial: item.quantity,
-        valor_unitario_comercial: item.unit_price,
-        valor_bruto: item.total_price,
-        codigo_ncm: "00000000", // Precisa vir do produto futuramente
-        icms_situacao_tributaria: "102", // Simples Nacional
-        icms_origem: "0"
-      }))
+      informacoes_adicionais_contribuinte: fiscalOp.default_message || "",
+      itens: order.items.map((item: any, index: number) => {
+        const itemPayload: any = {
+          numero_item: index + 1,
+          codigo_produto: item.product.code,
+          descricao: item.product.description,
+          cfop: cfop,
+          unidade_comercial: item.product.unit_measure || "UN",
+          quantidade_comercial: item.quantity,
+          valor_unitario_comercial: item.unit_price,
+          valor_bruto: item.total_price,
+          codigo_ncm: item.product.ncm || "00000000",
+          icms_origem: item.product.origin || "0",
+        };
+
+        if (isSimplesNacional) {
+          itemPayload.icms_situacao_tributaria = fiscalOp.csosn || "102";
+        } else {
+          itemPayload.icms_situacao_tributaria = fiscalOp.cst || "00";
+        }
+
+        // Add PIS and COFINS if they exist and company is not Simples (simplified approach)
+        if (!isSimplesNacional) {
+          itemPayload.pis_situacao_tributaria = "01";
+          itemPayload.pis_aliquota_porcentual = fiscalOp.pis_rate || 0;
+          itemPayload.cofins_situacao_tributaria = "01";
+          itemPayload.cofins_aliquota_porcentual = fiscalOp.cofins_rate || 0;
+        }
+
+        return itemPayload;
+      })
     };
 
     const baseUrl = company.focusnfe_env === 'producao' 

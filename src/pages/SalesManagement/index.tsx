@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
 import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Upload, Edit, Eye, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Send } from 'lucide-react'
 import { ImportMaxiprodModal } from '@/components/Sales/ImportMaxiprodModal'
+import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
 import { Pagination } from '@/components/ui/Pagination'
 import type { SalesOrder } from '@/types/database'
 
@@ -51,6 +52,7 @@ export default function SalesManagement() {
   const [sendingOrderId, setSendingOrderId] = useState<string | null>(null)
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([])
   const [isBatchSending, setIsBatchSending] = useState(false)
+  const [emitNfeOrderId, setEmitNfeOrderId] = useState<string | null>(null)
   
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
@@ -544,6 +546,11 @@ export default function SalesManagement() {
                             </Button>
                           </>
                         )}
+                        {order.status === 'Faturado' && (
+                          <Button size="sm" className="h-8 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setEmitNfeOrderId(order.id)}>
+                            <FileText className="h-4 w-4 mr-1" /> Emitir NF-e
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 text-blue-600 hover:text-blue-700" title="Editar Pedido (Completo)" onClick={() => navigate(`/vendas/novo-pedido?id=${order.id}&returnTo=/vendas/gestao`)}>
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -675,9 +682,12 @@ export default function SalesManagement() {
         </DialogContent>
       </Dialog>
       <ImportMaxiprodModal isOpen={isImportModalOpen} onOpenChange={setIsImportModalOpen} />
+
+      <NfeEmissionModal 
+        isOpen={!!emitNfeOrderId} 
+        onClose={() => setEmitNfeOrderId(null)} 
+        orderId={emitNfeOrderId} 
+      />
     </div>
   )
 }
-
-
-

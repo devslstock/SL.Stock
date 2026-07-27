@@ -41,6 +41,7 @@ export default function CompanySettings() {
   // Fiscal Config
   const [fiscalToken, setFiscalToken] = useState('')
   const [fiscalEnv, setFiscalEnv] = useState('homologacao')
+  const [taxRegime, setTaxRegime] = useState('simples_nacional')
   const [isSavingFiscal, setIsSavingFiscal] = useState(false)
   const [certFile, setCertFile] = useState<File | null>(null)
   const [certPassword, setCertPassword] = useState('')
@@ -93,6 +94,7 @@ export default function CompanySettings() {
 
       setFiscalToken(companyData.focusnfe_token || '')
       setFiscalEnv(companyData.focusnfe_env || 'homologacao')
+      setTaxRegime(companyData.tax_regime || 'simples_nacional')
     }
   }, [companyData])
 
@@ -243,7 +245,8 @@ export default function CompanySettings() {
     try {
       await companiesApi.updateCompany(company.id, { 
         focusnfe_token: fiscalToken,
-        focusnfe_env: fiscalEnv as any
+        focusnfe_env: fiscalEnv as any,
+        tax_regime: taxRegime as any
       } as any)
       toast.success('Configurações Fiscais salvas com sucesso!')
     } catch (err: any) {
@@ -618,7 +621,7 @@ export default function CompanySettings() {
           </p>
 
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Token da API (Focus NFe)</label>
                 <div className="relative">
@@ -641,6 +644,17 @@ export default function CompanySettings() {
                 >
                   <option value="homologacao">Homologação (Testes)</option>
                   <option value="producao">Produção (Validade Jurídica)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Regime Tributário</label>
+                <select 
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={taxRegime}
+                  onChange={e => setTaxRegime(e.target.value)}
+                >
+                  <option value="simples_nacional">Simples Nacional</option>
+                  <option value="regime_normal">Regime Normal (Lucro Presumido/Real)</option>
                 </select>
               </div>
             </div>

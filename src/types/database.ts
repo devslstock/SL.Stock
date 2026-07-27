@@ -69,6 +69,7 @@ export interface Company {
   maxiprod_unidade_id?: number | null
   focusnfe_token?: string | null
   focusnfe_env?: 'producao' | 'homologacao' | null
+  tax_regime?: 'simples_nacional' | 'regime_normal' | null
   created_at: string
 }
 
@@ -331,7 +332,30 @@ export interface Product {
   batch?: string
   unit_weight?: number
   box_quantity?: number
+  ncm?: string | null
+  cest?: string | null
+  origin?: string | null
+  net_weight?: number | null
+  gross_weight?: number | null
   created_at: string
+}
+
+export interface FiscalOperation {
+  id: string
+  company_id: string
+  name: string
+  cfop_intra: string
+  cfop_inter: string
+  csosn?: string | null
+  cst?: string | null
+  icms_rate?: number
+  ipi_rate?: number
+  pis_rate?: number
+  cofins_rate?: number
+  default_message?: string | null
+  active: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface RelatedCode {

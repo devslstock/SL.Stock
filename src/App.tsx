@@ -10,6 +10,7 @@ import Products from './pages/Products'
 import ProductForm from './pages/ProductForm'
 import AccessControl from './pages/AccessControl'
 import CompanySettings from './pages/CompanySettings'
+import FiscalOperations from './pages/FiscalOperations'
 import Login from './pages/Login'
 import MasterPanel from './pages/Master'
 import SaaSFinance from './pages/Master/Finance'
@@ -184,6 +185,7 @@ function App() {
 
             <Route element={<RequirePermission perm="can_manage_company" />}>
               <Route path="/configuracoes/empresa" element={<CompanySettings />} />
+              <Route path="/fiscal/natureza-operacao" element={<FiscalOperations />} />
               <Route path="/acesso" element={<AccessControl />} />
             </Route>
              <Route path="/ajuda" element={<HelpAndSupport />} />

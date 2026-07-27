@@ -33,7 +33,14 @@ export default function ProductForm() {
     group_name: '',
     batch: '',
     stock: 0,
-    min_stock_alert: 0
+    min_stock_alert: 0,
+    ncm: '',
+    cest: '',
+    origin: '0',
+    net_weight: 0,
+    gross_weight: 0,
+    unit_weight: 0,
+    box_quantity: 0
   })
 
   // Preços por tabela: chave é o table_id, valor é um objeto { price, discount }
@@ -87,7 +94,14 @@ export default function ProductForm() {
         group_name: product.group_name || '',
         batch: product.batch || '',
         stock: product.stock || 0,
-        min_stock_alert: product.min_stock_alert || 0
+        min_stock_alert: product.min_stock_alert || 0,
+        ncm: product.ncm || '',
+        cest: product.cest || '',
+        origin: product.origin || '0',
+        net_weight: product.net_weight || 0,
+        gross_weight: product.gross_weight || 0,
+        unit_weight: product.unit_weight || 0,
+        box_quantity: product.box_quantity || 0
       })
     }
   }, [product])
@@ -198,6 +212,12 @@ export default function ProductForm() {
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-3 font-semibold uppercase text-xs tracking-wider"
               >
                 Tabelas de Preço
+              </TabsTrigger>
+              <TabsTrigger 
+                value="fiscal" 
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-3 font-semibold uppercase text-xs tracking-wider"
+              >
+                Fiscal e Pesos
               </TabsTrigger>
             </TabsList>
           </div>
@@ -352,6 +372,41 @@ export default function ProductForm() {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="fiscal" className="p-6 focus-visible:outline-none">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="ncm" className="text-xs font-bold uppercase text-muted-foreground">NCM</Label>
+                <Input id="ncm" value={formData.ncm || ''} onChange={e => setFormData({...formData, ncm: e.target.value})} placeholder="Ex: 85171231" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cest" className="text-xs font-bold uppercase text-muted-foreground">CEST</Label>
+                <Input id="cest" value={formData.cest || ''} onChange={e => setFormData({...formData, cest: e.target.value})} placeholder="Ex: 2105300" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="origin" className="text-xs font-bold uppercase text-muted-foreground">Origem (CST/CSOSN)</Label>
+                <select id="origin" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" value={formData.origin || '0'} onChange={e => setFormData({...formData, origin: e.target.value})}>
+                  <option value="0">0 - Nacional</option>
+                  <option value="1">1 - Estrangeira (Importação direta)</option>
+                  <option value="2">2 - Estrangeira (Adquirida no mercado interno)</option>
+                  <option value="3">3 - Nacional (Importação > 40%)</option>
+                  <option value="4">4 - Nacional (Processo produtivo básico)</option>
+                  <option value="5">5 - Nacional (Importação &lt;= 40%)</option>
+                  <option value="6">6 - Estrangeira (Importação s/ similar nacional)</option>
+                  <option value="7">7 - Estrangeira (Mercado interno s/ similar nacional)</option>
+                  <option value="8">8 - Nacional (Importação > 70%)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="net_weight" className="text-xs font-bold uppercase text-muted-foreground">Peso Líquido (kg)</Label>
+                <Input id="net_weight" type="number" step="0.001" value={formData.net_weight || ''} onChange={e => setFormData({...formData, net_weight: Number(e.target.value)})} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gross_weight" className="text-xs font-bold uppercase text-muted-foreground">Peso Bruto (kg)</Label>
+                <Input id="gross_weight" type="number" step="0.001" value={formData.gross_weight || ''} onChange={e => setFormData({...formData, gross_weight: Number(e.target.value)})} />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

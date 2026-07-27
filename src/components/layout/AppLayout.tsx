@@ -6,7 +6,7 @@ import {
   Settings, Users, CheckSquare, Palette, Sun, Moon, Search,
   Clock, History, UserIcon, FileSignature, Box, Building2, Banknote,
   Megaphone, StickyNote, MapPin, Bell, ShieldCheck, LogOut, Lock,
-  ChevronDown, Map, Tag, Briefcase, HelpCircle, Wifi, WifiOff, RefreshCw
+  ChevronDown, Map, Tag, Briefcase, HelpCircle, Wifi, WifiOff, RefreshCw, Receipt
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
@@ -44,9 +44,15 @@ const navGroups: NavGroup[] = [
     ]
   },
   {
-    title: 'OPERAÇÕES',
+    title: 'FISCAL',
     items: [
       { label: 'Gestão de Pedidos', icon: FileSignature, path: '/vendas/gestao', permission: 'can_manage_sales' },
+      { label: 'Natureza de Operação', icon: Receipt, path: '/fiscal/natureza-operacao', permission: 'can_manage_company' }
+    ]
+  },
+  {
+    title: 'OPERAÇÕES',
+    items: [
       { label: 'Cargas', icon: Truck, path: '/cargas', permission: 'can_manage_loads' },
       { label: 'Entregas', icon: MapPin, path: '/entregas', permission: 'can_do_delivery' }
     ]
