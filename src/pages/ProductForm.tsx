@@ -390,12 +390,12 @@ export default function ProductForm() {
                   <option value="0">0 - Nacional</option>
                   <option value="1">1 - Estrangeira (Importação direta)</option>
                   <option value="2">2 - Estrangeira (Adquirida no mercado interno)</option>
-                  <option value="3">3 - Nacional (Importação > 40%)</option>
+                  <option value="3">3 - Nacional (Importação &gt; 40%)</option>
                   <option value="4">4 - Nacional (Processo produtivo básico)</option>
                   <option value="5">5 - Nacional (Importação &lt;= 40%)</option>
                   <option value="6">6 - Estrangeira (Importação s/ similar nacional)</option>
                   <option value="7">7 - Estrangeira (Mercado interno s/ similar nacional)</option>
-                  <option value="8">8 - Nacional (Importação > 70%)</option>
+                  <option value="8">8 - Nacional (Importação &gt; 70%)</option>
                 </select>
               </div>
               <div className="space-y-2">
