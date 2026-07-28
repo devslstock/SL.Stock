@@ -199,11 +199,11 @@ export default function FiscalOperations() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase">CSOSN (Simples Nacional)</Label>
-                  <Input value={formData.csosn} onChange={e => setFormData({...formData, csosn: e.target.value})} placeholder="Ex: 102, 103, 500" />
+                  <Input value={formData.csosn || ''} onChange={e => setFormData({...formData, csosn: e.target.value})} placeholder="Ex: 102, 103, 500" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase">CST (Regime Normal)</Label>
-                  <Input value={formData.cst} onChange={e => setFormData({...formData, cst: e.target.value})} placeholder="Ex: 00, 20, 40" />
+                  <Input value={formData.cst || ''} onChange={e => setFormData({...formData, cst: e.target.value})} placeholder="Ex: 00, 20, 40" />
                 </div>
               </div>
 
@@ -230,7 +230,7 @@ export default function FiscalOperations() {
                 <Label className="text-xs font-bold uppercase">Mensagem Padrão NF-e</Label>
                 <textarea 
                   className="w-full min-h-[80px] p-2 text-sm border border-input bg-background rounded-md"
-                  value={formData.default_message} 
+                  value={formData.default_message || ''} 
                   onChange={e => setFormData({...formData, default_message: e.target.value})}
                   placeholder="Ex: Documento emitido por ME ou EPP optante pelo Simples Nacional. Não gera direito a crédito fiscal de IPI..."
                 />
