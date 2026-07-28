@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { productsApi } from '@/api/products'
+import { priceTablesApi } from '@/api/priceTables'
 import type { Product } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -438,43 +439,93 @@ export default function Products() {
     reader.readAsBinaryString(selectedFile)
   }
 
-  const exportToCSV = () => {
+  const exportToCSV = async () => {
     if (products.length === 0) {
       toast.warning('Nenhum produto para exportar.')
       return
     }
 
-    const headers = ['ID', 'Código', 'Código Externo', 'Código de Fábrica', 'Descrição', 'Grupo', 'Estoque', 'Estoque Mínimo Alerta', 'Lote', 'Peso Unit.', 'Qtd. Caixa', 'Data Criação']
-    
-    const rows = products.map(p => [
-      p.id,
-      p.code || '',
-      p.external_code || '',
-      p.factory_code || '',
-      p.description || '',
-      p.group_name || '',
-      p.stock || 0,
-      p.min_stock_alert || 0,
-      p.batch || '',
-      p.unit_weight || '',
-      p.box_quantity || '',
-      p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : ''
-    ])
+    toast.info('Preparando relatório, aguarde...', { duration: 3000 })
 
-    const csvContent = [
-      headers.join(';'),
-      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
-    ].join('\n')
+    try {
+      const { data: priceTables, error: ptError } = await supabase
+        .from('price_tables')
+        .select('id, name, active')
+        .eq('active', true)
+        
+      if (ptError) throw ptError
+      
+      const priceTableIds = priceTables?.map(pt => pt.id) || []
+      
+      let priceItems: any[] = []
+      if (priceTableIds.length > 0) {
+        const { data: items, error: itemsError } = await supabase
+          .from('price_table_items')
+          .select('price_table_id, product_id, price')
+          .in('price_table_id', priceTableIds)
+          
+        if (itemsError) throw itemsError
+        priceItems = items || []
+      }
 
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `produtos_${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    toast.success('Relatório exportado com sucesso!')
+      const headers = [
+        'ID', 'Código', 'Código Externo', 'Código de Fábrica', 'Descrição', 'Grupo', 
+        'Estoque', 'Estoque Mínimo Alerta', 'Lote', 'Data Criação',
+        'NCM', 'CEST', 'Origem', 'Peso Bruto', 'Peso Líquido', 'Peso Unit.', 'Qtd. Caixa'
+      ]
+      
+      priceTables?.forEach(pt => {
+        headers.push(`Preço: ${pt.name}`)
+      })
+      
+      const rows = products.map(p => {
+        const rowData = [
+          p.id,
+          p.code || '',
+          p.external_code || '',
+          p.factory_code || '',
+          p.description || '',
+          p.group_name || '',
+          p.stock || 0,
+          p.min_stock_alert || 0,
+          p.batch || '',
+          p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '',
+          p.ncm || '',
+          p.cest || '',
+          p.origin || '',
+          p.gross_weight || '',
+          p.net_weight || '',
+          p.unit_weight || '',
+          p.box_quantity || ''
+        ]
+        
+        priceTables?.forEach(pt => {
+          const item = priceItems.find(pi => pi.product_id === p.id && pi.price_table_id === pt.id)
+          rowData.push(item ? item.price : '')
+        })
+        
+        return rowData
+      })
+
+      const csvContent = [
+        headers.join(';'),
+        ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+      ].join('\n')
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `produtos_${new Date().toISOString().split('T')[0]}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast.success('Relatório exportado com sucesso!')
+    } catch (e) {
+      console.error(e)
+      toast.error('Erro ao gerar relatório CSV')
+    }
   }
 
   const downloadTemplate = () => {
