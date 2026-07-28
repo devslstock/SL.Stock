@@ -20,7 +20,8 @@ export default function CompanySettings() {
   const { user, company } = useAuth()
   
   // Apenas gestores podem editar isso
-  const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
+  const isMaster = user?.role === 'master'
+  const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
 
   const { data: companyData, isLoading } = useQuery({
     queryKey: ['company_settings', company?.id],
@@ -156,13 +157,19 @@ export default function CompanySettings() {
       return
     }
 
-    const payload = {
+    const payload: any = {
       ...formData,
       garage_address: `${formData.garage_street}, ${formData.garage_number}, ${formData.garage_neighborhood}, ${formData.garage_city} - ${formData.garage_state}`,
       garage_lat: formData.garage_lat ? parseFloat(formData.garage_lat) : null,
       garage_lng: formData.garage_lng ? parseFloat(formData.garage_lng) : null
     }
-    updateMutation.mutate(payload as any)
+
+    if (!isMaster) {
+      delete payload.name
+      delete payload.cnpj
+    }
+    
+    updateMutation.mutate(payload)
   }
 
 
@@ -373,6 +380,7 @@ export default function CompanySettings() {
                 value={formData.name} 
                 onChange={e => setFormData({...formData, name: e.target.value})} 
                 required
+                disabled={!isMaster}
               />
             </div>
             <div className="md:col-span-4">
@@ -381,6 +389,7 @@ export default function CompanySettings() {
                 value={formData.cnpj} 
                 onChange={e => setFormData({...formData, cnpj: formatDocument(e.target.value)})} 
                 placeholder="00.000.000/0000-00"
+                disabled={!isMaster}
               />
             </div>
             <div className="md:col-span-12">
