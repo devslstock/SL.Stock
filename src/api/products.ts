@@ -21,7 +21,7 @@ export const productsApi = {
     return normalized
   },
 
-  async createProduct(product: Omit<Product, 'id' | 'created_at' | 'company_id'>) {
+  async createProduct(product: Omit<Product, 'id' | 'created_at'>) {
     
     const { data, error } = await supabase
       .from('products')

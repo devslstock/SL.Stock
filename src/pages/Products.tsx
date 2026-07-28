@@ -37,7 +37,7 @@ export default function Products() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
 
-  const { user, isMaster, hasPermission } = useAuth()
+  const { user, isMaster, hasPermission, company } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
   const canDoConference = hasPermission('can_do_conference')
 
@@ -353,6 +353,7 @@ export default function Products() {
 
               try {
                 const productData = {
+                  company_id: company?.id,
                   code,
                   external_code: ext || undefined,
                   description: desc,
