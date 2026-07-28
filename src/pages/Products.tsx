@@ -561,7 +561,7 @@ export default function Products() {
       </div>
 
       {/* Painel de Filtros */}
-      <div className="glass-card relative z-10">
+      <div className="glass-card relative">
         <div 
           className="flex justify-between items-center p-4 border-b border-border/50 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors rounded-t-xl"
           onClick={() => setShowFilters(!showFilters)}
