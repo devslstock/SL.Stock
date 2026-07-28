@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
+import { ActionMenu, ActionMenuItem } from '@/components/ui/action-menu'
 import { useAuth } from '@/contexts/AuthContext'
 import { Pagination } from '@/components/ui/Pagination'
 
@@ -524,26 +525,25 @@ export default function CustomersList() {
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           {isManager && (
             <>
-              <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm text-primary border-primary hover:bg-primary/10" onClick={exportCSV}>
-                <FileDown className="mr-2 h-4 w-4" /> Exportar CSV
-              </Button>
-              <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm text-primary border-primary hover:bg-primary/10" onClick={downloadTemplate}>
-                <FileDown className="mr-2 h-4 w-4" /> Baixar Modelo
-              </Button>
-              <label className="cursor-pointer">
-                <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm" disabled={isImporting} onClick={() => document.getElementById('csv-upload')?.click()}>
-                  <UploadCloud className="mr-2 h-4 w-4" /> 
-                  {isImporting ? 'Importando...' : 'Importar CSV'}
-                </Button>
-                <Input 
-                  id="csv-upload"
-                  type="file" 
-                  accept=".csv" 
-                  className="hidden" 
-                  onChange={handleFileUpload}
-                  disabled={isImporting}
-                />
-              </label>
+              <ActionMenu label="Ações">
+                <ActionMenuItem onClick={exportCSV}>
+                  <FileDown className="h-4 w-4" /> Exportar CSV
+                </ActionMenuItem>
+                <ActionMenuItem onClick={downloadTemplate}>
+                  <FileDown className="h-4 w-4" /> Baixar Modelo
+                </ActionMenuItem>
+                <ActionMenuItem onClick={() => document.getElementById('csv-upload')?.click()} disabled={isImporting}>
+                  <UploadCloud className="h-4 w-4" /> {isImporting ? 'Importando...' : 'Importar CSV'}
+                </ActionMenuItem>
+              </ActionMenu>
+              <Input 
+                id="csv-upload"
+                type="file" 
+                accept=".csv" 
+                className="hidden" 
+                onChange={handleFileUpload}
+                disabled={isImporting}
+              />
 
               <Link to="/cadastros/clientes/novo" className="w-full sm:w-auto">
                 <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">

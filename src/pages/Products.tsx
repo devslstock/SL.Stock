@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { ActionMenu, ActionMenuItem } from '@/components/ui/action-menu'
 import { Pagination } from '@/components/ui/Pagination'
 import { toast } from '@/components/ui/toaster'
 import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight, ScanLine, ArrowUpDown, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, X } from 'lucide-react'
@@ -499,15 +500,6 @@ export default function Products() {
           <p className="text-sm text-muted-foreground mt-1">{products.length} produtos no estoque</p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
-          {isManager && (
-            <Button variant="outline" onClick={() => {
-              if (window.confirm('Tem certeza que deseja recalcular o estoque previsto de todos os produtos com base nos pedidos em rascunho/enviados?')) {
-                fixReservedStockMutation.mutate()
-              }
-            }} disabled={fixReservedStockMutation.isPending}>
-              {fixReservedStockMutation.isPending ? 'Corrigindo...' : 'Corrigir Estoque Previsto'}
-            </Button>
-          )}
           {canDoConference && (
             <>
               <Link to="/contagens">
@@ -523,37 +515,40 @@ export default function Products() {
             </>
           )}
           {isManager && (
-            <>
-              <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
-                <Upload className="h-4 w-4 mr-1.5" /> Importar
-              </Button>
-              <Button variant="outline" size="sm" onClick={exportToCSV}>
-                <FileDown className="h-4 w-4 mr-1.5" /> Exportar
-              </Button>
+            <ActionMenu label="Ações">
+              <ActionMenuItem onClick={() => {
+                if (window.confirm('Tem certeza que deseja recalcular o estoque previsto de todos os produtos com base nos pedidos em rascunho/enviados?')) {
+                  fixReservedStockMutation.mutate()
+                }
+              }} disabled={fixReservedStockMutation.isPending}>
+                <Archive className="h-4 w-4" /> {fixReservedStockMutation.isPending ? 'Corrigindo...' : 'Corrigir Estoque Previsto'}
+              </ActionMenuItem>
+              <ActionMenuItem onClick={() => setIsImportOpen(true)}>
+                <Upload className="h-4 w-4" /> Importar
+              </ActionMenuItem>
+              <ActionMenuItem onClick={exportToCSV}>
+                <FileDown className="h-4 w-4" /> Exportar
+              </ActionMenuItem>
               {isMaster && (
-                <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => {
+                <ActionMenuItem onClick={() => {
                   if (window.confirm('CUIDADO: Isso irá apagar TODOS os produtos cadastrados. Tem certeza que deseja continuar?. Esta ação não pode ser desfeita.')) {
                     deleteAllMutation.mutate()
                   }
-                }}>
-                  <Trash2 className="h-4 w-4 mr-1.5" /> Limpar
-                </Button>
+                }} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50">
+                  <Trash2 className="h-4 w-4" /> Limpar Base
+                </ActionMenuItem>
               )}
               {isMaster && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-amber-500/30 text-amber-600 dark:text-amber-600 dark:text-amber-400 hover:bg-amber-500/10" 
-                  onClick={() => {
-                    if (window.confirm('Deseja realmente ajustar o estoque de TODOS os produtos para 100 itens?')) {
-                      setAllStockTo100Mutation.mutate()
-                    }
-                  }}
-                  disabled={setAllStockTo100Mutation.isPending}
-                >
-                  <Package className="h-4 w-4 mr-1.5" /> Ajustar para 100
-                </Button>
+                <ActionMenuItem onClick={() => {
+                  if (window.confirm('Deseja realmente ajustar o estoque de TODOS os produtos para 100 itens?')) {
+                    setAllStockTo100Mutation.mutate()
+                  }
+                }} disabled={setAllStockTo100Mutation.isPending} className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/50">
+                  <Package className="h-4 w-4" /> Ajustar para 100
+                </ActionMenuItem>
               )}
+            </ActionMenu>
+          )}
               <Button size="sm" onClick={() => navigate('/produtos/novo')}>
                 <Plus className="h-4 w-4 mr-1.5" /> Novo Produto
               </Button>

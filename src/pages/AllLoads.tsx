@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { deliveriesApi } from '@/api/deliveries'
+import { ActionMenu, ActionMenuItem } from '@/components/ui/action-menu'
 import { ImportLoadModal } from './ImportLoadModal'
 import {
   Truck,
@@ -104,11 +105,13 @@ export default function AllLoads() {
         </div>
         {isManager && (
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2 text-emerald-600 border-emerald-500 hover:bg-emerald-50" onClick={() => setIsImportModalOpen(true)}>
-              <Boxes className="h-4 w-4" /> Importar Rota
-            </Button>
+            <ActionMenu label="Ações">
+              <ActionMenuItem onClick={() => setIsImportModalOpen(true)} className="text-emerald-600 hover:text-emerald-700">
+                <Boxes className="h-4 w-4" /> Importar Rota
+              </ActionMenuItem>
+            </ActionMenu>
             <Link to="/nova-carga">
-              <Button className="gap-2">
+              <Button className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
                 <Plus className="h-4 w-4" /> Nova Carga
               </Button>
             </Link>

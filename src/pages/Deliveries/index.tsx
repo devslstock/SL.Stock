@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { ActionMenu, ActionMenuItem } from '@/components/ui/action-menu'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { deliveriesApi } from '@/api/deliveries'
@@ -152,42 +153,17 @@ export default function DeliveriesList() {
               </Button>
             </Link>
 
-            <div className="relative w-full sm:w-auto">
-              <Button 
-                variant="outline"
-                size="icon"
-                className="h-12 w-full sm:w-10 sm:h-10 shrink-0 gap-2 sm:gap-0"
-                onClick={() => setShowMenu(!showMenu)}
-              >
-                <Menu className="h-5 w-5" />
-                <span className="sm:hidden text-lg">Menu</span>
-              </Button>
-
-              {showMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-background border rounded-md shadow-lg z-50 flex flex-col p-2 space-y-1 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
-                    <Label className="text-xs text-muted-foreground px-2 py-1 uppercase font-semibold">Ações Gestor</Label>
-                    <Link to="/entregas/importar-grupo" onClick={() => setShowMenu(false)} className="w-full">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="justify-start gap-3 w-full text-left font-normal text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                      >
-                        <Boxes className="h-4 w-4" /> Importar Grupo
-                      </Button>
-                    </Link>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="justify-start gap-3 w-full text-left font-normal text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                      onClick={() => { setShowMenu(false); setIsMergeModalOpen(true); }}
-                    >
-                      <GitMerge className="h-4 w-4" /> Mesclar Rotas
-                    </Button>
-                  </div>
-                </>
-              )}
+            <div className="w-full sm:w-auto">
+              <ActionMenu label="Menu" icon={<Menu className="h-5 w-5" />}>
+                <Link to="/entregas/importar-grupo" className="w-full">
+                  <ActionMenuItem className="text-emerald-600 hover:text-emerald-700">
+                    <Boxes className="h-4 w-4" /> Importar Grupo
+                  </ActionMenuItem>
+                </Link>
+                <ActionMenuItem onClick={() => setIsMergeModalOpen(true)} className="text-indigo-600 hover:text-indigo-700">
+                  <GitMerge className="h-4 w-4" /> Mesclar Rotas
+                </ActionMenuItem>
+              </ActionMenu>
             </div>
           </div>
         )}

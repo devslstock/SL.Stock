@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
 import * as XLSX from 'xlsx'
+import { ActionMenu, ActionMenuItem } from '@/components/ui/action-menu'
 import { Pagination } from '@/components/ui/Pagination'
 export default function PriceTablesList() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -281,9 +282,11 @@ export default function PriceTablesList() {
                 ref={fileInputRef}
                 onChange={handleFileUpload}
               />
-              <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="w-full sm:w-auto shadow-sm hover:scale-105 transition-transform text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10">
-                <FileUp className="mr-2 h-4 w-4" /> Importar Excel (Nova Tabela)
-              </Button>
+              <ActionMenu label="Ações">
+                <ActionMenuItem onClick={() => fileInputRef.current?.click()} className="text-emerald-600 hover:text-emerald-700">
+                  <FileUp className="h-4 w-4" /> Importar Excel (Nova Tabela)
+                </ActionMenuItem>
+              </ActionMenu>
               <Link to="/cadastros/tabelas-de-preco/nova">
                 <Button className="w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95">
                   <Plus className="mr-2 h-4 w-4" /> Nova Tabela
