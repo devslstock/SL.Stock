@@ -552,8 +552,6 @@ export default function Products() {
               <Button size="sm" onClick={() => navigate('/produtos/novo')}>
                 <Plus className="h-4 w-4 mr-1.5" /> Novo Produto
               </Button>
-            </>
-          )}
         </div>
       </div>
 
