@@ -107,6 +107,39 @@ export default function CustomersList() {
     }
   })
 
+  const exportCSV = () => {
+    if (!filteredCustomers || filteredCustomers.length === 0) {
+      toast.warning('Nenhum cliente para exportar.')
+      return
+    }
+    
+    const dataToExport = filteredCustomers.map(c => ({
+      Apelido: c.nickname || '',
+      'Razão social/Nome': c.legal_name || '',
+      CNPJ_OU_CPF: c.document || '',
+      'Telefone 1': c.phone1 || '',
+      'Telefone 2': c.phone2 || '',
+      Endereço: c.address || '',
+      Número: c.number || '',
+      Complemento: c.complement || '',
+      Bairro: c.neighborhood || '',
+      CEP: c.cep || '',
+      Município: c.city || '',
+      UF: c.state || '',
+      Email: c.email || ''
+    }))
+
+    const csvContent = Papa.unparse(dataToExport, { delimiter: ';' })
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `clientes_${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const downloadTemplate = () => {
     const headers = ['Apelido', 'Razão social/Nome', 'CNPJ_OU_CPF', 'Telefone 1', 'Endereço', 'Número', 'Bairro', 'CEP', 'Município', 'UF', 'Região', 'Tabela de Preços', 'Representante/Vendedor', 'Email']
     const csvContent = headers.join(';')
@@ -491,6 +524,9 @@ export default function CustomersList() {
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           {isManager && (
             <>
+              <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm text-primary border-primary hover:bg-primary/10" onClick={exportCSV}>
+                <FileDown className="mr-2 h-4 w-4" /> Exportar CSV
+              </Button>
               <Button type="button" variant="outline" className="w-full sm:w-auto shadow-sm text-primary border-primary hover:bg-primary/10" onClick={downloadTemplate}>
                 <FileDown className="mr-2 h-4 w-4" /> Baixar Modelo
               </Button>
