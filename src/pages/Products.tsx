@@ -248,6 +248,7 @@ export default function Products() {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const data = {
+      company_id: company?.id || '',
       code: formData.get('code') as string,
       external_code: formData.get('external_code') as string,
       factory_code: formData.get('factory_code') as string,
@@ -353,7 +354,7 @@ export default function Products() {
 
               try {
                 const productData = {
-                  company_id: company?.id,
+                  company_id: company?.id || '',
                   code,
                   external_code: ext || undefined,
                   description: desc,
