@@ -6,6 +6,7 @@ import { regionsApi } from '@/api/regions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function RegionForm() {
   const { id } = useParams()
@@ -33,10 +34,13 @@ export default function RegionForm() {
     }
   }, [region])
 
+  const { company } = useAuth()
+
   const saveMutation = useMutation({
     mutationFn: (data: any) => {
+      const payload = { ...data, company_id: company?.id }
       if (isEditing) return regionsApi.updateRegion(id!, data)
-      return regionsApi.createRegion(data)
+      return regionsApi.createRegion(payload)
     },
     onSuccess: () => {
       toast.success(isEditing ? 'Região atualizada com sucesso!' : 'Região criada com sucesso!')

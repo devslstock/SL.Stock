@@ -22,7 +22,7 @@ export const regionsApi = {
     return data as Region
   },
 
-  async createRegion(region: Omit<Region, 'id' | 'created_at' | 'updated_at' | 'company_id'>) {
+  async createRegion(region: Omit<Region, 'id' | 'created_at' | 'updated_at'>) {
         const { data, error } = await supabase
       .from('regions')
       .insert([{ ...region}])
