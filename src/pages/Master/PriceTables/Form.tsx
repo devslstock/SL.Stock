@@ -142,10 +142,32 @@ export default function PriceTableForm() {
       const workbook = XLSX.read(data, { type: 'array' })
       const firstSheetName = workbook.SheetNames[0]
       const worksheet = workbook.Sheets[firstSheetName]
-      const json = XLSX.utils.sheet_to_json<any>(worksheet)
+      
+      // Converte para array 2D para encontrar a linha do cabeçalho
+      const rawData = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 })
+      
+      let headerRowIndex = 0
+      for (let i = 0; i < rawData.length; i++) {
+        const row = rawData[i] || []
+        const hasCodeHeader = row.some((cell: any) => 
+          String(cell).trim().toLowerCase() === 'código' || 
+          String(cell).trim().toLowerCase() === 'codigo'
+        )
+        const hasPriceHeader = row.some((cell: any) => 
+          String(cell).trim().toLowerCase() === 'preço' || 
+          String(cell).trim().toLowerCase() === 'preco'
+        )
+        if (hasCodeHeader || hasPriceHeader) {
+          headerRowIndex = i
+          break
+        }
+      }
+
+      // Agora converte para JSON usando a linha correta como cabeçalho
+      const json = XLSX.utils.sheet_to_json<any>(worksheet, { range: headerRowIndex })
 
       if (json.length === 0) {
-        toast.warning('A planilha está vazia.')
+        toast.warning('A planilha está vazia ou os dados não puderam ser lidos.')
         return
       }
 
@@ -154,8 +176,8 @@ export default function PriceTableForm() {
 
       json.forEach(row => {
         // Tenta buscar as colunas Código, Preço e Desconto (%)
-        const codeValue = row['Código'] || row['codigo'] || row['Codigo'] || row['CÓDIGO']
-        const priceValue = row['Preço'] || row['preço'] || row['Preco'] || row['PREÇO'] || row['PRECO']
+        const codeValue = row['Código'] || row['codigo'] || row['Codigo'] || row['CÓDIGO'] || row['código']
+        const priceValue = row['Preço'] || row['preço'] || row['Preco'] || row['PREÇO'] || row['PRECO'] || row['preço']
         const discountValue = row['Desconto (%)'] || row['Desconto'] || row['desconto'] || row['DESCONTO']
 
         if (!codeValue || !priceValue) return
