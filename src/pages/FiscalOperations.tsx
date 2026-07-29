@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { FileText, Plus, Pencil, Trash2, X, Save, ShieldCheck } from 'lucide-react'
 import type { FiscalOperation } from '@/types/database'
+import cfopList from '@/data/cfop.json'
 
 export default function FiscalOperations() {
   const { company } = useAuth()
@@ -188,13 +189,31 @@ export default function FiscalOperations() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase">CFOP Dentro do Estado *</Label>
-                  <Input value={formData.cfop_intra} onChange={e => setFormData({...formData, cfop_intra: e.target.value})} placeholder="Ex: 5102" />
+                  <Input 
+                    value={formData.cfop_intra} 
+                    onChange={e => setFormData({...formData, cfop_intra: e.target.value})} 
+                    placeholder="Ex: 5102"
+                    list="cfop-list"
+                  />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label className="text-xs font-bold uppercase">CFOP Fora do Estado *</Label>
-                  <Input value={formData.cfop_inter} onChange={e => setFormData({...formData, cfop_inter: e.target.value})} placeholder="Ex: 6102" />
+                  <Input 
+                    value={formData.cfop_inter} 
+                    onChange={e => setFormData({...formData, cfop_inter: e.target.value})} 
+                    placeholder="Ex: 6102"
+                    list="cfop-list"
+                  />
                 </div>
               </div>
+
+              <datalist id="cfop-list">
+                {cfopList.map(item => (
+                  <option key={item.code} value={item.code}>
+                    {item.code} - {item.description}
+                  </option>
+                ))}
+              </datalist>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
