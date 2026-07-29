@@ -337,6 +337,14 @@ export interface Product {
   origin?: string | null
   net_weight?: number | null
   gross_weight?: number | null
+  ipi_rate?: number | null
+  fci?: string | null
+  gtin?: string | null
+  gtin_tributable?: string | null
+  complementary_description?: string | null
+  notes?: string | null
+  technical_notes?: string | null
+  active?: boolean
   created_at: string
 }
 

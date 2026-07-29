@@ -469,9 +469,10 @@ export default function Products() {
       }
 
       const headers = [
-        'ID', 'Código', 'Código Externo', 'Código de Fábrica', 'Descrição', 'Grupo', 
+        'ID', 'Código', 'Código Externo', 'Código de Fábrica', 'Descrição', 'Desc. Complementar', 'Grupo', 
         'Estoque', 'Estoque Mínimo Alerta', 'Lote', 'Data Criação',
-        'NCM', 'CEST', 'Origem', 'Peso Bruto', 'Peso Líquido', 'Peso Unit.', 'Qtd. Caixa'
+        'NCM', 'CEST', 'Origem', 'IPI (%)', 'FCI', 'GTIN', 'GTIN Tributável', 'Peso Bruto', 'Peso Líquido', 'Peso Unit.', 'Qtd. Caixa',
+        'Obs. Internas', 'Obs. Técnicas', 'Ativo'
       ]
       
       priceTables?.forEach(pt => {
@@ -485,6 +486,7 @@ export default function Products() {
           p.external_code || '',
           p.factory_code || '',
           p.description || '',
+          p.complementary_description || '',
           p.group_name || '',
           p.stock || 0,
           p.min_stock_alert || 0,
@@ -493,10 +495,17 @@ export default function Products() {
           p.ncm || '',
           p.cest || '',
           p.origin || '',
+          p.ipi_rate || '',
+          p.fci || '',
+          p.gtin || '',
+          p.gtin_tributable || '',
           p.gross_weight || '',
           p.net_weight || '',
           p.unit_weight || '',
-          p.box_quantity || ''
+          p.box_quantity || '',
+          p.notes || '',
+          p.technical_notes || '',
+          p.active !== false ? 'Sim' : 'Não'
         ]
         
         priceTables?.forEach(pt => {

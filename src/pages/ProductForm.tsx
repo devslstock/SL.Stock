@@ -40,7 +40,15 @@ export default function ProductForm() {
     net_weight: 0,
     gross_weight: 0,
     unit_weight: 0,
-    box_quantity: 0
+    box_quantity: 0,
+    ipi_rate: 0,
+    fci: '',
+    gtin: '',
+    gtin_tributable: '',
+    complementary_description: '',
+    notes: '',
+    technical_notes: '',
+    active: true
   })
 
   // Preços por tabela: chave é o table_id, valor é um objeto { price, discount }
@@ -101,7 +109,15 @@ export default function ProductForm() {
         net_weight: product.net_weight || 0,
         gross_weight: product.gross_weight || 0,
         unit_weight: product.unit_weight || 0,
-        box_quantity: product.box_quantity || 0
+        box_quantity: product.box_quantity || 0,
+        ipi_rate: product.ipi_rate || 0,
+        fci: product.fci || '',
+        gtin: product.gtin || '',
+        gtin_tributable: product.gtin_tributable || '',
+        complementary_description: product.complementary_description || '',
+        notes: product.notes || '',
+        technical_notes: product.technical_notes || '',
+        active: product.active ?? true
       })
     }
   }, [product])
@@ -338,6 +354,43 @@ export default function ProductForm() {
                   onChange={e => setFormData({...formData, min_stock_alert: Number(e.target.value)})} 
                 />
               </div>
+              <div className="space-y-2 lg:col-span-3">
+                <Label htmlFor="complementary_description" className="text-xs font-bold uppercase text-muted-foreground">Descrição Complementar</Label>
+                <Input 
+                  id="complementary_description" 
+                  value={formData.complementary_description} 
+                  onChange={e => setFormData({...formData, complementary_description: e.target.value})} 
+                  placeholder="Informações adicionais para nota fiscal"
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-3">
+                <Label htmlFor="notes" className="text-xs font-bold uppercase text-muted-foreground">Observações (Uso Interno)</Label>
+                <Input 
+                  id="notes" 
+                  value={formData.notes} 
+                  onChange={e => setFormData({...formData, notes: e.target.value})} 
+                  placeholder="Anotações internas"
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-3">
+                <Label htmlFor="technical_notes" className="text-xs font-bold uppercase text-muted-foreground">Observações Técnicas</Label>
+                <Input 
+                  id="technical_notes" 
+                  value={formData.technical_notes} 
+                  onChange={e => setFormData({...formData, technical_notes: e.target.value})} 
+                  placeholder="Detalhes técnicos, medidas, voltagem, etc"
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-3 flex items-center gap-2 mt-4">
+                <input 
+                  type="checkbox" 
+                  id="active" 
+                  checked={formData.active}
+                  onChange={e => setFormData({...formData, active: e.target.checked})}
+                  className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+                />
+                <Label htmlFor="active" className="text-sm font-bold cursor-pointer">Produto Ativo</Label>
+              </div>
             </div>
           </TabsContent>
 
@@ -405,6 +458,22 @@ export default function ProductForm() {
               <div className="space-y-2">
                 <Label htmlFor="gross_weight" className="text-xs font-bold uppercase text-muted-foreground">Peso Bruto (kg)</Label>
                 <Input id="gross_weight" type="number" step="0.001" value={formData.gross_weight || ''} onChange={e => setFormData({...formData, gross_weight: Number(e.target.value)})} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ipi_rate" className="text-xs font-bold uppercase text-muted-foreground">IPI (%)</Label>
+                <Input id="ipi_rate" type="number" step="0.01" value={formData.ipi_rate || ''} onChange={e => setFormData({...formData, ipi_rate: Number(e.target.value)})} placeholder="Ex: 5.00" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fci" className="text-xs font-bold uppercase text-muted-foreground">Número da FCI</Label>
+                <Input id="fci" value={formData.fci || ''} onChange={e => setFormData({...formData, fci: e.target.value})} placeholder="Ficha de Conteúdo de Importação" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gtin" className="text-xs font-bold uppercase text-muted-foreground">GTIN (EAN Principal)</Label>
+                <Input id="gtin" value={formData.gtin || ''} onChange={e => setFormData({...formData, gtin: e.target.value})} placeholder="Ex: 7891234567890" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gtin_tributable" className="text-xs font-bold uppercase text-muted-foreground">GTIN Unid. Tributável</Label>
+                <Input id="gtin_tributable" value={formData.gtin_tributable || ''} onChange={e => setFormData({...formData, gtin_tributable: e.target.value})} placeholder="Ex: 7891234567890" />
               </div>
             </div>
           </TabsContent>
