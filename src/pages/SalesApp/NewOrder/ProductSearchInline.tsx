@@ -153,8 +153,8 @@ export function ProductSearchInline({ priceTableId, currentItems, onUpdateQuanti
               onChange={e => setSelectedCategory(e.target.value)}
               title="Filtrar por categoria"
             >
-              <option value="">Todas</option>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              <option className="bg-background text-foreground" value="">Todas</option>
+              {categories.map(c => <option className="bg-background text-foreground" key={c} value={c}>{c}</option>)}
             </select>
             {selectedCategory && (
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background" />
