@@ -133,8 +133,9 @@ export default function Products() {
 
       const productReservations: Record<string, number> = {}
 
+      // Subtrair quantidades de pedidos em digitação ou aprovados
       orders.forEach((order: any) => {
-        if (order.status === 'Rascunho' || order.status === 'Enviado') {
+        if (order.status === 'Digitação' || order.status === 'Aprovado') {
           order.sales_order_items?.forEach((item: any) => {
             if (!productReservations[item.product_id]) {
               productReservations[item.product_id] = 0
@@ -577,7 +578,7 @@ export default function Products() {
           {isManager && (
             <ActionMenu label="Ações">
               <ActionMenuItem onClick={() => {
-                if (window.confirm('Tem certeza que deseja recalcular o estoque previsto de todos os produtos com base nos pedidos em rascunho/enviados?')) {
+                if (window.confirm('Tem certeza que deseja recalcular o estoque previsto de todos os produtos com base nos pedidos em digitação/aprovados?')) {
                   fixReservedStockMutation.mutate()
                 }
               }} disabled={fixReservedStockMutation.isPending}>

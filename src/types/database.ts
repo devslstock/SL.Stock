@@ -261,7 +261,7 @@ export interface SalesOrder {
   price_table_id: string | null
   payment_condition_id: string | null
   order_group_id: string | null
-  status: 'Rascunho' | 'Pedido Criado' | 'Enviado' | 'Faturado' | 'Cancelado' | 'Retornou' | 'Entregue'
+  status: 'Digitação' | 'Aprovado' | 'Faturado' | 'Cancelado' | 'Retornou' | 'Entregue'
   total_amount: number
   total_discount: number
   net_amount: number

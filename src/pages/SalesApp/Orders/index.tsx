@@ -75,14 +75,12 @@ export default function SalesOrders() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Rascunho':
-        return <span className="bg-yellow-200 text-yellow-800 text-[11px] font-bold px-3 py-1 rounded-full">Orçamento</span>
-      case 'Pedido Criado':
-        return <span className="bg-blue-100 text-blue-800 text-[11px] font-bold px-3 py-1 rounded-full">Pedido Criado</span>
+      case 'Digitação':
+        return <span className="bg-yellow-200 text-yellow-800 text-[11px] font-bold px-3 py-1 rounded-full">Em Digitação</span>
+      case 'Aprovado':
+        return <span className="bg-blue-100 text-blue-800 text-[11px] font-bold px-3 py-1 rounded-full">Aprovado</span>
       case 'Faturado':
         return <span className="bg-purple-100 text-purple-800 text-[11px] font-bold px-3 py-1 rounded-full">Faturado</span>
-      case 'Enviado':
-        return <span className="bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">Enviado</span>
       case 'Retornou':
         return <span className="bg-orange-100 text-orange-800 text-[11px] font-bold px-3 py-1 rounded-full">Retornou</span>
       case 'Entregue':
@@ -204,7 +202,7 @@ export default function SalesOrders() {
                       )}
                       
                       <div className="flex items-center gap-1.5 mt-2 font-bold text-sm text-foreground">
-                        {order.status === 'Rascunho' ? (
+                        {order.status === 'Digitação' ? (
                           <span className="text-foreground text-xs">{formatCurrency(order.net_amount || 0)}</span>
                         ) : (
                           <>

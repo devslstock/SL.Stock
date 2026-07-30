@@ -283,8 +283,8 @@ export default function SalesManagement() {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'Rascunho': return 'secondary'
-      case 'Enviado': return 'warning'
+      case 'Digitação': return 'secondary'
+      case 'Aprovado': return 'default'
       case 'Faturado': return 'success'
       case 'Cancelado': return 'destructive'
       case 'Retornou': return 'destructive'
@@ -339,9 +339,8 @@ export default function SalesManagement() {
             onChange={e => setFilterStatus(e.target.value)}
           >
             <option value="all">Todos os Status</option>
-            <option value="Rascunho">Em Rascunho</option>
-            <option value="Pedido Criado">Pedido Criado</option>
-            <option value="Enviado">Aguardando Faturamento (Enviado)</option>
+            <option value="Digitação">Em Digitação</option>
+            <option value="Aprovado">Aprovado</option>
             <option value="Faturado">Faturados</option>
             <option value="Cancelado">Cancelados</option>
           </select>
@@ -438,11 +437,11 @@ export default function SalesManagement() {
                   <input
                     type="checkbox"
                     checked={
-                      paginatedOrders.filter(o => o.status === 'Enviado').length > 0 &&
-                      paginatedOrders.filter(o => o.status === 'Enviado').every(o => selectedOrderIds.includes(o.id))
+                      paginatedOrders.filter(o => o.status === 'Aprovado').length > 0 &&
+                      paginatedOrders.filter(o => o.status === 'Aprovado').every(o => selectedOrderIds.includes(o.id))
                     }
                     onChange={e => {
-                      const sendableIds = paginatedOrders.filter(o => o.status === 'Enviado').map(o => o.id)
+                      const sendableIds = paginatedOrders.filter(o => o.status === 'Aprovado').map(o => o.id)
                       if (e.target.checked) {
                         const newSelection = Array.from(new Set([...selectedOrderIds, ...sendableIds]))
                         setSelectedOrderIds(newSelection)
@@ -481,7 +480,7 @@ export default function SalesManagement() {
                 paginatedOrders.map(order => (
                   <tr key={order.id} className={`transition-colors hover:bg-muted/30 ${order.status === 'Retornou' ? 'bg-red-50 dark:bg-red-950/20' : ''}`}>
                     <td className="px-4 py-3 text-center w-12">
-                      {order.status === 'Enviado' && (
+                      {order.status === 'Aprovado' && (
                         <input
                           type="checkbox"
                           checked={selectedOrderIds.includes(order.id)}
@@ -528,7 +527,7 @@ export default function SalesManagement() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {order.status === 'Enviado' && (
+                        {order.status === 'Aprovado' && (
                           <>
                             <Button 
                               size="sm" 

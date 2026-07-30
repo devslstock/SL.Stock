@@ -164,7 +164,7 @@ export default function NewOrder() {
         price_table_id: null,
         payment_condition_id: null,
         order_group_id: null,
-        status: 'Rascunho',
+        status: 'Digitação',
         total_amount: 0,
         total_discount: 0,
         net_amount: 0,
@@ -176,7 +176,7 @@ export default function NewOrder() {
       setSearchParams({ id: data.id })
     },
     onError: (err: any) => {
-      toast.error('Erro ao gerar rascunho de pedido: ' + err.message)
+      toast.error('Erro ao gerar pedido em digitação: ' + err.message)
       navigate(returnTo)
     }
   })
@@ -293,7 +293,7 @@ export default function NewOrder() {
         price_table_id: order.price_table_id,
         payment_condition_id: order.payment_condition_id,
         order_group_id: null,
-        status: 'Rascunho',
+        status: 'Digitação',
         total_amount: order.total_amount,
         total_discount: order.total_discount,
         net_amount: order.net_amount,
@@ -399,7 +399,7 @@ export default function NewOrder() {
       const calcNet = calcSubtotal - (order.total_discount || 0);
 
       await salesApi.updateSalesOrder(orderId, { 
-        status: 'Pedido Criado',
+        status: 'Digitação',
         total_amount: calcSubtotal,
         net_amount: calcNet
       })
@@ -426,7 +426,7 @@ export default function NewOrder() {
       const calcNet = calcSubtotal - (order.total_discount || 0);
 
       await salesApi.updateSalesOrder(orderId, { 
-        status: 'Enviado',
+        status: 'Digitação',
         total_amount: calcSubtotal,
         net_amount: calcNet
       })
@@ -492,8 +492,8 @@ export default function NewOrder() {
           <div className="font-bold text-xl text-primary">
             #{order.order_number || '---'}
           </div>
-          <Badge variant={order.status === 'Rascunho' ? 'secondary' : 'default'} className="uppercase text-[10px]">
-            {order.status === 'Rascunho' ? 'Em Orçamento' : order.status}
+          <Badge variant={order.status === 'Digitação' ? 'secondary' : 'default'} className="uppercase text-[10px]">
+            {order.status === 'Digitação' ? 'Em Digitação' : order.status}
           </Badge>
         </div>
         
