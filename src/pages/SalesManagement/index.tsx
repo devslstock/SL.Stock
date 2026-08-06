@@ -552,14 +552,7 @@ export default function SalesManagement() {
                       <div className="flex items-center justify-end gap-2">
                         {order.status === 'Aprovado' && (
                           <>
-                            <Button 
-                              size="sm" 
-                              className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white" 
-                              onClick={() => handleSendToMaxiprod(order.id)}
-                              disabled={sendingOrderId === order.id}
-                            >
-                              <Send className="h-4 w-4 mr-1" /> Enviar Maxiprod
-                            </Button>
+
                             <Button size="sm" variant="outline" className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleUpdateStatus(order.id, order.status, 'Faturado')}>
                               <CheckCircle className="h-4 w-4 mr-1" /> Faturar Local
                             </Button>
