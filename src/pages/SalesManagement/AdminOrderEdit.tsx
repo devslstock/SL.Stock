@@ -170,7 +170,7 @@ export default function AdminOrderEdit() {
   }
 
   const handleCustomerSelect = async (customer: any) => {
-    const newPriceTableId = customer.default_price_table_id || formData.price_table_id
+    const newPriceTableId = customer.price_table_id || formData.price_table_id
 
     if (formData.customer_id && formData.customer_id !== customer.id) {
       if (!window.confirm(`Tem certeza que deseja alterar o cliente do pedido para ${customer.legal_name || customer.fantasy_name}? A tabela de preços e o vendedor vinculados também serão atualizados caso o cliente possua.`)) {
@@ -182,7 +182,7 @@ export default function AdminOrderEdit() {
     setFormData(prev => ({
       ...prev,
       customer_id: customer.id,
-      sales_rep_id: customer.default_sales_rep_id || prev.sales_rep_id,
+      sales_rep_id: customer.sales_rep_id || prev.sales_rep_id,
       price_table_id: newPriceTableId
     }))
     setCustomerSearch('')
