@@ -765,11 +765,8 @@ export default function AdminOrderEdit() {
       <div className="bg-card border border-border shadow-sm p-4 flex flex-wrap items-center justify-start gap-2 rounded-md mt-6">
          {formData.status === 'Digitação' || !formData.status ? (
            <>
-             <Button onClick={() => handleSave('Digitação')} disabled={updateMutation.isPending} className="bg-[#78b31a] hover:bg-[#689914] text-white font-bold h-9">
-                Emitir e aguardar aprovação
-             </Button>
              <Button onClick={() => handleSave('Aprovado')} disabled={updateMutation.isPending} className="bg-[#78b31a] hover:bg-[#689914] text-white font-bold h-9">
-                Emitir e aprovar
+                Aprovar pedido
              </Button>
              <Button onClick={() => handleSave()} disabled={updateMutation.isPending} variant="outline" className="h-9 font-bold ml-4">
                 Apenas Salvar Alterações
