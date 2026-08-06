@@ -45,10 +45,8 @@ export default function AdminOrderEdit() {
     delivery_date: '',
     notes: '',
     // Fake fields to mirror ERP UI
-    referencia_ecommerce: '',
     contato_comercial: '',
     operacao_fiscal: '',
-    natureza_operacao: '',
     frete: 0,
     seguro: 0,
     outras_despesas: 0,
@@ -120,34 +118,21 @@ export default function AdminOrderEdit() {
           </Button>
           <span className="font-semibold">Pedido de venda</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8"><Search className="h-4 w-4 mr-1"/> Consultar</Button>
-          <Button variant="outline" size="sm" className="h-8"><Printer className="h-4 w-4 mr-1"/> Imprimir/exportar</Button>
-          <Button variant="outline" size="icon" className="h-8 w-8"><Settings className="h-4 w-4"/></Button>
-        </div>
       </div>
 
       {/* CABEÇALHO DO PEDIDO */}
       <div className="bg-card border border-border p-3 rounded-md shadow-sm">
         <div className="grid grid-cols-12 gap-x-4 gap-y-2">
           
-          <div className="col-span-1 flex items-center gap-2">
+          <div className="col-span-2 flex items-center gap-2">
             <label className="font-semibold text-right w-8">Nº</label>
             <Input className="h-7 text-[13px] bg-muted/30" readOnly value={order.order_number || order.id.slice(0,5).toUpperCase()} />
           </div>
-          <div className="col-span-1 flex items-center gap-2">
-            <label className="font-semibold text-right w-14">Revisão</label>
-            <Input className="h-7 text-[13px] bg-muted/30" readOnly value="0" />
-          </div>
-          <div className="col-span-2 flex items-center gap-2">
+          <div className="col-span-4 flex items-center gap-2">
             <label className="font-semibold text-right w-16">Emissão*</label>
             <Input type="date" className="h-7 text-[13px]" value={new Date(order.created_at).toISOString().split('T')[0]} readOnly />
           </div>
-          <div className="col-span-4 flex items-center gap-2">
-            <label className="font-semibold text-right w-44">ID do pedido no e-commerce</label>
-            <Input className="h-7 text-[13px]" value={formData.referencia_ecommerce} onChange={e => setFormData({...formData, referencia_ecommerce: e.target.value})} />
-          </div>
-          <div className="col-span-4 flex items-center gap-2 bg-muted/30 p-1 rounded border border-border/50">
+          <div className="col-span-6 flex items-center gap-2 bg-muted/30 p-1 rounded border border-border/50">
              <label className="font-semibold w-16 text-right">Estado</label>
              <select className="h-7 text-[13px] border rounded px-1 flex-1" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
                 <option value="Digitação">Digitação</option>
@@ -183,34 +168,22 @@ export default function AdminOrderEdit() {
           </div>
 
           {/* Row 4 - Tributario e Representante */}
-          <div className="col-span-4 flex items-center gap-2">
+          <div className="col-span-6 flex items-center gap-2">
             <label className="font-semibold text-right w-24">Tabela preços</label>
             <Input className="h-7 text-[13px] bg-muted/30" value={order.price_table?.name || 'TABELA GERAL'} readOnly />
           </div>
-          <div className="col-span-4 flex items-center gap-2">
+          <div className="col-span-6 flex items-center gap-2">
             <label className="font-semibold text-right w-24">Vendedor</label>
             <Input className="h-7 text-[13px] bg-muted/30" value={order.sales_rep?.nickname || ''} readOnly />
           </div>
-          <div className="col-span-4 flex items-center justify-end gap-2">
-            <label className="font-semibold text-right">Moeda*</label>
-            <select className="h-7 text-[13px] border rounded px-1 w-24" disabled><option>R$</option></select>
-          </div>
 
-          <div className="col-span-5 flex items-center gap-2">
+          <div className="col-span-12 flex items-center gap-2">
             <label className="font-semibold text-right w-24 leading-tight">Operação fiscal*</label>
-            <select className="h-7 text-[13px] border rounded px-1 flex-1 bg-white dark:bg-black" value={formData.operacao_fiscal} onChange={e => setFormData({...formData, operacao_fiscal: e.target.value})}>
+            <select className="h-7 text-[13px] border rounded px-1 w-80 bg-white dark:bg-black" value={formData.operacao_fiscal} onChange={e => setFormData({...formData, operacao_fiscal: e.target.value})}>
                <option value="">Selecione...</option>
                <option value="5405">5405 - Venda de merc. com subst. trib.</option>
                <option value="5102">5102 - Venda de merc. adquirida de terç.</option>
             </select>
-          </div>
-          <div className="col-span-5 flex items-center gap-2">
-            <label className="font-semibold text-right w-24 leading-tight">Natureza da Operação</label>
-            <Input className="h-7 text-[13px]" placeholder="Venda de merc. com subst..." value={formData.natureza_operacao} onChange={e => setFormData({...formData, natureza_operacao: e.target.value})} />
-          </div>
-          <div className="col-span-2 flex items-center gap-3">
-             <label className="flex items-center gap-1"><input type="checkbox" /> Cons. Final</label>
-             <label className="flex items-center gap-1"><input type="checkbox" /> Uso/Consumo</label>
           </div>
 
         </div>
