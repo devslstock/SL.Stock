@@ -290,6 +290,7 @@ export default function AdminOrderEdit() {
   const totalPedido = totalProdutos + formData.frete + formData.seguro + formData.outras_despesas - descontoCalculado
 
   const selectedCustomer = customers.find((c: any) => c.id === formData.customer_id)
+  const isEditable = !formData.status || formData.status === 'Digitação'
 
   return (
     <div className="space-y-4 max-w-[1400px] mx-auto pb-8 text-[13px]">
