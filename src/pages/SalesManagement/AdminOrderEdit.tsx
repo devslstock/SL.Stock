@@ -63,6 +63,8 @@ export default function AdminOrderEdit() {
   const [customerSearch, setCustomerSearch] = useState('')
   const [showCustomerResults, setShowCustomerResults] = useState(false)
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [showFaturarMenu, setShowFaturarMenu] = useState(false)
   const [isUpdatingPrices, setIsUpdatingPrices] = useState(false)
 
   const filteredCustomers = customerSearch.length > 1 
@@ -514,7 +516,19 @@ export default function AdminOrderEdit() {
                 const isEditing = editingItemId === item.id
                 return (
                   <tr key={item.id} className="hover:bg-muted/30">
-                    <td className="p-2"><input type="checkbox" /></td>
+                    <td className="p-2">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedItems.includes(item.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedItems(prev => [...prev, item.id])
+                          } else {
+                            setSelectedItems(prev => prev.filter(id => id !== item.id))
+                          }
+                        }}
+                      />
+                    </td>
                     <td className="p-2 flex gap-1">
                       {isEditing ? (
                         <button onClick={() => setEditingItemId(null)} className="text-green-600 hover:text-green-700" title="Confirmar Edição"><Check className="h-4 w-4"/></button>
@@ -759,9 +773,36 @@ export default function AdminOrderEdit() {
              <Button onClick={() => window.print()} variant="outline" className="h-9 font-bold">
                 <Printer className="h-4 w-4 mr-2" /> Imprimir
              </Button>
-             <Button onClick={() => handleSave('Faturado')} disabled={updateMutation.isPending} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 ml-4">
-                Faturar este pedido
-             </Button>
+             <div className="flex inline-flex ml-4 items-center">
+               <Button onClick={() => handleSave('Faturado')} disabled={updateMutation.isPending} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded-r-none">
+                  Faturar este pedido
+               </Button>
+               <div className="relative h-9">
+                 <Button 
+                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded-l-none border-l border-blue-400 px-2 flex items-center justify-center"
+                   onClick={() => setShowFaturarMenu(!showFaturarMenu)}
+                 >
+                   <span className="text-xs">▼</span>
+                 </Button>
+                 {showFaturarMenu && (
+                    <div className="absolute bottom-full right-0 mb-1 bg-card border border-border shadow-md rounded flex flex-col min-w-[240px] z-50 overflow-hidden">
+                       <button 
+                          className="text-left px-4 py-3 hover:bg-muted text-sm font-medium transition-colors"
+                          onClick={() => {
+                             setShowFaturarMenu(false)
+                             if (selectedItems.length === 0) {
+                               toast.warning('Selecione pelo menos um item na lista de produtos para faturar parcialmente.')
+                             } else {
+                               toast.info(`Lógica para faturar ${selectedItems.length} itens separadamente será implementada na integração do ERP.`)
+                             }
+                          }}
+                       >
+                          Faturar os itens selecionados
+                       </button>
+                    </div>
+                 )}
+               </div>
+             </div>
            </>
          ) : (
            <div className="font-semibold text-muted-foreground">
