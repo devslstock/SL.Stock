@@ -5,11 +5,12 @@ import { salesApi } from '@/api/sales'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
-import { Save, ChevronLeft, Building2, Calendar, DollarSign, FileText, Edit2, Trash2, Plus, Search, Printer, Settings } from 'lucide-react'
+import { Save, ChevronLeft, Building2, Calendar, DollarSign, FileText, Edit2, Trash2, Plus, Search, Printer, Settings, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ProductSearchInline } from '../SalesApp/NewOrder/ProductSearchInline'
+import { supabase } from '@/lib/supabase'
 
 export default function AdminOrderEdit() {
   const { id } = useParams<{ id: string }>()
@@ -34,7 +35,43 @@ export default function AdminOrderEdit() {
     queryFn: () => salesApi.getPaymentConditions()
   })
 
-  // State to handle local item edits
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const { customersApi } = await import('@/api/customers')
+      return customersApi.getCustomers()
+    }
+  })
+
+  const { data: salesReps = [] } = useQuery({
+    queryKey: ['sales_reps'],
+    queryFn: async () => {
+      const { data } = await supabase.from('sales_reps').select('id, nickname, legal_name').eq('active', true).order('nickname')
+      return data || []
+    }
+  })
+
+  const { data: priceTables = [] } = useQuery({
+    queryKey: ['price_tables', company?.id],
+    queryFn: async () => {
+      const { priceTablesApi } = await import('@/api/priceTables')
+      return priceTablesApi.getPriceTables(company?.id)
+    },
+    enabled: !!company?.id
+  })
+
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [showCustomerResults, setShowCustomerResults] = useState(false)
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+
+  const filteredCustomers = customerSearch.length > 1 
+    ? customers.filter((c: any) => 
+        c.legal_name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+        c.fantasy_name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+        c.document?.includes(customerSearch)
+      ).slice(0, 5)
+    : []
+
   const [localItems, setLocalItems] = useState<any[]>([])
   const [showProductSearch, setShowProductSearch] = useState(false)
 
@@ -44,13 +81,17 @@ export default function AdminOrderEdit() {
     payment_condition_id: '',
     delivery_date: '',
     notes: '',
+    customer_id: '',
+    sales_rep_id: '',
+    price_table_id: '',
     // Fake fields to mirror ERP UI
     contato_comercial: '',
     operacao_fiscal: '',
     frete: 0,
     seguro: 0,
     outras_despesas: 0,
-    desconto_reais: 0,
+    desconto_valor: 0,
+    discount_type: 'R$' as 'R$' | '%',
     obs_internas: '',
     obs_fisco: '',
     obs_contribuinte: ''
@@ -65,7 +106,10 @@ export default function AdminOrderEdit() {
         payment_condition_id: order.payment_condition_id || '',
         delivery_date: order.delivery_date ? new Date(order.delivery_date).toISOString().split('T')[0] : '',
         notes: order.notes || '',
-        desconto_reais: order.total_discount || 0
+        customer_id: order.customer_id || '',
+        sales_rep_id: order.sales_rep_id || '',
+        price_table_id: order.price_table_id || '',
+        desconto_valor: order.total_discount || 0
       }))
       setLocalItems(order.items || [])
     }
@@ -88,15 +132,53 @@ export default function AdminOrderEdit() {
     }
   }
 
+  const handleUpdateItem = (itemId: string, field: string, value: number) => {
+    setLocalItems(localItems.map(item => {
+      if (item.id === itemId) {
+        const updated = { ...item, [field]: value }
+        updated.total_price = (updated.quantity * updated.unit_price) * (1 - (updated.discount_percent || 0) / 100)
+        return updated
+      }
+      return item
+    }))
+  }
+
+  const handleCustomerSelect = (customer: any) => {
+    setFormData(prev => ({
+      ...prev,
+      customer_id: customer.id,
+      sales_rep_id: customer.default_sales_rep_id || prev.sales_rep_id,
+      price_table_id: customer.default_price_table_id || prev.price_table_id
+    }))
+    setCustomerSearch('')
+    setShowCustomerResults(false)
+  }
+
   const handleSave = (newStatus?: string) => {
-    // In a real scenario, here we would also calculate the new totals based on localItems
-    // and sync localItems deletions/insertions via salesApi.addSalesOrderItems / deleteSalesOrderItem
+    const total_amount = localItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0)
+    
+    // Apply discount
+    let final_discount = 0
+    if (formData.discount_type === 'R$') {
+      final_discount = formData.desconto_valor
+    } else {
+      final_discount = total_amount * (formData.desconto_valor / 100)
+    }
+
+    const net_amount = total_amount + formData.frete + formData.seguro + formData.outras_despesas - final_discount
+
     const updates = {
       status: newStatus || formData.status,
       order_group_id: formData.order_group_id === '' ? null : formData.order_group_id,
       payment_condition_id: formData.payment_condition_id === '' ? null : formData.payment_condition_id,
       delivery_date: formData.delivery_date === '' ? null : new Date(formData.delivery_date).toISOString(),
-      notes: formData.notes
+      notes: formData.notes,
+      customer_id: formData.customer_id === '' ? null : formData.customer_id,
+      sales_rep_id: formData.sales_rep_id === '' ? null : formData.sales_rep_id,
+      price_table_id: formData.price_table_id === '' ? null : formData.price_table_id,
+      total_amount,
+      total_discount: final_discount,
+      net_amount
     }
     updateMutation.mutate(updates)
   }
@@ -105,10 +187,20 @@ export default function AdminOrderEdit() {
   if (!order) return <div className="p-8 text-center text-red-500">Pedido não encontrado.</div>
 
   const totalProdutos = localItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0)
-  const totalPedido = totalProdutos + formData.frete + formData.seguro + formData.outras_despesas - formData.desconto_reais
+  
+  let descontoCalculado = 0
+  if (formData.discount_type === 'R$') {
+    descontoCalculado = formData.desconto_valor
+  } else {
+    descontoCalculado = totalProdutos * (formData.desconto_valor / 100)
+  }
+
+  const totalPedido = totalProdutos + formData.frete + formData.seguro + formData.outras_despesas - descontoCalculado
+
+  const selectedCustomer = customers.find((c: any) => c.id === formData.customer_id)
 
   return (
-    <div className="space-y-4 max-w-[1400px] mx-auto pb-24 text-[13px]">
+    <div className="space-y-4 max-w-[1400px] mx-auto pb-8 text-[13px]">
       
       {/* Top Action Bar */}
       <div className="flex items-center justify-between bg-muted/40 p-2 border-b border-border mb-4 rounded-t-md">
@@ -143,10 +235,54 @@ export default function AdminOrderEdit() {
           </div>
 
           {/* Row 2 */}
-          <div className="col-span-4 flex items-center gap-2">
+          <div className="col-span-4 flex items-center gap-2 relative">
             <label className="font-semibold text-right w-16">Cliente*</label>
-            <div className="flex-1 flex gap-1">
-              <Input className="h-7 text-[13px] font-bold" value={order.customer?.legal_name || ''} readOnly />
+            <div className="flex-1 flex gap-1 relative">
+              {formData.customer_id && !showCustomerResults ? (
+                <div className="flex w-full">
+                  <Input className="h-7 text-[13px] font-bold flex-1" value={selectedCustomer?.legal_name || ''} readOnly />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => setFormData({...formData, customer_id: ''})}>
+                    <XIcon className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="relative w-full">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                  <Input 
+                    placeholder="Buscar cliente..." 
+                    className="pl-7 h-7 text-[13px]"
+                    value={customerSearch}
+                    onChange={e => {
+                      setCustomerSearch(e.target.value)
+                      setShowCustomerResults(true)
+                    }}
+                    onFocus={() => setShowCustomerResults(true)}
+                  />
+                  {showCustomerResults && customerSearch.length > 1 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
+                      {filteredCustomers.length > 0 ? (
+                        filteredCustomers.map((c: any) => (
+                          <div 
+                            key={c.id} 
+                            className="p-2 hover:bg-muted cursor-pointer border-b border-border last:border-0"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleCustomerSelect(c)
+                            }}
+                          >
+                            <div className="font-medium text-[13px]">{c.legal_name || c.fantasy_name}</div>
+                            <div className="text-[11px] text-muted-foreground flex justify-between mt-0.5">
+                              <span>{c.document}</span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-2 text-[12px] text-muted-foreground text-center">Nenhum cliente encontrado</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div className="col-span-4 flex items-center gap-2">
@@ -164,17 +300,31 @@ export default function AdminOrderEdit() {
           {/* Row 3 - Endereço */}
           <div className="col-span-12 flex items-center gap-2 border-b border-border/50 pb-2 mb-1">
             <label className="font-semibold text-right w-16">Endereço*</label>
-            <span className="font-medium">{order.customer?.address || ''} - {order.customer?.city || ''}/{order.customer?.state || ''}</span>
+            <span className="font-medium">{selectedCustomer?.address || ''} - {selectedCustomer?.city || ''}/{selectedCustomer?.state || ''}</span>
           </div>
 
           {/* Row 4 - Tributario e Representante */}
           <div className="col-span-6 flex items-center gap-2">
             <label className="font-semibold text-right w-24">Tabela preços</label>
-            <Input className="h-7 text-[13px] bg-muted/30" value={order.price_table?.name || 'TABELA GERAL'} readOnly />
+            <select 
+              className="h-7 text-[13px] border rounded px-1 flex-1 bg-white dark:bg-black" 
+              value={formData.price_table_id} 
+              onChange={e => setFormData({...formData, price_table_id: e.target.value})}
+            >
+              <option value="">(Nenhuma)</option>
+              {priceTables.map((pt: any) => <option key={pt.id} value={pt.id}>{pt.name}</option>)}
+            </select>
           </div>
           <div className="col-span-6 flex items-center gap-2">
             <label className="font-semibold text-right w-24">Vendedor</label>
-            <Input className="h-7 text-[13px] bg-muted/30" value={order.sales_rep?.nickname || ''} readOnly />
+            <select 
+              className="h-7 text-[13px] border rounded px-1 flex-1 bg-white dark:bg-black" 
+              value={formData.sales_rep_id} 
+              onChange={e => setFormData({...formData, sales_rep_id: e.target.value})}
+            >
+              <option value="">(Nenhum)</option>
+              {salesReps.map((sr: any) => <option key={sr.id} value={sr.id}>{sr.nickname || sr.legal_name}</option>)}
+            </select>
           </div>
 
           <div className="col-span-12 flex items-center gap-2">
@@ -204,30 +354,79 @@ export default function AdminOrderEdit() {
                 <th className="p-2 text-right">Qt</th>
                 <th className="p-2">Unid</th>
                 <th className="p-2 text-right">Vl un</th>
-                <th className="p-2 text-right">Vl desconto</th>
+                <th className="p-2 text-right">Desc %</th>
                 <th className="p-2 text-right bg-amber-50 dark:bg-amber-950/20">Vl tot</th>
                 <th className="p-2">Estado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {localItems.map((item: any, index) => (
-                <tr key={item.id} className="hover:bg-muted/30">
-                  <td className="p-2"><input type="checkbox" /></td>
-                  <td className="p-2 flex gap-1">
-                    <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700" title="Excluir"><XIcon className="h-4 w-4"/></button>
-                    <button className="text-orange-500 hover:text-orange-700" title="Editar"><Edit2 className="h-4 w-4"/></button>
-                  </td>
-                  <td className="p-2">{index + 1}</td>
-                  <td className="p-2">{item.product?.code || ''}</td>
-                  <td className="p-2 font-medium">{item.product?.description}</td>
-                  <td className="p-2 text-right bg-amber-100 dark:bg-amber-900/40 font-bold">{item.quantity.toFixed(4)}</td>
-                  <td className="p-2 text-muted-foreground">{item.product?.unit || 'un'}</td>
-                  <td className="p-2 text-right">{formatCurrency(item.unit_price)}</td>
-                  <td className="p-2 text-right">{formatCurrency((item.unit_price * item.quantity) * (item.discount_percent || 0)/100)}</td>
-                  <td className="p-2 text-right bg-amber-100 dark:bg-amber-900/40 font-bold text-amber-900 dark:text-amber-100">{formatCurrency(item.total_price)}</td>
-                  <td className="p-2">A faturar</td>
-                </tr>
-              ))}
+              {localItems.map((item: any, index) => {
+                const isEditing = editingItemId === item.id
+                return (
+                  <tr key={item.id} className="hover:bg-muted/30">
+                    <td className="p-2"><input type="checkbox" /></td>
+                    <td className="p-2 flex gap-1">
+                      {isEditing ? (
+                        <button onClick={() => setEditingItemId(null)} className="text-green-600 hover:text-green-700" title="Confirmar Edição"><Check className="h-4 w-4"/></button>
+                      ) : (
+                        <>
+                          <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700" title="Excluir"><Trash2 className="h-4 w-4"/></button>
+                          <button onClick={() => setEditingItemId(item.id)} className="text-orange-500 hover:text-orange-700" title="Editar"><Edit2 className="h-4 w-4"/></button>
+                        </>
+                      )}
+                    </td>
+                    <td className="p-2">{index + 1}</td>
+                    <td className="p-2">{item.product?.code || ''}</td>
+                    <td className="p-2 font-medium">{item.product?.description}</td>
+                    
+                    {/* Editable Quantidade */}
+                    <td className="p-2 text-right bg-amber-100 dark:bg-amber-900/40 font-bold">
+                      {isEditing ? (
+                        <Input 
+                          type="number" 
+                          className="h-7 w-20 text-right text-[13px] ml-auto p-1" 
+                          value={item.quantity} 
+                          onChange={(e) => handleUpdateItem(item.id, 'quantity', Number(e.target.value))} 
+                        />
+                      ) : (
+                        item.quantity.toFixed(4)
+                      )}
+                    </td>
+                    <td className="p-2 text-muted-foreground">{item.product?.unit || 'un'}</td>
+                    
+                    {/* Editable Unit Price */}
+                    <td className="p-2 text-right">
+                      {isEditing ? (
+                        <Input 
+                          type="number" 
+                          className="h-7 w-24 text-right text-[13px] ml-auto p-1" 
+                          value={item.unit_price} 
+                          onChange={(e) => handleUpdateItem(item.id, 'unit_price', Number(e.target.value))} 
+                        />
+                      ) : (
+                        formatCurrency(item.unit_price)
+                      )}
+                    </td>
+                    
+                    {/* Editable Discount */}
+                    <td className="p-2 text-right">
+                      {isEditing ? (
+                        <Input 
+                          type="number" 
+                          className="h-7 w-16 text-right text-[13px] ml-auto p-1" 
+                          value={item.discount_percent || 0} 
+                          onChange={(e) => handleUpdateItem(item.id, 'discount_percent', Number(e.target.value))} 
+                        />
+                      ) : (
+                        `${item.discount_percent || 0}%`
+                      )}
+                    </td>
+                    
+                    <td className="p-2 text-right bg-amber-100 dark:bg-amber-900/40 font-bold text-amber-900 dark:text-amber-100">{formatCurrency(item.total_price)}</td>
+                    <td className="p-2">A faturar</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
           <div className="p-2 bg-muted/30 border-t border-border flex gap-2">
@@ -253,7 +452,7 @@ export default function AdminOrderEdit() {
              <tbody>
                <tr>
                  <td className="text-left font-semibold">Valor total dos produtos</td>
-                 <td className="w-32"><Input className="h-7 text-right bg-muted/30" readOnly value={formatCurrency(totalProdutos)} /></td>
+                 <td className="w-40"><Input className="h-7 text-right bg-muted/30" readOnly value={formatCurrency(totalProdutos)} /></td>
                </tr>
                <tr>
                  <td className="text-left font-semibold">Valor total dos serviços</td>
@@ -268,8 +467,17 @@ export default function AdminOrderEdit() {
                  <td><Input className="h-7 text-right" type="number" value={formData.seguro} onChange={e => setFormData({...formData, seguro: Number(e.target.value)})} /></td>
                </tr>
                <tr>
-                 <td className="text-left font-semibold">Desconto em R$</td>
-                 <td><Input className="h-7 text-right text-red-600" type="number" value={formData.desconto_reais} onChange={e => setFormData({...formData, desconto_reais: Number(e.target.value)})} /></td>
+                 <td className="text-left font-semibold flex items-center">
+                    <select 
+                      className="h-7 border rounded text-[12px] bg-background mr-2"
+                      value={formData.discount_type}
+                      onChange={e => setFormData({...formData, discount_type: e.target.value as 'R$' | '%'})}
+                    >
+                      <option value="R$">Desconto em R$</option>
+                      <option value="%">Desconto em %</option>
+                    </select>
+                 </td>
+                 <td><Input className="h-7 text-right text-red-600" type="number" value={formData.desconto_valor} onChange={e => setFormData({...formData, desconto_valor: Number(e.target.value)})} /></td>
                </tr>
                <tr>
                  <td className="text-left font-bold pt-2 border-t border-border">Valor total do pedido</td>
@@ -319,11 +527,11 @@ export default function AdminOrderEdit() {
          <div className="flex gap-4 items-center mb-4">
            <div className="flex items-center gap-2">
              <label className="text-right w-36">Forma de pagamento</label>
-             <select className="h-7 text-[13px] border rounded px-1 w-32">
+             <select className="h-7 text-[13px] border rounded px-1 w-32 bg-white dark:bg-black">
                <option>A prazo</option>
                <option>À vista</option>
              </select>
-             <select className="h-7 text-[13px] border rounded px-1 w-48">
+             <select className="h-7 text-[13px] border rounded px-1 w-48 bg-white dark:bg-black">
                <option>Boleto bancário</option>
                <option>PIX</option>
              </select>
@@ -333,7 +541,7 @@ export default function AdminOrderEdit() {
            <div className="flex items-center gap-2">
              <label className="text-right w-36">Condição de pagamento</label>
              <select 
-               className="h-7 text-[13px] border rounded px-1 w-80"
+               className="h-7 text-[13px] border rounded px-1 w-80 bg-white dark:bg-black"
                value={formData.payment_condition_id}
                onChange={e => setFormData({...formData, payment_condition_id: e.target.value})}
              >
@@ -347,7 +555,7 @@ export default function AdminOrderEdit() {
          <div className="flex gap-4 items-center">
            <div className="flex items-center gap-2">
              <label className="text-right w-36">Condição de Frete</label>
-             <select className="h-7 text-[13px] border rounded px-1 w-80">
+             <select className="h-7 text-[13px] border rounded px-1 w-80 bg-white dark:bg-black">
                <option>0 - Por conta do remetente (CIF)</option>
                <option>1 - Por conta do destinatário (FOB)</option>
                <option>3 - Transporte próprio por conta do remetente</option>
@@ -378,8 +586,8 @@ export default function AdminOrderEdit() {
         </div>
       </div>
 
-      {/* BOTTOM ACTION BAR */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-3 flex flex-wrap items-center justify-start z-50 gap-2">
+      {/* ACTION BAR INLINE */}
+      <div className="bg-card border border-border shadow-sm p-4 flex flex-wrap items-center justify-start gap-2 rounded-md mt-6">
          <Button onClick={() => handleSave('Digitação')} disabled={updateMutation.isPending} className="bg-[#78b31a] hover:bg-[#689914] text-white font-bold h-9">
             Emitir e aguardar aprovação
          </Button>
