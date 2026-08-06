@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { salesApi } from '@/api/sales'
+import { productsApi } from '@/api/products'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
@@ -58,6 +59,11 @@ export default function AdminOrderEdit() {
       return priceTablesApi.getPriceTables()
     },
     enabled: !!company?.id
+  })
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: productsApi.getProducts,
   })
 
   const [customerSearch, setCustomerSearch] = useState('')
@@ -125,7 +131,7 @@ export default function AdminOrderEdit() {
       
       // Sincroniza os itens
       const originalItemIds = order?.items?.map((i: any) => i.id) || []
-      const currentItemIds = localItems.map((i: any) => i.id).filter(id => id)
+      const currentItemIds = localItems.map((i: any) => i.id).filter(id => id && !id.startsWith('temp-'))
       
       const deletedIds = originalItemIds.filter((oldId: string) => !currentItemIds.includes(oldId))
       
@@ -141,7 +147,7 @@ export default function AdminOrderEdit() {
             product_id: item.product_id,
             quantity: item.quantity,
             unit_price: item.unit_price,
-            discount_percent: item.discount_percent,
+            discount_percent: item.discount_percent || 0,
             total_price: item.total_price,
             net_price: item.total_price
           })
@@ -149,7 +155,7 @@ export default function AdminOrderEdit() {
           await salesApi.updateSalesOrderItem(item.id, {
             quantity: item.quantity,
             unit_price: item.unit_price,
-            discount_percent: item.discount_percent,
+            discount_percent: item.discount_percent || 0,
             total_price: item.total_price,
             net_price: item.total_price
           })
@@ -203,11 +209,55 @@ export default function AdminOrderEdit() {
         }
         return item
       }))
-      toast.success('Preços atualizados de acordo com a tabela selecionada!')
-    } catch (e) {
-      toast.error('Erro ao atualizar preços da tabela.')
+      const total = localItems.reduce((acc, i) => acc + (i.quantity * i.unit_price), 0)
+      const calcSubtotal = total
+      const final_discount = formData.discount_type === 'R$' ? formData.desconto_valor : (total * formData.desconto_valor / 100)
+      const calcNet = calcSubtotal - final_discount
+      await salesApi.updateSalesOrder(id!, { total_amount: calcSubtotal, net_amount: calcNet })
+      toast.success('Preços atualizados com base na tabela!')
+      queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
+    } catch (e: any) {
+      toast.error('Erro ao atualizar preços: ' + e.message)
     } finally {
       setIsUpdatingPrices(false)
+    }
+  }
+
+  const handleUpdateQuantityFromSearch = (productId: string, quantity: number, price: number) => {
+    const existing = localItems.find((i: any) => i.product_id === productId)
+    
+    if (quantity === 0) {
+      if (existing) setLocalItems(prev => prev.filter(i => i.product_id !== productId))
+    } else if (existing) {
+      setLocalItems(prev => prev.map(i => {
+        if (i.product_id === productId) {
+          return {
+            ...i,
+            quantity,
+            unit_price: price,
+            total_price: quantity * price * (1 - (i.discount_percent || 0)/100)
+          }
+        }
+        return i
+      }))
+    } else {
+      const product = products.find((p: any) => p.id === productId)
+      if (product) {
+        setLocalItems(prev => [...prev, {
+          id: `temp-${Date.now()}-${Math.random()}`,
+          sales_order_id: id,
+          product_id: productId,
+          quantity,
+          unit_price: price,
+          discount_percent: 0,
+          total_price: quantity * price,
+          product: {
+             code: product.code,
+             description: product.description,
+             unit: product.unit || 'un'
+          }
+        }])
+      }
     }
   }
 
@@ -610,9 +660,14 @@ export default function AdminOrderEdit() {
           )}
           {showProductSearch && (
             <div className="p-4 border-t border-border bg-card">
-               {/* Aqui renderizaríamos o componente ProductSearchInline, mas para simplificar, apenas mostramos uma mensagem na POC */}
-               <p className="text-amber-600 font-medium">Buscador de produtos seria ativado aqui para inserção rápida inline.</p>
-               <Button variant="ghost" size="sm" onClick={() => setShowProductSearch(false)}>Fechar busca</Button>
+               <ProductSearchInline 
+                 priceTableId={formData.price_table_id} 
+                 currentItems={localItems}
+                 onUpdateQuantity={handleUpdateQuantityFromSearch}
+               />
+               <div className="mt-4 flex justify-end">
+                 <Button variant="ghost" size="sm" onClick={() => setShowProductSearch(false)}>Fechar busca</Button>
+               </div>
             </div>
           )}
         </div>
