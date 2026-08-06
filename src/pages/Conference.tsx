@@ -1286,43 +1286,77 @@ export default function Conference() {
 
         {(op.status === 'dispatched' || activeTab === 'return') && (
         <TabsContent value="return" className="flex-1 flex flex-col gap-4 mt-4">
-          <div className="glass-card p-6 border-amber-500/30 bg-amber-500/5 flex flex-col items-center text-center gap-4 mt-4">
-            <div className="h-16 w-16 bg-amber-500/10 rounded-full flex items-center justify-center">
-              <Undo2 className="h-8 w-8 text-amber-600 dark:text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <h3 className="font-bold text-foreground text-lg mb-1">Aguardando Retorno Físico</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {route?.id ? (
-                  pendingReturnsCount > 0 
-                    ? `Esta rota possui ${pendingReturnsCount} volumes que precisam retornar ao estoque.` 
-                    : "Nenhuma pendência de retorno para esta rota, ou a rota ainda não possui itens configurados."
-                ) : (
-                  "Bipe ou informe os itens que retornaram para devolvê-los ao estoque físico."
+          {isRetorno ? (
+            <Card className="border-amber-500/30 bg-amber-500/5 mb-6 mt-4">
+              <CardContent className="p-4">
+                <form onSubmit={handleReturnScan} className="flex flex-col gap-2">
+                  <Label className="font-bold text-amber-700 dark:text-amber-500">Bipar Retorno ao Estoque</Label>
+                  <div className="flex gap-2">
+                    <div className="w-20 shrink-0">
+                      <Label className="text-xs text-muted-foreground mb-1 block">Qtd</Label>
+                      <Input 
+                        type="number" 
+                        min="1"
+                        value={manualQty} 
+                        onChange={e => setManualQty(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="h-12 text-lg text-center font-bold"
+                      />
+                    </div>
+                    <div className="flex-1 relative">
+                      <Label className="text-xs text-muted-foreground mb-1 block opacity-0">Código</Label>
+                      <Input 
+                        value={returnScanInput} 
+                        onChange={e => setReturnScanInput(e.target.value)} 
+                        placeholder="Cod. de Barras" 
+                        className="h-12 text-lg font-mono border-amber-500/30" 
+                        autoFocus 
+                      />
+                    </div>
+                  </div>
+                  <Button type="submit" className="hidden">Buscar</Button>
+                </form>
+                {lastReturned && (
+                  <div className="mt-4 p-3 bg-amber-500/10 rounded-md border border-amber-500/30 flex items-center gap-3">
+                    <div className="h-10 w-10 bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full flex items-center justify-center shrink-0">
+                      <Check className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold truncate text-sm text-foreground">{lastReturned.desc}</p>
+                      <p className="text-xs text-muted-foreground font-mono">{lastReturned.code} - Retornou: {lastReturned.qty}</p>
+                    </div>
+                  </div>
                 )}
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              {route?.id ? (
-                <Button 
-                  className="w-full sm:w-auto h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
-                  onClick={() => navigate(`/conferencia/${id}?retorno=true`, { replace: true })}
-                >
-                  <PenTool className="mr-2 h-5 w-5" />
-                  Conferir Retornos da Rota
-                </Button>
-              ) : (
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="glass-card p-6 border-amber-500/30 bg-amber-500/5 flex flex-col items-center text-center gap-4 mt-4">
+              <div className="h-16 w-16 bg-amber-500/10 rounded-full flex items-center justify-center">
+                <Undo2 className="h-8 w-8 text-amber-600 dark:text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground text-lg mb-1">Aguardando Retorno Físico</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {route?.id ? (
+                    pendingReturnsCount > 0 
+                      ? `Esta rota possui ${pendingReturnsCount} volumes que precisam retornar ao estoque.` 
+                      : "Nenhuma pendência de retorno para esta rota, ou a rota ainda não possui itens configurados."
+                  ) : (
+                    "Bipe ou informe os itens que retornaram para devolvê-los ao estoque físico."
+                  )}
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Button 
                   className="w-full sm:w-auto h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
                   onClick={() => navigate(`/conferencia/${id}?retorno=true`, { replace: true })}
                 >
                   <Undo2 className="mr-2 h-5 w-5" />
-                  Iniciar Retorno da Carga
+                  {route?.id ? 'Conferir Retornos da Rota' : 'Iniciar Retorno da Carga'}
                 </Button>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
 
           <div className="space-y-2 mt-6">
