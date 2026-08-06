@@ -310,5 +310,63 @@ export const salesApi = {
 
     if (error) throw error
     return true
+  },
+
+  // ============================================
+  // Batch Operations
+  // ============================================
+  async batchUpdateOrdersStatus(ids: string[], status: string) {
+    if (!ids || ids.length === 0) return true;
+    
+    const { error } = await supabase
+      .from('sales_orders')
+      .update({ status })
+      .in('id', ids);
+
+    if (error) throw error;
+
+    if (status === 'Cancelado') {
+      for (const id of ids) {
+        const { data: items } = await supabase
+          .from('sales_order_items')
+          .select('product_id, quantity')
+          .eq('sales_order_id', id);
+          
+        if (items && items.length > 0) {
+          for (const item of items) {
+            await supabase.rpc('increment_reserved_stock', {
+              p_product_id: item.product_id,
+              p_delta: -item.quantity
+            });
+          }
+        }
+      }
+    }
+
+    return true;
+  },
+
+  async batchUpdateOrdersGroup(ids: string[], groupId: string | null) {
+    if (!ids || ids.length === 0) return true;
+    
+    const { error } = await supabase
+      .from('sales_orders')
+      .update({ order_group_id: groupId })
+      .in('id', ids);
+
+    if (error) throw error;
+    return true;
+  },
+
+  async batchDeleteOrders(ids: string[]) {
+    if (!ids || ids.length === 0) return true;
+    
+    const { error } = await supabase
+      .from('sales_orders')
+      .delete()
+      .in('id', ids);
+
+    if (error) throw error;
+    return true;
   }
 }

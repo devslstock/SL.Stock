@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { salesApi } from '@/api/sales'
 import { formatCurrency, formatDate } from '@/utils/formatters'
-import { Search, Plus, Printer, Settings, FileText, Store, Calendar, DollarSign, MessageSquare, FileDigit, Trash2, Boxes, Upload } from 'lucide-react'
+import { Search, Plus, Printer, Settings, FileText, Store, Calendar, DollarSign, MessageSquare, FileDigit, Trash2, Boxes, Upload, CheckSquare } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
 import { OrderDetailsModal } from '@/components/Sales/OrderDetailsModal'
 import { ImportOrdersModal } from './ImportOrdersModal'
@@ -19,6 +20,9 @@ export default function SalesOrders() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const { user, company, isMaster } = useAuth()
+  const queryClient = useQueryClient()
+
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([])
 
   const { data: orderGroups = [] } = useQuery({
     queryKey: ['order_groups', company?.id],
@@ -67,6 +71,50 @@ export default function SalesOrders() {
   if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
   
   const paginatedOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Batch actions
+  const batchUpdateStatusMutation = useMutation({
+    mutationFn: ({ ids, status }: { ids: string[], status: string }) => salesApi.batchUpdateOrdersStatus(ids, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      toast.success('Status atualizado com sucesso!')
+      setSelectedOrders([])
+    },
+    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+  })
+
+  const batchUpdateGroupMutation = useMutation({
+    mutationFn: ({ ids, groupId }: { ids: string[], groupId: string | null }) => salesApi.batchUpdateOrdersGroup(ids, groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      toast.success('Grupo atribuído com sucesso!')
+      setSelectedOrders([])
+    },
+    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+  })
+
+  const batchDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => salesApi.batchDeleteOrders(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      toast.success('Pedidos excluídos com sucesso!')
+      setSelectedOrders([])
+    },
+    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+  })
+
+  const handleToggleSelection = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+    e.stopPropagation()
+    setSelectedOrders(prev => prev.includes(id) ? prev.filter(orderId => orderId !== id) : [...prev, id])
+  }
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedOrders(paginatedOrders.map(o => o.id))
+    } else {
+      setSelectedOrders([])
+    }
+  }
 
   // Group by date logic (mocking "HOJE" for all to match the design)
   const groupedOrders = {
@@ -153,6 +201,18 @@ export default function SalesOrders() {
         className="bg-muted/20 p-2 rounded-lg border border-border/50 mb-4"
       />
 
+      {paginatedOrders.length > 0 && (
+        <div className="flex items-center gap-2 mb-4 px-2">
+          <input 
+            type="checkbox" 
+            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+            checked={selectedOrders.length === paginatedOrders.length && paginatedOrders.length > 0}
+            onChange={handleSelectAll}
+          />
+          <span className="text-sm text-muted-foreground font-medium">Selecionar todos os pedidos desta página</span>
+        </div>
+      )}
+
         {/* List */}
         {isLoading ? (
           <div className="text-center text-muted-foreground py-12">Carregando pedidos...</div>
@@ -173,11 +233,20 @@ export default function SalesOrders() {
                       setSelectedOrderId(order.id)
                       setIsDetailsOpen(true)
                     }
-                  }} className="bg-card border border-border rounded-md p-4 md:p-5 hover:border-primary/50 cursor-pointer transition-colors shadow-sm relative group flex justify-between items-start">
+                  }} className={`bg-card border ${selectedOrders.includes(order.id) ? 'border-primary ring-1 ring-primary' : 'border-border'} rounded-md p-4 md:p-5 hover:border-primary/50 cursor-pointer transition-colors shadow-sm relative group flex justify-between items-start`}>
                     
                     {/* Left Side */}
-                    <div className="flex flex-col gap-3">
-                      <div className="text-xs font-medium text-foreground">
+                    <div className="flex items-start gap-4">
+                      <div className="mt-1" onClick={e => e.stopPropagation()}>
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                          checked={selectedOrders.includes(order.id)}
+                          onChange={(e) => handleToggleSelection(e, order.id)}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        <div className="text-xs font-medium text-foreground">
                         <span className="text-primary font-bold">#{order.order_number || order.id.slice(0, 5).toUpperCase()}</span> emitido por <span className="uppercase text-muted-foreground">{order.sales_rep?.nickname || 'Vendedor'}</span>
                       </div>
                       
@@ -213,6 +282,7 @@ export default function SalesOrders() {
                           </>
                         )}
                       </div>
+                    </div>
                     </div>
 
                     {/* Right Side */}
@@ -251,6 +321,71 @@ export default function SalesOrders() {
         isOpen={isImportModalOpen}
         onOpenChange={setIsImportModalOpen}
       />
+
+      {selectedOrders.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4 flex flex-col sm:flex-row items-center justify-between z-50 gap-4 slide-in-from-bottom-4 animate-in duration-300">
+          <div className="flex items-center gap-4">
+            <div className="bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold text-sm">
+              {selectedOrders.length} selecionado{selectedOrders.length > 1 ? 's' : ''}
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedOrders([])} className="text-muted-foreground hover:text-foreground">
+              Limpar seleção
+            </Button>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <select 
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-auto"
+              value=""
+              onChange={(e) => {
+                if(e.target.value) {
+                  batchUpdateGroupMutation.mutate({ ids: selectedOrders, groupId: e.target.value === 'null' ? null : e.target.value })
+                }
+              }}
+              disabled={batchUpdateGroupMutation.isPending}
+            >
+              <option value="" disabled>Atribuir a Grupo...</option>
+              <option value="null">Nenhum Grupo</option>
+              {orderGroups.map((g: any) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+
+            <select 
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-auto"
+              value=""
+              onChange={(e) => {
+                if(e.target.value && confirm(`Mudar o status de ${selectedOrders.length} pedido(s) para ${e.target.value}?`)) {
+                  batchUpdateStatusMutation.mutate({ ids: selectedOrders, status: e.target.value })
+                }
+              }}
+              disabled={batchUpdateStatusMutation.isPending}
+            >
+              <option value="" disabled>Mudar Status para...</option>
+              <option value="Digitação">Em Digitação</option>
+              <option value="Aprovado">Aprovado</option>
+              <option value="Enviado">Enviado</option>
+              <option value="Faturado">Faturado</option>
+              <option value="Entregue">Entregue</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+
+            <Button 
+              variant="destructive" 
+              size="sm"
+              className="h-9"
+              disabled={batchDeleteMutation.isPending}
+              onClick={() => {
+                if(confirm(`Tem certeza que deseja excluir ${selectedOrders.length} pedido(s)? (Somente pedidos em digitação serão afetados)`)) {
+                  batchDeleteMutation.mutate(selectedOrders)
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" /> Excluir
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
