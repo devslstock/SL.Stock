@@ -118,7 +118,16 @@ export default function AdminOrderEdit() {
         customer_id: order.customer_id || '',
         sales_rep_id: order.sales_rep_id || '',
         price_table_id: order.price_table_id || '',
-        desconto_valor: order.total_discount || 0
+        desconto_valor: order.total_discount || 0,
+        frete: order.frete || 0,
+        seguro: order.seguro || 0,
+        outras_despesas: order.outras_despesas || 0,
+        obs_internas: order.obs_internas || '',
+        obs_fisco: order.obs_fisco || '',
+        obs_contribuinte: order.obs_contribuinte || '',
+        operacao_fiscal: order.operacao_fiscal || '',
+        forma_pagamento: order.forma_pagamento || '',
+        condicao_frete: order.condicao_frete || ''
       }))
       setLocalItems(order.items || [])
     }
@@ -317,7 +326,16 @@ export default function AdminOrderEdit() {
       price_table_id: formData.price_table_id === '' ? null : formData.price_table_id,
       total_amount,
       total_discount: final_discount,
-      net_amount
+      net_amount,
+      frete: formData.frete,
+      seguro: formData.seguro,
+      outras_despesas: formData.outras_despesas,
+      obs_internas: formData.obs_internas,
+      obs_fisco: formData.obs_fisco,
+      obs_contribuinte: formData.obs_contribuinte,
+      operacao_fiscal: formData.operacao_fiscal,
+      forma_pagamento: formData.forma_pagamento,
+      condicao_frete: formData.condicao_frete
     }
     updateMutation.mutate(updates)
   }
@@ -762,9 +780,14 @@ export default function AdminOrderEdit() {
          <div className="flex gap-4 items-center mb-4">
            <div className="flex items-center gap-2">
              <label className="text-right w-36">Forma de pagamento</label>
-             <select className="h-7 text-[13px] border rounded px-1 w-32 bg-background">
-               <option>A prazo</option>
-               <option>À vista</option>
+             <select 
+               className="h-7 text-[13px] border rounded px-1 w-32 bg-background"
+               value={formData.forma_pagamento || ''}
+               onChange={e => setFormData({...formData, forma_pagamento: e.target.value})}
+             >
+               <option value="">Selecione...</option>
+               <option value="A prazo">A prazo</option>
+               <option value="À vista">À vista</option>
              </select>
              <select className="h-7 text-[13px] border rounded px-1 w-48 bg-background">
                <option>Boleto bancário</option>
@@ -790,10 +813,15 @@ export default function AdminOrderEdit() {
          <div className="flex gap-4 items-center">
            <div className="flex items-center gap-2">
              <label className="text-right w-36">Condição de Frete</label>
-             <select className="h-7 text-[13px] border rounded px-1 w-80 bg-background">
-               <option>0 - Por conta do remetente (CIF)</option>
-               <option>1 - Por conta do destinatário (FOB)</option>
-               <option>3 - Transporte próprio por conta do remetente</option>
+             <select 
+               className="h-7 text-[13px] border rounded px-1 w-80 bg-background"
+               value={formData.condicao_frete || ''}
+               onChange={e => setFormData({...formData, condicao_frete: e.target.value})}
+             >
+               <option value="">Selecione...</option>
+               <option value="0">0 - Por conta do remetente (CIF)</option>
+               <option value="1">1 - Por conta do destinatário (FOB)</option>
+               <option value="3">3 - Transporte próprio por conta do remetente</option>
              </select>
            </div>
          </div>

@@ -267,6 +267,15 @@ export interface SalesOrder {
   net_amount: number
   notes: string | null
   delivery_date: string | null
+  frete?: number
+  seguro?: number
+  outras_despesas?: number
+  obs_internas?: string | null
+  obs_fisco?: string | null
+  obs_contribuinte?: string | null
+  operacao_fiscal?: string | null
+  forma_pagamento?: string | null
+  condicao_frete?: string | null
   created_at: string
   updated_at: string
   
