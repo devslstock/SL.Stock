@@ -492,6 +492,8 @@ export default function AdminOrderEdit() {
         </div>
       </div>
 
+      </fieldset>
+
       {/* PRODUTOS E SERVIÇOS */}
       <div className="bg-card border border-border p-0 rounded-md shadow-sm overflow-hidden">
         <div className="bg-muted p-2 font-semibold border-b border-border">Produtos/serviços</div>
@@ -535,8 +537,12 @@ export default function AdminOrderEdit() {
                         <button onClick={() => setEditingItemId(null)} className="text-green-600 hover:text-green-700" title="Confirmar Edição"><Check className="h-4 w-4"/></button>
                       ) : (
                         <>
-                          <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700" title="Excluir"><Trash2 className="h-4 w-4"/></button>
-                          <button onClick={() => setEditingItemId(item.id)} className="text-orange-500 hover:text-orange-700" title="Editar"><Edit2 className="h-4 w-4"/></button>
+                          {isEditable && (
+                            <>
+                              <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700" title="Excluir"><Trash2 className="h-4 w-4"/></button>
+                              <button onClick={() => setEditingItemId(item.id)} className="text-orange-500 hover:text-orange-700" title="Editar"><Edit2 className="h-4 w-4"/></button>
+                            </>
+                          )}
                         </>
                       )}
                     </td>
@@ -594,12 +600,14 @@ export default function AdminOrderEdit() {
               })}
             </tbody>
           </table>
-          <div className="p-2 bg-muted/30 border-t border-border flex gap-2">
-             <Button size="sm" variant="outline" className="h-7 text-xs bg-green-500 hover:bg-green-600 text-white border-green-600 font-bold" onClick={() => setShowProductSearch(!showProductSearch)}>
-               <Plus className="h-3 w-3 mr-1"/> Novo Item
-             </Button>
-             <span className="text-muted-foreground text-xs self-center ml-2">*As alterações nos itens necessitam que você clique em Salvar ao final para recalcular o pedido.</span>
-          </div>
+          {isEditable && (
+            <div className="p-2 bg-muted/30 border-t border-border flex gap-2">
+               <Button size="sm" variant="outline" className="h-7 text-xs bg-green-500 hover:bg-green-600 text-white border-green-600 font-bold" onClick={() => setShowProductSearch(!showProductSearch)}>
+                 <Plus className="h-3 w-3 mr-1"/> Novo Item
+               </Button>
+               <span className="text-muted-foreground text-xs self-center ml-2">*As alterações nos itens necessitam que você clique em Salvar ao final para recalcular o pedido.</span>
+            </div>
+          )}
           {showProductSearch && (
             <div className="p-4 border-t border-border bg-card">
                {/* Aqui renderizaríamos o componente ProductSearchInline, mas para simplificar, apenas mostramos uma mensagem na POC */}
@@ -610,6 +618,7 @@ export default function AdminOrderEdit() {
         </div>
       </div>
 
+      <fieldset disabled={!isEditable} className="border-none p-0 m-0 min-w-0">
       {/* TOTAIS E IMPOSTOS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-card border border-border p-3 rounded-md shadow-sm">
