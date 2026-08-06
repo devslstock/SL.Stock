@@ -698,7 +698,25 @@ export default function CreateLoad() {
 
               <div className="space-y-2">
                 <Label>Data Prevista de Entrega</Label>
-                <Input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} required={importedClients.length > 0} />
+                <div className="flex gap-2">
+                  <Input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} required={importedClients.length > 0} className="flex-1" />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="shrink-0 text-blue-600 border-blue-500 hover:bg-blue-50"
+                    title="Importar carga por planilha"
+                  >
+                    <Upload className="h-4 w-4 mr-2" /> Planilha
+                  </Button>
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept=".xlsx, .xls, .csv" 
+                  onChange={handleFileUpload} 
+                />
               </div>
             </div>
 
