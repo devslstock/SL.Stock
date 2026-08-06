@@ -122,7 +122,7 @@ export default function AdminOrderEdit() {
       await salesApi.updateSalesOrder(id!, updates)
       
       // Sincroniza os itens
-      const originalItemIds = order.items?.map((i: any) => i.id) || []
+      const originalItemIds = order?.items?.map((i: any) => i.id) || []
       const currentItemIds = localItems.map((i: any) => i.id).filter(id => id)
       
       const deletedIds = originalItemIds.filter((oldId: string) => !currentItemIds.includes(oldId))
@@ -140,14 +140,16 @@ export default function AdminOrderEdit() {
             quantity: item.quantity,
             unit_price: item.unit_price,
             discount_percent: item.discount_percent,
-            total_price: item.total_price
+            total_price: item.total_price,
+            net_price: item.total_price
           })
         } else {
           await salesApi.updateSalesOrderItem(item.id, {
             quantity: item.quantity,
             unit_price: item.unit_price,
             discount_percent: item.discount_percent,
-            total_price: item.total_price
+            total_price: item.total_price,
+            net_price: item.total_price
           })
         }
       }
