@@ -222,11 +222,7 @@ export default function Conference() {
       queryClient.invalidateQueries({ queryKey: ['operations'] })
       queryClient.invalidateQueries({ queryKey: ['products'] })
       toast.success('Rota despachada, estoque deduzido e alertas gerados!')
-      if (route?.id) {
-        navigate(`/entregas/${route.id}`)
-      } else {
-        navigate('/entregas/nova')
-      }
+      // Permanece na mesma tela para exibir o card de retorno
     },
     onError: (e: any) => {
       toast.error(`Erro ao despachar rota: ${e.message}`)
@@ -1293,33 +1289,28 @@ export default function Conference() {
             <div>
               <h3 className="font-bold text-foreground text-lg mb-1">Aguardando Retorno Físico</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {pendingReturnsCount > 0 
-                  ? `Esta rota possui ${pendingReturnsCount} volumes que precisam retornar ao estoque.` 
-                  : "Nenhuma pendência de retorno para esta rota, ou a rota ainda não possui itens configurados."}
+                {route?.id ? (
+                  pendingReturnsCount > 0 
+                    ? `Esta rota possui ${pendingReturnsCount} volumes que precisam retornar ao estoque.` 
+                    : "Nenhuma pendência de retorno para esta rota, ou a rota ainda não possui itens configurados."
+                ) : (
+                  "Bipe ou informe os itens que retornaram para devolvê-los ao estoque físico."
+                )}
               </p>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               {route?.id ? (
-                <>
-                  <Button 
-                    className="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
-                    onClick={() => navigate(`/entregas/${route.id}/retorno`)}
-                  >
-                    <PenTool className="mr-2 h-5 w-5" />
-                    Retorno por Entregas (Rota)
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    className="flex-1 h-12 border-amber-500 text-amber-600 hover:bg-amber-50"
-                    onClick={() => navigate(`/conferencia/${id}?retorno=true`, { replace: true })}
-                  >
-                    Retorno Avulso
-                  </Button>
-                </>
+                <Button 
+                  className="w-full sm:w-auto h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
+                  onClick={() => navigate(`/entregas/${route.id}/retorno`)}
+                >
+                  <PenTool className="mr-2 h-5 w-5" />
+                  Conferir Retornos da Rota
+                </Button>
               ) : (
                 <Button 
-                  className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
+                  className="w-full sm:w-auto h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
                   onClick={() => navigate(`/conferencia/${id}?retorno=true`, { replace: true })}
                 >
                   <Undo2 className="mr-2 h-5 w-5" />
