@@ -9,13 +9,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, Save, Package } from 'lucide-react'
+import { ArrowLeft, Package, Save, CheckCircle2, AlertCircle, X, Plus, Trash2, Lock } from 'lucide-react'
 
 export default function ProductForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { company } = useAuth()
+  const isPlatina = company?.plan === 'platina'
   
   const isEditing = Boolean(id)
 
@@ -225,15 +226,21 @@ export default function ProductForm() {
               </TabsTrigger>
               <TabsTrigger 
                 value="precos" 
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-3 font-semibold uppercase text-xs tracking-wider"
+                disabled={!isPlatina}
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-3 font-semibold uppercase text-xs tracking-wider disabled:opacity-50 flex items-center gap-1"
+                title={!isPlatina ? "Disponível apenas no plano Platina" : ""}
               >
                 Tabelas de Preço
+                {!isPlatina && <Lock className="h-3 w-3" />}
               </TabsTrigger>
               <TabsTrigger 
                 value="fiscal" 
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-3 font-semibold uppercase text-xs tracking-wider"
+                disabled={!isPlatina}
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-4 py-3 font-semibold uppercase text-xs tracking-wider disabled:opacity-50 flex items-center gap-1"
+                title={!isPlatina ? "Disponível apenas no plano Platina" : ""}
               >
                 Fiscal e Pesos
+                {!isPlatina && <Lock className="h-3 w-3" />}
               </TabsTrigger>
             </TabsList>
           </div>

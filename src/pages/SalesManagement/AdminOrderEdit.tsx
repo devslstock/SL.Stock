@@ -6,7 +6,7 @@ import { productsApi } from '@/api/products'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
-import { Save, ChevronLeft, Building2, Calendar, DollarSign, FileText, Edit2, Trash2, Plus, Search, Printer, Settings, Check, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Upload, X, Copy, ChevronDown, Check, Save, FileText, FileSignature, LogOut, CheckCircle2, RefreshCw, Printer, FileDown, Scissors, CheckSquare, Pencil, Lock, ChevronLeft, Building2, Calendar, DollarSign, Edit2, Trash2, Plus, Search, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -18,6 +18,7 @@ export default function AdminOrderEdit() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { company } = useAuth()
+  const isPlatina = company?.plan === 'platina'
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['sales_order', id],
@@ -551,8 +552,17 @@ export default function AdminOrderEdit() {
           </div>
 
           <div className="col-span-12 flex items-center gap-2">
-            <label className="font-semibold text-right w-24 leading-tight">Operação fiscal*</label>
-            <select className="h-7 text-[13px] border rounded px-1 w-80 bg-background" value={formData.operacao_fiscal} onChange={e => setFormData({...formData, operacao_fiscal: e.target.value})}>
+            <label className="font-semibold text-right w-24 leading-tight flex items-center justify-end gap-1">
+              Operação fiscal*
+              {!isPlatina && <Lock className="h-3 w-3 text-muted-foreground" title="Disponível apenas no plano Platina" />}
+            </label>
+            <select 
+              className="h-7 text-[13px] border rounded px-1 w-80 bg-background disabled:opacity-50 disabled:cursor-not-allowed" 
+              value={formData.operacao_fiscal} 
+              onChange={e => setFormData({...formData, operacao_fiscal: e.target.value})}
+              disabled={!isPlatina}
+              title={!isPlatina ? "Disponível apenas no plano Platina" : ""}
+            >
                <option value="">Selecione...</option>
                <option value="5405">5405 - Venda de merc. com subst. trib.</option>
                <option value="5102">5102 - Venda de merc. adquirida de terç.</option>
