@@ -179,7 +179,7 @@ export default function AdminOrderEdit() {
           {/* Row 3 - Endereço */}
           <div className="col-span-12 flex items-center gap-2 border-b border-border/50 pb-2 mb-1">
             <label className="font-semibold text-right w-16">Endereço*</label>
-            <span className="font-medium">{order.customer?.address || ''}, {order.customer?.address_number || ''} - {order.customer?.city || ''}/{order.customer?.state || ''}</span>
+            <span className="font-medium">{order.customer?.address || ''} - {order.customer?.city || ''}/{order.customer?.state || ''}</span>
           </div>
 
           {/* Row 4 - Tributario e Representante */}
