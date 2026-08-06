@@ -321,10 +321,34 @@ export default function AdminOrderEdit() {
             <Input className="h-7 text-[13px]" value={formData.contato_comercial} onChange={e => setFormData({...formData, contato_comercial: e.target.value})} />
           </div>
           <div className="col-span-4 flex items-center gap-2 bg-muted/30 p-1 rounded border border-border/50">
-             <label className="font-semibold w-16 text-right leading-tight">Estado Config.</label>
-             <select className="h-7 text-[13px] border rounded px-1 flex-1" value={formData.order_group_id} onChange={e => setFormData({...formData, order_group_id: e.target.value})}>
+             <label className="font-semibold w-16 text-right leading-tight">Grupo</label>
+             <select 
+                className="h-7 text-[13px] border rounded px-1 flex-1 bg-background" 
+                value={formData.order_group_id} 
+                onChange={async (e) => {
+                  if (e.target.value === 'NEW') {
+                    const name = window.prompt('Nome do novo grupo:')
+                    if (name && name.trim() && company?.id) {
+                      try {
+                        const newGroup = await salesApi.createOrderGroup({ company_id: company.id, name: name.trim() })
+                        queryClient.invalidateQueries({ queryKey: ['order_groups'] })
+                        setFormData({...formData, order_group_id: newGroup.id})
+                        toast.success('Grupo criado!')
+                      } catch (err: any) {
+                        toast.error('Erro ao criar grupo')
+                        setFormData({...formData, order_group_id: ''})
+                      }
+                    } else {
+                      setFormData({...formData, order_group_id: ''})
+                    }
+                  } else {
+                    setFormData({...formData, order_group_id: e.target.value})
+                  }
+                }}
+             >
                 <option value="">(Nenhum Grupo)</option>
                 {orderGroups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                <option value="NEW" className="font-bold text-blue-600">+ Criar novo grupo...</option>
              </select>
           </div>
 
