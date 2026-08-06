@@ -1303,7 +1303,7 @@ export default function Conference() {
               {route?.id ? (
                 <Button 
                   className="w-full sm:w-auto h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
-                  onClick={() => navigate(`/entregas/${route.id}/retorno`)}
+                  onClick={() => navigate(`/conferencia/${id}?retorno=true`, { replace: true })}
                 >
                   <PenTool className="mr-2 h-5 w-5" />
                   Conferir Retornos da Rota
