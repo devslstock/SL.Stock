@@ -103,7 +103,9 @@ export default function AdminOrderEdit() {
     discount_type: 'R$' as 'R$' | '%',
     obs_internas: '',
     obs_fisco: '',
-    obs_contribuinte: ''
+    obs_contribuinte: '',
+    forma_pagamento: '',
+    condicao_frete: ''
   })
 
   useEffect(() => {
