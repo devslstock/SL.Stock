@@ -144,7 +144,34 @@ export default function AdminOrderEdit() {
     }))
   }
 
-  const handleCustomerSelect = (customer: any) => {
+  const updatePricesFromTable = async (tableId: string) => {
+    setIsUpdatingPrices(true)
+    try {
+      const { priceTablesApi } = await import('@/api/priceTables')
+      const tableData = await priceTablesApi.getPriceTable(tableId)
+      const tableItems = tableData?.price_table_items || []
+      
+      setLocalItems(prevItems => prevItems.map(item => {
+        const tableItem = tableItems.find((pti: any) => pti.product_id === item.product_id)
+        if (tableItem) {
+          const newPrice = tableItem.price
+          const updated = { ...item, unit_price: newPrice }
+          updated.total_price = (updated.quantity * newPrice) * (1 - (updated.discount_percent || 0) / 100)
+          return updated
+        }
+        return item
+      }))
+      toast.success('Preços atualizados de acordo com a tabela selecionada!')
+    } catch (e) {
+      toast.error('Erro ao atualizar preços da tabela.')
+    } finally {
+      setIsUpdatingPrices(false)
+    }
+  }
+
+  const handleCustomerSelect = async (customer: any) => {
+    const newPriceTableId = customer.default_price_table_id || formData.price_table_id
+
     if (formData.customer_id && formData.customer_id !== customer.id) {
       if (!window.confirm(`Tem certeza que deseja alterar o cliente do pedido para ${customer.legal_name || customer.fantasy_name}? A tabela de preços e o vendedor vinculados também serão atualizados caso o cliente possua.`)) {
         setShowCustomerResults(false)
@@ -156,10 +183,14 @@ export default function AdminOrderEdit() {
       ...prev,
       customer_id: customer.id,
       sales_rep_id: customer.default_sales_rep_id || prev.sales_rep_id,
-      price_table_id: customer.default_price_table_id || prev.price_table_id
+      price_table_id: newPriceTableId
     }))
     setCustomerSearch('')
     setShowCustomerResults(false)
+
+    if (newPriceTableId) {
+       await updatePricesFromTable(newPriceTableId)
+    }
   }
 
   const handleUpdatePricesFromTable = async () => {
@@ -167,31 +198,7 @@ export default function AdminOrderEdit() {
       toast.warning('Selecione uma tabela de preços primeiro.')
       return
     }
-    
-    setIsUpdatingPrices(true)
-    try {
-      const { priceTablesApi } = await import('@/api/priceTables')
-      const tableData = await priceTablesApi.getPriceTable(formData.price_table_id)
-      const tableItems = tableData?.price_table_items || []
-      
-      const newItems = localItems.map(item => {
-        const tableItem = tableItems.find((pti: any) => pti.product_id === item.product_id)
-        if (tableItem) {
-          const newPrice = tableItem.price
-          const updated = { ...item, unit_price: newPrice }
-          updated.total_price = (updated.quantity * newPrice) * (1 - (updated.discount_percent || 0) / 100)
-          return updated
-        }
-        return item
-      })
-      
-      setLocalItems(newItems)
-      toast.success('Preços atualizados de acordo com a tabela selecionada!')
-    } catch (e) {
-      toast.error('Erro ao buscar preços da tabela.')
-    } finally {
-      setIsUpdatingPrices(false)
-    }
+    await updatePricesFromTable(formData.price_table_id)
   }
 
   const handleSave = (newStatus?: string) => {
@@ -307,7 +314,6 @@ export default function AdminOrderEdit() {
                         setShowCustomerResults(true)
                       }}
                       onFocus={() => setShowCustomerResults(true)}
-                      autoFocus
                     />
                     {showCustomerResults && customerSearch.length > 1 && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
