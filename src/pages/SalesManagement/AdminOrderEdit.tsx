@@ -5,7 +5,7 @@ import { salesApi } from '@/api/sales'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
-import { Save, ChevronLeft, Building2, Calendar, DollarSign, FileText } from 'lucide-react'
+import { Save, ChevronLeft, Building2, Calendar, DollarSign, FileText, Edit2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -129,7 +129,17 @@ export default function AdminOrderEdit() {
 
           {/* Itens do Pedido */}
           <div className="bg-card border border-border p-5 rounded-xl shadow-sm">
-            <h2 className="text-lg font-bold flex items-center gap-2 mb-4"><FileText className="h-5 w-5 text-primary" /> Itens do Pedido</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> Itens do Pedido</h2>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-primary border-primary/30 hover:bg-primary/10"
+                onClick={() => navigate(`/vendas/novo-pedido?id=${order.id}&returnTo=/vendas/gestao/editar/${order.id}`)}
+              >
+                <Edit2 className="h-4 w-4 mr-2" /> Adicionar / Remover Itens
+              </Button>
+            </div>
             <div className="border rounded-md overflow-x-auto bg-background">
               <table className="w-full text-sm text-left">
                 <thead className="bg-muted/50 text-muted-foreground text-xs uppercase whitespace-nowrap">
@@ -160,8 +170,9 @@ export default function AdminOrderEdit() {
                 </tbody>
               </table>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300 text-xs p-3 rounded-md mt-4 font-medium border border-blue-100 dark:border-blue-900/50">
-              * A alteração de itens e valores deve ser feita exclusivamente pelo módulo Força de Vendas.
+            <div className="bg-blue-50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300 text-xs p-3 rounded-md mt-4 font-medium border border-blue-100 dark:border-blue-900/50 flex flex-col gap-2">
+              <p>* Devido às regras complexas de precificação, tributação e descontos, a alteração de itens é feita através do motor do módulo de Vendas.</p>
+              <p>Clique no botão <strong>"Adicionar / Remover Itens"</strong> acima para ser levado diretamente para a tela de edição de itens deste pedido.</p>
             </div>
           </div>
         </div>
