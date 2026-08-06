@@ -280,7 +280,7 @@ export default function AdminOrderEdit() {
           </div>
 
           {/* Row 2 */}
-          <div className="col-span-4 flex items-center gap-2 relative">
+          <div className="col-span-6 flex items-center gap-2 relative">
             <label className="font-semibold text-right w-16">Cliente*</label>
             <div className="flex-1 flex gap-1 relative">
               {formData.customer_id && !showCustomerResults ? (
@@ -357,7 +357,7 @@ export default function AdminOrderEdit() {
             </div>
           </div>
 
-          <div className="col-span-4 flex items-center gap-2 bg-muted/30 p-1 rounded border border-border/50">
+          <div className="col-span-6 flex items-center gap-2 bg-muted/30 p-1 rounded border border-border/50">
              <label className="font-semibold w-16 text-right leading-tight">Grupo</label>
              <select 
                 className="h-7 text-[13px] border rounded px-1 flex-1 bg-background" 
