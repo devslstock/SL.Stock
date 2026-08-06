@@ -554,7 +554,7 @@ export default function AdminOrderEdit() {
           <div className="col-span-12 flex items-center gap-2">
             <label className="font-semibold text-right w-24 leading-tight flex items-center justify-end gap-1">
               Operação fiscal*
-              {!isPlatina && <Lock className="h-3 w-3 text-muted-foreground" title="Disponível apenas no plano Platina" />}
+              {!isPlatina && <span title="Disponível apenas no plano Platina"><Lock className="h-3 w-3 text-muted-foreground" /></span>}
             </label>
             <select 
               className="h-7 text-[13px] border rounded px-1 w-80 bg-background disabled:opacity-50 disabled:cursor-not-allowed" 

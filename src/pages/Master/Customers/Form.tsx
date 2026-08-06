@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save, Building2, MapPin, Phone, Wallet, Briefcase, Plus, Trash2, Box, History, ClipboardList, FileText, Search, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Save, Building2, MapPin, Phone, Wallet, Briefcase, Plus, Trash2, Box, History, ClipboardList, FileText, Search, RefreshCw, Lock } from 'lucide-react'
 import { customersApi } from '@/api/customers'
 import { salesRepsApi } from '@/api/salesReps'
 import { regionsApi } from '@/api/regions'
@@ -22,6 +22,7 @@ export default function CustomerForm() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user, company, hasPermission } = useAuth()
+  const isPlatina = company?.plan === 'platina'
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
   
   const isEditing = Boolean(id)
@@ -542,7 +543,15 @@ export default function CustomerForm() {
         </div>
 
         {/* Dados de Venda */}
-        <div className="glass-card p-6 border-t-4 border-t-purple-500">
+        <div className={`glass-card p-6 border-t-4 border-t-purple-500 relative ${!isPlatina ? 'opacity-60 pointer-events-none' : ''}`}>
+          {!isPlatina && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/10 backdrop-blur-[1px]">
+              <div className="bg-background border border-border px-4 py-2 rounded-md shadow-md flex items-center gap-2">
+                <Lock className="h-5 w-5 text-muted-foreground" />
+                <span className="font-semibold text-sm text-foreground">Disponível apenas no plano Platina</span>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2 mb-4 text-lg font-bold text-foreground">
             <Briefcase className="h-5 w-5 text-purple-500" />
             Dados de Venda / Financeiro
