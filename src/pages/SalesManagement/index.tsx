@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
-import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Upload, Edit, Eye, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Send } from 'lucide-react'
+import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Upload, Edit, Eye, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Send, Trash2 } from 'lucide-react'
 import { ImportMaxiprodModal } from '@/components/Sales/ImportMaxiprodModal'
 import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
 import { Pagination } from '@/components/ui/Pagination'
@@ -66,6 +66,41 @@ export default function SalesManagement() {
     queryKey: ['sales_order_details', selectedOrderId],
     queryFn: () => salesApi.getSalesOrder(selectedOrderId!),
     enabled: !!selectedOrderId,
+  })
+
+  const { data: orderGroups = [] } = useQuery({
+    queryKey: ['order_groups'],
+    queryFn: () => salesApi.getOrderGroups(),
+  })
+
+  const batchUpdateStatusMutation = useMutation({
+    mutationFn: ({ ids, status }: { ids: string[], status: string }) => salesApi.batchUpdateOrdersStatus(ids, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      toast.success('Status atualizado com sucesso!')
+      setSelectedOrderIds([])
+    },
+    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+  })
+
+  const batchUpdateGroupMutation = useMutation({
+    mutationFn: ({ ids, groupId }: { ids: string[], groupId: string | null }) => salesApi.batchUpdateOrdersGroup(ids, groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      toast.success('Grupo atribuído com sucesso!')
+      setSelectedOrderIds([])
+    },
+    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+  })
+
+  const batchDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => salesApi.batchDeleteOrders(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      toast.success('Pedidos excluídos com sucesso!')
+      setSelectedOrderIds([])
+    },
+    onError: (error: any) => toast.error(`Erro: ${error.message}`)
   })
 
   const updateStatusMutation = useMutation({
@@ -303,15 +338,6 @@ export default function SalesManagement() {
           <p className="text-muted-foreground mt-1">Acompanhe e fature os pedidos enviados pelos vendedores.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {selectedOrderIds.length > 0 && (
-            <Button
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-10 px-4 shadow-sm rounded-md animate-in fade-in zoom-in-95"
-              onClick={handleBatchSendToMaxiprod}
-              disabled={isBatchSending}
-            >
-              {isBatchSending ? 'Transmitindo...' : `Transmitir Selecionados (${selectedOrderIds.length})`}
-            </Button>
-          )}
           <Button 
             variant="outline" 
             className="text-blue-600 border-blue-500 hover:bg-blue-50 font-bold px-4 h-10 shadow-sm rounded-md"
@@ -436,20 +462,18 @@ export default function SalesManagement() {
                 <th className="px-4 py-3 font-medium w-12 text-center">
                   <input
                     type="checkbox"
-                    checked={
-                      paginatedOrders.filter(o => o.status === 'Aprovado').length > 0 &&
-                      paginatedOrders.filter(o => o.status === 'Aprovado').every(o => selectedOrderIds.includes(o.id))
-                    }
+                    style={{ appearance: 'checkbox', WebkitAppearance: 'checkbox' }}
+                    checked={paginatedOrders.length > 0 && paginatedOrders.every(o => selectedOrderIds.includes(o.id))}
                     onChange={e => {
-                      const sendableIds = paginatedOrders.filter(o => o.status === 'Aprovado').map(o => o.id)
                       if (e.target.checked) {
-                        const newSelection = Array.from(new Set([...selectedOrderIds, ...sendableIds]))
+                        const newSelection = Array.from(new Set([...selectedOrderIds, ...paginatedOrders.map(o => o.id)]))
                         setSelectedOrderIds(newSelection)
                       } else {
-                        setSelectedOrderIds(selectedOrderIds.filter(id => !sendableIds.includes(id)))
+                        const paginatedIds = paginatedOrders.map(o => o.id)
+                        setSelectedOrderIds(selectedOrderIds.filter(id => !paginatedIds.includes(id)))
                       }
                     }}
-                    className="rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                    className="w-5 h-5 accent-primary cursor-pointer align-middle"
                   />
                 </th>
                 <th className="px-4 py-3 font-medium">Pedido</th>
@@ -480,20 +504,19 @@ export default function SalesManagement() {
                 paginatedOrders.map(order => (
                   <tr key={order.id} className={`transition-colors hover:bg-muted/30 ${order.status === 'Retornou' ? 'bg-red-50 dark:bg-red-950/20' : ''}`}>
                     <td className="px-4 py-3 text-center w-12">
-                      {order.status === 'Aprovado' && (
-                        <input
-                          type="checkbox"
-                          checked={selectedOrderIds.includes(order.id)}
-                          onChange={e => {
-                            if (e.target.checked) {
-                              setSelectedOrderIds([...selectedOrderIds, order.id])
-                            } else {
-                              setSelectedOrderIds(selectedOrderIds.filter(id => id !== order.id))
-                            }
-                          }}
-                          className="rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
-                        />
-                      )}
+                      <input
+                        type="checkbox"
+                        style={{ appearance: 'checkbox', WebkitAppearance: 'checkbox' }}
+                        checked={selectedOrderIds.includes(order.id)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setSelectedOrderIds([...selectedOrderIds, order.id])
+                          } else {
+                            setSelectedOrderIds(selectedOrderIds.filter(id => id !== order.id))
+                          }
+                        }}
+                        className="w-5 h-5 accent-primary cursor-pointer align-middle mt-1"
+                      />
                     </td>
                     <td className="px-4 py-3 font-bold text-primary">
                       #{order.order_number || order.id.slice(0, 5).toUpperCase()}
@@ -687,6 +710,80 @@ export default function SalesManagement() {
         onClose={() => setEmitNfeOrderId(null)} 
         orderId={emitNfeOrderId} 
       />
+
+      {selectedOrderIds.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4 flex flex-col sm:flex-row items-center justify-between z-50 gap-4 slide-in-from-bottom-4 animate-in duration-300">
+          <div className="flex items-center gap-4">
+            <div className="bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold text-sm">
+              {selectedOrderIds.length} selecionado{selectedOrderIds.length > 1 ? 's' : ''}
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedOrderIds([])} className="text-muted-foreground hover:text-foreground">
+              Limpar seleção
+            </Button>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-9 shadow-sm"
+              size="sm"
+              onClick={handleBatchSendToMaxiprod}
+              disabled={isBatchSending}
+            >
+              <Send className="h-4 w-4 mr-2" /> {isBatchSending ? 'Transmitindo...' : 'Transmitir (Maxiprod)'}
+            </Button>
+
+            <select 
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-auto"
+              value=""
+              onChange={(e) => {
+                if(e.target.value) {
+                  batchUpdateGroupMutation.mutate({ ids: selectedOrderIds, groupId: e.target.value === 'null' ? null : e.target.value })
+                }
+              }}
+              disabled={batchUpdateGroupMutation.isPending}
+            >
+              <option value="" disabled>Atribuir a Grupo...</option>
+              <option value="null">Nenhum Grupo</option>
+              {orderGroups.map((g: any) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+
+            <select 
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-auto"
+              value=""
+              onChange={(e) => {
+                if(e.target.value && confirm(`Mudar o status de ${selectedOrderIds.length} pedido(s) para ${e.target.value}?`)) {
+                  batchUpdateStatusMutation.mutate({ ids: selectedOrderIds, status: e.target.value })
+                }
+              }}
+              disabled={batchUpdateStatusMutation.isPending}
+            >
+              <option value="" disabled>Mudar Status para...</option>
+              <option value="Digitação">Em Digitação</option>
+              <option value="Aprovado">Aprovado</option>
+              <option value="Enviado">Enviado</option>
+              <option value="Faturado">Faturado</option>
+              <option value="Entregue">Entregue</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+
+            <Button 
+              variant="destructive" 
+              size="sm"
+              className="h-9"
+              disabled={batchDeleteMutation.isPending}
+              onClick={() => {
+                if(confirm(`Tem certeza que deseja excluir ${selectedOrderIds.length} pedido(s)?`)) {
+                  batchDeleteMutation.mutate(selectedOrderIds)
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" /> Excluir
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
