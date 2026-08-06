@@ -1360,6 +1360,32 @@ export default function Conference() {
 
 
           <div className="space-y-2 mt-6">
+            {Object.keys(returnedItems).length > 0 && (
+              <div className="space-y-2 mb-6">
+                <h3 className="text-sm font-bold text-amber-600 dark:text-amber-500">Itens Bipados (Nesta Sessão)</h3>
+                <div className="space-y-2">
+                  {Object.entries(returnedItems).map(([code, qty], i) => {
+                    const productDesc = allProducts.find(p => p.code === code)?.description 
+                      || items.find(it => it.product_code === code)?.description 
+                      || 'Produto Desconhecido';
+                    
+                    return (
+                      <div key={code} className="glass-card p-3 flex items-center justify-between slide-up border-amber-500/30 bg-amber-500/10" style={{ animationDelay: `${i * 50}ms` }}>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate text-amber-700 dark:text-amber-400">{productDesc.replace('🔄 Devolução: ', '')}</p>
+                          <p className="text-xs text-amber-600 dark:text-amber-500 font-mono">{code}</p>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-lg font-bold font-mono text-amber-700 dark:text-amber-400">+{qty}</span>
+                          <span className="text-amber-600 dark:text-amber-500 text-sm">bipados</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             <div 
               className="pt-2 pb-1 flex justify-between items-center cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setIsLoadedListOpen(!isLoadedListOpen)}
