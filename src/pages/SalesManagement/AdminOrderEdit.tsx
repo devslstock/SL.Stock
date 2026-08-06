@@ -300,9 +300,15 @@ export default function AdminOrderEdit() {
           </Button>
           <span className="font-semibold">Pedido de venda</span>
         </div>
+        {isEditable && (
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => handleSave()} className="h-8">Salvar Alterações</Button>
+          </div>
+        )}
       </div>
 
       {/* CABEÇALHO DO PEDIDO */}
+      <fieldset disabled={!isEditable} className="border-none p-0 m-0 min-w-0">
       <div className="bg-card border border-border p-3 rounded-md shadow-sm">
         <div className="grid grid-cols-12 gap-x-4 gap-y-2">
           
@@ -729,18 +735,39 @@ export default function AdminOrderEdit() {
           </div>
         </div>
       </div>
+      </fieldset>
 
       {/* ACTION BAR INLINE */}
       <div className="bg-card border border-border shadow-sm p-4 flex flex-wrap items-center justify-start gap-2 rounded-md mt-6">
-         <Button onClick={() => handleSave('Digitação')} disabled={updateMutation.isPending} className="bg-[#78b31a] hover:bg-[#689914] text-white font-bold h-9">
-            Emitir e aguardar aprovação
-         </Button>
-         <Button onClick={() => handleSave('Aprovado')} disabled={updateMutation.isPending} className="bg-[#78b31a] hover:bg-[#689914] text-white font-bold h-9">
-            Emitir e aprovar
-         </Button>
-         <Button onClick={() => handleSave()} disabled={updateMutation.isPending} variant="outline" className="h-9 font-bold ml-4">
-            Apenas Salvar Alterações
-         </Button>
+         {formData.status === 'Digitação' || !formData.status ? (
+           <>
+             <Button onClick={() => handleSave('Digitação')} disabled={updateMutation.isPending} className="bg-[#78b31a] hover:bg-[#689914] text-white font-bold h-9">
+                Emitir e aguardar aprovação
+             </Button>
+             <Button onClick={() => handleSave('Aprovado')} disabled={updateMutation.isPending} className="bg-[#78b31a] hover:bg-[#689914] text-white font-bold h-9">
+                Emitir e aprovar
+             </Button>
+             <Button onClick={() => handleSave()} disabled={updateMutation.isPending} variant="outline" className="h-9 font-bold ml-4">
+                Apenas Salvar Alterações
+             </Button>
+           </>
+         ) : formData.status === 'Aprovado' ? (
+           <>
+             <Button onClick={() => handleSave('Digitação')} disabled={updateMutation.isPending} variant="outline" className="border-orange-500 text-orange-600 hover:bg-orange-50 font-bold h-9">
+                Revisar (Reabrir)
+             </Button>
+             <Button onClick={() => window.print()} variant="outline" className="h-9 font-bold">
+                <Printer className="h-4 w-4 mr-2" /> Imprimir
+             </Button>
+             <Button onClick={() => handleSave('Faturado')} disabled={updateMutation.isPending} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 ml-4">
+                Faturar este pedido
+             </Button>
+           </>
+         ) : (
+           <div className="font-semibold text-muted-foreground">
+             Pedido {formData.status}
+           </div>
+         )}
          <Button variant="outline" className="h-9 ml-auto" onClick={() => navigate('/vendas/gestao')}>
             Sair
          </Button>
