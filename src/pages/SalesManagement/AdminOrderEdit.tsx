@@ -356,10 +356,7 @@ export default function AdminOrderEdit() {
               )}
             </div>
           </div>
-          <div className="col-span-4 flex items-center gap-2">
-            <label className="font-semibold text-right w-24">Contato</label>
-            <Input className="h-7 text-[13px]" value={formData.contato_comercial} onChange={e => setFormData({...formData, contato_comercial: e.target.value})} />
-          </div>
+
           <div className="col-span-4 flex items-center gap-2 bg-muted/30 p-1 rounded border border-border/50">
              <label className="font-semibold w-16 text-right leading-tight">Grupo</label>
              <select 
