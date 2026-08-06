@@ -186,7 +186,10 @@ export default function AdminOrderEdit() {
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando detalhes do pedido...</div>
   if (!order) return <div className="p-8 text-center text-red-500">Pedido não encontrado.</div>
 
-  const totalProdutos = localItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0)
+  const totalProdutos = localItems.reduce((acc, item) => {
+    const itemTotal = (item.quantity * item.unit_price) * (1 - (item.discount_percent || 0) / 100)
+    return acc + itemTotal
+  }, 0)
   
   let descontoCalculado = 0
   if (formData.discount_type === 'R$') {
