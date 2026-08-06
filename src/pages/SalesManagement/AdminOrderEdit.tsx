@@ -254,7 +254,7 @@ export default function AdminOrderEdit() {
           product: {
              code: product.code,
              description: product.description,
-             unit: product.unit || 'un'
+             unit: product.unit_measure || 'un'
           }
         }])
       }
