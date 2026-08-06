@@ -145,6 +145,13 @@ export default function AdminOrderEdit() {
   }
 
   const handleCustomerSelect = (customer: any) => {
+    if (formData.customer_id && formData.customer_id !== customer.id) {
+      if (!window.confirm(`Tem certeza que deseja alterar o cliente do pedido para ${customer.legal_name || customer.fantasy_name}? A tabela de preços e o vendedor vinculados também serão atualizados caso o cliente possua.`)) {
+        setShowCustomerResults(false)
+        return
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       customer_id: customer.id,
