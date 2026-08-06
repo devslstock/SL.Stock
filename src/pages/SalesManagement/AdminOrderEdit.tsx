@@ -117,11 +117,49 @@ export default function AdminOrderEdit() {
   }, [order])
 
   const updateMutation = useMutation({
-    mutationFn: (updates: any) => salesApi.updateSalesOrder(id!, updates),
+    mutationFn: async (updates: any) => {
+      // Atualiza o pedido
+      await salesApi.updateSalesOrder(id!, updates)
+      
+      // Sincroniza os itens
+      const originalItemIds = order.items?.map((i: any) => i.id) || []
+      const currentItemIds = localItems.map((i: any) => i.id).filter(id => id)
+      
+      const deletedIds = originalItemIds.filter((oldId: string) => !currentItemIds.includes(oldId))
+      
+      for (const delId of deletedIds) {
+        await salesApi.deleteSalesOrderItem(delId)
+      }
+      
+      const newItemsToInsert = []
+      for (const item of localItems) {
+        if (!item.id || item.id.startsWith('temp-')) {
+          newItemsToInsert.push({
+            sales_order_id: id!,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            discount_percent: item.discount_percent,
+            total_price: item.total_price
+          })
+        } else {
+          await salesApi.updateSalesOrderItem(item.id, {
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            discount_percent: item.discount_percent,
+            total_price: item.total_price
+          })
+        }
+      }
+      
+      if (newItemsToInsert.length > 0) {
+        await salesApi.addSalesOrderItems(newItemsToInsert)
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
-      toast.success('Pedido atualizado com sucesso!')
+      toast.success('Pedido e itens atualizados com sucesso!')
       navigate('/vendas/gestao')
     },
     onError: (e: any) => toast.error(`Erro ao atualizar: ${e.message}`)
