@@ -1299,16 +1299,34 @@ export default function Conference() {
               </p>
             </div>
             
-            <Button 
-              className="w-full sm:w-auto h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
-              onClick={() => {
-                if (route?.id) navigate(`/entregas/${route.id}/retorno`)
-              }}
-              disabled={!route?.id}
-            >
-              <PenTool className="mr-2 h-5 w-5" />
-              Conferir Retornos da Rota
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              {route?.id ? (
+                <>
+                  <Button 
+                    className="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
+                    onClick={() => navigate(`/entregas/${route.id}/retorno`)}
+                  >
+                    <PenTool className="mr-2 h-5 w-5" />
+                    Retorno por Entregas (Rota)
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="flex-1 h-12 border-amber-500 text-amber-600 hover:bg-amber-50"
+                    onClick={() => navigate(`/conferencia/${id}?retorno=true`, { replace: true })}
+                  >
+                    Retorno Avulso
+                  </Button>
+                </>
+              ) : (
+                <Button 
+                  className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold"
+                  onClick={() => navigate(`/conferencia/${id}?retorno=true`, { replace: true })}
+                >
+                  <Undo2 className="mr-2 h-5 w-5" />
+                  Iniciar Retorno da Carga
+                </Button>
+              )}
+            </div>
           </div>
 
 
