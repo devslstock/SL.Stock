@@ -63,6 +63,7 @@ export default function AdminOrderEdit() {
   const [customerSearch, setCustomerSearch] = useState('')
   const [showCustomerResults, setShowCustomerResults] = useState(false)
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [isUpdatingPrices, setIsUpdatingPrices] = useState(false)
 
   const filteredCustomers = customerSearch.length > 1 
     ? customers.filter((c: any) => 
@@ -152,6 +153,38 @@ export default function AdminOrderEdit() {
     }))
     setCustomerSearch('')
     setShowCustomerResults(false)
+  }
+
+  const handleUpdatePricesFromTable = async () => {
+    if (!formData.price_table_id) {
+      toast.warning('Selecione uma tabela de preços primeiro.')
+      return
+    }
+    
+    setIsUpdatingPrices(true)
+    try {
+      const { priceTablesApi } = await import('@/api/priceTables')
+      const tableData = await priceTablesApi.getPriceTable(formData.price_table_id)
+      const tableItems = tableData?.price_table_items || []
+      
+      const newItems = localItems.map(item => {
+        const tableItem = tableItems.find((pti: any) => pti.product_id === item.product_id)
+        if (tableItem) {
+          const newPrice = tableItem.price
+          const updated = { ...item, unit_price: newPrice }
+          updated.total_price = (updated.quantity * newPrice) * (1 - (updated.discount_percent || 0) / 100)
+          return updated
+        }
+        return item
+      })
+      
+      setLocalItems(newItems)
+      toast.success('Preços atualizados de acordo com a tabela selecionada!')
+    } catch (e) {
+      toast.error('Erro ao buscar preços da tabela.')
+    } finally {
+      setIsUpdatingPrices(false)
+    }
   }
 
   const handleSave = (newStatus?: string) => {
@@ -309,14 +342,26 @@ export default function AdminOrderEdit() {
           {/* Row 4 - Tributario e Representante */}
           <div className="col-span-6 flex items-center gap-2">
             <label className="font-semibold text-right w-24">Tabela preços</label>
-            <select 
-              className="h-7 text-[13px] border rounded px-1 flex-1 bg-background" 
-              value={formData.price_table_id} 
-              onChange={e => setFormData({...formData, price_table_id: e.target.value})}
-            >
-              <option value="">(Nenhuma)</option>
-              {priceTables.map((pt: any) => <option key={pt.id} value={pt.id}>{pt.name}</option>)}
-            </select>
+            <div className="flex-1 flex gap-1">
+              <select 
+                className="h-7 text-[13px] border rounded px-1 flex-1 bg-background" 
+                value={formData.price_table_id} 
+                onChange={e => setFormData({...formData, price_table_id: e.target.value})}
+              >
+                <option value="">(Nenhuma)</option>
+                {priceTables.map((pt: any) => <option key={pt.id} value={pt.id}>{pt.name}</option>)}
+              </select>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 px-2 text-[12px] bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
+                onClick={handleUpdatePricesFromTable}
+                disabled={isUpdatingPrices}
+                title="Atualizar valores dos itens pela tabela"
+              >
+                {isUpdatingPrices ? '...' : 'Atualizar'}
+              </Button>
+            </div>
           </div>
           <div className="col-span-6 flex items-center gap-2">
             <label className="font-semibold text-right w-24">Vendedor</label>
