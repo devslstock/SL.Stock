@@ -652,8 +652,17 @@ export default function AdminOrderEdit() {
           </table>
           {isEditable && (
             <div className="p-2 bg-muted/30 border-t border-border flex gap-2">
-               <Button size="sm" variant="outline" className="h-7 text-xs bg-green-500 hover:bg-green-600 text-white border-green-600 font-bold" onClick={() => setShowProductSearch(!showProductSearch)}>
-                 <Plus className="h-3 w-3 mr-1"/> Novo Item
+               <Button 
+                 size="sm" 
+                 variant="outline" 
+                 className={`h-7 text-xs text-white font-bold ${showProductSearch ? 'bg-red-500 hover:bg-red-600 border-red-600' : 'bg-green-500 hover:bg-green-600 border-green-600'}`} 
+                 onClick={() => setShowProductSearch(!showProductSearch)}
+               >
+                 {showProductSearch ? (
+                   <><X className="h-3 w-3 mr-1"/> Fechar Busca</>
+                 ) : (
+                   <><Plus className="h-3 w-3 mr-1"/> Novo Item</>
+                 )}
                </Button>
                <span className="text-muted-foreground text-xs self-center ml-2">*As alterações nos itens necessitam que você clique em Salvar ao final para recalcular o pedido.</span>
             </div>
@@ -665,9 +674,6 @@ export default function AdminOrderEdit() {
                  currentItems={localItems}
                  onUpdateQuantity={handleUpdateQuantityFromSearch}
                />
-               <div className="mt-4 flex justify-end">
-                 <Button variant="ghost" size="sm" onClick={() => setShowProductSearch(false)}>Fechar busca</Button>
-               </div>
             </div>
           )}
         </div>
