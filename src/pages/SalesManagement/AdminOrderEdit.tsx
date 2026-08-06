@@ -262,12 +262,7 @@ export default function AdminOrderEdit() {
           </div>
           <div className="col-span-6 flex items-center gap-2 bg-muted/30 p-1 rounded border border-border/50">
              <label className="font-semibold w-16 text-right">Estado</label>
-             <select className="h-7 text-[13px] border rounded px-1 flex-1" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
-                <option value="Digitação">Digitação</option>
-                <option value="Aprovado">Aprovado</option>
-                <option value="Faturado">Faturado</option>
-                <option value="Cancelado">Cancelado</option>
-             </select>
+             <Input className="h-7 text-[13px] bg-muted/50 font-medium flex-1" readOnly value={formData.status || 'Digitação'} />
           </div>
 
           {/* Row 2 */}
