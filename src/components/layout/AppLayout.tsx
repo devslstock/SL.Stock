@@ -287,9 +287,12 @@ export default function AppLayout() {
     if (path === '/vendas') return 'platina'
     
     // OPERAÇÕES
-    if (path === '/vendas/gestao') return 'ouro'
+    if (path === '/vendas/gestao') return 'platina'
     if (path === '/cargas') return 'prata'
     if (path === '/entregas') return 'ouro'
+    
+    // FISCAL
+    if (path.startsWith('/fiscal')) return 'platina'
     
     // ESTOQUE
     if (path === '/produtos') return 'bronze' // Estoque (Produtos)
