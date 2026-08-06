@@ -307,7 +307,7 @@ export default function AdminOrderEdit() {
           <div className="col-span-6 flex items-center gap-2">
             <label className="font-semibold text-right w-24">Tabela preços</label>
             <select 
-              className="h-7 text-[13px] border rounded px-1 flex-1 bg-white dark:bg-black" 
+              className="h-7 text-[13px] border rounded px-1 flex-1 bg-background" 
               value={formData.price_table_id} 
               onChange={e => setFormData({...formData, price_table_id: e.target.value})}
             >
@@ -318,7 +318,7 @@ export default function AdminOrderEdit() {
           <div className="col-span-6 flex items-center gap-2">
             <label className="font-semibold text-right w-24">Vendedor</label>
             <select 
-              className="h-7 text-[13px] border rounded px-1 flex-1 bg-white dark:bg-black" 
+              className="h-7 text-[13px] border rounded px-1 flex-1 bg-background" 
               value={formData.sales_rep_id} 
               onChange={e => setFormData({...formData, sales_rep_id: e.target.value})}
             >
@@ -329,7 +329,7 @@ export default function AdminOrderEdit() {
 
           <div className="col-span-12 flex items-center gap-2">
             <label className="font-semibold text-right w-24 leading-tight">Operação fiscal*</label>
-            <select className="h-7 text-[13px] border rounded px-1 w-80 bg-white dark:bg-black" value={formData.operacao_fiscal} onChange={e => setFormData({...formData, operacao_fiscal: e.target.value})}>
+            <select className="h-7 text-[13px] border rounded px-1 w-80 bg-background" value={formData.operacao_fiscal} onChange={e => setFormData({...formData, operacao_fiscal: e.target.value})}>
                <option value="">Selecione...</option>
                <option value="5405">5405 - Venda de merc. com subst. trib.</option>
                <option value="5102">5102 - Venda de merc. adquirida de terç.</option>
@@ -527,11 +527,11 @@ export default function AdminOrderEdit() {
          <div className="flex gap-4 items-center mb-4">
            <div className="flex items-center gap-2">
              <label className="text-right w-36">Forma de pagamento</label>
-             <select className="h-7 text-[13px] border rounded px-1 w-32 bg-white dark:bg-black">
+             <select className="h-7 text-[13px] border rounded px-1 w-32 bg-background">
                <option>A prazo</option>
                <option>À vista</option>
              </select>
-             <select className="h-7 text-[13px] border rounded px-1 w-48 bg-white dark:bg-black">
+             <select className="h-7 text-[13px] border rounded px-1 w-48 bg-background">
                <option>Boleto bancário</option>
                <option>PIX</option>
              </select>
@@ -541,7 +541,7 @@ export default function AdminOrderEdit() {
            <div className="flex items-center gap-2">
              <label className="text-right w-36">Condição de pagamento</label>
              <select 
-               className="h-7 text-[13px] border rounded px-1 w-80 bg-white dark:bg-black"
+               className="h-7 text-[13px] border rounded px-1 w-80 bg-background"
                value={formData.payment_condition_id}
                onChange={e => setFormData({...formData, payment_condition_id: e.target.value})}
              >
@@ -555,7 +555,7 @@ export default function AdminOrderEdit() {
          <div className="flex gap-4 items-center">
            <div className="flex items-center gap-2">
              <label className="text-right w-36">Condição de Frete</label>
-             <select className="h-7 text-[13px] border rounded px-1 w-80 bg-white dark:bg-black">
+             <select className="h-7 text-[13px] border rounded px-1 w-80 bg-background">
                <option>0 - Por conta do remetente (CIF)</option>
                <option>1 - Por conta do destinatário (FOB)</option>
                <option>3 - Transporte próprio por conta do remetente</option>
