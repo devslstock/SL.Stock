@@ -225,7 +225,7 @@ export default function SalesOrders() {
               <h3 className="text-muted-foreground text-xs font-semibold tracking-wider mb-3">{dateLabel}</h3>
               <div className="space-y-3">
                 {orders.map(order => {
-                  const isEditable = !['Faturado', 'Retornou', 'Entregue', 'Cancelado'].includes(order.status)
+                  const isEditable = !['Aprovado', 'Faturado', 'Retornou', 'Entregue', 'Cancelado'].includes(order.status)
                   return (
                   <div key={order.id} onClick={() => {
                     if (isEditable) {
