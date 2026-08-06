@@ -37,7 +37,9 @@ export default function SalesManagement() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [filterStatus, setFilterStatus] = useState<string[]>(['Digitação', 'Aprovado'])
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false)
+  const allStatuses = ['Digitação', 'Aprovado', 'Faturado', 'Cancelado', 'Retornou', 'Entregue']
 
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
@@ -139,7 +141,7 @@ export default function SalesManagement() {
       
       if (!searchMatch) return false
       
-      if (filterStatus !== 'all' && o.status !== filterStatus) return false
+      if (filterStatus.length > 0 && !filterStatus.includes(o.status)) return false
       if (filterOrderNumber && String(o.order_number) !== filterOrderNumber.trim()) return false
       if (filterSalesRep !== 'all' && o.sales_rep_id !== filterSalesRep) return false
       if (filterRegion !== 'all' && o.customer?.region?.id !== filterRegion) return false
@@ -359,17 +361,64 @@ export default function SalesManagement() {
               className="pl-9"
             />
           </div>
-          <select 
-            className="flex h-10 w-full sm:w-48 rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
-          >
-            <option value="all">Todos os Status</option>
-            <option value="Digitação">Em Digitação</option>
-            <option value="Aprovado">Aprovado</option>
-            <option value="Faturado">Faturados</option>
-            <option value="Cancelado">Cancelados</option>
-          </select>
+          <div className="relative w-full sm:w-64">
+            <div 
+              className="flex h-10 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm cursor-pointer select-none"
+              onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+            >
+              <span className="truncate">
+                {filterStatus.length === 0 ? 'Nenhum status' : 
+                 filterStatus.length === allStatuses.length ? 'Todos os Status' : 
+                 `${filterStatus.length} status selecionado(s)`}
+              </span>
+              {isStatusDropdownOpen ? <ChevronUp className="h-4 w-4 opacity-50" /> : <ChevronDown className="h-4 w-4 opacity-50" />}
+            </div>
+            
+            {isStatusDropdownOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg py-1 max-h-60 overflow-auto">
+                <label className="flex items-center px-3 py-2 hover:bg-muted cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="mr-2 rounded border-gray-300"
+                    checked={filterStatus.length === allStatuses.length}
+                    onChange={() => {
+                      if (filterStatus.length === allStatuses.length) {
+                        setFilterStatus([])
+                      } else {
+                        setFilterStatus([...allStatuses])
+                      }
+                    }}
+                  />
+                  <span className="text-sm font-medium">[Selecionar tudo]</span>
+                </label>
+                <div className="border-t border-border my-1"></div>
+                {allStatuses.map(status => (
+                  <label key={status} className="flex items-center px-3 py-2 hover:bg-muted cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2 rounded border-gray-300"
+                      checked={filterStatus.includes(status)}
+                      onChange={() => {
+                        setFilterStatus(prev => 
+                          prev.includes(status) 
+                            ? prev.filter(s => s !== status) 
+                            : [...prev, status]
+                        )
+                      }}
+                    />
+                    <span className="text-sm">{status}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            {/* Overlay para fechar ao clicar fora */}
+            {isStatusDropdownOpen && (
+              <div 
+                className="fixed inset-0 z-0" 
+                onClick={() => setIsStatusDropdownOpen(false)}
+              ></div>
+            )}
+          </div>
           <Button 
             variant="outline"
             className={`gap-2 ${showAdvancedFilters ? 'bg-primary/5 border-primary text-primary' : ''}`}
