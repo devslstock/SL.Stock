@@ -205,7 +205,8 @@ export default function SalesOrders() {
         <div className="flex items-center gap-2 mb-4 px-2">
           <input 
             type="checkbox" 
-            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+            style={{ appearance: 'checkbox', WebkitAppearance: 'checkbox' }}
+            className="w-5 h-5 accent-primary cursor-pointer"
             checked={selectedOrders.length === paginatedOrders.length && paginatedOrders.length > 0}
             onChange={handleSelectAll}
           />
@@ -240,7 +241,8 @@ export default function SalesOrders() {
                       <div className="mt-1" onClick={e => e.stopPropagation()}>
                         <input 
                           type="checkbox" 
-                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                          style={{ appearance: 'checkbox', WebkitAppearance: 'checkbox' }}
+                          className="w-5 h-5 accent-primary cursor-pointer"
                           checked={selectedOrders.includes(order.id)}
                           onChange={(e) => handleToggleSelection(e, order.id)}
                         />
