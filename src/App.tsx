@@ -113,6 +113,7 @@ import SalesOrders from './pages/SalesApp/Orders/index'
 import SalesCustomers from './pages/SalesApp/Customers/index'
 import NewOrder from '@/pages/SalesApp/NewOrder'
 import OrderGroups from '@/pages/SalesApp/OrderGroups/index'
+import AdminOrderEdit from './pages/SalesManagement/AdminOrderEdit'
 import { PlanGuard } from './components/PlanGuard'
 
 function App() {
@@ -173,6 +174,7 @@ function App() {
             
             {/* Sales Management */}
             <Route path="/vendas/gestao" element={<SalesManagement />} />
+            <Route path="/vendas/gestao/editar/:id" element={<AdminOrderEdit />} />
 
             {/* Sales App (Moved into AppLayout) */}
             <Route path="/vendas" element={<Navigate to="/vendas/pedidos" replace />} />

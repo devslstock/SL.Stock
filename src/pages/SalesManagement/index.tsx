@@ -573,7 +573,7 @@ export default function SalesManagement() {
                             <FileText className="h-4 w-4 mr-1" /> Emitir NF-e
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 text-blue-600 hover:text-blue-700" title="Editar Pedido (Completo)" onClick={() => navigate(`/vendas/novo-pedido?id=${order.id}&returnTo=/vendas/gestao`)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 text-blue-600 hover:text-blue-700" title="Gestão Burocrática do Pedido" onClick={() => navigate(`/vendas/gestao/editar/${order.id}`)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" title="Ver Detalhes" onClick={() => openDetails(order.id)}>
