@@ -277,47 +277,74 @@ export default function AdminOrderEdit() {
             <label className="font-semibold text-right w-16">Cliente*</label>
             <div className="flex-1 flex gap-1 relative">
               {formData.customer_id && !showCustomerResults ? (
-                <div className="flex w-full">
-                  <Input className="h-7 text-[13px] font-bold flex-1" value={selectedCustomer?.legal_name || ''} readOnly />
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => setFormData({...formData, customer_id: ''})}>
-                    <XIcon className="h-3 w-3" />
+                <div className="flex w-full relative">
+                  <Input 
+                    className="h-7 text-[13px] font-bold flex-1 cursor-pointer pr-8" 
+                    value={selectedCustomer?.legal_name || ''} 
+                    readOnly 
+                    onClick={() => setShowCustomerResults(true)}
+                    title="Clique para alterar o cliente"
+                  />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-muted-foreground absolute right-0 hover:text-blue-500" 
+                    onClick={() => setShowCustomerResults(true)}
+                  >
+                    <Search className="h-3 w-3" />
                   </Button>
                 </div>
               ) : (
-                <div className="relative w-full">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                  <Input 
-                    placeholder="Buscar cliente..." 
-                    className="pl-7 h-7 text-[13px]"
-                    value={customerSearch}
-                    onChange={e => {
-                      setCustomerSearch(e.target.value)
-                      setShowCustomerResults(true)
-                    }}
-                    onFocus={() => setShowCustomerResults(true)}
-                  />
-                  {showCustomerResults && customerSearch.length > 1 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
-                      {filteredCustomers.length > 0 ? (
-                        filteredCustomers.map((c: any) => (
-                          <div 
-                            key={c.id} 
-                            className="p-2 hover:bg-muted cursor-pointer border-b border-border last:border-0"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleCustomerSelect(c)
-                            }}
-                          >
-                            <div className="font-medium text-[13px]">{c.legal_name || c.fantasy_name}</div>
-                            <div className="text-[11px] text-muted-foreground flex justify-between mt-0.5">
-                              <span>{c.document}</span>
+                <div className="relative w-full flex items-center">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <Input 
+                      placeholder="Buscar cliente..." 
+                      className="pl-7 h-7 text-[13px]"
+                      value={customerSearch}
+                      onChange={e => {
+                        setCustomerSearch(e.target.value)
+                        setShowCustomerResults(true)
+                      }}
+                      onFocus={() => setShowCustomerResults(true)}
+                      autoFocus
+                    />
+                    {showCustomerResults && customerSearch.length > 1 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
+                        {filteredCustomers.length > 0 ? (
+                          filteredCustomers.map((c: any) => (
+                            <div 
+                              key={c.id} 
+                              className="p-2 hover:bg-muted cursor-pointer border-b border-border last:border-0"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleCustomerSelect(c)
+                              }}
+                            >
+                              <div className="font-medium text-[13px]">{c.legal_name || c.fantasy_name}</div>
+                              <div className="text-[11px] text-muted-foreground flex justify-between mt-0.5">
+                                <span>{c.document}</span>
+                              </div>
                             </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-2 text-[12px] text-muted-foreground text-center">Nenhum cliente encontrado</div>
-                      )}
-                    </div>
+                          ))
+                        ) : (
+                          <div className="p-2 text-[12px] text-muted-foreground text-center">Nenhum cliente encontrado</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {formData.customer_id && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 px-2 ml-1 text-red-500 text-xs" 
+                      onClick={() => {
+                        setShowCustomerResults(false)
+                        setCustomerSearch('')
+                      }}
+                    >
+                      Cancelar
+                    </Button>
                   )}
                 </div>
               )}
