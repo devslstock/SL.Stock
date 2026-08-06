@@ -34,7 +34,11 @@ export default function Conference() {
 
   const [scanInput, setScanInput] = useState('')
   const [manualQty, setManualQty] = useState<number | ''>(1)
-  const [activeTab, setActiveTab] = useState(isRetorno ? 'resumo' : 'scan')
+  const [activeTab, setActiveTab] = useState(isRetorno ? 'return' : 'scan')
+  
+  useEffect(() => {
+    if (isRetorno) setActiveTab('return')
+  }, [isRetorno])
   const [lastScanned, setLastScanned] = useState<OperationItem | null>(null)
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [isLoadedListOpen, setIsLoadedListOpen] = useState(!isRetorno)
