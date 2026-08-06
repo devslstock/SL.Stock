@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, User, MapPin, FileSpreadsheet, Trash2, ChevronRight, AlertTriangle, Search, Plus, Map as MapIcon, ListOrdered, Menu, FileDown, CheckSquare, Truck, DownloadCloud, GitMerge, Receipt, RefreshCw } from 'lucide-react'
+import { ArrowLeft, User, MapPin, FileSpreadsheet, Trash2, ChevronRight, AlertTriangle, Search, Plus, Map as MapIcon, ListOrdered, Menu, FileDown, CheckSquare, Truck, DownloadCloud, GitMerge, Receipt, RefreshCw, Lock } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import * as XLSX from 'xlsx'
@@ -39,6 +39,7 @@ export default function RouteClients() {
   const queryClient = useQueryClient()
   const { user, hasPermission, company } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'master'
+  const isPlatina = company?.plan === 'platina'
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [isImporting, setIsImporting] = useState(false)
@@ -887,7 +888,15 @@ export default function RouteClients() {
 
         {/* MDF-e Panel */}
         {isManager && (
-          <div className="w-full bg-orange-50/50 border border-orange-200/50 dark:bg-orange-950/10 dark:border-orange-900/30 p-4 rounded-lg flex flex-col sm:flex-row gap-4 justify-between items-center slide-up">
+          <div className={`w-full bg-orange-50/50 border border-orange-200/50 dark:bg-orange-950/10 dark:border-orange-900/30 p-4 rounded-lg flex flex-col sm:flex-row gap-4 justify-between items-center relative slide-up ${!isPlatina ? 'opacity-60 pointer-events-none' : ''}`}>
+            {!isPlatina && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/10 backdrop-blur-[1px]">
+                <div className="bg-background border border-border px-4 py-2 rounded-md shadow-md flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-semibold text-sm text-foreground">MDF-e liberado apenas no plano Platina</span>
+                </div>
+              </div>
+            )}
             <div className="flex items-start gap-3">
               <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg shrink-0">
                 <Receipt className="h-5 w-5 text-orange-600 dark:text-orange-400" />
