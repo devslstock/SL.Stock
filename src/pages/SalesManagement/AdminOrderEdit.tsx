@@ -55,7 +55,7 @@ export default function AdminOrderEdit() {
     queryKey: ['price_tables', company?.id],
     queryFn: async () => {
       const { priceTablesApi } = await import('@/api/priceTables')
-      return priceTablesApi.getPriceTables(company?.id)
+      return priceTablesApi.getPriceTables()
     },
     enabled: !!company?.id
   })
