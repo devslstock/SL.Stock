@@ -112,13 +112,15 @@ export default function ClientConference() {
     mutationFn: (status: 'pending' | 'waiting' | 'delivered' | 'delivered_with_divergence' | 'canceled') => 
       deliveriesApi.updateDeliveryClient(clientId!, { status }),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['delivery_client', clientId] })
       if (variables === 'delivered' || variables === 'delivered_with_divergence') {
         toast.success('Conferência finalizada. Prosseguindo para assinatura...')
-        navigate(`/entregas/cliente/${clientId}/assinatura`)
+        setTimeout(() => {
+          navigate(`/entregas/cliente/${clientId}/assinatura`, { replace: true })
+        }, 100)
       } else {
         toast.success('Progresso salvo!')
       }
+      queryClient.invalidateQueries({ queryKey: ['delivery_client', clientId] })
     }
   })
 
