@@ -111,9 +111,9 @@ export default function ClientConference() {
   const updateClientStatusMutation = useMutation({
     mutationFn: (status: 'pending' | 'waiting' | 'delivered' | 'delivered_with_divergence' | 'canceled') => 
       deliveriesApi.updateDeliveryClient(clientId!, { status }),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['delivery_client', clientId] })
-      if (data.status.includes('delivered')) {
+      if (variables === 'delivered' || variables === 'delivered_with_divergence') {
         toast.success('Conferência finalizada. Prosseguindo para assinatura...')
         navigate(`/entregas/cliente/${clientId}/assinatura`)
       } else {
