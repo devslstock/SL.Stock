@@ -114,13 +114,11 @@ export default function ClientConference() {
     onSuccess: (data, variables) => {
       if (variables === 'delivered' || variables === 'delivered_with_divergence') {
         toast.success('Conferência finalizada. Prosseguindo para assinatura...')
-        setTimeout(() => {
-          navigate(`/entregas/cliente/${clientId}/assinatura`, { replace: true })
-        }, 100)
+        navigate(`/entregas/cliente/${clientId}/assinatura`)
       } else {
         toast.success('Progresso salvo!')
+        queryClient.invalidateQueries({ queryKey: ['delivery_client', clientId] })
       }
-      queryClient.invalidateQueries({ queryKey: ['delivery_client', clientId] })
     }
   })
 
