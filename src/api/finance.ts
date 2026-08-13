@@ -74,7 +74,7 @@ export const financeApi = {
     
     if (matches && matches.length > 1) {
       // Se há vários números, assumimos que são os dias exatos das parcelas (ex: 0, 7, 14, 28)
-      daysArray = matches.map(n => parseInt(n, 10))
+      daysArray = matches.map((n: string) => parseInt(n, 10))
     } else if (matches && matches.length === 1 && installments > 1) {
       // Ex: "Em 3x". Usa o intervalo padrão configurado na tabela
       for (let i = 1; i <= installments; i++) {
