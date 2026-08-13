@@ -610,21 +610,7 @@ export default function SalesManagement() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {order.status === 'Aprovado' && (
-                          <>
 
-                            <Button size="sm" variant="outline" className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => {
-                              if (window.confirm(`Confirma o faturamento do pedido ${order.order_number}? Isso irá gerar as cobranças no financeiro.`)) {
-                                faturarMutation.mutate(order.id)
-                              }
-                            }} disabled={faturarMutation.isPending}>
-                              <CheckCircle className="h-4 w-4 mr-1" /> Faturar
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleUpdateStatus(order.id, order.status, 'Cancelado')}>
-                              <XCircle className="h-4 w-4 mr-1" /> Cancelar
-                            </Button>
-                          </>
-                        )}
                         {order.status === 'Faturado' && (
                           <>
                             <Button size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setCancelFaturamentoOrderId(order.id)}>
