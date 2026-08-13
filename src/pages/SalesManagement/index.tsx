@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { salesApi } from '@/api/sales'
+import { financeApi } from '@/api/finance'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -110,9 +111,19 @@ export default function SalesManagement() {
       salesApi.updateSalesOrder(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
-      toast.success('Status do pedido atualizado')
+      toast.success('Status atualizado com sucesso!')
     },
-    onError: (e: any) => toast.error(`Erro: ${e.message}`)
+    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+  })
+
+  const faturarMutation = useMutation({
+    mutationFn: (id: string) => financeApi.faturarPedido(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
+      toast.success('Pedido faturado e cobranças geradas com sucesso!')
+    },
+    onError: (e: any) => toast.error('Erro ao faturar pedido: ' + e.message)
   })
 
   const uniqueSalesReps = useMemo(() => {
@@ -602,8 +613,12 @@ export default function SalesManagement() {
                         {order.status === 'Aprovado' && (
                           <>
 
-                            <Button size="sm" variant="outline" className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleUpdateStatus(order.id, order.status, 'Faturado')}>
-                              <CheckCircle className="h-4 w-4 mr-1" /> Faturar Local
+                            <Button size="sm" variant="outline" className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => {
+                              if (window.confirm(`Confirma o faturamento do pedido ${order.order_number}? Isso irá gerar as cobranças no financeiro.`)) {
+                                faturarMutation.mutate(order.id)
+                              }
+                            }} disabled={faturarMutation.isPending}>
+                              <CheckCircle className="h-4 w-4 mr-1" /> Faturar
                             </Button>
                             <Button size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleUpdateStatus(order.id, order.status, 'Cancelado')}>
                               <XCircle className="h-4 w-4 mr-1" /> Cancelar
