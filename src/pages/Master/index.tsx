@@ -33,6 +33,10 @@ export default function MasterPanel() {
   const [plan, setPlan] = useState<'bronze' | 'prata' | 'ouro' | 'platina'>('ouro');
   const [adminName, setAdminName] = useState('');
   const [adminUsername, setAdminUsername] = useState('');
+  
+  // Focus NFe Configs
+  const [focusToken, setFocusToken] = useState('');
+  const [focusEnv, setFocusEnv] = useState<'producao' | 'homologacao'>('homologacao');
 
 
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
@@ -178,7 +182,9 @@ export default function MasterPanel() {
           max_users: maxUsers,
           billing_day: billingDay,
           monthly_fee: monthlyFee,
-          plan
+          plan,
+          focusnfe_token: focusToken,
+          focusnfe_env: focusEnv
         });
         
         if (editingAdminId) {
@@ -196,7 +202,9 @@ export default function MasterPanel() {
           active: true,
           billing_day: billingDay,
           monthly_fee: monthlyFee,
-          plan
+          plan,
+          focusnfe_token: focusToken,
+          focusnfe_env: focusEnv
         });
 
         await usersApi.createUser({
@@ -235,6 +243,8 @@ export default function MasterPanel() {
     setMaxUsers(comp.max_users);
     setBillingDay(comp.billing_day || 10);
     setMonthlyFee(comp.monthly_fee || 0);
+    setFocusToken(comp.focusnfe_token || '');
+    setFocusEnv(comp.focusnfe_env || 'homologacao');
 
     // Fetch the admin user
     const { supabase } = await import('@/lib/supabase');
@@ -281,6 +291,7 @@ export default function MasterPanel() {
     setName(''); setCnpj(''); setMaxUsers(5);
     setBillingDay(10); setMonthlyFee(0); setPlan('ouro');
     setAdminName(''); setAdminUsername('');
+    setFocusToken(''); setFocusEnv('homologacao');
     setEditingCompanyId(null);
     setEditingAdminId(null);
   };
@@ -459,6 +470,25 @@ export default function MasterPanel() {
                   <Label>Valor da Mensalidade (R$) *</Label>
                   <Input type="number" step="0.01" min={0} value={monthlyFee} onChange={e => setMonthlyFee(Number(e.target.value))} required />
                 </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3 pt-2">
+              <h3 className="font-semibold text-sm border-b pb-1">Integração Focus NFe (Opcional)</h3>
+              <div className="space-y-2">
+                <Label>Token de Acesso (Focus NFe)</Label>
+                <Input value={focusToken} onChange={e => setFocusToken(e.target.value)} placeholder="Token da API" />
+              </div>
+              <div className="space-y-2">
+                <Label>Ambiente Sefaz</Label>
+                <select 
+                  value={focusEnv} 
+                  onChange={e => setFocusEnv(e.target.value as any)} 
+                  className="flex h-10 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+                >
+                  <option value="homologacao">Homologação (Testes)</option>
+                  <option value="producao">Produção</option>
+                </select>
               </div>
             </div>
 

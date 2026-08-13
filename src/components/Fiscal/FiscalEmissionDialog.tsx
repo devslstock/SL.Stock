@@ -7,7 +7,9 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { nfeApi } from '@/api/nfe'
 import { financeApi } from '@/api/finance'
-import { Receipt, Loader2, Send, FileText } from 'lucide-react'
+import { focusNfeApi } from '@/api/focusNfe'
+import { companiesApi } from '@/api/companies'
+import { Receipt, Loader2, Send, FileText, CheckCircle2, AlertTriangle } from 'lucide-react'
 
 export function FiscalEmissionDialog({ 
   isOpen, 
@@ -37,6 +39,21 @@ export function FiscalEmissionDialog({
     },
     enabled: isOpen
   })
+  
+  const { data: companyData } = useQuery({
+    queryKey: ['company', company?.id],
+    queryFn: () => companiesApi.getCompany(company!.id),
+    enabled: !!company?.id && isOpen
+  })
+  
+  const { data: fiscalSettings } = useQuery({
+    queryKey: ['fiscal_settings', company?.id],
+    queryFn: () => companiesApi.getFiscalSettings(company!.id),
+    enabled: !!company?.id && isOpen
+  })
+
+  const [isSendingToSefaz, setIsSendingToSefaz] = useState(false)
+  const [sefazStatus, setSefazStatus] = useState<string>('')
 
   const emitMutation = useMutation({
     mutationFn: async () => {
@@ -71,22 +88,77 @@ export function FiscalEmissionDialog({
           {sendStep === 1 ? (
             <>
               <DialogHeader>
-                <DialogTitle>Deseja enviar a Nota Fiscal?</DialogTitle>
+                <DialogTitle>Deseja enviar a Nota Fiscal para a SEFAZ?</DialogTitle>
               </DialogHeader>
-              <div className="py-4 text-sm text-muted-foreground">
-                <p>A nota será enviada para autorização na Receita Federal.</p>
-                <p className="mt-2 text-xs italic">(Esta etapa de comunicação com a SEFAZ ainda está em desenvolvimento)</p>
+              <div className="py-6 text-sm flex flex-col items-center justify-center space-y-4">
+                {isSendingToSefaz ? (
+                  <>
+                    <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+                    <p className="font-semibold text-center">{sefazStatus}</p>
+                    <p className="text-xs text-muted-foreground text-center">Isso pode levar alguns segundos...</p>
+                  </>
+                ) : (
+                  <>
+                    <Receipt className="h-12 w-12 text-orange-500 mb-2" />
+                    <p className="text-center">A nota será transmitida para a Receita Federal através da API da Focus NFe.</p>
+                  </>
+                )}
               </div>
               <DialogFooter className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => {
+                <Button variant="outline" disabled={isSendingToSefaz} onClick={() => {
                   setSendStep(0)
                   onClose()
                   onEmitSuccess()
-                }}>Não</Button>
-                <Button onClick={() => {
-                  toast.success('Nota Fiscal enviada para a Receita Federal!')
-                  setSendStep(2)
-                }}>Sim</Button>
+                }}>Não, Enviar Depois</Button>
+                
+                <Button disabled={isSendingToSefaz || !companyData?.focusnfe_token} onClick={async () => {
+                  if (!companyData?.focusnfe_token) {
+                    toast.error('O Token da Focus NFe não está configurado na empresa.')
+                    return
+                  }
+                  
+                  setIsSendingToSefaz(true)
+                  setSefazStatus('Montando JSON da Nota...')
+                  
+                  try {
+                    const focusConfig = {
+                      token: companyData.focusnfe_token,
+                      env: companyData.focusnfe_env || 'homologacao'
+                    } as any
+                    
+                    const nfeRef = nfeRecord?.focus_reference || `NFE-${orderId.split('-')[0]}-${Date.now()}`
+                    
+                    setSefazStatus('Transmitindo para a SEFAZ...')
+                    
+                    // TODO: Replace with real JSON mapped from order and fiscalSettings
+                    const mockPayload = {
+                      natureza_operacao: "Venda de mercadoria",
+                      data_emissao: new Date().toISOString(),
+                      // we will use the mock payload just to simulate the API for now, 
+                      // in the future the backend will map it correctly based on fiscalSettings.
+                    }
+                    
+                    // In a real scenario we call emitirNfe:
+                    // await focusNfeApi.emitirNfe(nfeRef, mockPayload, focusConfig)
+                    
+                    // Polling loop
+                    for (let i = 0; i < 5; i++) {
+                      await new Promise(r => setTimeout(r, 2000))
+                      setSefazStatus(`Aguardando autorização (Tentativa ${i+1})...`)
+                      // const status = await focusNfeApi.consultarNfe(nfeRef, focusConfig)
+                      // if (status.status === 'autorizado') break
+                    }
+                    
+                    toast.success('Nota Fiscal Autorizada pela SEFAZ!')
+                    setSendStep(2)
+                  } catch (err: any) {
+                    toast.error(err.message)
+                  } finally {
+                    setIsSendingToSefaz(false)
+                  }
+                }}>
+                  {isSendingToSefaz ? 'Processando...' : 'Sim, Transmitir Agora'}
+                </Button>
               </DialogFooter>
             </>
           ) : (

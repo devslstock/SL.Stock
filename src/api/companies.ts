@@ -31,6 +31,43 @@ export const companiesApi = {
     return data as Company
   },
 
+  async getFiscalSettings(companyId: string) {
+    const { data, error } = await supabase
+      .from('fiscal_settings')
+      .select('*')
+      .eq('company_id', companyId)
+      .maybeSingle()
+    if (error) throw error
+    return data
+  },
+
+  async updateFiscalSettings(companyId: string, settings: any) {
+    const { data: existing } = await supabase
+      .from('fiscal_settings')
+      .select('id')
+      .eq('company_id', companyId)
+      .maybeSingle()
+      
+    if (existing) {
+      const { data, error } = await supabase
+        .from('fiscal_settings')
+        .update(settings)
+        .eq('company_id', companyId)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    } else {
+      const { data, error } = await supabase
+        .from('fiscal_settings')
+        .insert([{ company_id: companyId, ...settings }])
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    }
+  },
+
   async updateCompany(id: string, updates: Partial<Company>) {
     const { data, error } = await supabase
       .from('companies')

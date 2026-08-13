@@ -79,6 +79,21 @@ export interface Company {
   created_at: string
 }
 
+export interface FiscalSettings {
+  id: string
+  company_id: string
+  default_cfop?: string | null
+  default_csosn?: string | null
+  default_cst?: string | null
+  default_ncm?: string | null
+  default_pis?: string | null
+  default_cofins?: string | null
+  default_icms_rate?: number | null
+  default_ipi_rate?: number | null
+  created_at: string
+  updated_at: string
+}
+
 export interface NfeRecord {
   id: string
   company_id: string
