@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ProductSearchInline } from '../SalesApp/NewOrder/ProductSearchInline'
 import { supabase } from '@/lib/supabase'
 import { parsePaymentCondition } from '@/utils/paymentParser'
+import { FiscalEmissionDialog } from '@/components/Fiscal/FiscalEmissionDialog'
 
 export default function AdminOrderEdit() {
   const { id } = useParams<{ id: string }>()
@@ -84,6 +85,7 @@ export default function AdminOrderEdit() {
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [showFaturarMenu, setShowFaturarMenu] = useState(false)
+  const [showFiscalDialog, setShowFiscalDialog] = useState(false)
   const [isUpdatingPrices, setIsUpdatingPrices] = useState(false)
 
   const filteredCustomers = customerSearch.length > 1 
@@ -1074,7 +1076,7 @@ export default function AdminOrderEdit() {
                 <Printer className="h-4 w-4 mr-2" /> Imprimir
              </Button>
              <div className="flex inline-flex ml-4 items-center">
-               <Button onClick={() => handleSave('Faturado')} disabled={updateMutation.isPending} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded-r-none">
+               <Button onClick={() => setShowFiscalDialog(true)} disabled={updateMutation.isPending} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded-r-none">
                   Faturar este pedido
                </Button>
                <div className="relative h-9">
@@ -1114,6 +1116,17 @@ export default function AdminOrderEdit() {
          </Button>
       </div>
 
+      {showFiscalDialog && order && (
+         <FiscalEmissionDialog 
+            isOpen={showFiscalDialog}
+            onClose={() => setShowFiscalDialog(false)}
+            orderId={order.id}
+            onEmitSuccess={() => {
+               queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
+               navigate('/vendas/gestao')
+            }}
+         />
+      )}
     </div>
   )
 }
