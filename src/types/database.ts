@@ -74,6 +74,8 @@ export interface Company {
   focusnfe_token?: string | null
   focusnfe_env?: 'producao' | 'homologacao' | null
   tax_regime?: 'simples_nacional' | 'regime_normal' | null
+  last_nfe_number?: number | null
+  nfe_series?: number | null
   created_at: string
 }
 
@@ -83,9 +85,15 @@ export interface NfeRecord {
   sales_order_id: string | null
   focus_reference: string
   status: string
+  nfe_number?: number | null
+  nfe_series?: number | null
+  access_key?: string | null
+  protocol?: string | null
+  environment?: string | null
   xml_url: string | null
   pdf_url: string | null
   error_message: string | null
+  issued_at?: string | null
   created_at: string
   updated_at: string
 }

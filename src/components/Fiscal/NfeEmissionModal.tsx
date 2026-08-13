@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { fiscalOperationsApi } from '@/api/fiscalOperations'
 import { Receipt, Loader2 } from 'lucide-react'
+import { nfeApi } from '@/api/nfe'
 import type { SalesOrder } from '@/types/database'
 
 interface NfeEmissionModalProps {
@@ -42,12 +43,8 @@ export function NfeEmissionModal({ isOpen, onClose, orderId }: NfeEmissionModalP
     mutationFn: async () => {
       if (!selectedOpId) throw new Error('Selecione a Natureza de Operação')
       
-      const res = await supabase.functions.invoke('emit-nfe', {
-        body: { orderId, fiscalOperationId: selectedOpId }
-      })
-      if (res.error) throw new Error(res.error.message || 'Erro na requisição')
-      if (res.data.error) throw new Error(res.data.error)
-      return res.data
+      const res = await nfeApi.emitirNfe(company!.id, orderId!)
+      return res
     },
     onSuccess: () => {
       toast.success('NF-e enviada para processamento!')

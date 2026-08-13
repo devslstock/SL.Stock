@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
 import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Upload, Edit, Eye, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Send, Trash2 } from 'lucide-react'
 import { ImportMaxiprodModal } from '@/components/Sales/ImportMaxiprodModal'
-import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
 import { CancelFaturamentoDialog } from '@/components/Sales/CancelFaturamentoDialog'
 import { Pagination } from '@/components/ui/Pagination'
 import type { SalesOrder } from '@/types/database'
@@ -56,7 +55,6 @@ export default function SalesManagement() {
   const [sendingOrderId, setSendingOrderId] = useState<string | null>(null)
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([])
   const [isBatchSending, setIsBatchSending] = useState(false)
-  const [emitNfeOrderId, setEmitNfeOrderId] = useState<string | null>(null)
   const [cancelFaturamentoOrderId, setCancelFaturamentoOrderId] = useState<string | null>(null)
   
   const [currentPage, setCurrentPage] = useState(1)
@@ -629,9 +627,6 @@ export default function SalesManagement() {
                         )}
                         {order.status === 'Faturado' && (
                           <>
-                            <Button size="sm" className="h-8 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setEmitNfeOrderId(order.id)}>
-                              <FileText className="h-4 w-4 mr-1" /> Emitir NF-e
-                            </Button>
                             <Button size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setCancelFaturamentoOrderId(order.id)}>
                               <XCircle className="h-4 w-4 mr-1" /> Cancelar Faturamento
                             </Button>
@@ -768,14 +763,6 @@ export default function SalesManagement() {
         </DialogContent>
       </Dialog>
       <ImportMaxiprodModal isOpen={isImportModalOpen} onOpenChange={setIsImportModalOpen} />
-
-      {emitNfeOrderId && (
-        <NfeEmissionModal 
-          isOpen={!!emitNfeOrderId} 
-          onClose={() => setEmitNfeOrderId(null)} 
-          orderId={emitNfeOrderId} 
-        />
-      )}
 
       {cancelFaturamentoOrderId && (
         <CancelFaturamentoDialog

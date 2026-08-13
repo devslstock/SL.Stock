@@ -43,6 +43,8 @@ export default function CompanySettings() {
   const [fiscalToken, setFiscalToken] = useState('')
   const [fiscalEnv, setFiscalEnv] = useState('homologacao')
   const [taxRegime, setTaxRegime] = useState('simples_nacional')
+  const [lastNfeNumber, setLastNfeNumber] = useState<number>(0)
+  const [nfeSeries, setNfeSeries] = useState<number>(1)
   const [isSavingFiscal, setIsSavingFiscal] = useState(false)
   const [certFile, setCertFile] = useState<File | null>(null)
   const [certPassword, setCertPassword] = useState('')
@@ -96,6 +98,8 @@ export default function CompanySettings() {
       setFiscalToken(companyData.focusnfe_token || '')
       setFiscalEnv(companyData.focusnfe_env || 'homologacao')
       setTaxRegime(companyData.tax_regime || 'simples_nacional')
+      setLastNfeNumber(companyData.last_nfe_number || 0)
+      setNfeSeries(companyData.nfe_series || 1)
     }
   }, [companyData])
 
@@ -253,7 +257,9 @@ export default function CompanySettings() {
       await companiesApi.updateCompany(company.id, { 
         focusnfe_token: fiscalToken,
         focusnfe_env: fiscalEnv as any,
-        tax_regime: taxRegime as any
+        tax_regime: taxRegime as any,
+        last_nfe_number: lastNfeNumber,
+        nfe_series: nfeSeries
       } as any)
       toast.success('Configurações Fiscais salvas com sucesso!')
     } catch (err: any) {
@@ -665,6 +671,25 @@ export default function CompanySettings() {
                   <option value="simples_nacional">Simples Nacional</option>
                   <option value="regime_normal">Regime Normal (Lucro Presumido/Real)</option>
                 </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Última NF-e Emitida</label>
+                <Input 
+                  type="number" 
+                  value={lastNfeNumber}
+                  onChange={e => setLastNfeNumber(parseInt(e.target.value) || 0)}
+                  placeholder="Ex: 154"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Para sequenciar corretamente as novas emissões.</p>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Série da NF-e</label>
+                <Input 
+                  type="number" 
+                  value={nfeSeries}
+                  onChange={e => setNfeSeries(parseInt(e.target.value) || 1)}
+                  placeholder="Ex: 1"
+                />
               </div>
             </div>
             

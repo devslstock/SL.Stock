@@ -114,6 +114,7 @@ import SalesCustomers from './pages/SalesApp/Customers/index'
 import NewOrder from '@/pages/SalesApp/NewOrder'
 import OrderGroups from '@/pages/SalesApp/OrderGroups/index'
 import AdminOrderEdit from './pages/SalesManagement/AdminOrderEdit'
+import NfeManagement from './pages/Fiscal/NfeManagement/index'
 import { PlanGuard } from './components/PlanGuard'
 
 import AccountsReceivable from './pages/Finance/AccountsReceivable'
@@ -195,6 +196,7 @@ function App() {
             <Route element={<RequirePermission perm="can_manage_company" />}>
               <Route path="/configuracoes/empresa" element={<CompanySettings />} />
               <Route path="/fiscal/natureza-operacao" element={<FiscalOperations />} />
+              <Route path="/fiscal/notas" element={<NfeManagement />} />
               <Route path="/acesso" element={<AccessControl />} />
             </Route>
              <Route path="/ajuda" element={<HelpAndSupport />} />
