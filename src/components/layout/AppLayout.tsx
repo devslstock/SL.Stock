@@ -77,8 +77,8 @@ const navGroups: NavGroup[] = [
     title: 'ESTOQUE',
     items: [
       { label: 'Estoque', icon: Package, path: '/produtos', permission: 'can_manage_products' },
-      { label: 'Entrada', icon: ArrowDown, path: '/estoque/entradas', permission: 'can_manage_products' }, // Placeholder
-      { label: 'Contagens', icon: ClipboardList, path: '/estoque/contagens', permission: 'can_manage_products' } // Placeholder
+      { label: 'Entrada', icon: ArrowDown, path: '/recebimentos', permission: 'can_manage_products' },
+      { label: 'Contagens', icon: ClipboardList, path: '/contagens', permission: 'can_manage_products' }
     ]
   },
   {
