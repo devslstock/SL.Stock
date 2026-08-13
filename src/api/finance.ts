@@ -29,6 +29,30 @@ export const financeApi = {
     return data
   },
 
+  // Buscar contas a receber vinculadas a um pedido específico
+  getContasPorPedido: async (salesOrderId: string): Promise<AccountReceivable[]> => {
+    const { data: userData } = await supabase.auth.getUser()
+    if (!userData.user) throw new Error('Not authenticated')
+
+    const { data: userRecord } = await supabase
+      .from('users')
+      .select('company_id')
+      .eq('auth_user_id', userData.user.id)
+      .single()
+
+    if (!userRecord) throw new Error('User not found')
+
+    const { data, error } = await supabase
+      .from('accounts_receivable')
+      .select('*')
+      .eq('company_id', userRecord.company_id)
+      .eq('sales_order_id', salesOrderId)
+      .order('installment_number', { ascending: true })
+
+    if (error) throw error
+    return data
+  },
+
   // Faturar um pedido e gerar parcelas (Idempotente)
   faturarPedido: async (salesOrderId: string): Promise<AccountReceivable[]> => {
     const { data: userData } = await supabase.auth.getUser()
@@ -188,6 +212,16 @@ export const financeApi = {
       .update({ status: 'cancelado' })
       .in('id', accountIds)
 
+    if (error) throw error
+  },
+
+  // Excluir permanentemente contas de um pedido
+  excluirContasDoPedido: async (salesOrderId: string): Promise<void> => {
+    const { error } = await supabase
+      .from('accounts_receivable')
+      .delete()
+      .eq('sales_order_id', salesOrderId)
+      
     if (error) throw error
   },
 

@@ -11,6 +11,7 @@ import { toast } from '@/components/ui/toaster'
 import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Upload, Edit, Eye, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Send, Trash2 } from 'lucide-react'
 import { ImportMaxiprodModal } from '@/components/Sales/ImportMaxiprodModal'
 import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
+import { CancelFaturamentoDialog } from '@/components/Sales/CancelFaturamentoDialog'
 import { Pagination } from '@/components/ui/Pagination'
 import type { SalesOrder } from '@/types/database'
 
@@ -56,6 +57,7 @@ export default function SalesManagement() {
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([])
   const [isBatchSending, setIsBatchSending] = useState(false)
   const [emitNfeOrderId, setEmitNfeOrderId] = useState<string | null>(null)
+  const [cancelFaturamentoOrderId, setCancelFaturamentoOrderId] = useState<string | null>(null)
   
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
@@ -626,9 +628,14 @@ export default function SalesManagement() {
                           </>
                         )}
                         {order.status === 'Faturado' && (
-                          <Button size="sm" className="h-8 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setEmitNfeOrderId(order.id)}>
-                            <FileText className="h-4 w-4 mr-1" /> Emitir NF-e
-                          </Button>
+                          <>
+                            <Button size="sm" className="h-8 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setEmitNfeOrderId(order.id)}>
+                              <FileText className="h-4 w-4 mr-1" /> Emitir NF-e
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setCancelFaturamentoOrderId(order.id)}>
+                              <XCircle className="h-4 w-4 mr-1" /> Cancelar Faturamento
+                            </Button>
+                          </>
                         )}
                         <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 text-blue-600 hover:text-blue-700" title="Gestão Burocrática do Pedido" onClick={() => navigate(`/vendas/gestao/editar/${order.id}`)}>
                           <Edit className="h-4 w-4" />
@@ -762,11 +769,20 @@ export default function SalesManagement() {
       </Dialog>
       <ImportMaxiprodModal isOpen={isImportModalOpen} onOpenChange={setIsImportModalOpen} />
 
-      <NfeEmissionModal 
-        isOpen={!!emitNfeOrderId} 
-        onClose={() => setEmitNfeOrderId(null)} 
-        orderId={emitNfeOrderId} 
-      />
+      {emitNfeOrderId && (
+        <NfeEmissionModal 
+          isOpen={!!emitNfeOrderId} 
+          onClose={() => setEmitNfeOrderId(null)} 
+          orderId={emitNfeOrderId} 
+        />
+      )}
+
+      {cancelFaturamentoOrderId && (
+        <CancelFaturamentoDialog
+          orderId={cancelFaturamentoOrderId}
+          onClose={() => setCancelFaturamentoOrderId(null)}
+        />
+      )}
 
       {selectedOrderIds.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4 flex flex-col sm:flex-row items-center justify-between z-50 gap-4 slide-in-from-bottom-4 animate-in duration-300">
