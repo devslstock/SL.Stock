@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { salesApi } from '@/api/sales'
 import { productsApi } from '@/api/products'
 import { financeApi } from '@/api/finance'
+import { nfeApi } from '@/api/nfe'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
@@ -37,6 +38,15 @@ export default function AdminOrderEdit() {
   const { data: paymentConditions = [] } = useQuery({
     queryKey: ['payment_conditions'],
     queryFn: () => salesApi.getPaymentConditions()
+  })
+
+  const { data: nfeRecord } = useQuery({
+    queryKey: ['nfe_record', id],
+    queryFn: async () => {
+      const { data } = await supabase.from('nfe_records').select('*').eq('sales_order_id', id).maybeSingle()
+      return data
+    },
+    enabled: !!id
   })
 
   const { data: customers = [] } = useQuery({
@@ -189,6 +199,19 @@ export default function AdminOrderEdit() {
       navigate('/vendas/gestao')
     },
     onError: (e: any) => toast.error(`Erro ao atualizar: ${e.message}`)
+  })
+
+  const emitirMutation = useMutation({
+    mutationFn: async () => {
+      if (!company?.id) throw new Error('Empresa não encontrada')
+      await nfeApi.emitirNfe(company.id, id!)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
+      toast.success('Nota Fiscal emitida com sucesso!')
+    },
+    onError: (e: any) => toast.error(`Erro ao emitir NF: ${e.message}`)
   })
 
   const faturarMutation = useMutation({
@@ -429,6 +452,9 @@ export default function AdminOrderEdit() {
 
   const selectedCustomer = customers.find((c: any) => c.id === formData.customer_id)
   const isEditable = !formData.status || formData.status === 'Digitação'
+  
+  const isNfeEmitida = nfeRecord?.status === 'Emitida'
+  const isAprovado = formData.status === 'Aprovado'
 
   return (
     <div className="space-y-4 max-w-[1400px] mx-auto pb-8 text-[13px]">
@@ -442,7 +468,22 @@ export default function AdminOrderEdit() {
           <span className="font-semibold">Pedido de venda</span>
         </div>
         <div className="flex gap-2">
-          {formData.status === 'Aprovado' && (
+          {isAprovado && !isNfeEmitida && (
+            <Button 
+              size="sm" 
+              onClick={() => {
+                if (confirm('Deseja emitir a Nota Fiscal para este pedido?')) {
+                  emitirMutation.mutate()
+                }
+              }} 
+              className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={emitirMutation.isPending}
+            >
+              {emitirMutation.isPending ? 'Emitindo...' : 'Emitir NF'}
+            </Button>
+          )}
+
+          {isAprovado && isNfeEmitida && (
             <Button 
               size="sm" 
               onClick={handleFaturar} 
@@ -452,6 +493,7 @@ export default function AdminOrderEdit() {
               {faturarMutation.isPending ? 'Faturando...' : 'FATURAR PEDIDO'}
             </Button>
           )}
+
           {isEditable && (
             <Button size="sm" onClick={() => handleSave()} className="h-8">Salvar Alterações</Button>
           )}
@@ -902,16 +944,19 @@ export default function AdminOrderEdit() {
            </div>
 
            <div className="flex flex-col gap-2 pl-4">
-             <div className="flex items-center gap-2">
-               <label className="text-right w-32">Condição editável</label>
-               <Input 
-                 className="h-7 text-[13px] w-80 bg-background font-medium"
-                 value={formData.custom_payment_condition || ''}
-                 onChange={e => setFormData({...formData, custom_payment_condition: e.target.value})}
-                 placeholder="Ex: 0; 7; 14; 28 ou 3x ou 30 Dias"
-                 disabled={!isEditable}
-               />
-             </div>
+           <div className="col-span-6 flex items-center gap-2">
+             <label className="text-right w-32">Condição editável</label>
+             <Input 
+               className="h-7 text-[13px] flex-1 bg-background font-medium"
+               value={formData.custom_payment_condition || ''}
+               onChange={e => setFormData({...formData, custom_payment_condition: e.target.value})}
+               placeholder="Ex: 0; 7; 14; 28 ou 3x ou 30 Dias"
+               disabled={!isEditable && !isAprovado || isNfeEmitida}
+             />
+             {isNfeEmitida && (
+               <span className="text-xs text-muted-foreground ml-2">Bloqueado pela NF</span>
+             )}
+           </div>
              
              {/* PREVIEW TABLE */}
              {formData.custom_payment_condition && (

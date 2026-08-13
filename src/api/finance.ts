@@ -21,7 +21,7 @@ export const financeApi = {
       .select(`
         *,
         customer:customers(*),
-        sales_order:sales_orders(*)
+        sales_order:sales_orders(*, nfe:nfe_records(*))
       `)
       .eq('company_id', userRecord.company_id)
       .order('due_date', { ascending: true })
@@ -67,14 +67,23 @@ export const financeApi = {
 
     if (!userRecord) throw new Error('User not found')
     
-    // 1. Validar se o pedido existe e não está faturado
+    // 1. Validar pedido e recuperar NF
     const { data: order, error: orderError } = await supabase
       .from('sales_orders')
-      .select('*, payment_condition:payment_conditions(*)')
+      .select('*, payment_condition:payment_conditions(*), nfe:nfe_records(*)')
       .eq('id', salesOrderId)
       .single()
-      
-    if (orderError || !order) throw new Error('Pedido não encontrado')
+
+    if (orderError || !order) {
+      throw new Error('Pedido não encontrado')
+    }
+
+    const nfeList = order.nfe as any[]
+    const isNfeEmitida = nfeList && nfeList.length > 0 && nfeList[0].status === 'Emitida'
+
+    if (!isNfeEmitida) {
+      throw new Error('Pedido não pode ser faturado. É necessário emitir e autorizar a Nota Fiscal primeiro.')
+    }
     if (order.status === 'Faturado') throw new Error('Este pedido já foi faturado')
     
     // 2. Checar se já existem contas a receber (proteção extra de idempotência)

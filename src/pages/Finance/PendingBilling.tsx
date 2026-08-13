@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { salesApi } from '@/api/sales'
 import { useNavigate } from 'react-router-dom'
-import { formatCurrency } from '@/utils/formatters'
-import { FileText, ArrowRight, Clock, AlertCircle } from 'lucide-react'
+import { ArrowRight, Clock, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { supabase } from '@/lib/supabase'
 
 export default function PendingBilling() {
   const navigate = useNavigate()
@@ -12,9 +12,18 @@ export default function PendingBilling() {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['sales_orders_pending_billing'],
     queryFn: async () => {
-      // In a real app we might want to query specifically for 'Aprovado' status
-      const data = await salesApi.getSalesOrders()
-      return data.filter(order => order.status === 'Aprovado')
+      const { data, error } = await supabase
+        .from('sales_orders')
+        .select('*, customer:customer_id(*), sales_rep:sales_rep_id(*), nfe:nfe_records(*)')
+        .eq('status', 'Aprovado')
+      
+      if (error) throw error
+      
+      // Filtra os que tem NF Emitida
+      return (data || []).filter(order => {
+        const nfeList = order.nfe as any[]
+        return nfeList && nfeList.length > 0 && nfeList[0].status === 'Emitida'
+      })
     }
   })
 
@@ -27,10 +36,10 @@ export default function PendingBilling() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6 text-amber-500" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-file-text text-amber-500"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
             Pedidos Aguardando Faturamento
           </h1>
-          <p className="text-muted-foreground mt-1">Estes pedidos foram aprovados e aguardam a ação de faturamento para gerar as cobranças financeiras.</p>
+          <p className="text-muted-foreground mt-1">Estes pedidos possuem Nota Fiscal emitida e aguardam a ação de faturamento para gerar as cobranças financeiras.</p>
         </div>
       </div>
 
@@ -54,7 +63,7 @@ export default function PendingBilling() {
             <div key={order.id} className="glass-card p-4 rounded-xl flex items-center justify-between hover:border-primary/30 transition-colors">
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <FileText className="h-6 w-6 text-primary" />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-file-text text-primary"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">
@@ -67,7 +76,7 @@ export default function PendingBilling() {
                     <span>•</span>
                     <span>Vendedor: {order.sales_rep?.nickname || '-'}</span>
                     <span>•</span>
-                    <span className="font-medium text-foreground">{formatCurrency(order.net_amount || order.total_amount)}</span>
+                    <span className="font-medium text-foreground text-emerald-600">NF Autorizada</span>
                   </div>
                 </div>
               </div>

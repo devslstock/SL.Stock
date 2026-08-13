@@ -23,7 +23,7 @@ export const nfeApi = {
         nfe:nfe_records(*)
       `)
       .eq('company_id', companyId)
-      .eq('status', 'Faturado') // Somente pedidos faturados estão aptos
+      .in('status', ['Aprovado', 'Faturado']) // Pedidos Aprovados e Faturados estão aptos para listar na fiscal
       .order('created_at', { ascending: false })
 
     if (filtros?.numero_pedido) {
@@ -167,6 +167,21 @@ export const nfeApi = {
   async cancelarNfe(companyId: string, nfeId: string, justificativa: string) {
     if (justificativa.length < 15) {
       throw new Error('A justificativa deve ter pelo menos 15 caracteres.')
+    }
+
+    // Verificar se a NF tem cobranças ativas no financeiro
+    const { data: nfe } = await supabase.from('nfe_records').select('sales_order_id').eq('id', nfeId).single()
+    if (nfe?.sales_order_id) {
+      const { data: accounts } = await supabase
+        .from('accounts_receivable')
+        .select('id')
+        .eq('sales_order_id', nfe.sales_order_id)
+        .neq('status', 'cancelado')
+        .limit(1)
+
+      if (accounts && accounts.length > 0) {
+        throw new Error('Não é possível cancelar a Nota Fiscal: existem cobranças ativas no financeiro vinculadas a ela. Cancele as cobranças primeiro.')
+      }
     }
 
     await new Promise(resolve => setTimeout(resolve, 1000))
