@@ -23,7 +23,7 @@ export function FiscalEmissionDialog({
   const { company } = useAuth()
   const queryClient = useQueryClient()
   
-  const [showSendModal, setShowSendModal] = useState(false)
+  const [sendStep, setSendStep] = useState<0 | 1 | 2>(0)
   const [nfeRecord, setNfeRecord] = useState<any>(null)
   const [customerEmail, setCustomerEmail] = useState('')
 
@@ -55,57 +55,77 @@ export function FiscalEmissionDialog({
       toast.success('Nota Fiscal emitida e cobranças geradas com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
-      setShowSendModal(true)
+      setSendStep(1)
     },
     onError: (err: any) => toast.error(err.message)
   })
 
-  if (showSendModal) {
+  if (sendStep > 0) {
     return (
-      <Dialog open={showSendModal} onOpenChange={() => {
-        setShowSendModal(false)
+      <Dialog open={sendStep > 0} onOpenChange={() => {
+        setSendStep(0)
         onClose()
         onEmitSuccess()
       }}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Deseja enviar a Nota Fiscal?</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div>
-              <label className="text-sm font-semibold">E-mail do destinatário</label>
-              <input 
-                type="email" 
-                className="w-full h-9 border rounded px-3 mt-1" 
-                value={customerEmail}
-                onChange={e => setCustomerEmail(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button variant="outline" className="w-full justify-start" onClick={() => {
-                toast.info("A visualização do PDF será implementada em breve.")
-              }}>
-                <FileText className="h-4 w-4 mr-2" /> Visualizar NF em PDF
-              </Button>
-              <Button className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white" onClick={() => {
-                toast.success(`E-mail enviado para ${customerEmail}`)
-              }}>
-                <Send className="h-4 w-4 mr-2" /> Enviar por E-mail
-              </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setShowSendModal(false)
-              onClose()
-              onEmitSuccess()
-            }}>Não</Button>
-            <Button onClick={() => {
-              setShowSendModal(false)
-              onClose()
-              onEmitSuccess()
-            }}>OK</Button>
-          </DialogFooter>
+          {sendStep === 1 ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Deseja enviar a Nota Fiscal?</DialogTitle>
+              </DialogHeader>
+              <div className="py-4 text-sm text-muted-foreground">
+                <p>A nota será enviada para autorização na Receita Federal.</p>
+                <p className="mt-2 text-xs italic">(Esta etapa de comunicação com a SEFAZ ainda está em desenvolvimento)</p>
+              </div>
+              <DialogFooter className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => {
+                  setSendStep(0)
+                  onClose()
+                  onEmitSuccess()
+                }}>Não</Button>
+                <Button onClick={() => {
+                  toast.success('Nota Fiscal enviada para a Receita Federal!')
+                  setSendStep(2)
+                }}>Sim</Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Envio da Nota Fiscal</DialogTitle>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                <div>
+                  <label className="text-sm font-semibold">E-mail do destinatário</label>
+                  <input 
+                    type="email" 
+                    className="w-full h-9 border rounded px-3 mt-1" 
+                    value={customerEmail}
+                    onChange={e => setCustomerEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => {
+                    toast.info("A visualização do PDF será implementada em breve.")
+                  }}>
+                    <FileText className="h-4 w-4 mr-2" /> Visualizar NF em PDF
+                  </Button>
+                  <Button className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white" onClick={() => {
+                    toast.success(`E-mail enviado para ${customerEmail}`)
+                  }}>
+                    <Send className="h-4 w-4 mr-2" /> Enviar por E-mail
+                  </Button>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => {
+                  setSendStep(0)
+                  onClose()
+                  onEmitSuccess()
+                }}>OK</Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     )
