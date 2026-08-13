@@ -205,6 +205,26 @@ export const financeApi = {
     if (error) throw error
   },
 
+  // Excluir permanentemente contas por ID
+  excluirContas: async (accountIds: string[]): Promise<void> => {
+    const { error } = await supabase
+      .from('accounts_receivable')
+      .delete()
+      .in('id', accountIds)
+
+    if (error) throw error
+  },
+
+  // Reverter status do pedido de Faturado para Aprovado
+  reverterFaturamentoPedido: async (salesOrderId: string): Promise<void> => {
+    const { error } = await supabase
+      .from('sales_orders')
+      .update({ status: 'Aprovado' })
+      .eq('id', salesOrderId)
+
+    if (error) throw error
+  },
+
   // Checar inadimplência
   hasOverduePayments: async (customerId: string): Promise<boolean> => {
     const { data: userData } = await supabase.auth.getUser()

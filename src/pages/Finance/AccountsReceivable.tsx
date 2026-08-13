@@ -6,6 +6,7 @@ import { DollarSign, Search, Calendar, FileText, CheckCircle2, XCircle, AlertCir
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import type { AccountReceivable } from '@/types/database'
 
 export default function AccountsReceivable() {
@@ -13,6 +14,23 @@ export default function AccountsReceivable() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+  // Estados para o fluxo de cancelamento
+  const [cancelDialogState, setCancelDialogState] = useState<{
+    isOpen: boolean;
+    step: 1 | 2; // 1: Cancelar, 2: Excluir
+    account: AccountReceivable | null;
+    relatedAccounts: AccountReceivable[];
+    idsToProcess: string[]; // IDs que foram efetivamente cancelados no passo 1
+    cancelAll: boolean; // Se o usuário escolheu cancelar todas no passo 1
+  }>({
+    isOpen: false,
+    step: 1,
+    account: null,
+    relatedAccounts: [],
+    idsToProcess: [],
+    cancelAll: false
+  })
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['accounts_receivable'],
@@ -31,13 +49,37 @@ export default function AccountsReceivable() {
   })
 
   const cancelarMutation = useMutation({
-    mutationFn: (id: string) => financeApi.cancelarConta(id),
-    onSuccess: (_, id) => {
+    mutationFn: async ({ ids, cancelAll, salesOrderId }: { ids: string[], cancelAll: boolean, salesOrderId: string }) => {
+      // 1. Cancelar as contas no financeiro
+      await financeApi.batchCancelarContas(ids)
+      
+      // 2. Se cancelou TODAS as contas do pedido, volta o pedido para Aprovado
+      if (cancelAll) {
+         await financeApi.reverterFaturamentoPedido(salesOrderId)
+      }
+    },
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
-      toast.success('Cobrança cancelada!')
-      setSelectedIds(prev => prev.filter(p => p !== id)) // Removendo da seleção se estiver
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] }) // Invalida pedidos tb
+      toast.success('Cobrança(s) cancelada(s)!')
+      setSelectedIds(prev => prev.filter(p => !variables.ids.includes(p)))
+      
+      // Avança para a pergunta de exclusão
+      setCancelDialogState(prev => ({ ...prev, step: 2, idsToProcess: variables.ids, cancelAll: variables.cancelAll }))
     },
     onError: (e: any) => toast.error('Erro ao cancelar: ' + e.message)
+  })
+
+  const excluirMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+       await financeApi.excluirContas(ids)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
+      toast.success('Cobrança(s) excluída(s) permanentemente!')
+      setCancelDialogState(prev => ({ ...prev, isOpen: false }))
+    },
+    onError: (e: any) => toast.error('Erro ao excluir: ' + e.message)
   })
 
   const batchBaixarMutation = useMutation({
@@ -66,10 +108,20 @@ export default function AccountsReceivable() {
     }
   }
 
-  const handleCancelar = (account: AccountReceivable) => {
-    if (confirm(`Confirma o cancelamento da cobrança ${account.installment_number} do pedido ${account.sales_order?.order_number || account.sales_order_id.slice(0,5).toUpperCase()}?`)) {
-      cancelarMutation.mutate(account.id)
-    }
+  const handleCancelar = async (account: AccountReceivable) => {
+    // Buscar se há mais cobranças para o mesmo pedido
+    const related = accounts.filter((a: AccountReceivable) => 
+       a.sales_order_id === account.sales_order_id && a.status !== 'cancelado'
+    )
+    
+    setCancelDialogState({
+       isOpen: true,
+       step: 1,
+       account,
+       relatedAccounts: related,
+       idsToProcess: [],
+       cancelAll: false
+    })
   }
 
   const handleToggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,6 +156,130 @@ export default function AccountsReceivable() {
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-6">
+
+      {/* Modal de Cancelamento/Exclusão */}
+      <Dialog open={cancelDialogState.isOpen} onOpenChange={(open) => {
+         if (!open && !cancelarMutation.isPending && !excluirMutation.isPending) {
+            setCancelDialogState(prev => ({...prev, isOpen: false}))
+         }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              {cancelDialogState.step === 1 ? 'Cancelar Cobrança' : 'Excluir Cobrança'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {cancelDialogState.step === 1 ? (
+            <div className="py-4 space-y-4">
+               {cancelDialogState.relatedAccounts.length > 1 ? (
+                  <>
+                     <p className="text-sm">
+                        O pedido <strong>{cancelDialogState.account?.sales_order?.order_number || cancelDialogState.account?.sales_order_id.slice(0,5).toUpperCase()}</strong> possui <strong>{cancelDialogState.relatedAccounts.length} cobranças</strong> vinculadas.
+                     </p>
+                     <p className="text-sm font-semibold text-red-600">
+                        Deseja cancelar TODAS as cobranças referentes a este pedido?
+                     </p>
+                     <p className="text-xs text-muted-foreground">
+                        Se escolher cancelar todas, o pedido voltará para o status "Aprovado" e ficará disponível para faturamento novamente.
+                     </p>
+                     <DialogFooter className="mt-6">
+                        <Button 
+                           variant="outline" 
+                           disabled={cancelarMutation.isPending}
+                           onClick={() => setCancelDialogState(prev => ({...prev, isOpen: false}))}
+                        >
+                           Desistir
+                        </Button>
+                        <Button 
+                           variant="secondary"
+                           disabled={cancelarMutation.isPending}
+                           onClick={() => {
+                              cancelarMutation.mutate({ 
+                                 ids: [cancelDialogState.account!.id], 
+                                 cancelAll: false,
+                                 salesOrderId: cancelDialogState.account!.sales_order_id
+                              })
+                           }}
+                        >
+                           Cancelar apenas esta ({cancelDialogState.account?.installment_number})
+                        </Button>
+                        <Button 
+                           variant="destructive"
+                           disabled={cancelarMutation.isPending}
+                           onClick={() => {
+                              const allIds = cancelDialogState.relatedAccounts.map(r => r.id)
+                              cancelarMutation.mutate({ 
+                                 ids: allIds, 
+                                 cancelAll: true,
+                                 salesOrderId: cancelDialogState.account!.sales_order_id
+                              })
+                           }}
+                        >
+                           {cancelarMutation.isPending ? 'Aguarde...' : 'Sim, cancelar todas'}
+                        </Button>
+                     </DialogFooter>
+                  </>
+               ) : (
+                  <>
+                     <p className="text-sm">
+                        Confirma o cancelamento da cobrança <strong>{cancelDialogState.account?.installment_number}</strong> do pedido <strong>{cancelDialogState.account?.sales_order?.order_number || cancelDialogState.account?.sales_order_id.slice(0,5).toUpperCase()}</strong>?
+                     </p>
+                     <p className="text-xs text-muted-foreground mt-2">
+                        O pedido voltará para o status "Aprovado" e ficará disponível para faturamento novamente.
+                     </p>
+                     <DialogFooter className="mt-6">
+                        <Button 
+                           variant="outline" 
+                           disabled={cancelarMutation.isPending}
+                           onClick={() => setCancelDialogState(prev => ({...prev, isOpen: false}))}
+                        >
+                           Desistir
+                        </Button>
+                        <Button 
+                           variant="destructive"
+                           disabled={cancelarMutation.isPending}
+                           onClick={() => {
+                              cancelarMutation.mutate({ 
+                                 ids: [cancelDialogState.account!.id], 
+                                 cancelAll: true,
+                                 salesOrderId: cancelDialogState.account!.sales_order_id
+                              })
+                           }}
+                        >
+                           {cancelarMutation.isPending ? 'Aguarde...' : 'Sim, cancelar'}
+                        </Button>
+                     </DialogFooter>
+                  </>
+               )}
+            </div>
+          ) : (
+            <div className="py-4 space-y-4">
+               <p className="text-sm font-semibold text-orange-600">Cobrança(s) cancelada(s) com sucesso!</p>
+               <p className="text-sm">
+                  Deseja apagar permanentemente o(s) registro(s) cancelado(s) do sistema?
+               </p>
+               <DialogFooter className="mt-6">
+                  <Button 
+                     variant="outline" 
+                     disabled={excluirMutation.isPending}
+                     onClick={() => setCancelDialogState(prev => ({...prev, isOpen: false}))}
+                  >
+                     Não, manter como cancelado
+                  </Button>
+                  <Button 
+                     variant="destructive"
+                     disabled={excluirMutation.isPending}
+                     onClick={() => excluirMutation.mutate(cancelDialogState.idsToProcess)}
+                  >
+                     {excluirMutation.isPending ? 'Apagando...' : 'Sim, apagar permanentemente'}
+                  </Button>
+               </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
