@@ -32,7 +32,7 @@ export default function AccountsReceivable() {
 
   const cancelarMutation = useMutation({
     mutationFn: (id: string) => financeApi.cancelarConta(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
       toast.success('Cobrança cancelada!')
       setSelectedIds(prev => prev.filter(p => p !== id)) // Removendo da seleção se estiver
