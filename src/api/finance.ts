@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { AccountReceivable, BankIntegration } from '../types/database'
-import { v4 as uuidv4 } from 'uuid'
+import type { AccountReceivable, BankIntegration } from '../types/database'
 
 export const financeApi = {
   // Buscar todas as contas a receber
@@ -76,7 +75,7 @@ export const financeApi = {
       dueDate.setDate(dueDate.getDate() + (i * intervalDays))
       
       newAccounts.push({
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         company_id: userRecord.company_id,
         customer_id: order.customer_id,
         sales_order_id: order.id,

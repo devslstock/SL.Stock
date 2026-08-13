@@ -6,7 +6,7 @@ import { DollarSign, Search, Calendar, FileText, CheckCircle2, XCircle, AlertCir
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
-import { AccountReceivable } from '@/types/database'
+import type { AccountReceivable } from '@/types/database'
 
 export default function AccountsReceivable() {
   const queryClient = useQueryClient()
@@ -39,7 +39,7 @@ export default function AccountsReceivable() {
     const matchesSearch = 
       acc.customer?.legal_name?.toLowerCase().includes(search.toLowerCase()) ||
       acc.customer?.fantasy_name?.toLowerCase().includes(search.toLowerCase()) ||
-      acc.sales_order?.order_number?.toLowerCase().includes(search.toLowerCase())
+      acc.sales_order?.order_number?.toString().includes(search.toLowerCase())
 
     if (filterStatus === 'all') return matchesSearch
     return matchesSearch && acc.status === filterStatus
