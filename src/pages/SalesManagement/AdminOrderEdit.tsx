@@ -200,7 +200,6 @@ export default function AdminOrderEdit() {
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
       toast.success('Pedido e itens atualizados com sucesso!')
-      navigate('/vendas/gestao')
     },
     onError: (e: any) => toast.error(`Erro ao atualizar: ${e.message}`)
   })
@@ -1123,7 +1122,7 @@ export default function AdminOrderEdit() {
             orderId={order.id}
             onEmitSuccess={() => {
                queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
-               navigate('/vendas/gestao')
+               // navigate removido para manter o usuário na tela
             }}
          />
       )}
