@@ -7,7 +7,7 @@ import {
   Clock, History, UserIcon, FileSignature, Box, Building2, Banknote,
   Megaphone, StickyNote, MapPin, Bell, ShieldCheck, LogOut, Lock,
   ChevronDown, Map, Tag, Briefcase, HelpCircle, Wifi, WifiOff, RefreshCw, Receipt,
-  FileText, DollarSign
+  FileText, DollarSign, ArrowDown
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
@@ -40,28 +40,36 @@ const navGroups: NavGroup[] = [
   {
     title: '',
     items: [
-      { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', permission: 'can_view_dashboard' },
-      { label: 'App Força de Vendas', icon: Briefcase, path: '/vendas', permission: 'can_use_sales_app' }
+      { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', permission: 'can_view_dashboard' }
+    ]
+  },
+  {
+    title: 'COMERCIAL',
+    items: [
+      { label: 'Força de Vendas', icon: Briefcase, path: '/vendas', permission: 'can_use_sales_app' }
     ]
   },
   {
     title: 'FISCAL',
     items: [
       { label: 'Gestão de Pedidos', icon: FileSignature, path: '/vendas/gestao', permission: 'can_manage_sales' },
-      { label: 'Natureza de Operação', icon: Receipt, path: '/fiscal/natureza-operacao', permission: 'can_manage_company' }
+      { label: 'Notas Fiscais', icon: FileText, path: '/fiscal/notas', permission: 'can_manage_sales' }, // Placeholder permission and path
+      { label: 'Natureza da Operação', icon: Receipt, path: '/fiscal/natureza-operacao', permission: 'can_manage_company' }
     ]
   },
   {
     title: 'FINANCEIRO',
     items: [
-      { label: 'Aguardando Faturamento', icon: FileText, path: '/financeiro/faturamento', permission: 'can_manage_finance' },
-      { label: 'Contas a Receber', icon: DollarSign, path: '/financeiro/contas-receber', permission: 'can_manage_finance' }
+      { label: 'Contas a Receber', icon: DollarSign, path: '/financeiro/contas-receber', permission: 'can_manage_finance' },
+      { label: 'Contas a Pagar', icon: Banknote, path: '/financeiro/contas-pagar', permission: 'can_manage_finance' }, // Placeholder
+      { label: 'Tabela de Preços', icon: Tag, path: '/cadastros/tabelas-de-preco', permission: 'can_manage_price_tables' },
+      { label: 'Condições de Pagamento', icon: Banknote, path: '/cadastros/condicoes-pagamento', permission: 'can_manage_payment_conditions' }
     ]
   },
   {
     title: 'OPERAÇÕES',
     items: [
-      { label: 'Cargas', icon: Truck, path: '/cargas', permission: 'can_manage_loads' },
+      { label: 'Carga', icon: Truck, path: '/cargas', permission: 'can_manage_loads' },
       { label: 'Entregas', icon: MapPin, path: '/entregas', permission: 'can_do_delivery' }
     ]
   },
@@ -69,26 +77,26 @@ const navGroups: NavGroup[] = [
     title: 'ESTOQUE',
     items: [
       { label: 'Estoque', icon: Package, path: '/produtos', permission: 'can_manage_products' },
-      { label: 'Tabelas de Preço', icon: Tag, path: '/cadastros/tabelas-de-preco', permission: 'can_manage_price_tables' },
-      { label: 'Condições de Pagamento', icon: Banknote, path: '/cadastros/condicoes-pagamento', permission: 'can_manage_payment_conditions' }
-    ]
-  },
-  {
-    title: 'COMODATOS',
-    items: [
-      { label: 'Equipamentos', icon: Box, path: '/comodatos', permission: 'can_manage_equipments' },
-      { label: 'Ordens de Serviço', icon: ClipboardList, path: '/comodatos/os', permission: 'can_manage_os' },
-      { label: 'Insumos / Peças', icon: Package, path: '/comodatos/insumos', permission: 'can_manage_supplies' },
-      { label: 'Solicitar Peças', icon: Tag, path: '/comodatos/solicitacoes', permission: 'can_request_supplies' }
+      { label: 'Entrada', icon: ArrowDown, path: '/estoque/entradas', permission: 'can_manage_products' }, // Placeholder
+      { label: 'Contagens', icon: ClipboardList, path: '/estoque/contagens', permission: 'can_manage_products' } // Placeholder
     ]
   },
   {
     title: 'CRM & CADASTROS',
     items: [
       { label: 'Clientes', icon: Building2, path: '/cadastros/clientes', permission: 'can_manage_customers' },
-      { label: 'Grupos de Pedidos', icon: Boxes, path: '/vendas/grupos', permission: 'can_manage_order_groups' },
+      { label: 'Grupo de Pedidos', icon: Boxes, path: '/vendas/grupos', permission: 'can_manage_order_groups' },
       { label: 'Representantes', icon: Users, path: '/cadastros/representantes', permission: 'can_manage_reps' },
       { label: 'Regiões', icon: Map, path: '/cadastros/regioes', permission: 'can_manage_regions' }
+    ]
+  },
+  {
+    title: 'COMODATOS',
+    items: [
+      { label: 'Equipamento', icon: Box, path: '/comodatos', permission: 'can_manage_equipments' },
+      { label: 'Ordem de Serviço', icon: ClipboardList, path: '/comodatos/os', permission: 'can_manage_os' },
+      { label: 'Insumo / Peças', icon: Package, path: '/comodatos/insumos', permission: 'can_manage_supplies' },
+      { label: 'Solicitar Peças', icon: Tag, path: '/comodatos/solicitacoes', permission: 'can_request_supplies' }
     ]
   },
   {
