@@ -118,6 +118,7 @@ export default function AdminOrderEdit() {
     obs_internas: '',
     obs_fisco: '',
     obs_contribuinte: '',
+    nfe_series: 3,
     forma_pagamento: '',
     condicao_frete: ''
   })
@@ -143,6 +144,7 @@ export default function AdminOrderEdit() {
         obs_fisco: order.obs_fisco || '',
         obs_contribuinte: order.obs_contribuinte || '',
         operacao_fiscal: order.operacao_fiscal || '',
+        nfe_series: order.nfe_series || 3,
         forma_pagamento: order.forma_pagamento || '',
         condicao_frete: order.condicao_frete || ''
       }))
@@ -417,6 +419,7 @@ export default function AdminOrderEdit() {
       obs_fisco: formData.obs_fisco,
       obs_contribuinte: formData.obs_contribuinte,
       operacao_fiscal: formData.operacao_fiscal,
+      nfe_series: formData.nfe_series,
       forma_pagamento: formData.forma_pagamento,
       condicao_frete: formData.condicao_frete
     }
@@ -670,24 +673,39 @@ export default function AdminOrderEdit() {
             </select>
           </div>
 
-          <div className="col-span-12 flex items-center gap-2">
-            <label className="font-semibold text-right w-24 leading-tight flex items-center justify-end gap-1">
-              Operação fiscal*
-              {!isPlatina && <span title="Disponível apenas no plano Platina"><Lock className="h-3 w-3 text-muted-foreground" /></span>}
-            </label>
-            <select 
-              className="h-7 text-[13px] border rounded px-1 w-80 bg-background disabled:opacity-50 disabled:cursor-not-allowed" 
-              value={formData.operacao_fiscal} 
-              onChange={e => setFormData({...formData, operacao_fiscal: e.target.value})}
-              disabled={!isPlatina}
-              title={!isPlatina ? "Disponível apenas no plano Platina" : ""}
-            >
-               <option value="">Selecione...</option>
-               <option value="5405">5405 - Venda de merc. com subst. trib.</option>
-               <option value="5102">5102 - Venda de merc. adquirida de terç.</option>
-            </select>
+          <div className="col-span-12 flex gap-4 mt-2 mb-2 p-3 bg-muted/20 border border-border rounded-lg">
+            <div className="flex-1 flex items-center gap-2">
+              <label className="font-semibold text-right w-24 leading-tight flex items-center justify-end gap-1">
+                Operação fiscal*
+                {!isPlatina && <span title="Disponível apenas no plano Platina"><Lock className="h-3 w-3 text-muted-foreground" /></span>}
+              </label>
+              <select 
+                className="h-7 text-[13px] border rounded px-1 flex-1 bg-background disabled:opacity-50 disabled:cursor-not-allowed" 
+                value={formData.operacao_fiscal} 
+                onChange={e => setFormData({...formData, operacao_fiscal: e.target.value})}
+                disabled={!isPlatina || !isEditable}
+                title={!isPlatina ? "Disponível apenas no plano Platina" : ""}
+              >
+                 <option value="">Selecione...</option>
+                 <option value="5405">5405 - Venda de merc. com subst. trib.</option>
+                 <option value="5102">5102 - Venda de merc. adquirida de terç.</option>
+              </select>
+            </div>
+            <div className="flex-1 flex items-center gap-2">
+              <label className="font-semibold w-24 text-right text-primary">Série Fiscal</label>
+              <select 
+                className="h-7 flex-1 border rounded px-2 bg-background font-medium"
+                value={formData.nfe_series}
+                onChange={e => setFormData({...formData, nfe_series: parseInt(e.target.value)})}
+                disabled={!isEditable && !isAprovado || isNfeEmitida}
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+              </select>
+              {isNfeEmitida && <span className="text-xs text-muted-foreground ml-2">Bloqueado</span>}
+            </div>
           </div>
-
         </div>
       </div>
 

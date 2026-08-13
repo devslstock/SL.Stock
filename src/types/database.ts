@@ -274,6 +274,7 @@ export interface SalesOrder {
   price_table_id: string | null
   payment_condition_id: string | null
   custom_payment_condition?: string | null
+  nfe_series?: number | null
   order_group_id: string | null
   status: 'Digitação' | 'Aprovado' | 'Faturado' | 'Cancelado' | 'Retornou' | 'Entregue'
   total_amount: number

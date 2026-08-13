@@ -91,6 +91,10 @@ export const nfeApi = {
     if (!customer?.document) {
       throw new Error(`Cliente ${customer?.name || ''} sem CNPJ/CPF cadastrado.`)
     }
+    
+    if (!order.nfe_series) {
+      throw new Error('Série fiscal não informada. Selecione uma série antes de emitir a Nota Fiscal.')
+    }
 
     // 2. Incrementar a numeração da empresa de forma atômica
     const { data: company, error: companyError } = await supabase
@@ -102,7 +106,7 @@ export const nfeApi = {
     if (companyError || !company) throw new Error('Erro ao buscar numeração da empresa')
 
     const nextNumber = (company.last_nfe_number || 0) + 1
-    const series = company.nfe_series || 1
+    const series = order.nfe_series
 
     await supabase
       .from('companies')
