@@ -61,7 +61,7 @@ const navGroups: NavGroup[] = [
     title: 'FINANCEIRO',
     items: [
       { label: 'Contas a Receber', icon: DollarSign, path: '/financeiro/contas-receber', permission: 'can_manage_finance' },
-      { label: 'Contas a Pagar', icon: Banknote, path: '/financeiro/contas-pagar', permission: 'can_manage_finance' }, // Placeholder
+      { label: 'Contas a Pagar (Em breve)', icon: Banknote, path: '/financeiro/contas-pagar', permission: 'can_manage_finance' }, // Placeholder
       { label: 'Tabela de Preços', icon: Tag, path: '/cadastros/tabelas-de-preco', permission: 'can_manage_price_tables' },
       { label: 'Condições de Pagamento', icon: Banknote, path: '/cadastros/condicoes-pagamento', permission: 'can_manage_payment_conditions' }
     ]
