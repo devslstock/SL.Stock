@@ -1415,9 +1415,32 @@ export default function Conference() {
                             <span className={`text-lg font-bold font-mono ${done && !isExtra ? 'text-emerald-700 dark:text-emerald-400' : isExtra ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'}`}>{scannedQty}</span>
                             <span className="text-muted-foreground text-sm">/{expectedQty}</span>
                           </div>
-                          {done && !isExtra && <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-                          {!done && !isExtra && <div className="h-5 w-5 rounded-full border-2 border-amber-500/30" />}
-                          {isExtra && <AlertTriangle className="h-5 w-5 text-red-500" />}
+                          {isExtra ? (
+                            <AlertTriangle className="h-5 w-5 text-red-500" />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!done) {
+                                  setReturnedItems(prev => ({ ...prev, [code]: expectedQty }))
+                                } else {
+                                  setReturnedItems(prev => {
+                                    const next = { ...prev }
+                                    delete next[code]
+                                    return next
+                                  })
+                                }
+                              }}
+                              className="hover:scale-105 active:scale-95 transition-transform"
+                              title={done ? "Desmarcar item" : "Marcar item como retornado"}
+                            >
+                              {done ? (
+                                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                              ) : (
+                                <div className="h-5 w-5 rounded-full border-2 border-amber-500/30 hover:border-amber-500/70" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
                     )
