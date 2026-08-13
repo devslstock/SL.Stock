@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ProductSearchInline } from '../SalesApp/NewOrder/ProductSearchInline'
 import { supabase } from '@/lib/supabase'
+import { parsePaymentCondition } from '@/utils/paymentParser'
 
 export default function AdminOrderEdit() {
   const { id } = useParams<{ id: string }>()
@@ -90,6 +91,7 @@ export default function AdminOrderEdit() {
     status: '',
     order_group_id: '',
     payment_condition_id: '',
+    custom_payment_condition: '',
     delivery_date: '',
     notes: '',
     customer_id: '',
@@ -117,6 +119,7 @@ export default function AdminOrderEdit() {
         status: order.status || '',
         order_group_id: order.order_group_id || '',
         payment_condition_id: order.payment_condition_id || '',
+        custom_payment_condition: order.custom_payment_condition || order.payment_condition?.name || '',
         delivery_date: order.delivery_date ? new Date(order.delivery_date).toISOString().split('T')[0] : '',
         notes: order.notes || '',
         customer_id: order.customer_id || '',
@@ -202,6 +205,24 @@ export default function AdminOrderEdit() {
   })
 
   const handleFaturar = () => {
+    // Calcular as parcelas e total localmente para validar
+    const tProdutos = localItems.reduce((acc, item) => acc + (item.quantity * item.unit_price) * (1 - (item.discount_percent || 0) / 100), 0)
+    const dCalculado = formData.discount_type === 'R$' ? formData.desconto_valor : tProdutos * (formData.desconto_valor / 100)
+    const tPedido = tProdutos + formData.frete + formData.seguro + formData.outras_despesas - dCalculado
+    const oCond = paymentConditions.find((pc: any) => pc.id === formData.payment_condition_id)
+    const dInt = oCond?.interval_days || 30
+    
+    const parsed = parsePaymentCondition(
+      formData.custom_payment_condition || '', 
+      dInt, 
+      order?.created_at ? new Date(order.created_at) : new Date(), 
+      tPedido
+    )
+
+    if (!parsed.isValid) {
+      toast.error('A condição de pagamento atual é inválida. Verifique o formato antes de faturar.')
+      return
+    }
     if (confirm('Tem certeza que deseja FATURAR este pedido? Isso gerará as cobranças financeiras e não poderá ser desfeito.')) {
       faturarMutation.mutate()
     }
@@ -326,6 +347,21 @@ export default function AdminOrderEdit() {
   }
 
   const handleSave = (newStatus?: string) => {
+    if (formData.custom_payment_condition) {
+       const oCond = paymentConditions.find((pc: any) => pc.id === formData.payment_condition_id)
+       const dInt = oCond?.interval_days || 30
+       const parsed = parsePaymentCondition(
+         formData.custom_payment_condition, 
+         dInt, 
+         order?.created_at ? new Date(order.created_at) : new Date(), 
+         totalPedido
+       )
+       if (!parsed.isValid) {
+         toast.error('A condição de pagamento editável é inválida. Corrija o formato antes de salvar.')
+         return
+       }
+    }
+
     const total_amount = localItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0)
     
     // Apply discount
@@ -342,6 +378,7 @@ export default function AdminOrderEdit() {
       status: newStatus || formData.status,
       order_group_id: formData.order_group_id === '' ? null : formData.order_group_id,
       payment_condition_id: formData.payment_condition_id === '' ? null : formData.payment_condition_id,
+      custom_payment_condition: formData.custom_payment_condition,
       delivery_date: formData.delivery_date === '' ? null : new Date(formData.delivery_date).toISOString(),
       notes: formData.notes,
       customer_id: formData.customer_id === '' ? null : formData.customer_id,
@@ -379,6 +416,16 @@ export default function AdminOrderEdit() {
   }
 
   const totalPedido = totalProdutos + formData.frete + formData.seguro + formData.outras_despesas - descontoCalculado
+
+  const originalCondition = paymentConditions.find((pc: any) => pc.id === formData.payment_condition_id)
+  const defaultInterval = originalCondition?.interval_days || 30
+  
+  const parsedPayment = parsePaymentCondition(
+    formData.custom_payment_condition || '', 
+    defaultInterval, 
+    order?.created_at ? new Date(order.created_at) : new Date(), 
+    totalPedido
+  )
 
   const selectedCustomer = customers.find((c: any) => c.id === formData.customer_id)
   const isEditable = !formData.status || formData.status === 'Digitação'
@@ -837,17 +884,69 @@ export default function AdminOrderEdit() {
              </select>
            </div>
          </div>
-         <div className="flex gap-4 items-center">
-           <div className="flex items-center gap-2">
-             <label className="text-right w-36">Condição de pagamento</label>
-             <select 
-               className="h-7 text-[13px] border rounded px-1 w-80 bg-background"
-               value={formData.payment_condition_id}
-               onChange={e => setFormData({...formData, payment_condition_id: e.target.value})}
-             >
-               <option value="">Selecione...</option>
-               {paymentConditions.map((pc: any) => <option key={pc.id} value={pc.id}>{pc.name}</option>)}
-             </select>
+         <div className="flex flex-col gap-4">
+           <div className="flex gap-4 items-start">
+             <div className="flex items-center gap-2">
+               <label className="text-right w-36 mt-1.5">Condição original</label>
+               <select 
+                 className="h-7 text-[13px] border rounded px-1 w-80 bg-background text-muted-foreground bg-muted/20"
+                 value={formData.payment_condition_id || ''}
+                 onChange={e => setFormData({...formData, payment_condition_id: e.target.value})}
+                 disabled
+                 title="Condição original selecionada no Força de Vendas"
+               >
+                 <option value="">Selecione...</option>
+                 {paymentConditions.map((pc: any) => <option key={pc.id} value={pc.id}>{pc.name}</option>)}
+               </select>
+             </div>
+           </div>
+
+           <div className="flex flex-col gap-2 pl-4">
+             <div className="flex items-center gap-2">
+               <label className="text-right w-32">Condição editável</label>
+               <Input 
+                 className="h-7 text-[13px] w-80 bg-background font-medium"
+                 value={formData.custom_payment_condition || ''}
+                 onChange={e => setFormData({...formData, custom_payment_condition: e.target.value})}
+                 placeholder="Ex: 0; 7; 14; 28 ou 3x ou 30 Dias"
+                 disabled={!isEditable}
+               />
+             </div>
+             
+             {/* PREVIEW TABLE */}
+             {formData.custom_payment_condition && (
+               <div className="ml-[136px] w-[500px]">
+                 {!parsedPayment.isValid ? (
+                    <div className="text-red-500 text-xs font-medium border border-red-200 bg-red-50 p-2 rounded">
+                      {parsedPayment.error} <br/>
+                      Exemplos válidos: 0; 7; 14; 28 | 30/60/90 | Em 3x | 3 Parcelas | 30 Dias | À vista
+                    </div>
+                 ) : (
+                    <div className="border border-border rounded-md overflow-hidden bg-muted/10">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-muted/50 border-b border-border">
+                          <tr>
+                            <th className="p-1.5 px-2">Parcela</th>
+                            <th className="p-1.5 px-2">Prazo</th>
+                            <th className="p-1.5 px-2">Vencimento</th>
+                            <th className="p-1.5 px-2 text-right">Valor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {parsedPayment.installments.map((inst) => (
+                            <tr key={inst.installmentNumber} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
+                              <td className="p-1.5 px-2 font-medium">{inst.installmentNumber}/{parsedPayment.installments.length}</td>
+                              <td className="p-1.5 px-2">{inst.days} dias</td>
+                              <td className="p-1.5 px-2">{inst.dueDate.toLocaleDateString('pt-BR')}</td>
+                              <td className="p-1.5 px-2 text-right text-emerald-600 font-medium">{formatCurrency(inst.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                 )}
+               </div>
+             )}
            </div>
          </div>
 

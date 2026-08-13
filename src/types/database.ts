@@ -273,6 +273,7 @@ export interface SalesOrder {
   sales_rep_id: string | null
   price_table_id: string | null
   payment_condition_id: string | null
+  custom_payment_condition?: string | null
   order_group_id: string | null
   status: 'Digitação' | 'Aprovado' | 'Faturado' | 'Cancelado' | 'Retornou' | 'Entregue'
   total_amount: number

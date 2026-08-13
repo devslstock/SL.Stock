@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { AccountReceivable, BankIntegration } from '../types/database'
+import { parsePaymentCondition } from '../utils/paymentParser'
 
 export const financeApi = {
   // Buscar todas as contas a receber
@@ -86,59 +87,29 @@ export const financeApi = {
       throw new Error('Já existem cobranças vinculadas a este pedido')
     }
 
-    // 3. Preparar parcelas com base na condição de pagamento
-    const conditionName = order.payment_condition?.name || ''
-    let installments = order.payment_condition?.installments || 1
+    // 3. Preparar parcelas com base na condição de pagamento editada ou original
+    const conditionStr = order.custom_payment_condition || order.payment_condition?.name || ''
     const intervalDays = order.payment_condition?.interval_days || 30
     const totalAmount = Number(order.total_amount)
+    const baseDate = order.created_at ? new Date(order.created_at) : new Date()
     
-    // Tenta extrair a sequência de dias do nome da condição (ex: "0; 7; 14; 28" ou "30/60/90")
-    const matches = conditionName.match(/\d+/g)
-    let daysArray: number[] = []
-    
-    if (matches && matches.length > 1) {
-      // Se há vários números, assumimos que são os dias exatos das parcelas (ex: 0, 7, 14, 28)
-      daysArray = matches.map((n: string) => parseInt(n, 10))
-    } else if (matches && matches.length === 1 && installments > 1) {
-      // Ex: "Em 3x". Usa o intervalo padrão configurado na tabela
-      for (let i = 1; i <= installments; i++) {
-        daysArray.push(i * intervalDays)
-      }
-    } else if (matches && matches.length === 1 && parseInt(matches[0], 10) > 12) {
-      // Ex: "30 Dias". 1 única parcela naquele dia
-      daysArray = [parseInt(matches[0], 10)]
-    } else if (conditionName.toLowerCase().includes('vista') || conditionName.toLowerCase().includes('dinheiro') || conditionName.toLowerCase().includes('pix')) {
-      // À vista
-      daysArray = [0]
-    } else {
-      // Fallback
-      for (let i = 1; i <= installments; i++) {
-        daysArray.push(i * intervalDays)
-      }
+    const parsed = parsePaymentCondition(conditionStr, intervalDays, baseDate, totalAmount)
+
+    if (!parsed.isValid) {
+      throw new Error(`Condição de pagamento inválida: ${parsed.error}`)
     }
     
-    // O número final de parcelas é definido pela sequência de dias
-    installments = daysArray.length
-    const amountPerInstallment = totalAmount / installments
-    
-    const newAccounts = []
-    
-    for (let i = 0; i < installments; i++) {
-      const dueDate = new Date()
-      dueDate.setDate(dueDate.getDate() + daysArray[i])
-      
-      newAccounts.push({
-        id: crypto.randomUUID(),
-        company_id: userRecord.company_id,
-        customer_id: order.customer_id,
-        sales_order_id: order.id,
-        installment_number: i + 1,
-        amount: amountPerInstallment,
-        due_date: new Date(dueDate.getTime() - dueDate.getTimezoneOffset() * 60000).toISOString().split('T')[0],
-        status: 'pendente',
-        payment_method: 'boleto' // Mock, no futuro buscar da order
-      })
-    }
+    const newAccounts = parsed.installments.map(inst => ({
+      id: crypto.randomUUID(),
+      company_id: userRecord.company_id,
+      customer_id: order.customer_id,
+      sales_order_id: order.id,
+      installment_number: inst.installmentNumber,
+      amount: inst.amount,
+      due_date: inst.dueDate.toISOString().split('T')[0],
+      status: 'pendente',
+      payment_method: 'boleto' // Mock, no futuro buscar da order
+    }))
     
     // 4. Inserir contas a receber
     const { data: createdAccounts, error: insertError } = await supabase
