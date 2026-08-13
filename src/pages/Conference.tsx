@@ -84,7 +84,10 @@ export default function Conference() {
     enabled: !!route?.id,
   })
 
-  const pendingReturnsCount = useMemo(() => {
+  const isPremiumPlan = company?.plan === 'ouro' || company?.plan === 'platina'
+
+  const pendingReturnsList = useMemo(() => {
+    const list: { code: string, desc: string, expected: number }[] = []
     let count = 0
     
     // 1. O que foi carregado no caminhão
@@ -112,12 +115,19 @@ export default function Conference() {
       const resolved = resolvedMap.get(code) || 0
       const expectedReturn = Math.max(0, loaded - resolved)
       if (expectedReturn > 0) {
-        count += expectedReturn
+        const desc = allProducts.find(p => p.code === code)?.description 
+          || items.find((it: any) => it.product_code === code)?.description 
+          || 'Produto Desconhecido'
+        list.push({ code, desc, expected: expectedReturn })
       }
     }
     
-    return count
-  }, [items, clients])
+    return list.sort((a, b) => a.desc.localeCompare(b.desc))
+  }, [items, clients, allProducts])
+
+  const pendingReturnsCount = useMemo(() => {
+    return pendingReturnsList.reduce((acc, curr) => acc + curr.expected, 0)
+  }, [pendingReturnsList])
 
   const updateItemMutation = useMutation({
     mutationFn: async ({ itemId, qty, expected, status, extraUpdates }: { 
@@ -746,13 +756,29 @@ export default function Conference() {
       window.alert(`LIMITE ATINGIDO: Não é possível retornar mais de ${item.quantity_scanned} unidades de ${item.description}, pois esta foi a quantidade enviada na rota.`)
       return
     }
+
+    if (isPremiumPlan && route?.id) {
+      const expectedItem = pendingReturnsList.find(p => p.code === primaryCode)
+      const expectedQty = expectedItem ? expectedItem.expected : 0
+      
+      if (expectedQty === 0) {
+        playBeep('error')
+        toast.warning(`Atenção: O item ${primaryCode} não consta na lista de retornos esperados desta rota!`)
+      } else if (cur + 1 > expectedQty) {
+        playBeep('error')
+        toast.warning(`Atenção: A quantidade bipada do item ${primaryCode} excede o esperado para retornar (${expectedQty}).`)
+      } else {
+        playBeep('success')
+      }
+    } else {
+      playBeep('success')
+    }
     
     setReturnedItems(prev => {
-      const next = cur + 1
-      setLastReturned({ code: primaryCode, desc: item.description, qty: next })
-      return { ...prev, [primaryCode]: next }
+      const next = { ...prev, [primaryCode]: cur + 1 }
+      setLastReturned({ code: primaryCode, desc: item.description, qty: next[primaryCode] })
+      return next
     })
-    playBeep('success')
     toast.info(`${item.description}: Retornado +1`)
   }
 
@@ -1360,7 +1386,47 @@ export default function Conference() {
 
 
           <div className="space-y-2 mt-6">
-            {Object.keys(returnedItems).length > 0 && (
+            {isPremiumPlan && route?.id && (
+              <div className="space-y-2 mb-6">
+                <h3 className="text-sm font-bold text-amber-600 dark:text-amber-500">Checklist de Retorno (Faltas na Rota)</h3>
+                <div className="space-y-2">
+                  {Array.from(new Set([...pendingReturnsList.map(p => p.code), ...Object.keys(returnedItems)])).map((code, i) => {
+                    const expectedQty = pendingReturnsList.find(p => p.code === code)?.expected || 0;
+                    const scannedQty = returnedItems[code] || 0;
+                    const done = scannedQty >= expectedQty;
+                    const isExtra = expectedQty === 0 && scannedQty > 0;
+                    
+                    const productDesc = pendingReturnsList.find(p => p.code === code)?.desc
+                      || allProducts.find(p => p.code === code)?.description 
+                      || items.find(it => it.product_code === code)?.description 
+                      || 'Produto Desconhecido';
+
+                    return (
+                      <div key={code} className={`glass-card p-3 flex items-center justify-between slide-up ${done && !isExtra ? 'border-emerald-500/30 bg-emerald-500/5' : isExtra ? 'border-red-500/30 bg-red-500/5' : 'border-amber-500/30 bg-amber-500/5'}`} style={{ animationDelay: `${i * 50}ms` }}>
+                        <div className="min-w-0 flex-1">
+                          <p className={`font-medium truncate ${done && !isExtra ? 'text-emerald-700 dark:text-emerald-400' : isExtra ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                            {productDesc.replace('🔄 Devolução: ', '')}
+                            {isExtra && <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Não Esperado</span>}
+                          </p>
+                          <p className={`text-xs font-mono ${done && !isExtra ? 'text-emerald-600' : isExtra ? 'text-red-600' : 'text-amber-600'}`}>{code}</p>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <span className={`text-lg font-bold font-mono ${done && !isExtra ? 'text-emerald-700 dark:text-emerald-400' : isExtra ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'}`}>{scannedQty}</span>
+                            <span className="text-muted-foreground text-sm">/{expectedQty}</span>
+                          </div>
+                          {done && !isExtra && <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+                          {!done && !isExtra && <div className="h-5 w-5 rounded-full border-2 border-amber-500/30" />}
+                          {isExtra && <AlertTriangle className="h-5 w-5 text-red-500" />}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {!isPremiumPlan && Object.keys(returnedItems).length > 0 && (
               <div className="space-y-2 mb-6">
                 <h3 className="text-sm font-bold text-amber-600 dark:text-amber-500">Itens Bipados (Nesta Sessão)</h3>
                 <div className="space-y-2">
