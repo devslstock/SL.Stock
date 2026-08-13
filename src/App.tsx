@@ -116,6 +116,9 @@ import OrderGroups from '@/pages/SalesApp/OrderGroups/index'
 import AdminOrderEdit from './pages/SalesManagement/AdminOrderEdit'
 import { PlanGuard } from './components/PlanGuard'
 
+import AccountsReceivable from './pages/Finance/AccountsReceivable'
+import PendingBilling from './pages/Finance/PendingBilling'
+
 function App() {
   return (
     <AuthProvider>
@@ -175,6 +178,10 @@ function App() {
             {/* Sales Management */}
             <Route path="/vendas/gestao" element={<SalesManagement />} />
             <Route path="/vendas/gestao/editar/:id" element={<AdminOrderEdit />} />
+
+            {/* Finance Routes */}
+            <Route path="/financeiro/contas-receber" element={<AccountsReceivable />} />
+            <Route path="/financeiro/faturamento" element={<PendingBilling />} />
 
             {/* Sales App (Moved into AppLayout) */}
             <Route path="/vendas" element={<Navigate to="/vendas/pedidos" replace />} />

@@ -35,6 +35,10 @@ export interface UserPermissions {
   can_manage_saas_finance?: boolean
   can_manage_saas_clients?: boolean
   can_manage_saas_staff?: boolean
+  
+  // Finance Permissions
+  can_manage_finance?: boolean
+  can_override_financial_block?: boolean
 }
 
 export interface Company {
@@ -240,6 +244,7 @@ export interface PaymentCondition {
   name: string
   active: boolean
   installments: number
+  interval_days?: number
   created_at: string
   updated_at: string
 }
@@ -285,6 +290,39 @@ export interface SalesOrder {
   price_table?: PriceTable
   items?: SalesOrderItem[]
   order_group?: OrderGroup
+}
+
+export interface AccountReceivable {
+  id: string
+  company_id: string
+  customer_id: string
+  sales_order_id: string
+  installment_number: number
+  amount: number
+  due_date: string
+  status: 'pendente' | 'boleto_emitido' | 'aguardando_pagamento' | 'pago' | 'vencido' | 'cancelado'
+  payment_method: string
+  paid_amount?: number
+  paid_at?: string
+  bank_transaction_id?: string
+  bank_slip_barcode?: string
+  bank_slip_digitable_line?: string
+  bank_slip_url?: string
+  created_at: string
+  updated_at: string
+  
+  customer?: Customer
+  sales_order?: SalesOrder
+}
+
+export interface BankIntegration {
+  id: string
+  company_id: string
+  provider: string
+  is_active: boolean
+  webhook_secret?: string
+  created_at: string
+  updated_at: string
 }
 
 export interface OrderGroup {

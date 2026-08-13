@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save, Building2, MapPin, Phone, Wallet, Briefcase, Plus, Trash2, Box, History, ClipboardList, FileText, Search, RefreshCw, Lock } from 'lucide-react'
+import { ArrowLeft, Save, Building2, MapPin, Phone, Wallet, Briefcase, Plus, Trash2, Box, History, ClipboardList, FileText, Search, RefreshCw, Lock, DollarSign, Calendar, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 import { customersApi } from '@/api/customers'
 import { salesRepsApi } from '@/api/salesReps'
 import { regionsApi } from '@/api/regions'
 import { priceTablesApi } from '@/api/priceTables'
 import { salesApi } from '@/api/sales'
 import { equipmentsApi } from '@/api/equipments'
+import { financeApi } from '@/api/finance'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
@@ -16,6 +17,7 @@ import { Link } from 'react-router-dom'
 import { geocodeAddress } from '@/api/routing'
 import { generateContractPDF } from '@/utils/pdf'
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation'
+import { formatCurrency } from '@/utils/formatters'
 
 export default function CustomerForm() {
   const { id } = useParams()
@@ -29,6 +31,7 @@ export default function CustomerForm() {
 
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [comodatoTab, setComodatoTab] = useState<'atuais' | 'historico' | 'os'>('atuais')
+  const [financeTab, setFinanceTab] = useState<'pendentes' | 'pagos'>('pendentes')
 
   const [formData, setFormData] = useState({
     active: true,
@@ -145,6 +148,16 @@ export default function CustomerForm() {
       })
     }
   }, [customer, customerConditions])
+
+  const { data: customerAccounts = [], isLoading: isLoadingAccounts } = useQuery({
+    queryKey: ['accounts_receivable', id],
+    queryFn: async () => {
+      if (!id) return []
+      const allAccounts = await financeApi.getAccountsReceivable()
+      return allAccounts.filter(acc => acc.customer_id === id)
+    },
+    enabled: !!id
+  })
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
@@ -803,6 +816,78 @@ export default function CustomerForm() {
                     ))}
                   </div>
                 )
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Financeiro */}
+        {isPlatina && isEditing && (
+          <div className="glass-card p-6 border-t-4 border-t-amber-500">
+            <div className="flex items-center gap-2 mb-4 text-lg font-bold text-foreground">
+              <DollarSign className="h-5 w-5 text-amber-500" />
+              Contas a Receber (Financeiro)
+            </div>
+            
+            <div className="flex gap-2 border-b border-border mb-4">
+              <button
+                type="button"
+                className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${financeTab === 'pendentes' ? 'border-amber-500 text-amber-600' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                onClick={() => setFinanceTab('pendentes')}
+              >
+                Pendentes / Vencidas
+              </button>
+              <button
+                type="button"
+                className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${financeTab === 'pagos' ? 'border-amber-500 text-amber-600' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                onClick={() => setFinanceTab('pagos')}
+              >
+                Pagas
+              </button>
+            </div>
+
+            <div className="min-h-[150px]">
+              {isLoadingAccounts ? (
+                <div className="text-center py-6 text-muted-foreground animate-pulse">Carregando contas...</div>
+              ) : (
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                  {customerAccounts.filter(a => financeTab === 'pagos' ? a.status === 'pago' : a.status !== 'pago').length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border/50">
+                      Nenhuma conta encontrada nesta situação.
+                    </div>
+                  ) : (
+                    customerAccounts
+                      .filter(a => financeTab === 'pagos' ? a.status === 'pago' : a.status !== 'pago')
+                      .map(account => (
+                        <div key={account.id} className="border p-3 rounded bg-muted/30 flex justify-between items-center hover:bg-muted/50 transition-colors">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-bold text-sm">Parcela {account.installment_number}</span>
+                              {account.status === 'pago' ? (
+                                <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                                  <CheckCircle2 className="h-3 w-3" /> Pago
+                                </span>
+                              ) : account.status === 'vencido' ? (
+                                <span className="inline-flex items-center gap-1 text-red-600 bg-red-500/10 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                                  <XCircle className="h-3 w-3" /> Vencido
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                                  <AlertCircle className="h-3 w-3" /> {account.status.replace('_', ' ')}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Calendar className="h-3 w-3" /> Venc: {new Date(account.due_date).toLocaleDateString('pt-BR')}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-foreground">{formatCurrency(account.amount)}</div>
+                          </div>
+                        </div>
+                    ))
+                  )}
+                </div>
               )}
             </div>
           </div>

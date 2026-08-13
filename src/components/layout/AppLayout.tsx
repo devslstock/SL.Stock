@@ -6,7 +6,8 @@ import {
   Settings, Users, CheckSquare, Palette, Sun, Moon, Search,
   Clock, History, UserIcon, FileSignature, Box, Building2, Banknote,
   Megaphone, StickyNote, MapPin, Bell, ShieldCheck, LogOut, Lock,
-  ChevronDown, Map, Tag, Briefcase, HelpCircle, Wifi, WifiOff, RefreshCw, Receipt
+  ChevronDown, Map, Tag, Briefcase, HelpCircle, Wifi, WifiOff, RefreshCw, Receipt,
+  FileText, DollarSign
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
@@ -48,6 +49,13 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Gestão de Pedidos', icon: FileSignature, path: '/vendas/gestao', permission: 'can_manage_sales' },
       { label: 'Natureza de Operação', icon: Receipt, path: '/fiscal/natureza-operacao', permission: 'can_manage_company' }
+    ]
+  },
+  {
+    title: 'FINANCEIRO',
+    items: [
+      { label: 'Aguardando Faturamento', icon: FileText, path: '/financeiro/faturamento', permission: 'can_manage_finance' },
+      { label: 'Contas a Receber', icon: DollarSign, path: '/financeiro/contas-receber', permission: 'can_manage_finance' }
     ]
   },
   {
@@ -293,6 +301,9 @@ export default function AppLayout() {
     
     // FISCAL
     if (path.startsWith('/fiscal')) return 'platina'
+    
+    // FINANCEIRO
+    if (path.startsWith('/financeiro')) return 'platina'
     
     // ESTOQUE
     if (path === '/produtos') return 'bronze' // Estoque (Produtos)

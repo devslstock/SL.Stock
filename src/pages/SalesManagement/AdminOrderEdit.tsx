@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { salesApi } from '@/api/sales'
 import { productsApi } from '@/api/products'
+import { financeApi } from '@/api/finance'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
@@ -186,6 +187,25 @@ export default function AdminOrderEdit() {
     },
     onError: (e: any) => toast.error(`Erro ao atualizar: ${e.message}`)
   })
+
+  const faturarMutation = useMutation({
+    mutationFn: async () => {
+      await financeApi.faturarPedido(id!)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
+      queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
+      toast.success('Pedido faturado com sucesso! Cobranças geradas.')
+      navigate('/financeiro/contas-receber') // ou para a página atual
+    },
+    onError: (e: any) => toast.error(`Erro ao faturar: ${e.message}`)
+  })
+
+  const handleFaturar = () => {
+    if (confirm('Tem certeza que deseja FATURAR este pedido? Isso gerará as cobranças financeiras e não poderá ser desfeito.')) {
+      faturarMutation.mutate()
+    }
+  }
 
   const removeItem = (itemId: string) => {
     if (confirm('Tem certeza que deseja remover este item? (Não será salvo no banco até você clicar em Salvar Alterações)')) {
@@ -374,11 +394,21 @@ export default function AdminOrderEdit() {
           </Button>
           <span className="font-semibold">Pedido de venda</span>
         </div>
-        {isEditable && (
-          <div className="flex gap-2">
+        <div className="flex gap-2">
+          {formData.status === 'Aprovado' && (
+            <Button 
+              size="sm" 
+              onClick={handleFaturar} 
+              className="h-8 bg-green-600 hover:bg-green-700 text-white"
+              disabled={faturarMutation.isPending}
+            >
+              {faturarMutation.isPending ? 'Faturando...' : 'FATURAR PEDIDO'}
+            </Button>
+          )}
+          {isEditable && (
             <Button size="sm" onClick={() => handleSave()} className="h-8">Salvar Alterações</Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* CABEÇALHO DO PEDIDO */}

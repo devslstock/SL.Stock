@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { salesApi } from '@/api/sales'
+import { financeApi } from '@/api/finance'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
@@ -23,7 +24,7 @@ export default function NewOrder() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { user, company } = useAuth()
+  const { user, company, hasPermission } = useAuth()
   
   const orderId = searchParams.get('id')
   const returnTo = searchParams.get('returnTo') || '/vendas/pedidos'
@@ -237,6 +238,13 @@ export default function NewOrder() {
 
   const handleUpdate = async (updates: any) => {
     try {
+      if (updates.customer_id) {
+        const isOverdue = await financeApi.hasOverduePayments(updates.customer_id)
+        if (isOverdue && !hasPermission('can_override_financial_block')) {
+          toast.error('Este cliente possui contas vencidas e está bloqueado. Peça liberação a um gestor.')
+          return
+        }
+      }
       await salesApi.updateSalesOrder(orderId, updates)
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
     } catch (e: any) {
