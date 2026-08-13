@@ -85,10 +85,12 @@ export default function AccountsReceivable() {
   }
 
   const filteredAccounts = accounts.filter((acc: AccountReceivable) => {
-    const matchesSearch = 
-      acc.customer?.legal_name?.toLowerCase().includes(search.toLowerCase()) ||
-      acc.customer?.fantasy_name?.toLowerCase().includes(search.toLowerCase()) ||
-      acc.sales_order?.order_number?.toString().includes(search.toLowerCase())
+    const s = search.toLowerCase()
+    const matchesSearch = s === '' || Boolean(
+      acc.customer?.legal_name?.toLowerCase().includes(s) ||
+      acc.customer?.fantasy_name?.toLowerCase().includes(s) ||
+      acc.sales_order?.order_number?.toString().includes(s)
+    )
 
     if (filterStatus === 'all') return matchesSearch
     return matchesSearch && acc.status === filterStatus
