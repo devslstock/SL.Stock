@@ -12,6 +12,7 @@ export default function AccountsReceivable() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['accounts_receivable'],
@@ -29,10 +30,58 @@ export default function AccountsReceivable() {
     onError: (e: any) => toast.error('Erro ao baixar conta: ' + e.message)
   })
 
+  const cancelarMutation = useMutation({
+    mutationFn: (id: string) => financeApi.cancelarConta(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
+      toast.success('Cobrança cancelada!')
+      setSelectedIds(prev => prev.filter(p => p !== id)) // Removendo da seleção se estiver
+    },
+    onError: (e: any) => toast.error('Erro ao cancelar: ' + e.message)
+  })
+
+  const batchBaixarMutation = useMutation({
+    mutationFn: (ids: string[]) => financeApi.batchBaixarContas(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
+      toast.success('Baixa efetuada em massa com sucesso!')
+      setSelectedIds([])
+    },
+    onError: (e: any) => toast.error('Erro na baixa em massa: ' + e.message)
+  })
+
+  const batchCancelarMutation = useMutation({
+    mutationFn: (ids: string[]) => financeApi.batchCancelarContas(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
+      toast.success('Cobranças canceladas com sucesso!')
+      setSelectedIds([])
+    },
+    onError: (e: any) => toast.error('Erro ao cancelar em massa: ' + e.message)
+  })
+
   const handleBaixar = (account: AccountReceivable) => {
     if (confirm(`Confirma a baixa da parcela ${account.installment_number} do pedido ${account.sales_order?.order_number || account.sales_order_id.slice(0,5).toUpperCase()} no valor de ${formatCurrency(account.amount)}?`)) {
       baixarMutation.mutate({ id: account.id, amount: account.amount })
     }
+  }
+
+  const handleCancelar = (account: AccountReceivable) => {
+    if (confirm(`Confirma o cancelamento da cobrança ${account.installment_number} do pedido ${account.sales_order?.order_number || account.sales_order_id.slice(0,5).toUpperCase()}?`)) {
+      cancelarMutation.mutate(account.id)
+    }
+  }
+
+  const handleToggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredAccounts.filter(a => a.status !== 'cancelado').map(a => a.id))
+    } else {
+      setSelectedIds([])
+    }
+  }
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
   }
 
   const filteredAccounts = accounts.filter((acc: AccountReceivable) => {
@@ -68,6 +117,45 @@ export default function AccountsReceivable() {
         </div>
       </div>
 
+      {selectedIds.length > 0 && (
+        <div className="bg-primary/10 border border-primary/20 text-primary px-4 py-3 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+          <span className="font-medium text-sm">
+            {selectedIds.length} cobrança{selectedIds.length > 1 ? 's' : ''} selecionada{selectedIds.length > 1 ? 's' : ''}
+          </span>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="default" onClick={() => toast.info('Emissão de boletos em massa em breve!')}>
+              <FileText className="h-4 w-4 mr-2" /> Imprimir Boletos
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+              onClick={() => {
+                if (confirm(`Confirma a baixa de ${selectedIds.length} cobranças?`)) {
+                  batchBaixarMutation.mutate(selectedIds)
+                }
+              }}
+              disabled={batchBaixarMutation.isPending}
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" /> Dar Baixa
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="border-red-500 text-red-600 hover:bg-red-50"
+              onClick={() => {
+                if (confirm(`Confirma o cancelamento de ${selectedIds.length} cobranças?`)) {
+                  batchCancelarMutation.mutate(selectedIds)
+                }
+              }}
+              disabled={batchCancelarMutation.isPending}
+            >
+              <XCircle className="h-4 w-4 mr-2" /> Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -96,6 +184,14 @@ export default function AccountsReceivable() {
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-semibold">
               <tr>
+                <th className="px-4 py-3 w-10 text-center">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-input text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                    onChange={handleToggleSelectAll}
+                    checked={selectedIds.length > 0 && selectedIds.length === filteredAccounts.filter(a => a.status !== 'cancelado').length}
+                  />
+                </th>
                 <th className="px-4 py-3">Vencimento</th>
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">Pedido</th>
@@ -115,6 +211,15 @@ export default function AccountsReceivable() {
               ) : (
                 filteredAccounts.map((account) => (
                   <tr key={account.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 text-center">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-input text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                        checked={selectedIds.includes(account.id)}
+                        onChange={() => handleToggleSelect(account.id)}
+                        disabled={account.status === 'cancelado'}
+                      />
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -154,16 +259,27 @@ export default function AccountsReceivable() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {account.status !== 'pago' && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="h-8 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white"
-                          onClick={() => handleBaixar(account)}
-                          disabled={baixarMutation.isPending}
-                        >
-                          Dar Baixa
-                        </Button>
+                      {account.status !== 'pago' && account.status !== 'cancelado' && (
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="h-8 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white"
+                            onClick={() => handleBaixar(account)}
+                            disabled={baixarMutation.isPending}
+                          >
+                            Dar Baixa
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="h-8 border-red-500/30 text-red-600 hover:bg-red-500 hover:text-white"
+                            onClick={() => handleCancelar(account)}
+                            disabled={cancelarMutation.isPending}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
                       )}
                     </td>
                   </tr>

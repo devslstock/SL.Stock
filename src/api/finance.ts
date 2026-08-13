@@ -149,6 +149,48 @@ export const financeApi = {
     if (error) throw error
   },
 
+  // Cancelar conta
+  cancelarConta: async (accountId: string): Promise<void> => {
+    const { error } = await supabase
+      .from('accounts_receivable')
+      .update({ status: 'cancelado' })
+      .eq('id', accountId)
+
+    if (error) throw error
+  },
+
+  // Dar baixa em massa (assume valor integral)
+  batchBaixarContas: async (accountIds: string[]): Promise<void> => {
+    // Como precisamos do amount para salvar o paid_amount de cada um,
+    // faremos a baixa iterando sobre cada conta
+    const { data: accounts } = await supabase
+      .from('accounts_receivable')
+      .select('id, amount')
+      .in('id', accountIds)
+      
+    if (!accounts) return
+
+    const promises = accounts.map(acc => 
+      supabase.from('accounts_receivable').update({
+        status: 'pago',
+        paid_amount: acc.amount,
+        paid_at: new Date().toISOString()
+      }).eq('id', acc.id)
+    )
+    
+    await Promise.all(promises)
+  },
+
+  // Cancelar em massa
+  batchCancelarContas: async (accountIds: string[]): Promise<void> => {
+    const { error } = await supabase
+      .from('accounts_receivable')
+      .update({ status: 'cancelado' })
+      .in('id', accountIds)
+
+    if (error) throw error
+  },
+
   // Checar inadimplência
   hasOverduePayments: async (customerId: string): Promise<boolean> => {
     const { data: userData } = await supabase.auth.getUser()
