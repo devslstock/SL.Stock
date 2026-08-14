@@ -209,9 +209,7 @@ export default function MasterPanel() {
           plan,
           focusnfe_token: focusToken,
           focusnfe_env: focusEnv,
-          tax_regime: taxRegime as any,
-          last_nfe_number: lastNfeNumber,
-          nfe_series: nfeSeries
+          tax_regime: taxRegime as any
         });
 
         await usersApi.createUser({
