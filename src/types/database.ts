@@ -74,9 +74,18 @@ export interface Company {
   focusnfe_token?: string | null
   focusnfe_env?: 'producao' | 'homologacao' | null
   tax_regime?: 'simples_nacional' | 'regime_normal' | null
-  last_nfe_number?: number | null
-  nfe_series?: number | null
   created_at: string
+}
+
+export interface FiscalSeries {
+  id: string
+  company_id: string
+  series_number: number
+  next_number: number
+  document_type: string
+  active: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface FiscalSettings {

@@ -9,13 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Plus, Users, Power, LogIn, Edit2, LogOut, Trash2, Search, RefreshCw } from 'lucide-react';
+import { Building2, Plus, Users, Power, LogIn, Edit2, LogOut, Trash2, Search, RefreshCw, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/toaster';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import type { Company } from '@/types/database';
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation';
+import { FiscalSeriesManager } from './FiscalSeriesManager';
 
 export default function MasterPanel() {
   const { isMaster, switchCompany, exitCompany, company: currentCompany } = useAuth();
@@ -38,12 +39,11 @@ export default function MasterPanel() {
   const [focusToken, setFocusToken] = useState('');
   const [focusEnv, setFocusEnv] = useState<'producao' | 'homologacao'>('homologacao');
   const [taxRegime, setTaxRegime] = useState('simples_nacional');
-  const [lastNfeNumber, setLastNfeNumber] = useState(0);
-  const [nfeSeries, setNfeSeries] = useState(1);
 
 
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<{ id: string, name: string } | null>(null);
+  const [seriesManagerCompany, setSeriesManagerCompany] = useState<{ id: string, name: string } | null>(null);
 
   const { data: companies, isLoading } = useQuery({
     queryKey: ['companies'],
@@ -188,9 +188,7 @@ export default function MasterPanel() {
           plan,
           focusnfe_token: focusToken,
           focusnfe_env: focusEnv,
-          tax_regime: taxRegime as any,
-          last_nfe_number: lastNfeNumber,
-          nfe_series: nfeSeries
+          tax_regime: taxRegime as any
         });
         
         if (editingAdminId) {
@@ -255,8 +253,6 @@ export default function MasterPanel() {
     setFocusToken(comp.focusnfe_token || '');
     setFocusEnv(comp.focusnfe_env || 'homologacao');
     setTaxRegime(comp.tax_regime || 'simples_nacional');
-    setLastNfeNumber(comp.last_nfe_number || 0);
-    setNfeSeries(comp.nfe_series || 1);
 
     // Fetch the admin user
     const { supabase } = await import('@/lib/supabase');
@@ -304,7 +300,7 @@ export default function MasterPanel() {
     setBillingDay(10); setMonthlyFee(0); setPlan('ouro');
     setAdminName(''); setAdminUsername('');
     setFocusToken(''); setFocusEnv('homologacao');
-    setTaxRegime('simples_nacional'); setLastNfeNumber(0); setNfeSeries(1);
+    setTaxRegime('simples_nacional');
     setEditingCompanyId(null);
     setEditingAdminId(null);
   };
@@ -354,9 +350,14 @@ export default function MasterPanel() {
                     )}>
                       {comp.plan || 'ouro'}
                     </span>
-                    <Button variant="ghost" size="icon" onClick={() => handleEditCompany(comp)} className="h-8 w-8 mt-1">
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditCompany(comp)} className="h-8 w-8">
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setSeriesManagerCompany({ id: comp.id, name: comp.name })} className="h-8 w-8">
+                        <FileText className="h-4 w-4 text-orange-500" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -516,14 +517,6 @@ export default function MasterPanel() {
                     <option value="lucro_real">Lucro Real</option>
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Última NF-e Emitida</Label>
-                  <Input type="number" min={0} value={lastNfeNumber} onChange={e => setLastNfeNumber(parseInt(e.target.value) || 0)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Série da NF-e</Label>
-                  <Input type="number" min={1} value={nfeSeries} onChange={e => setNfeSeries(parseInt(e.target.value) || 1)} />
-                </div>
               </div>
             </div>
 
@@ -624,6 +617,15 @@ export default function MasterPanel() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Fiscal Series Manager Modal */}
+      {seriesManagerCompany && (
+        <FiscalSeriesManager 
+          open={!!seriesManagerCompany} 
+          onOpenChange={(open) => !open && setSeriesManagerCompany(null)} 
+          companyId={seriesManagerCompany.id} 
+          companyName={seriesManagerCompany.name} 
+        />
+      )}
     </div>
   );
 }
