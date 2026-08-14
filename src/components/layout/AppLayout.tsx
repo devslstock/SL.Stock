@@ -54,7 +54,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Gestão de Pedidos', icon: FileSignature, path: '/vendas/gestao', permission: 'can_manage_sales' },
       { label: 'Notas Fiscais', icon: FileText, path: '/fiscal/notas', permission: 'can_manage_sales' }, // Placeholder permission and path
-      { label: 'Natureza da Operação', icon: Receipt, path: '/fiscal/natureza-operacao', permission: 'can_manage_company' }
+      { label: 'Cadastros', icon: FileText, path: '/fiscal/cadastros', permission: 'can_manage_company' }
     ]
   },
   {

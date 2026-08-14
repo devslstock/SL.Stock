@@ -11,6 +11,11 @@ import ProductForm from './pages/ProductForm'
 import AccessControl from './pages/AccessControl'
 import CompanySettings from './pages/CompanySettings'
 import FiscalOperations from './pages/FiscalOperations'
+import FiscalRegisters from './pages/Fiscal/Registers/index'
+import FiscalVehicles from './pages/Fiscal/Registers/Vehicles'
+import FiscalDrivers from './pages/Fiscal/Registers/Drivers'
+import NfeManagement from './pages/Fiscal/NfeManagement/index'
+import { FiscalSeriesManager } from './pages/Fiscal/Registers/FiscalSeriesManager'
 import Login from './pages/Login'
 import MasterPanel from './pages/Master'
 import SaaSFinance from './pages/Master/Finance'
@@ -197,7 +202,12 @@ function App() {
 
             <Route element={<RequirePermission perm="can_manage_company" />}>
               <Route path="/configuracoes/empresa" element={<CompanySettings />} />
-              <Route path="/fiscal/natureza-operacao" element={<FiscalOperations />} />
+              <Route path="/fiscal/natureza-operacao" element={<Navigate to="/fiscal/cadastros/operacoes" replace />} />
+              <Route path="/fiscal/cadastros" element={<FiscalRegisters />} />
+              <Route path="/fiscal/cadastros/operacoes" element={<FiscalOperations />} />
+              <Route path="/fiscal/cadastros/veiculos" element={<FiscalVehicles />} />
+              <Route path="/fiscal/cadastros/condutores" element={<FiscalDrivers />} />
+              <Route path="/fiscal/cadastros/series" element={<FiscalSeriesManager />} />
               <Route path="/fiscal/notas" element={<NfeManagement />} />
               <Route path="/acesso" element={<AccessControl />} />
             </Route>

@@ -755,7 +755,231 @@ export interface EquipmentHistory {
   notes: string | null
   created_by: string | null
   created_at: string
+  created_at: string
+}
+
+export interface InventoryCountItem {
+  id: string
+  inventory_id: string
+  product_code: string
+  description: string
+  group_category?: string
+  quantity_counted: number
+  quantity_system: number
+  status: 'ok' | 'divergent' | 'missing' | 'excess'
+  created_at: string
+  updated_at: string
+}
+
+export interface PlannedInventory {
+  id: string
+  name: string
+  status: 'planning' | 'in_progress' | 'completed'
+  company_id: string
+  collection_rule: 'any' | 'registered_only' | 'confirm_unknown'
+  divergence_rule: 'ignore_uncollected' | 'zero_uncollected'
+  created_at: string
+  updated_at: string
+}
+
+export interface PlannedInventorySector {
+  id: string
+  inventory_id: string
+  name: string
+  created_at: string
+}
+
+export interface PlannedInventoryArea {
+  id: string
+  inventory_id: string
+  sector_id?: string
+  area_number?: number
+  name: string
+  description?: string
+  status?: 'pending' | 'in_progress' | 'completed'
+  created_at: string
+}
+
+export interface PlannedInventoryCount {
+  id: string
+  inventory_id: string
+  area_id: string
+  product_code: string
+  quantity: number
+  extra_info?: string | null
+  user_name: string
+  created_at: string
+  updated_at: string
+}
+
+export interface DeliveryRoute {
+  id: string
+  company_id: string
+  operation_id: string
+  driver_id: string
+  helper_id?: string
+  title?: string
+  scheduled_date?: string
+  status: 'pending' | 'in_progress' | 'completed'
+  created_at: string
+}
+
+export interface DeliveryClient {
+  id: string
+  company_id: string
+  delivery_route_id: string
+  customer_id?: string | null
+  name: string
+  order_number?: string
+  address?: string
+  phone?: string
+  notes?: string
+  latitude?: number | null
+  longitude?: number | null
+  status: 'pending' | 'waiting' | 'delivered' | 'delivered_with_divergence' | 'canceled' | 'returned'
+  signature_data?: string
+  receiver_name?: string
+  receiver_doc?: string
+  return_reason?: string
+  signed_at?: string
+  delivery_sequence?: number
+  created_at: string
+}
+
+export interface DeliveryItem {
+  id: string
+  company_id: string
+  delivery_client_id: string
+  product_id: string
+  product_code: string
+  description: string
+  quantity_expected: number
+  quantity_scanned: number
+  status: 'pending' | 'ok' | 'divergent'
+  approval_status?: 'approved' | 'pending' | 'rejected'
+  returned_to_stock?: boolean
+  requested_qty?: number
+  return_reason?: string
+  requested_by_name?: string
+  created_at: string
+}
+
+export interface Equipment {
+  id: string
+  company_id: string
+  patrimony: string
+  type: string
+  model: string
+  size: string | null
+  voltage: string | null
+  notes: string | null
+  status: 'Teste' | 'Disponível' | 'Em Manutenção' | 'Danificado' | 'No Cliente' | 'Equipamento de Estoque'
+  current_customer_id: string | null
+  created_at: string
+  updated_at: string
+  customer?: Customer
+}
+
+export interface EquipmentOrder {
+  id: string
+  os_number: number
+  company_id: string
+  customer_id: string | null
+  equipment_id: string
+  delivery_route_id?: string | null
+  delivery_sequence?: number
+  type: 'entrega' | 'recolha' | 'troca' | 'manutencao'
+  status: 'chamado' | 'pendente' | 'em_rota' | 'concluido' | 'cancelado'
+  driver_id: string | null
+  scheduled_date: string | null
+  completed_at: string | null
+  signature_data: string | null
+  term_pdf_url: string | null
+  receiver_name: string | null
+  receiver_doc: string | null
+  notes: string | null
+  defect_description: string | null
+  solution_description: string | null
+  action_taken: string | null
+  created_at: string
+  updated_at: string
+  customer?: Customer
+  equipment?: Equipment
+  driver?: User
+}
+
+export interface Supply {
+  id: string
+  company_id: string
+  name: string
+  unit: string
+  stock_quantity: number
+  created_at: string
+  updated_at: string
+}
+
+export interface SupplyRequest {
+  id: string
+  company_id: string
+  mechanic_id: string
+  supply_id: string
+  quantity_requested: number
+  status: 'pendente' | 'aprovado' | 'rejeitado'
+  notes: string | null
+  created_at: string
+  updated_at: string
+  mechanic?: User
+  supply?: Supply
+}
+
+export interface EquipmentOrderSupply {
+  id: string
+  order_id: string
+  supply_id: string
+  quantity_consumed: number
+  created_at: string
+  supply?: Supply
+}
+
+export interface EquipmentHistory {
+  id: string
+  company_id: string
+  equipment_id: string
+  customer_id: string | null
+  action: string
+  notes: string | null
+  created_by: string | null
+  created_at: string
   customer?: Customer
   user?: User
   equipment?: Equipment
+}
+
+export interface Driver {
+  id: string
+  company_id: string
+  name: string
+  cpf: string
+  cnh?: string
+  active: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface Vehicle {
+  id: string
+  company_id: string
+  plate: string
+  uf: string
+  renavam?: string
+  tara_kg?: number
+  capacity_kg?: number
+  capacity_m3?: number
+  body_type?: string
+  wheel_type?: string
+  owner_name?: string
+  owner_document?: string
+  active: boolean
+  created_at?: string
+  updated_at?: string
 }
