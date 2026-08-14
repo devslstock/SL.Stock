@@ -159,38 +159,11 @@ export default function ProductForm() {
   // Populate form when data arrives
   useEffect(() => {
     if (product) {
-      setFormData({
-        code: product.code || '',
-        external_code: product.external_code || '',
-        factory_code: product.factory_code || '',
-        description: product.description || '',
-        unit_measure: product.unit_measure || 'UN',
-        group_name: product.group_name || '',
-        batch: product.batch || '',
-        stock: product.stock || 0,
-        min_stock_alert: product.min_stock_alert || 0,
-        ncm: product.ncm || '',
-        cest: product.cest || '',
-        origin: product.origin || '0',
-        net_weight: product.net_weight || 0,
-        gross_weight: product.gross_weight || 0,
-        unit_weight: product.unit_weight || 0,
-        box_quantity: product.box_quantity || 0,
-        ipi_rate: product.ipi_rate || 0,
-        icms_rate: product.icms_rate || 0,
-        cfop: product.cfop || '',
-        csosn: product.csosn || '',
-        cst: product.cst || '',
-        pis_cst: product.pis_cst || '',
-        cofins_cst: product.cofins_cst || '',
-        fci: product.fci || '',
-        gtin: product.gtin || '',
-        gtin_tributable: product.gtin_tributable || '',
-        complementary_description: product.complementary_description || '',
-        notes: product.notes || '',
-        technical_notes: product.technical_notes || '',
+      setFormData(prev => ({
+        ...prev,
+        ...product,
         active: product.active ?? true
-      })
+      }))
     }
   }, [product])
 
