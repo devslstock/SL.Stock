@@ -29,11 +29,7 @@ export default function CompanySettings() {
     enabled: !!company?.id && isManager
   })
 
-  const { data: fiscalData } = useQuery({
-    queryKey: ['fiscal_settings', company?.id],
-    queryFn: () => company?.id ? companiesApi.getFiscalSettings(company.id) : null,
-    enabled: !!company?.id && isManager
-  })
+
 
   if (!isManager) {
     return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
@@ -45,28 +41,6 @@ export default function CompanySettings() {
   const [isRestoring, setIsRestoring] = useState(false)
   const [restoreProgress, setRestoreProgress] = useState('')
   
-  // Fiscal Config
-  const [fiscalToken, setFiscalToken] = useState('')
-  const [fiscalEnv, setFiscalEnv] = useState('homologacao')
-  const [taxRegime, setTaxRegime] = useState('simples_nacional')
-  const [lastNfeNumber, setLastNfeNumber] = useState<number>(0)
-  const [nfeSeries, setNfeSeries] = useState<number>(1)
-  const [isSavingFiscal, setIsSavingFiscal] = useState(false)
-  const [certFile, setCertFile] = useState<File | null>(null)
-  const [certPassword, setCertPassword] = useState('')
-  const [isUploadingCert, setIsUploadingCert] = useState(false)
-
-  const [fiscalSettings, setFiscalSettings] = useState({
-    default_cfop: '',
-    default_csosn: '',
-    default_cst: '',
-    default_ncm: '',
-    default_pis: '',
-    default_cofins: '',
-    default_icms_rate: 0,
-    default_ipi_rate: 0,
-  })
-
   const fileInputRef = import('react').then(m => m.useRef<HTMLInputElement>(null))
   // Resolving useRef synchronously since it's inside component:
   // Actually, we can just use React.useRef. We already import { useState, useEffect, useRef } from 'react' if we add it.
@@ -110,30 +84,8 @@ export default function CompanySettings() {
         additional_info: companyData.additional_info || '',
         logo_url: companyData.logo_url || ''
       })
-
-
-      setFiscalToken(companyData.focusnfe_token || '')
-      setFiscalEnv(companyData.focusnfe_env || 'homologacao')
-      setTaxRegime(companyData.tax_regime || 'simples_nacional')
-      setLastNfeNumber(companyData.last_nfe_number || 0)
-      setNfeSeries(companyData.nfe_series || 1)
     }
   }, [companyData])
-
-  useEffect(() => {
-    if (fiscalData) {
-      setFiscalSettings({
-        default_cfop: fiscalData.default_cfop || '',
-        default_csosn: fiscalData.default_csosn || '',
-        default_cst: fiscalData.default_cst || '',
-        default_ncm: fiscalData.default_ncm || '',
-        default_pis: fiscalData.default_pis || '',
-        default_cofins: fiscalData.default_cofins || '',
-        default_icms_rate: fiscalData.default_icms_rate || 0,
-        default_ipi_rate: fiscalData.default_ipi_rate || 0,
-      })
-    }
-  }, [fiscalData])
 
   const handleCepBlur = async () => {
     const cep = formData.garage_cep.replace(/\D/g, '')
@@ -165,17 +117,6 @@ export default function CompanySettings() {
     onSuccess: () => {
       toast.success('Dados da empresa atualizados com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['company_settings'] })
-    },
-    onError: (err: any) => toast.error(err.message)
-  })
-
-  const updateFiscalSettingsMutation = useMutation({
-    mutationFn: () => {
-      if (!company?.id) throw new Error('Empresa não identificada')
-      return companiesApi.updateFiscalSettings(company.id, fiscalSettings)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['fiscal_settings'] })
     },
     onError: (err: any) => toast.error(err.message)
   })
@@ -293,60 +234,6 @@ export default function CompanySettings() {
     }
   }
 
-  async function handleSaveFiscalSettings() {
-    if (!company?.id) return
-    setIsSavingFiscal(true)
-    try {
-      await companiesApi.updateCompany(company.id, { 
-        focusnfe_token: fiscalToken,
-        focusnfe_env: fiscalEnv as any,
-        tax_regime: taxRegime as any,
-        last_nfe_number: lastNfeNumber,
-        nfe_series: nfeSeries
-      } as any)
-      
-      await companiesApi.updateFiscalSettings(company.id, fiscalSettings)
-      
-      toast.success('Configurações Fiscais salvas com sucesso!')
-    } catch (err: any) {
-      toast.error(`Erro ao salvar configurações fiscais: ${err.message}`)
-    } finally {
-      setIsSavingFiscal(false)
-    }
-  }
-
-  async function handleUploadCertificate() {
-    if (!certFile || !certPassword) {
-      toast.error('Selecione o arquivo do certificado e informe a senha.');
-      return;
-    }
-
-    setIsUploadingCert(true);
-    try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(certFile);
-      });
-
-      const { data, error } = await supabase.functions.invoke('upload-certificate', {
-        body: { arquivo: base64, senha: certPassword }
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      toast.success('Certificado Digital A1 importado e salvo no cofre da Focus NFe!');
-      setCertFile(null);
-      setCertPassword('');
-    } catch (err: any) {
-      console.error(err);
-      toast.error(`Erro ao fazer upload do certificado: ${err.message}`);
-    } finally {
-      setIsUploadingCert(false);
-    }
-  }
 
   const planDetails: Record<string, any> = {
     bronze: { name: 'Bronze', desc: 'Funcionalidades Básicas', icon: Star, color: 'text-amber-700 dark:text-amber-600', bg: 'bg-amber-700/10', border: 'border-t-amber-700', perms: ['Dashboard Básico', 'Configurações de Empresa', 'Gestão de Usuários'] },
@@ -670,168 +557,6 @@ export default function CompanySettings() {
         </div>
 
 
-
-        {/* Configuração Fiscal (Focus NFe) */}
-        <div className="glass-card p-6 border-t-4 border-t-orange-400">
-          <div className="flex items-center gap-2 mb-4 text-lg font-bold text-foreground">
-            <Receipt className="h-5 w-5 text-orange-400" />
-            Configuração Fiscal (NF-e / MDF-e)
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Configure seu emissor fiscal (Focus NFe) e envie seu Certificado Digital A1.
-          </p>
-
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Token da API (Focus NFe)</label>
-                <div className="relative">
-                  <KeyIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    placeholder="Seu token de produção ou homologação..."
-                    className="pl-9"
-                    value={fiscalToken}
-                    onChange={e => setFiscalToken(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Ambiente</label>
-                <select 
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={fiscalEnv}
-                  onChange={e => setFiscalEnv(e.target.value)}
-                >
-                  <option value="homologacao">Homologação (Testes)</option>
-                  <option value="producao">Produção (Validade Jurídica)</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Regime Tributário</label>
-                <select 
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={taxRegime}
-                  onChange={e => setTaxRegime(e.target.value)}
-                >
-                  <option value="simples_nacional">Simples Nacional</option>
-                  <option value="regime_normal">Regime Normal (Lucro Presumido/Real)</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Última NF-e Emitida</label>
-                <Input 
-                  type="number" 
-                  value={lastNfeNumber}
-                  onChange={e => setLastNfeNumber(parseInt(e.target.value) || 0)}
-                  placeholder="Ex: 154"
-                />
-                <p className="text-[10px] text-muted-foreground mt-1">Para sequenciar corretamente as novas emissões.</p>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Série da NF-e</label>
-                <Input 
-                  type="number" 
-                  value={nfeSeries}
-                  onChange={e => setNfeSeries(parseInt(e.target.value) || 1)}
-                  placeholder="Ex: 1"
-                />
-              </div>
-            </div>
-            
-            <div className="pt-4 border-t border-border mt-4">
-              <h4 className="font-bold text-sm text-foreground mb-4">Impostos Padrões (Usados na emissão de NF-e)</h4>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">CFOP Padrão</label>
-                  <Input value={fiscalSettings.default_cfop} onChange={e => setFiscalSettings({...fiscalSettings, default_cfop: e.target.value})} placeholder="Ex: 5102" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">CSOSN Padrão</label>
-                  <Input value={fiscalSettings.default_csosn} onChange={e => setFiscalSettings({...fiscalSettings, default_csosn: e.target.value})} placeholder="Ex: 102" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">CST Padrão</label>
-                  <Input value={fiscalSettings.default_cst} onChange={e => setFiscalSettings({...fiscalSettings, default_cst: e.target.value})} placeholder="Ex: 00" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">NCM Padrão</label>
-                  <Input value={fiscalSettings.default_ncm} onChange={e => setFiscalSettings({...fiscalSettings, default_ncm: e.target.value})} placeholder="Ex: 84000000" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">PIS CST</label>
-                  <Input value={fiscalSettings.default_pis} onChange={e => setFiscalSettings({...fiscalSettings, default_pis: e.target.value})} placeholder="Ex: 01" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">COFINS CST</label>
-                  <Input value={fiscalSettings.default_cofins} onChange={e => setFiscalSettings({...fiscalSettings, default_cofins: e.target.value})} placeholder="Ex: 01" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Aliq. ICMS (%)</label>
-                  <Input type="number" step="0.01" value={fiscalSettings.default_icms_rate} onChange={e => setFiscalSettings({...fiscalSettings, default_icms_rate: parseFloat(e.target.value) || 0})} placeholder="Ex: 18.00" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Aliq. IPI (%)</label>
-                  <Input type="number" step="0.01" value={fiscalSettings.default_ipi_rate} onChange={e => setFiscalSettings({...fiscalSettings, default_ipi_rate: parseFloat(e.target.value) || 0})} placeholder="Ex: 5.00" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end pt-4">
-              <Button onClick={handleSaveFiscalSettings} disabled={isSavingFiscal} type="button" className="h-10 bg-orange-500 hover:bg-orange-600 text-white">
-                {isSavingFiscal ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Salvar Dados Fiscais
-              </Button>
-            </div>
-
-            <div className="pt-4 border-t border-border mt-4">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-1">
-                  <h4 className="font-bold text-sm text-foreground flex items-center gap-2 mb-1">
-                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                    Upload de Certificado Digital A1
-                  </h4>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Seu certificado (.pfx ou .p12) será enviado de forma segura e direta para o cofre da Focus NFe. Nossa plataforma não armazena o arquivo nem a senha no nosso banco de dados.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                    <div>
-                      <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Arquivo .PFX / .P12</label>
-                      <Input 
-                        type="file" 
-                        accept=".pfx,.p12" 
-                        onChange={e => setCertFile(e.target.files?.[0] || null)}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Senha do Certificado</label>
-                      <Input 
-                        type="password" 
-                        placeholder="Senha do arquivo"
-                        value={certPassword}
-                        onChange={e => setCertPassword(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-end shrink-0">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleUploadCertificate} 
-                    disabled={isUploadingCert || !certFile || !certPassword || !fiscalToken} 
-                    type="button" 
-                    className="w-full md:w-auto border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                  >
-                    {isUploadingCert ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                    {isUploadingCert ? 'Enviando ao Cofre...' : 'Enviar Certificado'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Backup de Dados */}
         <div className="glass-card p-6 border-t-4 border-t-orange-500">

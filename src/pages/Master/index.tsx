@@ -37,6 +37,9 @@ export default function MasterPanel() {
   // Focus NFe Configs
   const [focusToken, setFocusToken] = useState('');
   const [focusEnv, setFocusEnv] = useState<'producao' | 'homologacao'>('homologacao');
+  const [taxRegime, setTaxRegime] = useState('simples_nacional');
+  const [lastNfeNumber, setLastNfeNumber] = useState(0);
+  const [nfeSeries, setNfeSeries] = useState(1);
 
 
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
@@ -184,7 +187,10 @@ export default function MasterPanel() {
           monthly_fee: monthlyFee,
           plan,
           focusnfe_token: focusToken,
-          focusnfe_env: focusEnv
+          focusnfe_env: focusEnv,
+          tax_regime: taxRegime as any,
+          last_nfe_number: lastNfeNumber,
+          nfe_series: nfeSeries
         });
         
         if (editingAdminId) {
@@ -204,7 +210,10 @@ export default function MasterPanel() {
           monthly_fee: monthlyFee,
           plan,
           focusnfe_token: focusToken,
-          focusnfe_env: focusEnv
+          focusnfe_env: focusEnv,
+          tax_regime: taxRegime as any,
+          last_nfe_number: lastNfeNumber,
+          nfe_series: nfeSeries
         });
 
         await usersApi.createUser({
@@ -245,6 +254,9 @@ export default function MasterPanel() {
     setMonthlyFee(comp.monthly_fee || 0);
     setFocusToken(comp.focusnfe_token || '');
     setFocusEnv(comp.focusnfe_env || 'homologacao');
+    setTaxRegime(comp.tax_regime || 'simples_nacional');
+    setLastNfeNumber(comp.last_nfe_number || 0);
+    setNfeSeries(comp.nfe_series || 1);
 
     // Fetch the admin user
     const { supabase } = await import('@/lib/supabase');
@@ -292,6 +304,7 @@ export default function MasterPanel() {
     setBillingDay(10); setMonthlyFee(0); setPlan('ouro');
     setAdminName(''); setAdminUsername('');
     setFocusToken(''); setFocusEnv('homologacao');
+    setTaxRegime('simples_nacional'); setLastNfeNumber(0); setNfeSeries(1);
     setEditingCompanyId(null);
     setEditingAdminId(null);
   };
@@ -475,20 +488,42 @@ export default function MasterPanel() {
             
             <div className="space-y-3 pt-2">
               <h3 className="font-semibold text-sm border-b pb-1">Integração Focus NFe (Opcional)</h3>
-              <div className="space-y-2">
-                <Label>Token de Acesso (Focus NFe)</Label>
-                <Input value={focusToken} onChange={e => setFocusToken(e.target.value)} placeholder="Token da API" />
-              </div>
-              <div className="space-y-2">
-                <Label>Ambiente Sefaz</Label>
-                <select 
-                  value={focusEnv} 
-                  onChange={e => setFocusEnv(e.target.value as any)} 
-                  className="flex h-10 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
-                >
-                  <option value="homologacao">Homologação (Testes)</option>
-                  <option value="producao">Produção</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2 col-span-2">
+                  <Label>Token de Acesso (Focus NFe)</Label>
+                  <Input value={focusToken} onChange={e => setFocusToken(e.target.value)} placeholder="Token da API" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Ambiente Sefaz</Label>
+                  <select 
+                    value={focusEnv} 
+                    onChange={e => setFocusEnv(e.target.value as any)} 
+                    className="flex h-10 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+                  >
+                    <option value="homologacao">Homologação (Testes)</option>
+                    <option value="producao">Produção</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Regime Tributário</Label>
+                  <select 
+                    value={taxRegime} 
+                    onChange={e => setTaxRegime(e.target.value)} 
+                    className="flex h-10 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+                  >
+                    <option value="simples_nacional">Simples Nacional</option>
+                    <option value="lucro_presumido">Lucro Presumido</option>
+                    <option value="lucro_real">Lucro Real</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Última NF-e Emitida</Label>
+                  <Input type="number" min={0} value={lastNfeNumber} onChange={e => setLastNfeNumber(parseInt(e.target.value) || 0)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Série da NF-e</Label>
+                  <Input type="number" min={1} value={nfeSeries} onChange={e => setNfeSeries(parseInt(e.target.value) || 1)} />
+                </div>
               </div>
             </div>
 

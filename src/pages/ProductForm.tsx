@@ -43,6 +43,12 @@ export default function ProductForm() {
     unit_weight: 0,
     box_quantity: 0,
     ipi_rate: 0,
+    icms_rate: 0,
+    cfop: '',
+    csosn: '',
+    cst: '',
+    pis_cst: '',
+    cofins_cst: '',
     fci: '',
     gtin: '',
     gtin_tributable: '',
@@ -112,6 +118,12 @@ export default function ProductForm() {
         unit_weight: product.unit_weight || 0,
         box_quantity: product.box_quantity || 0,
         ipi_rate: product.ipi_rate || 0,
+        icms_rate: product.icms_rate || 0,
+        cfop: product.cfop || '',
+        csosn: product.csosn || '',
+        cst: product.cst || '',
+        pis_cst: product.pis_cst || '',
+        cofins_cst: product.cofins_cst || '',
         fci: product.fci || '',
         gtin: product.gtin || '',
         gtin_tributable: product.gtin_tributable || '',
@@ -457,6 +469,30 @@ export default function ProductForm() {
                   <option value="7">7 - Estrangeira (Mercado interno s/ similar nacional)</option>
                   <option value="8">8 - Nacional (Importação &gt; 70%)</option>
                 </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cfop" className="text-xs font-bold uppercase text-muted-foreground">CFOP Padrão</Label>
+                <Input id="cfop" value={formData.cfop || ''} onChange={e => setFormData({...formData, cfop: e.target.value})} placeholder="Ex: 5102" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="csosn" className="text-xs font-bold uppercase text-muted-foreground">CSOSN Padrão</Label>
+                <Input id="csosn" value={formData.csosn || ''} onChange={e => setFormData({...formData, csosn: e.target.value})} placeholder="Ex: 102" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cst" className="text-xs font-bold uppercase text-muted-foreground">CST Padrão</Label>
+                <Input id="cst" value={formData.cst || ''} onChange={e => setFormData({...formData, cst: e.target.value})} placeholder="Ex: 00" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pis_cst" className="text-xs font-bold uppercase text-muted-foreground">PIS CST</Label>
+                <Input id="pis_cst" value={formData.pis_cst || ''} onChange={e => setFormData({...formData, pis_cst: e.target.value})} placeholder="Ex: 01" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cofins_cst" className="text-xs font-bold uppercase text-muted-foreground">COFINS CST</Label>
+                <Input id="cofins_cst" value={formData.cofins_cst || ''} onChange={e => setFormData({...formData, cofins_cst: e.target.value})} placeholder="Ex: 01" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="icms_rate" className="text-xs font-bold uppercase text-muted-foreground">Aliq. ICMS (%)</Label>
+                <Input id="icms_rate" type="number" step="0.01" value={formData.icms_rate || ''} onChange={e => setFormData({...formData, icms_rate: Number(e.target.value)})} placeholder="Ex: 18.00" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="net_weight" className="text-xs font-bold uppercase text-muted-foreground">Peso Líquido (kg)</Label>

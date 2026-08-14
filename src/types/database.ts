@@ -416,6 +416,12 @@ export interface Product {
   complementary_description?: string | null
   notes?: string | null
   technical_notes?: string | null
+  cfop?: string | null
+  csosn?: string | null
+  cst?: string | null
+  pis_cst?: string | null
+  cofins_cst?: string | null
+  icms_rate?: number | null
   active?: boolean
   created_at: string
 }
