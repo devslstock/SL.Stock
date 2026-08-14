@@ -433,6 +433,65 @@ export interface Product {
   icms_rate?: number | null
   active?: boolean
   created_at: string
+  
+  // Novas propriedades (Mega Formulário)
+  origin_type?: string | null
+  integer_quantity?: boolean | null
+  photo_url?: string | null
+  abbreviation?: string | null
+  quantity_per_volume?: number | null
+  sales_unit?: string | null
+  sales_unit_factor?: number | null
+  purchase_unit?: string | null
+  purchase_unit_factor?: number | null
+  sales_quantity_calculation_method?: string | null
+  scale_min_weight?: number | null
+  scale_max_weight?: number | null
+  scale_tare?: number | null
+  scale_quantity_method?: string | null
+  purchase_price?: number | null
+  sellable?: boolean | null
+  sales_price?: number | null
+  min_sales_price?: number | null
+  min_sellable_batch?: number | null
+  multiple_sellable_batch?: number | null
+  integrate_ecommerce?: boolean | null
+  service_code?: string | null
+  nbs?: string | null
+  service_type?: string | null
+  income_nature?: string | null
+  anvisa_code?: string | null
+  accounting_type?: string | null
+  fiscal_notes?: string | null
+  max_consumer_price?: number | null
+  icms_st_base_ret?: number | null
+  icms_st_value_ret?: number | null
+  icms_fcp_st_base_ret?: number | null
+  icms_fcp_st_value_ret?: number | null
+  icms_substitute_value?: number | null
+  consumer_supported_rate?: number | null
+  icms_fcp_st_rate_ret?: number | null
+  fiscal_gender?: string | null
+  asset_identification?: string | null
+  anp_code?: string | null
+  fci_percentage?: number | null
+  fci_cost?: number | null
+  suframa_process?: string | null
+  storage_by?: string | null
+  stock_address?: string | null
+  inspection_method?: string | null
+  write_off_method?: string | null
+  reorder_point?: number | null
+  min_batch?: number | null
+  multiple_batch?: number | null
+  is_stock_item?: boolean | null
+  validity_days?: number | null
+  acquisition_deadline_days?: number | null
+  internal_receipt_deadline_days?: number | null
+  drawing_path?: string | null
+  drawing_revision?: string | null
+  budget_cost?: number | null
+  markup_percentage?: number | null
 }
 
 export interface FiscalOperation {

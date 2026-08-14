@@ -55,7 +55,66 @@ export default function ProductForm() {
     complementary_description: '',
     notes: '',
     technical_notes: '',
-    active: true
+    active: true,
+
+    // Novas propriedades (Mega Formulário)
+    origin_type: 'Comprado',
+    integer_quantity: false,
+    photo_url: '',
+    abbreviation: '',
+    quantity_per_volume: 0,
+    sales_unit: '',
+    sales_unit_factor: 1,
+    purchase_unit: '',
+    purchase_unit_factor: 1,
+    sales_quantity_calculation_method: 'Qt direta',
+    scale_min_weight: 0,
+    scale_max_weight: 0,
+    scale_tare: 0,
+    scale_quantity_method: 'Unitário',
+    purchase_price: 0,
+    sellable: true,
+    sales_price: 0,
+    min_sales_price: 0,
+    min_sellable_batch: 0,
+    multiple_sellable_batch: 0,
+    integrate_ecommerce: false,
+    service_code: '',
+    nbs: '',
+    service_type: '',
+    income_nature: '',
+    anvisa_code: '',
+    accounting_type: '',
+    fiscal_notes: '',
+    max_consumer_price: 0,
+    icms_st_base_ret: 0,
+    icms_st_value_ret: 0,
+    icms_fcp_st_base_ret: 0,
+    icms_fcp_st_value_ret: 0,
+    icms_substitute_value: 0,
+    consumer_supported_rate: 0,
+    icms_fcp_st_rate_ret: 0,
+    fiscal_gender: '',
+    asset_identification: '',
+    anp_code: '',
+    fci_percentage: 0,
+    fci_cost: 0,
+    suframa_process: '',
+    storage_by: 'Código do item',
+    stock_address: '',
+    inspection_method: 'Sem inspeção',
+    write_off_method: 'Manual',
+    reorder_point: 0,
+    min_batch: 0,
+    multiple_batch: 0,
+    is_stock_item: true,
+    validity_days: 0,
+    acquisition_deadline_days: 0,
+    internal_receipt_deadline_days: 0,
+    drawing_path: '',
+    drawing_revision: '',
+    budget_cost: 0,
+    markup_percentage: 0
   })
 
   // Preços por tabela: chave é o table_id, valor é um objeto { price, discount }
@@ -447,78 +506,323 @@ export default function ProductForm() {
           </TabsContent>
 
           <TabsContent value="fiscal" className="p-6 focus-visible:outline-none">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="ncm" className="text-xs font-bold uppercase text-muted-foreground">NCM</Label>
-                <Input id="ncm" value={formData.ncm || ''} onChange={e => setFormData({...formData, ncm: e.target.value})} placeholder="Ex: 85171231" />
+            
+            {/* Ocultar dados complementares */}
+            <details className="bg-muted/10 border border-border rounded-lg p-4 mb-4" open>
+              <summary className="font-semibold cursor-pointer mb-2 border-b border-border pb-2 select-none">
+                Dados complementares
+              </summary>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Procedência</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.origin_type || 'Comprado'} onChange={e => setFormData({...formData, origin_type: e.target.value})}>
+                    <option value="Comprado">Comprado</option>
+                    <option value="Fabricado">Fabricado</option>
+                  </select>
+                </div>
+                <div className="space-y-2 flex items-end pb-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={formData.integer_quantity || false} onChange={e => setFormData({...formData, integer_quantity: e.target.checked})} className="w-4 h-4 text-primary rounded border-gray-300" />
+                    <span className="text-sm font-bold">Quantidade inteira</span>
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Sigla</Label>
+                  <Input value={formData.abbreviation || ''} onChange={e => setFormData({...formData, abbreviation: e.target.value})} />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cest" className="text-xs font-bold uppercase text-muted-foreground">CEST</Label>
-                <Input id="cest" value={formData.cest || ''} onChange={e => setFormData({...formData, cest: e.target.value})} placeholder="Ex: 2105300" />
+            </details>
+
+            {/* Ocultar pesos, volumes e outras unidades */}
+            <details className="bg-muted/10 border border-border rounded-lg p-4 mb-4" open>
+              <summary className="font-semibold cursor-pointer mb-2 border-b border-border pb-2 select-none">
+                Pesos, volumes e outras unidades
+              </summary>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Peso Líquido</Label>
+                  <Input type="number" step="0.001" value={formData.net_weight || ''} onChange={e => setFormData({...formData, net_weight: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Peso Bruto</Label>
+                  <Input type="number" step="0.001" value={formData.gross_weight || ''} onChange={e => setFormData({...formData, gross_weight: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Quantidade por volume</Label>
+                  <Input type="number" value={formData.quantity_per_volume || ''} onChange={e => setFormData({...formData, quantity_per_volume: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Unidade de Venda</Label>
+                  <Input value={formData.sales_unit || ''} onChange={e => setFormData({...formData, sales_unit: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Unidade de Compra</Label>
+                  <Input value={formData.purchase_unit || ''} onChange={e => setFormData({...formData, purchase_unit: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Cálculo em proposta</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.sales_quantity_calculation_method || 'Qt direta'} onChange={e => setFormData({...formData, sales_quantity_calculation_method: e.target.value})}>
+                    <option value="Qt direta">Qt direta</option>
+                  </select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="origin" className="text-xs font-bold uppercase text-muted-foreground">Origem (CST/CSOSN)</Label>
-                <select id="origin" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" value={formData.origin || '0'} onChange={e => setFormData({...formData, origin: e.target.value})}>
-                  <option value="0">0 - Nacional</option>
-                  <option value="1">1 - Estrangeira (Importação direta)</option>
-                  <option value="2">2 - Estrangeira (Adquirida no mercado interno)</option>
-                  <option value="3">3 - Nacional (Importação &gt; 40%)</option>
-                  <option value="4">4 - Nacional (Processo produtivo básico)</option>
-                  <option value="5">5 - Nacional (Importação &lt;= 40%)</option>
-                  <option value="6">6 - Estrangeira (Importação s/ similar nacional)</option>
-                  <option value="7">7 - Estrangeira (Mercado interno s/ similar nacional)</option>
-                  <option value="8">8 - Nacional (Importação &gt; 70%)</option>
-                </select>
+            </details>
+
+            {/* Ocultar balança */}
+            <details className="bg-muted/10 border border-border rounded-lg p-4 mb-4">
+              <summary className="font-semibold cursor-pointer mb-2 border-b border-border pb-2 select-none">
+                Balança
+              </summary>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-2">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Peso Mínimo</Label>
+                  <Input type="number" step="0.001" value={formData.scale_min_weight || ''} onChange={e => setFormData({...formData, scale_min_weight: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Peso Máximo</Label>
+                  <Input type="number" step="0.001" value={formData.scale_max_weight || ''} onChange={e => setFormData({...formData, scale_max_weight: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Tara</Label>
+                  <Input type="number" step="0.001" value={formData.scale_tare || ''} onChange={e => setFormData({...formData, scale_tare: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Qtd nas Movimentações</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.scale_quantity_method || 'Unitário'} onChange={e => setFormData({...formData, scale_quantity_method: e.target.value})}>
+                    <option value="Unitário">Unitário</option>
+                  </select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cfop" className="text-xs font-bold uppercase text-muted-foreground">CFOP Padrão</Label>
-                <Input id="cfop" value={formData.cfop || ''} onChange={e => setFormData({...formData, cfop: e.target.value})} placeholder="Ex: 5102" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="csosn" className="text-xs font-bold uppercase text-muted-foreground">CSOSN Padrão</Label>
-                <Input id="csosn" value={formData.csosn || ''} onChange={e => setFormData({...formData, csosn: e.target.value})} placeholder="Ex: 102" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cst" className="text-xs font-bold uppercase text-muted-foreground">CST Padrão</Label>
-                <Input id="cst" value={formData.cst || ''} onChange={e => setFormData({...formData, cst: e.target.value})} placeholder="Ex: 00" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pis_cst" className="text-xs font-bold uppercase text-muted-foreground">PIS CST</Label>
-                <Input id="pis_cst" value={formData.pis_cst || ''} onChange={e => setFormData({...formData, pis_cst: e.target.value})} placeholder="Ex: 01" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cofins_cst" className="text-xs font-bold uppercase text-muted-foreground">COFINS CST</Label>
-                <Input id="cofins_cst" value={formData.cofins_cst || ''} onChange={e => setFormData({...formData, cofins_cst: e.target.value})} placeholder="Ex: 01" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="icms_rate" className="text-xs font-bold uppercase text-muted-foreground">Aliq. ICMS (%)</Label>
-                <Input id="icms_rate" type="number" step="0.01" value={formData.icms_rate || ''} onChange={e => setFormData({...formData, icms_rate: Number(e.target.value)})} placeholder="Ex: 18.00" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="net_weight" className="text-xs font-bold uppercase text-muted-foreground">Peso Líquido (kg)</Label>
-                <Input id="net_weight" type="number" step="0.001" value={formData.net_weight || ''} onChange={e => setFormData({...formData, net_weight: Number(e.target.value)})} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gross_weight" className="text-xs font-bold uppercase text-muted-foreground">Peso Bruto (kg)</Label>
-                <Input id="gross_weight" type="number" step="0.001" value={formData.gross_weight || ''} onChange={e => setFormData({...formData, gross_weight: Number(e.target.value)})} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ipi_rate" className="text-xs font-bold uppercase text-muted-foreground">IPI (%)</Label>
-                <Input id="ipi_rate" type="number" step="0.01" value={formData.ipi_rate || ''} onChange={e => setFormData({...formData, ipi_rate: Number(e.target.value)})} placeholder="Ex: 5.00" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="fci" className="text-xs font-bold uppercase text-muted-foreground">Número da FCI</Label>
-                <Input id="fci" value={formData.fci || ''} onChange={e => setFormData({...formData, fci: e.target.value})} placeholder="Ficha de Conteúdo de Importação" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gtin" className="text-xs font-bold uppercase text-muted-foreground">GTIN (EAN Principal)</Label>
-                <Input id="gtin" value={formData.gtin || ''} onChange={e => setFormData({...formData, gtin: e.target.value})} placeholder="Ex: 7891234567890" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gtin_tributable" className="text-xs font-bold uppercase text-muted-foreground">GTIN Unid. Tributável</Label>
-                <Input id="gtin_tributable" value={formData.gtin_tributable || ''} onChange={e => setFormData({...formData, gtin_tributable: e.target.value})} placeholder="Ex: 7891234567890" />
-              </div>
+            </details>
+
+            {/* Ocultar Compras / Vendas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <details className="bg-muted/10 border border-border rounded-lg p-4" open>
+                <summary className="font-semibold cursor-pointer mb-2 border-b border-border pb-2 select-none">Compras</summary>
+                <div className="space-y-2 pt-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Preço de Compra</Label>
+                  <Input type="number" step="0.01" value={formData.purchase_price || ''} onChange={e => setFormData({...formData, purchase_price: Number(e.target.value)})} />
+                </div>
+              </details>
+              
+              <details className="bg-muted/10 border border-border rounded-lg p-4" open>
+                <summary className="font-semibold cursor-pointer mb-2 border-b border-border pb-2 select-none">Vendas</summary>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="col-span-2 space-y-2 flex items-end">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={formData.sellable ?? true} onChange={e => setFormData({...formData, sellable: e.target.checked})} className="w-4 h-4 text-primary rounded border-gray-300" />
+                      <span className="text-sm font-bold">Item vendável</span>
+                    </label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase text-muted-foreground">Preço Mínimo</Label>
+                    <Input type="number" step="0.01" value={formData.min_sales_price || ''} onChange={e => setFormData({...formData, min_sales_price: Number(e.target.value)})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase text-muted-foreground">Lote Mínimo Vendável</Label>
+                    <Input type="number" value={formData.min_sellable_batch || ''} onChange={e => setFormData({...formData, min_sellable_batch: Number(e.target.value)})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase text-muted-foreground">Lote Múltiplo Vendável</Label>
+                    <Input type="number" value={formData.multiple_sellable_batch || ''} onChange={e => setFormData({...formData, multiple_sellable_batch: Number(e.target.value)})} />
+                  </div>
+                  <div className="space-y-2 flex items-end pb-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={formData.integrate_ecommerce || false} onChange={e => setFormData({...formData, integrate_ecommerce: e.target.checked})} className="w-4 h-4 text-primary rounded border-gray-300" />
+                      <span className="text-sm font-bold">Integrar E-commerce</span>
+                    </label>
+                  </div>
+                </div>
+              </details>
             </div>
+
+            {/* Ocultar dados fiscais base */}
+            <details className="bg-muted/10 border border-border rounded-lg p-4 mb-4" open>
+              <summary className="font-semibold cursor-pointer mb-2 border-b border-border pb-2 select-none">Dados Fiscais Básicos</summary>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+                <div className="space-y-2">
+                  <Label htmlFor="ncm" className="text-xs font-bold uppercase text-muted-foreground">NCM</Label>
+                  <Input id="ncm" value={formData.ncm || ''} onChange={e => setFormData({...formData, ncm: e.target.value})} placeholder="Ex: 85171231" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cest" className="text-xs font-bold uppercase text-muted-foreground">CEST</Label>
+                  <Input id="cest" value={formData.cest || ''} onChange={e => setFormData({...formData, cest: e.target.value})} placeholder="Ex: 2105300" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="origin" className="text-xs font-bold uppercase text-muted-foreground">Origem Mercadoria</Label>
+                  <select id="origin" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.origin || '0'} onChange={e => setFormData({...formData, origin: e.target.value})}>
+                    <option value="0">0 - Nacional</option>
+                    <option value="1">1 - Estrangeira (Importação direta)</option>
+                    <option value="2">2 - Estrangeira (Adquirida no mercado interno)</option>
+                    <option value="3">3 - Nacional (Importação &gt; 40%)</option>
+                    <option value="4">4 - Nacional (Processo produtivo básico)</option>
+                    <option value="5">5 - Nacional (Importação &lt;= 40%)</option>
+                    <option value="6">6 - Estrangeira (Importação s/ similar nacional)</option>
+                    <option value="7">7 - Estrangeira (Merc. int. s/ similar nac.)</option>
+                    <option value="8">8 - Nacional (Importação &gt; 70%)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">CFOP Padrão</Label>
+                  <Input value={formData.cfop || ''} onChange={e => setFormData({...formData, cfop: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">CST Padrão</Label>
+                  <Input value={formData.cst || ''} onChange={e => setFormData({...formData, cst: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">CSOSN Padrão</Label>
+                  <Input value={formData.csosn || ''} onChange={e => setFormData({...formData, csosn: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">PIS CST</Label>
+                  <Input value={formData.pis_cst || ''} onChange={e => setFormData({...formData, pis_cst: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">COFINS CST</Label>
+                  <Input value={formData.cofins_cst || ''} onChange={e => setFormData({...formData, cofins_cst: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Aliq. ICMS (%)</Label>
+                  <Input type="number" step="0.01" value={formData.icms_rate || ''} onChange={e => setFormData({...formData, icms_rate: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Aliq. IPI (%)</Label>
+                  <Input type="number" step="0.01" value={formData.ipi_rate || ''} onChange={e => setFormData({...formData, ipi_rate: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">GTIN (EAN Principal)</Label>
+                  <Input value={formData.gtin || ''} onChange={e => setFormData({...formData, gtin: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">GTIN Unid. Tributável</Label>
+                  <Input value={formData.gtin_tributable || ''} onChange={e => setFormData({...formData, gtin_tributable: e.target.value})} />
+                </div>
+              </div>
+            </details>
+
+            {/* Ocultar Outros dados fiscais */}
+            <details className="bg-muted/10 border border-border rounded-lg p-4 mb-4">
+              <summary className="font-semibold cursor-pointer mb-2 border-b border-border pb-2 select-none">Outros dados fiscais e Serviço</summary>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-2">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Código do serviço</Label>
+                  <Input value={formData.service_code || ''} onChange={e => setFormData({...formData, service_code: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">NBS</Label>
+                  <Input value={formData.nbs || ''} onChange={e => setFormData({...formData, nbs: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Código ANVISA</Label>
+                  <Input value={formData.anvisa_code || ''} onChange={e => setFormData({...formData, anvisa_code: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Preço Max. Consumidor</Label>
+                  <Input type="number" step="0.01" value={formData.max_consumer_price || ''} onChange={e => setFormData({...formData, max_consumer_price: Number(e.target.value)})} />
+                </div>
+                <div className="col-span-4 space-y-2 mt-4 border-t border-border pt-4">
+                  <h4 className="text-sm font-semibold mb-2">ICMS ST Anterior (Retido)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase text-muted-foreground">Base ICMS ST</Label>
+                      <Input type="number" step="0.01" value={formData.icms_st_base_ret || ''} onChange={e => setFormData({...formData, icms_st_base_ret: Number(e.target.value)})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase text-muted-foreground">Valor ICMS ST</Label>
+                      <Input type="number" step="0.01" value={formData.icms_st_value_ret || ''} onChange={e => setFormData({...formData, icms_st_value_ret: Number(e.target.value)})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase text-muted-foreground">Base ICMS FCP ST</Label>
+                      <Input type="number" step="0.01" value={formData.icms_fcp_st_base_ret || ''} onChange={e => setFormData({...formData, icms_fcp_st_base_ret: Number(e.target.value)})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase text-muted-foreground">Valor ICMS FCP ST</Label>
+                      <Input type="number" step="0.01" value={formData.icms_fcp_st_value_ret || ''} onChange={e => setFormData({...formData, icms_fcp_st_value_ret: Number(e.target.value)})} />
+                    </div>
+                  </div>
+                </div>
+                <div className="col-span-4 space-y-2 mt-4 border-t border-border pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase text-muted-foreground">Cód. Produto ANP</Label>
+                      <Input value={formData.anp_code || ''} onChange={e => setFormData({...formData, anp_code: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase text-muted-foreground">Nº da FCI</Label>
+                      <Input value={formData.fci || ''} onChange={e => setFormData({...formData, fci: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase text-muted-foreground">Proc. SUFRAMA</Label>
+                      <Input value={formData.suframa_process || ''} onChange={e => setFormData({...formData, suframa_process: e.target.value})} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            {/* Ocultar estocagem */}
+            <details className="bg-muted/10 border border-border rounded-lg p-4 mb-4">
+              <summary className="font-semibold cursor-pointer mb-2 border-b border-border pb-2 select-none">Estocagem, inspeção, baixa e planejamento</summary>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-2">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Estocagem por</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.storage_by || 'Código do item'} onChange={e => setFormData({...formData, storage_by: e.target.value})}>
+                    <option value="Código do item">Código do item</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Endereço de estoque</Label>
+                  <Input value={formData.stock_address || ''} onChange={e => setFormData({...formData, stock_address: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Inspeção</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.inspection_method || 'Sem inspeção'} onChange={e => setFormData({...formData, inspection_method: e.target.value})}>
+                    <option value="Sem inspeção">Sem inspeção</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Baixa</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.write_off_method || 'Manual'} onChange={e => setFormData({...formData, write_off_method: e.target.value})}>
+                    <option value="Manual">Manual</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Prazo Validade (dias)</Label>
+                  <Input type="number" value={formData.validity_days || ''} onChange={e => setFormData({...formData, validity_days: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2 flex items-end pb-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={formData.is_stock_item ?? true} onChange={e => setFormData({...formData, is_stock_item: e.target.checked})} className="w-4 h-4 text-primary rounded border-gray-300" />
+                    <span className="text-sm font-bold">Item de Estoque</span>
+                  </label>
+                </div>
+              </div>
+            </details>
+
+            {/* Ocultar desenho */}
+            <details className="bg-muted/10 border border-border rounded-lg p-4 mb-4">
+              <summary className="font-semibold cursor-pointer mb-2 border-b border-border pb-2 select-none">Desenho e Custo de Orçamentação</summary>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Desenho</Label>
+                  <Input value={formData.drawing_path || ''} onChange={e => setFormData({...formData, drawing_path: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Revisão</Label>
+                  <Input value={formData.drawing_revision || ''} onChange={e => setFormData({...formData, drawing_revision: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Custo (R$)</Label>
+                  <Input type="number" step="0.01" value={formData.budget_cost || ''} onChange={e => setFormData({...formData, budget_cost: Number(e.target.value)})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">% Markup</Label>
+                  <Input type="number" step="0.01" value={formData.markup_percentage || ''} onChange={e => setFormData({...formData, markup_percentage: Number(e.target.value)})} />
+                </div>
+              </div>
+            </details>
+
           </TabsContent>
         </Tabs>
       </div>
