@@ -23,6 +23,9 @@ export default function FiscalOperations() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('geral')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
   
   const [formData, setFormData] = useState<Partial<FiscalOperation>>({
     name: '',
@@ -111,6 +114,15 @@ export default function FiscalOperations() {
     queryFn: () => company?.id ? fiscalOperationsApi.getOperations(company.id) : [],
     enabled: !!company?.id
   })
+
+  const filteredOperations = operations.filter(op => 
+    (op.code || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (op.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (op.cfop_intra || '').includes(searchTerm)
+  )
+
+  const totalPages = Math.ceil(filteredOperations.length / itemsPerPage)
+  const paginatedOperations = filteredOperations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const saveMutation = useMutation({
     mutationFn: (data: Partial<FiscalOperation>) => {
@@ -207,7 +219,18 @@ export default function FiscalOperations() {
         </Button>
       </div>
 
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-border/50 bg-muted/20">
+          <Input
+            placeholder="Buscar por código, nome ou CFOP..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setCurrentPage(1)
+            }}
+            className="max-w-md"
+          />
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b border-border/50">
@@ -221,13 +244,13 @@ export default function FiscalOperations() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {operations.length === 0 ? (
+              {paginatedOperations.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhuma operação fiscal configurada.
+                    Nenhuma operação fiscal encontrada.
                   </td>
                 </tr>
-              ) : operations.map(op => (
+              ) : paginatedOperations.map(op => (
                 <tr key={op.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
                     <div className="font-medium text-foreground">{op.code} - {op.name}</div>
@@ -262,6 +285,31 @@ export default function FiscalOperations() {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t border-border/50 bg-muted/10">
+            <span className="text-sm text-muted-foreground">
+              Mostrando {(currentPage - 1) * itemsPerPage + 1} a {Math.min(currentPage * itemsPerPage, filteredOperations.length)} de {filteredOperations.length} operações
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (

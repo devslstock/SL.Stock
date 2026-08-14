@@ -24,6 +24,10 @@ export function FiscalSeriesManager() {
   const [newSeriesNum, setNewSeriesNum] = useState<number>(1)
   const [newNextNum, setNewNextNum] = useState<number>(1)
   const [newDocType, setNewDocType] = useState<string>('NFE')
+  
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
 
   const createMutation = useMutation({
     mutationFn: (newSeries: any) => fiscalSeriesApi.createSeries({ ...newSeries, company_id: companyId }),
@@ -50,8 +54,16 @@ export function FiscalSeriesManager() {
       queryClient.invalidateQueries({ queryKey: ['fiscal_series', companyId] })
       toast.success('Série removida!')
     },
-    onError: (err: any) => toast.error(`Erro: ${err.message}`)
+    onError: (err: any) => toast.error(err.message)
   })
+
+  const filteredSeries = seriesList.filter(s => 
+    String(s.series_number).includes(searchTerm) || 
+    (s.document_type || '').toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const totalPages = Math.ceil(filteredSeries.length / itemsPerPage)
+  const paginatedSeries = filteredSeries.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const handleAdd = () => {
     createMutation.mutate({
@@ -121,7 +133,18 @@ export function FiscalSeriesManager() {
               Nenhuma série configurada para esta empresa.
             </div>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-border/50 bg-muted/20">
+                <Input
+                  placeholder="Buscar por número da série ou tipo..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value)
+                    setCurrentPage(1)
+                  }}
+                  className="max-w-md"
+                />
+              </div>
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 border-b">
                   <tr>
@@ -132,7 +155,7 @@ export function FiscalSeriesManager() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {seriesList.map((series) => (
+                  {paginatedSeries.map((series) => (
                     <tr key={series.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-4 py-3 align-middle">
                         <Input 
@@ -191,6 +214,31 @@ export function FiscalSeriesManager() {
                   ))}
                 </tbody>
               </table>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t border-border/50 bg-muted/10">
+                  <span className="text-sm text-muted-foreground">
+                    Mostrando {(currentPage - 1) * itemsPerPage + 1} a {Math.min(currentPage * itemsPerPage, filteredSeries.length)} de {filteredSeries.length} séries
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
       </div>

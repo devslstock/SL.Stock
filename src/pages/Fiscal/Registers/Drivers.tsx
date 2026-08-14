@@ -14,6 +14,9 @@ export default function FiscalDrivers() {
   const queryClient = useQueryClient()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
   
   const [formData, setFormData] = useState<Partial<Driver>>({
     name: '',
@@ -27,6 +30,14 @@ export default function FiscalDrivers() {
     queryFn: () => company?.id ? driversApi.getDrivers(company.id) : [],
     enabled: !!company?.id
   })
+
+  const filteredDrivers = drivers.filter(d => 
+    (d.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (d.cpf || '').includes(searchTerm)
+  )
+
+  const totalPages = Math.ceil(filteredDrivers.length / itemsPerPage)
+  const paginatedDrivers = filteredDrivers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const saveMutation = useMutation({
     mutationFn: (data: Partial<Driver>) => {
@@ -96,7 +107,18 @@ export default function FiscalDrivers() {
         </Button>
       </div>
 
-      <div className="glass-card overflow-hidden">
+      <div className="glass-card overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-border/50 bg-muted/20">
+          <Input
+            placeholder="Buscar por nome ou CPF..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setCurrentPage(1)
+            }}
+            className="max-w-md"
+          />
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b border-border/50">
@@ -109,13 +131,13 @@ export default function FiscalDrivers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {drivers.length === 0 ? (
+              {paginatedDrivers.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhum condutor cadastrado.
+                    Nenhum condutor encontrado.
                   </td>
                 </tr>
-              ) : drivers.map(drv => (
+              ) : paginatedDrivers.map(drv => (
                 <tr key={drv.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3 font-medium">{drv.name}</td>
                   <td className="px-4 py-3 text-center">{drv.cpf}</td>
@@ -140,6 +162,31 @@ export default function FiscalDrivers() {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t border-border/50 bg-muted/10">
+            <span className="text-sm text-muted-foreground">
+              Mostrando {(currentPage - 1) * itemsPerPage + 1} a {Math.min(currentPage * itemsPerPage, filteredDrivers.length)} de {filteredDrivers.length} condutores
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (

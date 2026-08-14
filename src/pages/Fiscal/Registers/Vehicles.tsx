@@ -14,6 +14,9 @@ export default function FiscalVehicles() {
   const queryClient = useQueryClient()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
   
   const [formData, setFormData] = useState<Partial<Vehicle>>({
     description: '',
@@ -37,6 +40,14 @@ export default function FiscalVehicles() {
     queryFn: () => company?.id ? vehiclesApi.getVehicles(company.id) : [],
     enabled: !!company?.id
   })
+
+  const filteredVehicles = vehicles.filter(v => 
+    (v.plate || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (v.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage)
+  const paginatedVehicles = filteredVehicles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const saveMutation = useMutation({
     mutationFn: (data: Partial<Vehicle>) => {
@@ -126,7 +137,18 @@ export default function FiscalVehicles() {
         </Button>
       </div>
 
-      <div className="glass-card overflow-hidden">
+      <div className="glass-card overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-border/50 bg-muted/20">
+          <Input
+            placeholder="Buscar por placa ou descrição..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setCurrentPage(1)
+            }}
+            className="max-w-md"
+          />
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b border-border/50">
@@ -139,13 +161,13 @@ export default function FiscalVehicles() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {vehicles.length === 0 ? (
+              {paginatedVehicles.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhum veículo cadastrado.
+                    Nenhum veículo encontrado.
                   </td>
                 </tr>
-              ) : vehicles.map(v => (
+              ) : paginatedVehicles.map(v => (
                 <tr key={v.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
                     <div className="font-medium text-foreground">{v.description || 'Sem descrição'}</div>
@@ -173,6 +195,31 @@ export default function FiscalVehicles() {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t border-border/50 bg-muted/10">
+            <span className="text-sm text-muted-foreground">
+              Mostrando {(currentPage - 1) * itemsPerPage + 1} a {Math.min(currentPage * itemsPerPage, filteredVehicles.length)} de {filteredVehicles.length} veículos
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
