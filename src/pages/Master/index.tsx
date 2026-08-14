@@ -465,7 +465,7 @@ export default function MasterPanel() {
                     <option value="bronze">Bronze (Apenas Estoque)</option>
                     <option value="prata">Prata (+ Expedição)</option>
                     <option value="ouro">Ouro (+ Entregas e Motoristas)</option>
-                    <option value="platina">Platina (+ Força de Vendas e CRM)</option>
+                    <option value="platina">Platina (+ E-commerce e CRM)</option>
                   </select>
                 </div>
                 <div className="space-y-2">

@@ -373,7 +373,7 @@ export default function NewOrder() {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             title: `Pedido ${order?.order_number || ''}`,
-            text: `Segue o pedido gerado via Força de Vendas.`,
+            text: `Segue o pedido gerado via E-commerce.`,
             files: [file]
           });
           toast.success('Compartilhado com sucesso!');

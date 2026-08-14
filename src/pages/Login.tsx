@@ -168,7 +168,7 @@ export default function Login() {
                 Controle sua operação do <span className="text-[#0073E6]">estoque</span> até a <span className="text-[#0073E6]">entrega.</span>
               </h2>
               <p className="text-white/70 text-sm leading-relaxed max-w-[280px] mx-auto">
-                A plataforma completa que integra estoque, expedição, entregas e força de vendas em um único sistema.
+                A plataforma completa que integra estoque, expedição, entregas e e-commerce em um único sistema.
               </p>
             </div>
 

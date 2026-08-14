@@ -995,7 +995,7 @@ export default function AdminOrderEdit() {
                  value={formData.payment_condition_id || ''}
                  onChange={e => setFormData({...formData, payment_condition_id: e.target.value})}
                  disabled
-                 title="Condição original selecionada no Força de Vendas"
+                 title="Condição original selecionada no E-commerce"
                >
                  <option value="">Selecione...</option>
                  {paymentConditions.map((pc: any) => <option key={pc.id} value={pc.id}>{pc.name}</option>)}

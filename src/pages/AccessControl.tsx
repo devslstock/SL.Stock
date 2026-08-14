@@ -311,12 +311,12 @@ export default function AccessControl() {
                     </label>
                   </div>
 
-                  {/* App Força de Vendas */}
+                  {/* App E-commerce */}
                   {company?.plan === 'platina' && (
                     <div className="space-y-2">
                       <label className="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" checked={perms.can_use_sales_app} onChange={() => togglePerm('can_use_sales_app')} className="w-4 h-4 accent-primary" />
-                        <span className="text-sm font-semibold">App Força de Vendas</span>
+                        <span className="text-sm font-semibold">App E-commerce</span>
                       </label>
                     </div>
                   )}

@@ -46,7 +46,7 @@ const navGroups: NavGroup[] = [
   {
     title: 'COMERCIAL',
     items: [
-      { label: 'Força de Vendas', icon: Briefcase, path: '/vendas', permission: 'can_use_sales_app' }
+      { label: 'E-commerce', icon: Briefcase, path: '/vendas', permission: 'can_use_sales_app' }
     ]
   },
   {
@@ -299,7 +299,7 @@ export default function AppLayout() {
   }
 
   const getPlanRequirement = (path: string) => {
-    // App Força de Vendas
+    // App E-commerce
     if (path === '/vendas') return 'platina'
     
     // OPERAÇÕES

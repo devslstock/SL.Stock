@@ -38,7 +38,7 @@ export default function SalesOrders() {
   const isVendedor = user?.role === 'vendedor' || user?.role === 'representante'
 
   const filteredOrders = orders.filter(o => {
-    // Esconde os pedidos importados via planilha do App Força de Vendas
+    // Esconde os pedidos importados via planilha do E-commerce
     if (o.notes?.includes('[Origem: Importação Planilha]')) {
       return false
     }

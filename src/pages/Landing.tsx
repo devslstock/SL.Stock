@@ -142,7 +142,7 @@ export default function Landing() {
           <div className="space-y-8 relative z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium">
               <Zap className="h-4 w-4" />
-              <span>Sistema Completo para Logística e Força de Vendas</span>
+              <span>Sistema Completo para Logística e E-commerce</span>
             </div>
             
             <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1]">
@@ -150,7 +150,7 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg lg:text-xl text-slate-400 max-w-xl leading-relaxed">
-              O SL Stock conecta estoque, expedição, entregas e força de vendas em uma única plataforma integrada.
+              O SL Stock conecta estoque, expedição, entregas e e-commerce em uma única plataforma integrada.
             </p>
             
             <div className="flex flex-wrap items-center gap-4 pt-4">
@@ -319,7 +319,7 @@ export default function Landing() {
               <div className="h-14 w-14 bg-violet-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Briefcase className="h-7 w-7 text-violet-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-4">Força de Vendas</h3>
+              <h3 className="text-xl font-bold text-white mb-4">E-commerce</h3>
               <ul className="space-y-3">
                 {['Pedidos e orçamentos', 'Gestão de clientes', 'Tabelas de preço', 'Funil de vendas'].map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-slate-400">
@@ -363,7 +363,7 @@ export default function Landing() {
             <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/50 via-cyan-500/50 to-transparent hidden md:block" />
             
             {[
-              { title: 'Passo 1', desc: 'Pedido realizado pelo vendedor no Força de Vendas.', icon: Briefcase },
+              { title: 'Passo 1', desc: 'Pedido realizado pelo vendedor no E-commerce.', icon: Briefcase },
               { title: 'Passo 2', desc: 'Separação e conferência por bipagem no estoque.', icon: Box },
               { title: 'Passo 3', desc: 'Montagem da rota de entrega e romaneio.', icon: Truck },
               { title: 'Passo 4', desc: 'Motorista realiza a entrega utilizando o App.', icon: Smartphone },
@@ -444,7 +444,7 @@ export default function Landing() {
               <p className="text-slate-400 text-sm mb-6">Operação ponta a ponta</p>
               <div className="text-sm font-semibold text-white mb-4 pb-4 border-b border-white/10">Tudo do Ouro +</div>
               <ul className="space-y-4 mb-8 flex-1">
-                {['Sistema Força de Vendas', 'Gestão de vendedores', 'Integração completa ERP', 'Painel B2B'].map((item, i) => (
+                {['Sistema E-commerce', 'Gestão de vendedores', 'Integração completa ERP', 'Painel B2B'].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-slate-300">
                     <Check className="h-5 w-5 text-cyan-400" /> {item}
                   </li>
