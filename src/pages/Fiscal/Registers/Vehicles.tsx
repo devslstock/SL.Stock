@@ -299,9 +299,13 @@ export default function FiscalVehicles() {
                     value={formData.transport_unit_type} 
                     onChange={e => setFormData({...formData, transport_unit_type: e.target.value})}
                   >
-                    <option value="Caminhão">Caminhão</option>
-                    <option value="Carreta">Carreta</option>
+                    <option value="Aeronave">Aeronave</option>
+                    <option value="Balsa">Balsa</option>
+                    <option value="Navio">Navio</option>
                     <option value="Outros">Outros</option>
+                    <option value="Rodoviário reboque">Rodoviário reboque</option>
+                    <option value="Rodoviário tração">Rodoviário tração</option>
+                    <option value="Vagão">Vagão</option>
                   </select>
                 </div>
                 <div className="space-y-2">
