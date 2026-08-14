@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import Select from 'react-select'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { salesApi } from '@/api/sales'
 import { productsApi } from '@/api/products'
 import { financeApi } from '@/api/finance'
 import { nfeApi } from '@/api/nfe'
+import { fiscalOperationsApi } from '@/api/fiscalOperations'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/components/ui/toaster'
@@ -123,6 +125,12 @@ export default function AdminOrderEdit() {
     nfe_series: 3,
     forma_pagamento: '',
     condicao_frete: ''
+  })
+
+  const { data: fiscalOperations = [] } = useQuery({
+    queryKey: ['fiscal_operations', company?.id],
+    queryFn: () => company?.id ? fiscalOperationsApi.getOperations(company.id) : [],
+    enabled: !!company?.id
   })
 
   useEffect(() => {
@@ -680,17 +688,50 @@ export default function AdminOrderEdit() {
                 Operação fiscal*
                 {!isPlatina && <span title="Disponível apenas no plano Platina"><Lock className="h-3 w-3 text-muted-foreground" /></span>}
               </label>
-              <select 
-                className="h-7 text-[13px] border rounded px-1 flex-1 bg-background disabled:opacity-50 disabled:cursor-not-allowed" 
-                value={formData.operacao_fiscal} 
-                onChange={e => setFormData({...formData, operacao_fiscal: e.target.value})}
-                disabled={!isPlatina || !isEditable}
-                title={!isPlatina ? "Disponível apenas no plano Platina" : ""}
-              >
-                 <option value="">Selecione...</option>
-                 <option value="5405">5405 - Venda de merc. com subst. trib.</option>
-                 <option value="5102">5102 - Venda de merc. adquirida de terç.</option>
-              </select>
+              <div className="flex-1">
+                <Select
+                  options={fiscalOperations.map(op => ({ value: op.code, label: `${op.code} - ${op.name}` }))}
+                  value={formData.operacao_fiscal ? { value: formData.operacao_fiscal, label: fiscalOperations.find(op => op.code === formData.operacao_fiscal) ? `${formData.operacao_fiscal} - ${fiscalOperations.find(op => op.code === formData.operacao_fiscal)?.name}` : formData.operacao_fiscal } : null}
+                  onChange={(selected: any) => setFormData({...formData, operacao_fiscal: selected ? selected.value : ''})}
+                  isDisabled={!isPlatina || !isEditable}
+                  placeholder="Selecione a operação..."
+                  noOptionsMessage={() => "Nenhuma operação encontrada"}
+                  isClearable
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      minHeight: '28px',
+                      height: '28px',
+                      fontSize: '13px',
+                      borderRadius: '0.25rem',
+                      borderColor: 'hsl(var(--border))',
+                      backgroundColor: 'hsl(var(--background))',
+                      boxShadow: 'none',
+                      '&:hover': {
+                        borderColor: 'hsl(var(--border))'
+                      }
+                    }),
+                    valueContainer: (base) => ({
+                      ...base,
+                      padding: '0 8px',
+                    }),
+                    input: (base) => ({
+                      ...base,
+                      margin: '0',
+                      padding: '0'
+                    }),
+                    indicatorsContainer: (base) => ({
+                      ...base,
+                      height: '28px'
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      fontSize: '13px',
+                      zIndex: 50
+                    })
+                  }}
+                />
+              </div>
             </div>
             <div className="flex-1 flex items-center gap-2">
               <label className="font-semibold w-24 text-right text-primary">Série Fiscal</label>
