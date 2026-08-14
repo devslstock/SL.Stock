@@ -755,7 +755,6 @@ export interface EquipmentHistory {
   notes: string | null
   created_by: string | null
   created_at: string
-  created_at: string
 }
 
 export interface InventoryCountItem {
