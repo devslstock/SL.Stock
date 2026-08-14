@@ -16,16 +16,19 @@ export default function FiscalVehicles() {
   const [editingId, setEditingId] = useState<string | null>(null)
   
   const [formData, setFormData] = useState<Partial<Vehicle>>({
+    description: '',
     plate: '',
     uf: '',
     renavam: '',
-    tara_kg: 0,
-    capacity_kg: 0,
-    capacity_m3: 0,
-    body_type: '',
-    wheel_type: '',
+    tara_kg: undefined,
+    capacity_kg: undefined,
+    capacity_m3: undefined,
+    wheel_type: 'Outros',
+    body_type: 'Outros',
+    transport_unit_type: 'Outros',
+    owner_type: '',
     owner_name: '',
-    owner_document: '',
+    owner_rntrc: '',
     active: true
   })
 
@@ -64,16 +67,19 @@ export default function FiscalVehicles() {
   const resetForm = () => {
     setEditingId(null)
     setFormData({
+      description: '',
       plate: '',
       uf: '',
       renavam: '',
-      tara_kg: 0,
-      capacity_kg: 0,
-      capacity_m3: 0,
-      body_type: '',
-      wheel_type: '',
+      tara_kg: undefined,
+      capacity_kg: undefined,
+      capacity_m3: undefined,
+      wheel_type: 'Outros',
+      body_type: 'Outros',
+      transport_unit_type: 'Outros',
+      owner_type: '',
       owner_name: '',
-      owner_document: '',
+      owner_rntrc: '',
       active: true
     })
   }
@@ -81,16 +87,19 @@ export default function FiscalVehicles() {
   const handleEdit = (v: Vehicle) => {
     setEditingId(v.id)
     setFormData({
+      description: v.description || '',
       plate: v.plate,
       uf: v.uf,
       renavam: v.renavam || '',
-      tara_kg: v.tara_kg || 0,
-      capacity_kg: v.capacity_kg || 0,
-      capacity_m3: v.capacity_m3 || 0,
-      body_type: v.body_type || '',
-      wheel_type: v.wheel_type || '',
+      tara_kg: v.tara_kg || undefined,
+      capacity_kg: v.capacity_kg || undefined,
+      capacity_m3: v.capacity_m3 || undefined,
+      wheel_type: v.wheel_type || 'Outros',
+      body_type: v.body_type || 'Outros',
+      transport_unit_type: v.transport_unit_type || 'Outros',
+      owner_type: v.owner_type || '',
       owner_name: v.owner_name || '',
-      owner_document: v.owner_document || '',
+      owner_rntrc: v.owner_rntrc || '',
       active: v.active
     })
     setIsModalOpen(true)
@@ -122,9 +131,8 @@ export default function FiscalVehicles() {
           <table className="w-full text-sm text-left">
             <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b border-border/50">
               <tr>
-                <th className="px-4 py-3 font-semibold">Placa</th>
+                <th className="px-4 py-3 font-semibold">Descrição / Placa</th>
                 <th className="px-4 py-3 font-semibold text-center">UF</th>
-                <th className="px-4 py-3 font-semibold text-center">Renavam</th>
                 <th className="px-4 py-3 font-semibold text-center">Capacidade (KG)</th>
                 <th className="px-4 py-3 font-semibold text-center">Status</th>
                 <th className="px-4 py-3 font-semibold text-right">Ações</th>
@@ -133,15 +141,17 @@ export default function FiscalVehicles() {
             <tbody className="divide-y divide-border/50">
               {vehicles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                     Nenhum veículo cadastrado.
                   </td>
                 </tr>
               ) : vehicles.map(v => (
                 <tr key={v.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3 font-medium uppercase tracking-widest">{v.plate}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-foreground">{v.description || 'Sem descrição'}</div>
+                    <div className="text-xs uppercase tracking-widest text-muted-foreground">{v.plate}</div>
+                  </td>
                   <td className="px-4 py-3 text-center uppercase">{v.uf}</td>
-                  <td className="px-4 py-3 text-center">{v.renavam || '-'}</td>
                   <td className="px-4 py-3 text-center">{v.capacity_kg || '-'}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${v.active ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
@@ -176,40 +186,53 @@ export default function FiscalVehicles() {
             </div>
             
             <div className="p-6 overflow-y-auto space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              {/* Row 1: Descrição e Placa */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Descrição *</Label>
+                  <Input 
+                    value={formData.description} 
+                    onChange={e => setFormData({...formData, description: e.target.value})} 
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label>Placa *</Label>
                   <Input 
                     value={formData.plate} 
                     onChange={e => setFormData({...formData, plate: e.target.value})} 
-                    placeholder="ABC1D23"
                     className="uppercase"
                   />
+                </div>
+              </div>
+
+              {/* Row 2: UF e Renavam */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>UF de Licenciamento *</Label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={formData.uf} 
+                    onChange={e => setFormData({...formData, uf: e.target.value})}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="SP">SP</option><option value="RJ">RJ</option><option value="MG">MG</option>
+                    <option value="RS">RS</option><option value="SC">SC</option><option value="PR">PR</option>
+                    <option value="GO">GO</option><option value="BA">BA</option><option value="MT">MT</option>
+                  </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>UF (Estado) *</Label>
+                  <Label>Renavam</Label>
                   <Input 
-                    value={formData.uf} 
-                    onChange={e => setFormData({...formData, uf: e.target.value})} 
-                    placeholder="SP"
-                    className="uppercase"
-                    maxLength={2}
+                    value={formData.renavam} 
+                    onChange={e => setFormData({...formData, renavam: e.target.value})} 
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Renavam</Label>
-                <Input 
-                  value={formData.renavam} 
-                  onChange={e => setFormData({...formData, renavam: e.target.value})} 
-                  placeholder="00000000000"
-                />
-              </div>
-
+              {/* Row 3: Tara e Capacidades */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Tara (KG)</Label>
+                  <Label>Tara *</Label>
                   <Input 
                     type="number"
                     value={formData.tara_kg || ''} 
@@ -217,7 +240,7 @@ export default function FiscalVehicles() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Capacidade (KG)</Label>
+                  <Label>Capacidade (kg)</Label>
                   <Input 
                     type="number"
                     value={formData.capacity_kg || ''} 
@@ -225,11 +248,91 @@ export default function FiscalVehicles() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Capacidade (M³)</Label>
+                  <Label>Capacidade (m³)</Label>
                   <Input 
                     type="number"
                     value={formData.capacity_m3 || ''} 
                     onChange={e => setFormData({...formData, capacity_m3: Number(e.target.value)})} 
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Rodado e Carroceria */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo de rodado *</Label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={formData.wheel_type} 
+                    onChange={e => setFormData({...formData, wheel_type: e.target.value})}
+                  >
+                    <option value="Truck">Truck</option>
+                    <option value="Toco">Toco</option>
+                    <option value="Cavalo Mecânico">Cavalo Mecânico</option>
+                    <option value="VAN">VAN</option>
+                    <option value="Utilitário">Utilitário</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo de carroceria *</Label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={formData.body_type} 
+                    onChange={e => setFormData({...formData, body_type: e.target.value})}
+                  >
+                    <option value="Não aplicável">Não aplicável</option>
+                    <option value="Aberta">Aberta</option>
+                    <option value="Fechada/Baú">Fechada/Baú</option>
+                    <option value="Silo">Silo</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 5: Unidade de Transporte e Tipo proprietário */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Unidade de transporte *</Label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={formData.transport_unit_type} 
+                    onChange={e => setFormData({...formData, transport_unit_type: e.target.value})}
+                  >
+                    <option value="Caminhão">Caminhão</option>
+                    <option value="Carreta">Carreta</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo de proprietário</Label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={formData.owner_type} 
+                    onChange={e => setFormData({...formData, owner_type: e.target.value})}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="Próprio">Próprio</option>
+                    <option value="Terceiro">Terceiro</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 6: Proprietário e RNTRC */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Proprietário</Label>
+                  <Input 
+                    value={formData.owner_name} 
+                    onChange={e => setFormData({...formData, owner_name: e.target.value})} 
+                    placeholder="Nome ou Razão Social"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>RNTRC do proprietário</Label>
+                  <Input 
+                    value={formData.owner_rntrc} 
+                    onChange={e => setFormData({...formData, owner_rntrc: e.target.value})} 
                   />
                 </div>
               </div>

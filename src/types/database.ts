@@ -971,6 +971,10 @@ export interface Vehicle {
   plate: string
   uf: string
   renavam?: string
+  description: string
+  transport_unit_type?: string
+  owner_type?: string
+  owner_rntrc?: string
   tara_kg?: number
   capacity_kg?: number
   capacity_m3?: number
