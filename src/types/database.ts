@@ -131,6 +131,7 @@ export interface MdfeRecord {
   xml_url: string | null
   pdf_url: string | null
   error_message: string | null
+  payload?: any
   created_at: string
   updated_at: string
 }
@@ -788,6 +789,7 @@ export interface DeliveryClient {
   return_reason?: string
   signed_at?: string
   delivery_sequence?: number
+  nfe_access_key?: string
   created_at: string
 }
 

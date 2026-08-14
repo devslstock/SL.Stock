@@ -100,5 +100,111 @@ export const focusNfeApi = {
     } catch (error: any) {
       throw new Error(error.message || 'Falha ao cancelar NF-e')
     }
+  },
+
+  /**
+   * Emite um novo MDF-e
+   */
+  async emitirMdfe(ref: string, payload: any, config: FocusNfeConfig) {
+    const url = `${getBaseUrl(config.env)}/mdfe?ref=${ref}`
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: getHeaders(config.token),
+        body: JSON.stringify(payload)
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.mensagem || data.codigo || 'Erro desconhecido na emissão do MDF-e')
+      }
+      
+      return data
+    } catch (error: any) {
+      throw new Error(error.message || 'Falha ao emitir MDF-e')
+    }
+  },
+
+  /**
+   * Consulta o status de um MDF-e
+   */
+  async consultarMdfe(ref: string, config: FocusNfeConfig) {
+    const url = `${getBaseUrl(config.env)}/mdfe/${ref}`
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getHeaders(config.token),
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          return { status: 'nao_encontrado' }
+        }
+        throw new Error(data.mensagem || 'Erro ao consultar MDF-e')
+      }
+      
+      return data
+    } catch (error: any) {
+      throw new Error(error.message || 'Falha ao consultar MDF-e')
+    }
+  },
+
+  /**
+   * Cancela um MDF-e autorizado
+   */
+  async cancelarMdfe(ref: string, justificativa: string, config: FocusNfeConfig) {
+    const url = `${getBaseUrl(config.env)}/mdfe/${ref}`
+    
+    try {
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: getHeaders(config.token),
+        body: JSON.stringify({ justificativa })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.mensagem || 'Erro ao cancelar MDF-e')
+      }
+      
+      return data
+    } catch (error: any) {
+      throw new Error(error.message || 'Falha ao cancelar MDF-e')
+    }
+  },
+
+  /**
+   * Encerra um MDF-e
+   */
+  async encerrarMdfe(ref: string, uf: string, codigo_municipio: string, config: FocusNfeConfig) {
+    const url = `${getBaseUrl(config.env)}/mdfe/${ref}/encerrar`
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: getHeaders(config.token),
+        body: JSON.stringify({
+          uf,
+          codigo_municipio,
+          data_encerramento: new Date().toISOString()
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.mensagem || 'Erro ao encerrar MDF-e')
+      }
+      
+      return data
+    } catch (error: any) {
+      throw new Error(error.message || 'Falha ao encerrar MDF-e')
+    }
   }
 }

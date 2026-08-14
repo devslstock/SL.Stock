@@ -2,6 +2,9 @@ import { useState, useRef, useMemo, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { deliveriesApi } from '@/api/deliveries'
+import { OfflineSyncService } from '@/services/OfflineSyncService'
+import { usersApi } from '@/api/users'
+import { focusNfeApi } from '@/api/focusNfe'
 import { productsApi } from '@/api/products'
 import { customersApi } from '@/api/customers'
 import { useAuth } from '@/contexts/AuthContext'
@@ -20,6 +23,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { generateRouteReportPDF } from '@/utils/pdf'
 import { supabase } from '@/lib/supabase'
 import { OfflineSyncService } from '@/services/OfflineSyncService'
+import { MDFeTransporteModal } from './MDFeTransporteModal'
+
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success' | 'destructive' }> = {
   pending: { label: 'Pendente', variant: 'warning' },
   pendente: { label: 'Pendente', variant: 'warning' },
@@ -56,6 +61,7 @@ export default function RouteClients() {
   const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false)
   const [selectedSourceRouteId, setSelectedSourceRouteId] = useState('')
   const [isMerging, setIsMerging] = useState(false)
+  const [isTransporteModalOpen, setIsTransporteModalOpen] = useState(false)
 
   const { data: otherRoutes = [] } = useQuery({
     queryKey: ['delivery_routes'],
@@ -151,12 +157,17 @@ export default function RouteClients() {
 
   const emitMdfeMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('emit-mdfe', {
-        body: { deliveryRouteId: id }
-      })
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
-      return data
+      if (!company?.focusnfe_token || !company?.focusnfe_env) throw new Error('Token Focus NFe não configurado')
+      if (!mdfeRecord?.payload) throw new Error('MDF-e não configurado')
+
+      const ref = `MDFE-${id}` // Usando ID da rota como referencia
+      const config = { token: company.focusnfe_token, env: company.focusnfe_env }
+      const res = await focusNfeApi.emitirMdfe(ref, mdfeRecord.payload, config)
+      
+      // Update db status
+      await supabase.from('mdfe_records').update({ status: 'processando' }).eq('id', mdfeRecord.id)
+      
+      return res
     },
     onSuccess: () => {
       toast.success('Emissão de MDF-e iniciada!')
@@ -166,19 +177,76 @@ export default function RouteClients() {
   })
 
   const checkMdfeStatusMutation = useMutation({
-    mutationFn: async (mdfeId: string) => {
-      const { data, error } = await supabase.functions.invoke(`get-mdfe-status?id=${mdfeId}`, {
-        method: 'GET'
-      })
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
-      return data
+    mutationFn: async () => {
+      if (!company?.focusnfe_token || !company?.focusnfe_env) throw new Error('Token Focus NFe não configurado')
+      const ref = `MDFE-${id}`
+      const config = { token: company.focusnfe_token, env: company.focusnfe_env }
+      const res = await focusNfeApi.consultarMdfe(ref, config)
+      
+      if (res.status === 'autorizado') {
+        await supabase.from('mdfe_records').update({ 
+          status: 'autorizado', 
+          xml_url: res.caminho_xml_nota_fiscal, 
+          pdf_url: res.caminho_danfe 
+        }).eq('id', mdfeRecord!.id)
+      } else if (res.status === 'erro_autorizacao') {
+        await supabase.from('mdfe_records').update({ 
+          status: 'erro_autorizacao', 
+          error_message: res.erros ? JSON.stringify(res.erros) : 'Erro de autorização' 
+        }).eq('id', mdfeRecord!.id)
+      } else if (res.status === 'cancelado') {
+        await supabase.from('mdfe_records').update({ status: 'cancelado' }).eq('id', mdfeRecord!.id)
+      } else if (res.status === 'encerrado') {
+        await supabase.from('mdfe_records').update({ status: 'encerrado' }).eq('id', mdfeRecord!.id)
+      }
+
+      return res
     },
     onSuccess: () => {
       refetchMdfe()
       toast.success('Status atualizado')
     },
     onError: (e: any) => toast.error(`Erro ao verificar status: ${e.message}`)
+  })
+
+  const cancelarMdfeMutation = useMutation({
+    mutationFn: async () => {
+      if (!company?.focusnfe_token || !company?.focusnfe_env) throw new Error('Token Focus NFe não configurado')
+      const ref = `MDFE-${id}`
+      const config = { token: company.focusnfe_token, env: company.focusnfe_env }
+      const justificativa = prompt('Digite a justificativa de cancelamento (mínimo 15 caracteres):')
+      if (!justificativa || justificativa.length < 15) throw new Error('Justificativa inválida')
+      
+      const res = await focusNfeApi.cancelarMdfe(ref, justificativa, config)
+      await supabase.from('mdfe_records').update({ status: 'cancelado' }).eq('id', mdfeRecord!.id)
+      return res
+    },
+    onSuccess: () => {
+      refetchMdfe()
+      toast.success('MDF-e cancelado com sucesso')
+    },
+    onError: (e: any) => toast.error(`Erro ao cancelar: ${e.message}`)
+  })
+
+  const encerrarMdfeMutation = useMutation({
+    mutationFn: async () => {
+      if (!company?.focusnfe_token || !company?.focusnfe_env) throw new Error('Token Focus NFe não configurado')
+      const ref = `MDFE-${id}`
+      const config = { token: company.focusnfe_token, env: company.focusnfe_env }
+      
+      const uf = prompt('UF de encerramento (ex: SP):')
+      const codMun = prompt('Código IBGE do município de encerramento:')
+      if (!uf || !codMun) throw new Error('UF e Código IBGE são obrigatórios')
+
+      const res = await focusNfeApi.encerrarMdfe(ref, uf, codMun, config)
+      await supabase.from('mdfe_records').update({ status: 'encerrado' }).eq('id', mdfeRecord!.id)
+      return res
+    },
+    onSuccess: () => {
+      refetchMdfe()
+      toast.success('MDF-e encerrado com sucesso')
+    },
+    onError: (e: any) => toast.error(`Erro ao encerrar: ${e.message}`)
   })
 
   const { data: routeOrders = [], isLoading: isLoadingOrders } = useQuery({
@@ -920,10 +988,18 @@ export default function RouteClients() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 shrink-0">
-              {!mdfeRecord && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-orange-200 text-orange-700"
+                onClick={() => setIsTransporteModalOpen(true)}
+              >
+                Configurar Transporte
+              </Button>
+              {mdfeRecord && mdfeRecord.status === 'pendente' && (
                 <Button 
-                  className="bg-orange-600 hover:bg-orange-700 text-white" 
-                  size="sm"
+                  className="bg-indigo-600 hover:bg-indigo-700" 
+                  size="sm" 
                   onClick={() => emitMdfeMutation.mutate()}
                   disabled={emitMdfeMutation.isPending}
                 >
@@ -931,23 +1007,47 @@ export default function RouteClients() {
                   Emitir MDF-e
                 </Button>
               )}
-              {mdfeRecord && mdfeRecord.status !== 'autorizado' && (
+              {mdfeRecord && mdfeRecord.status !== 'autorizado' && mdfeRecord.status !== 'encerrado' && mdfeRecord.status !== 'cancelado' && (
                 <Button 
                   variant="outline" 
                   size="sm" 
                   className="border-orange-200 text-orange-700"
-                  onClick={() => checkMdfeStatusMutation.mutate(mdfeRecord.id)}
+                  onClick={() => checkMdfeStatusMutation.mutate()}
                   disabled={checkMdfeStatusMutation.isPending}
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${checkMdfeStatusMutation.isPending ? 'animate-spin' : ''}`} />
                   Consultar Status
                 </Button>
               )}
+              {mdfeRecord?.status === 'autorizado' && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="border-red-500 text-red-700 hover:bg-red-50"
+                    onClick={() => cancelarMdfeMutation.mutate()}
+                    disabled={cancelarMdfeMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Cancelar MDF-e
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="border-green-500 text-green-700 hover:bg-green-50"
+                    onClick={() => encerrarMdfeMutation.mutate()}
+                    disabled={encerrarMdfeMutation.isPending}
+                  >
+                    <CheckSquare className="h-4 w-4 mr-2" />
+                    Encerrar MDF-e
+                  </Button>
+                </>
+              )}
               {mdfeRecord?.pdf_url && (
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-orange-500 text-orange-700 hover:bg-orange-50"
+                  className="border-indigo-500 text-indigo-700 hover:bg-indigo-50"
                   onClick={() => window.open(mdfeRecord.pdf_url!, '_blank')}
                 >
                   <FileDown className="h-4 w-4 mr-2" />
