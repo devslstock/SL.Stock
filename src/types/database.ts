@@ -439,14 +439,95 @@ export interface FiscalOperation {
   id: string
   company_id: string
   name: string
+  code?: string
+  description?: string
+  nature_of_operation?: string
+  observations?: string
   cfop_intra: string
   cfop_inter: string
+  
+  // Aba 2
+  serie?: string
+  finality?: string
+  consumer_final?: boolean
+  use_consumption?: boolean
+  buyer_presence?: string
+  payment_form?: string
+  freight_condition?: string
+  iss_incidence_local?: string
+  nfse_operation_indicator?: string
+  freight_info?: string
+  insurance_info?: string
+  other_expenses_info?: string
+  discount_info?: string
+  fiscal_document?: string
+  document_situation?: string
+  efd_icms_ipi?: string
+  init_ie_st?: boolean
+  overwrite_reason_social?: string
+  inform_simples_nacional_rate?: boolean
+  
+  // Informações adicionais
+  internal_observations?: string
+  fisco_info?: string
+  contribuinte_info?: string
+  include_customer_order?: boolean
+  include_total_taxes?: boolean
+  include_additional_customer_info?: boolean
+  include_ibs_cbs?: boolean
+  
+  // Aba 3
+  with_payment?: boolean
+  payment_debit_account?: string
+  payment_finality?: string
+  payment_credit_cost_center?: string
+  
+  move_stock?: boolean
+  stock_origin?: string
+  stock_destination?: string
+  
+  operation_type?: string
+  special_category?: string
+  future_delivery_operation?: boolean
+  accounting_value?: boolean
+  generate_b020?: boolean
+  generate_traceability_group?: boolean
+  uf_fiscal_benefit_code?: string
+  installments_indicator?: string
+  relevant_scale_produced?: string
+  
+  has_tax_reform_taxes?: boolean
+  mobile_good_supply_indicator?: boolean
+  
+  item_exceptions?: any
+  
+  add_customer_order_to_product?: boolean
+  add_batch_data_to_product?: boolean
+  add_qty_unit_data_to_product?: boolean
+  add_original_note_data_to_product?: boolean
+  concat_product_info_nfse?: boolean
+  
+  accounting_history?: string
+  generate_additional_launches_item?: boolean
+  generate_additional_launches_stock?: boolean
+  
+  usage?: string
+  item_type?: string
+  init_unit_value_stock?: string
+  init_unit_value_outsource?: string
+  permit_referenced_nf?: boolean
+  permit_unit_value_lower_min?: boolean
+  item_receives_apportion?: boolean
+  
+  // Aba 4 (Legacy + JSONB)
   csosn?: string | null
   cst?: string | null
   icms_rate?: number
   ipi_rate?: number
   pis_rate?: number
   cofins_rate?: number
+  tax_initialization?: any
+
   default_message?: string | null
   active: boolean
   created_at: string
