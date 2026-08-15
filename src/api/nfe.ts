@@ -89,7 +89,8 @@ export const nfeApi = {
     }
 
     if (!data.success) {
-      throw new Error(data.error || 'Erro desconhecido ao tentar emitir NF-e')
+      const detailsMsg = data.details ? ` - Detalhes: ${JSON.stringify(data.details)}` : '';
+      throw new Error((data.error || 'Erro desconhecido ao tentar emitir NF-e') + detailsMsg);
     }
 
     // A Edge Function insere um nfe_record inicial com status 'processando'
