@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Plus, Trash2, MapPin, Truck, FileText, ShieldAlert } from 'lucide-react'
-import { supabase } from '@/db/supabase'
-import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface Props {
   isOpen: boolean
@@ -108,8 +108,8 @@ export function MDFeTransporteModal({ isOpen, onClose, routeId }: Props) {
         setMdfeRecordId(null)
         // Pre-fill NFe keys from delivery clients if available
         const nfes = (clientsData || [])
-          .filter(c => c.nfe_access_key)
-          .map(c => ({
+          .filter((c: any) => c.nfe_access_key)
+          .map((c: any) => ({
             chave_acesso: c.nfe_access_key,
             codigo_municipio_descarregamento: '' // Needs to be filled by user
           }))

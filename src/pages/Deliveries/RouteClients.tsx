@@ -22,7 +22,6 @@ import { ExecutionModal } from '@/pages/Comodatos/ExecutionModal'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { generateRouteReportPDF } from '@/utils/pdf'
 import { supabase } from '@/lib/supabase'
-import { OfflineSyncService } from '@/services/OfflineSyncService'
 import { MDFeTransporteModal } from './MDFeTransporteModal'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success' | 'destructive' }> = {
