@@ -140,12 +140,21 @@ export default function NfeManagement() {
     onError: (e: any) => toast.error(e.message)
   })
 
+  const cceMutation = useMutation({
+    mutationFn: ({ nfeId, correcao }: { nfeId: string, correcao: string }) => nfeApi.emitirCce(company!.id, nfeId, correcao),
+    onSuccess: () => {
+      toast.success('Carta de Correção emitida com sucesso')
+      refetch()
+    },
+    onError: (e: any) => toast.error(e.message)
+  })
+
   const handleBatchCancel = async () => {
     if (!company?.id) return
-    const elegiveis = orders.filter(o => selectedOrderIds.includes(o.id) && getOrderNfeStatus(o) === 'Emitida')
+    const elegiveis = orders.filter(o => selectedOrderIds.includes(o.id) && getOrderNfeStatus(o) === 'autorizado')
     
     if (elegiveis.length === 0) {
-      toast.warning('Nenhum pedido selecionado está apto para cancelamento (apenas NFs Emitidas podem ser canceladas).')
+      toast.warning('Nenhum pedido selecionado está apto para cancelamento (apenas NFs Autorizadas podem ser canceladas).')
       return
     }
 
@@ -179,6 +188,39 @@ export default function NfeManagement() {
     setSelectedOrderIds([])
     refetch()
     toast.success(`Cancelamento concluído. Sucesso: ${sucesso}. Erros: ${erro}. Ignorados: ${selectedOrderIds.length - elegiveis.length}`)
+  }
+
+  const handleBatchConsult = async () => {
+    if (!company?.id) return
+    const elegiveis = orders.filter(o => selectedOrderIds.includes(o.id) && getOrderNfeRecord(o))
+    
+    if (elegiveis.length === 0) {
+      toast.warning('Nenhum pedido selecionado possui registro de NF-e para consulta.')
+      return
+    }
+
+    setIsBatchProcessing(true)
+    let sucesso = 0
+    let erro = 0
+
+    const promises = elegiveis.map(async (order) => {
+      try {
+        const nfe = getOrderNfeRecord(order)
+        if (nfe) {
+          await nfeApi.consultarNfe(company.id, nfe.id)
+          sucesso++
+        }
+      } catch (e: any) {
+        erro++
+      }
+    })
+
+    await Promise.allSettled(promises)
+    
+    setIsBatchProcessing(false)
+    setSelectedOrderIds([])
+    refetch()
+    toast.success(`Consulta Síncrona concluída. Sucesso: ${sucesso}. Erros: ${erro}.`)
   }
 
   return (
@@ -351,7 +393,7 @@ export default function NfeManagement() {
                       {formatCurrency(order.net_amount)}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <Badge variant={getStatusBadgeVariant(nfStatus)} className={nfStatus === 'Emitida' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''}>
+                      <Badge variant={getStatusBadgeVariant(nfStatus)} className={nfStatus === 'autorizado' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''}>
                         {nfStatus}
                       </Badge>
                       {nfStatus === 'Cancelada' && nfeRecord?.error_message && (
@@ -370,13 +412,36 @@ export default function NfeManagement() {
                             <FileText className="h-4 w-4 mr-1" /> Emitir NF-e
                           </Button>
                         ) : null}
+
+                        {nfStatus === 'processando' && (
+                          <Button size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={async () => {
+                            if (!company?.id || !nfeRecord?.id) return
+                            try {
+                              await nfeApi.consultarNfe(company.id, nfeRecord.id)
+                              toast.success('Status sincronizado!')
+                              refetch()
+                            } catch (e: any) {
+                              toast.error(e.message)
+                            }
+                          }}>
+                            <RefreshCw className="h-4 w-4 mr-1" /> Sincronizar
+                          </Button>
+                        )}
                         
-                        {nfStatus === 'Emitida' && (
+                        {nfStatus === 'autorizado' && (
                           <>
                             <Button size="sm" variant="outline" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => {
                               window.open(nfeRecord?.pdf_url || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank')
                             }}>
                               <Printer className="h-4 w-4 mr-1" /> DANFE
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={() => {
+                              const correcao = window.prompt("Digite o texto da Carta de Correção (mínimo 15, máximo 1000 caracteres):")
+                              if (correcao) {
+                                cceMutation.mutate({ nfeId: nfeRecord.id, correcao })
+                              }
+                            }} disabled={cceMutation.isPending}>
+                              <FileText className="h-4 w-4 mr-1" /> Carta de Correção (CCe)
                             </Button>
                             <Button size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => {
                               const just = window.prompt("Digite a justificativa de cancelamento (mínimo 15 caracteres):")
@@ -420,19 +485,25 @@ export default function NfeManagement() {
             </Button>
           </div>
           
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Button
+              variant="outline"
+              className="flex-1 sm:flex-none border-blue-500 text-blue-600 hover:bg-blue-50 gap-2"
+              onClick={handleBatchConsult}
+              disabled={isBatchProcessing}
+            >
+              {isBatchProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Sincronizar (Consultar)
+            </Button>
+            <Button 
               className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-9 shadow-sm"
-              size="sm"
               onClick={handleBatchEmit}
               disabled={isBatchProcessing}
             >
               <Layers className="h-4 w-4 mr-2" /> {isBatchProcessing ? 'Processando...' : 'Emitir Selecionadas'}
             </Button>
-
             <Button 
               variant="outline" 
-              size="sm"
               className="h-9"
               disabled={isBatchProcessing}
               onClick={() => {
@@ -441,15 +512,13 @@ export default function NfeManagement() {
             >
               <Printer className="h-4 w-4 mr-2" /> Imprimir
             </Button>
-            
             <Button 
               variant="destructive" 
-              size="sm"
               className="h-9"
               disabled={isBatchProcessing}
               onClick={handleBatchCancel}
             >
-              <XCircle className="h-4 w-4 mr-2" /> Cancelar
+              <XCircle className="h-4 w-4 mr-2" /> Cancelar Lote
             </Button>
           </div>
         </div>

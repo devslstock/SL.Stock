@@ -1116,12 +1116,18 @@ export default function AdminOrderEdit() {
                 <Printer className="h-4 w-4 mr-2" /> Imprimir
              </Button>
              <div className="flex inline-flex ml-4 items-center">
-               <Button onClick={() => setShowFiscalDialog(true)} disabled={updateMutation.isPending} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded-r-none">
-                  Faturar este pedido
-               </Button>
+               {nfeRecord?.status === 'autorizado' ? (
+                 <Button onClick={() => faturarMutation.mutate()} disabled={updateMutation.isPending || faturarMutation.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 rounded-r-none">
+                    Gerar Faturamento (Cobranças)
+                 </Button>
+               ) : (
+                 <Button onClick={() => setShowFiscalDialog(true)} disabled={updateMutation.isPending} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded-r-none">
+                    {nfeRecord?.status === 'processando' ? 'Acompanhar Emissão (NF-e)' : nfeRecord?.status === 'erro_autorizacao' ? 'Corrigir e Re-emitir NF-e' : 'Emitir Nota Fiscal'}
+                 </Button>
+               )}
                <div className="relative h-9">
                  <Button 
-                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded-l-none border-l border-blue-400 px-2 flex items-center justify-center"
+                   className={`${nfeRecord?.status === 'autorizado' ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-400' : 'bg-blue-600 hover:bg-blue-700 border-blue-400'} text-white font-bold h-9 rounded-l-none border-l px-2 flex items-center justify-center`}
                    onClick={() => setShowFaturarMenu(!showFaturarMenu)}
                  >
                    <span className="text-xs">▼</span>

@@ -78,93 +78,30 @@ export const nfeApi = {
   },
 
   async emitirNfe(companyId: string, salesOrderId: string) {
-    // 1. Validar se o pedido existe e tem itens (Mocking a validação)
-    const { data: order, error: orderError } = await supabase
-      .from('sales_orders')
-      .select('*, customer:customer_id(*), items:sales_order_items(*)')
-      .eq('id', salesOrderId)
-      .single()
-    
-    if (orderError || !order) throw new Error('Pedido não encontrado')
-    
-    const customer = order.customer as any
-    if (!customer?.document) {
-      throw new Error(`Cliente ${customer?.name || ''} sem CNPJ/CPF cadastrado.`)
-    }
-    
-    if (!order.nfe_series) {
-      throw new Error('Série fiscal não informada. Selecione uma série antes de emitir a Nota Fiscal.')
+    // A validação pesada agora fica na Edge Function emit-nfe
+
+    const { data, error } = await supabase.functions.invoke('emit-nfe', {
+      body: { salesOrderId }
+    })
+
+    if (error) {
+      throw new Error(`Erro na conexão com o servidor fiscal: ${error.message}`)
     }
 
-    // 2. Incrementar a numeração da empresa de forma atômica
-    const { data: company, error: companyError } = await supabase
-      .from('companies')
-      .select('last_nfe_number, nfe_series')
-      .eq('id', companyId)
-      .single()
-    
-    if (companyError || !company) throw new Error('Erro ao buscar numeração da empresa')
+    if (!data.success) {
+      throw new Error(data.error || 'Erro desconhecido ao tentar emitir NF-e')
+    }
 
-    const nextNumber = (company.last_nfe_number || 0) + 1
-    const series = order.nfe_series
-
-    await supabase
-      .from('companies')
-      .update({ last_nfe_number: nextNumber })
-      .eq('id', companyId)
-
-    // 3. Simular delay da SEFAZ
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    // 4. Criar ou atualizar NfeRecord
-    const accessKey = Array.from({ length: 44 }, () => Math.floor(Math.random() * 10)).join('')
-    const protocol = Math.floor(100000000000000 + Math.random() * 900000000000000).toString()
-
-    const { data: existingNfe } = await supabase
+    // A Edge Function insere um nfe_record inicial com status 'processando'
+    // Retornamos um mock minimal ou buscamos o registro gerado
+    const { data: nfeData, error: nfeError } = await supabase
       .from('nfe_records')
-      .select('id')
-      .eq('sales_order_id', salesOrderId)
-      .maybeSingle()
+      .select('*')
+      .eq('id', data.nfeId)
+      .single()
+      
+    if (nfeError) throw new Error('Nota enviada, mas erro ao recuperar registro local.')
     
-    let nfeData = null
-
-    if (existingNfe) {
-      const { data, error } = await supabase
-        .from('nfe_records')
-        .update({
-          status: 'Emitida',
-          nfe_number: nextNumber,
-          nfe_series: series,
-          access_key: accessKey,
-          protocol: protocol,
-          issued_at: new Date().toISOString(),
-          error_message: null
-        })
-        .eq('id', existingNfe.id)
-        .select()
-        .single()
-      if (error) throw error
-      nfeData = data
-    } else {
-      const { data, error } = await supabase
-        .from('nfe_records')
-        .insert([{
-          company_id: companyId,
-          sales_order_id: salesOrderId,
-          status: 'Emitida',
-          focus_reference: `mock_${salesOrderId}`,
-          nfe_number: nextNumber,
-          nfe_series: series,
-          access_key: accessKey,
-          protocol: protocol,
-          issued_at: new Date().toISOString()
-        }])
-        .select()
-        .single()
-      if (error) throw error
-      nfeData = data
-    }
-
     return nfeData as NfeRecord
   },
 
@@ -173,40 +110,58 @@ export const nfeApi = {
       throw new Error('A justificativa deve ter pelo menos 15 caracteres.')
     }
 
-    // Verificar se a NF tem cobranças ativas no financeiro
-    const { data: nfe } = await supabase.from('nfe_records').select('sales_order_id').eq('id', nfeId).single()
-    if (nfe?.sales_order_id) {
-      const { data: accounts } = await supabase
-        .from('accounts_receivable')
-        .select('id')
-        .eq('sales_order_id', nfe.sales_order_id)
-        .neq('status', 'cancelado')
-        .limit(1)
+    const { data, error } = await supabase.functions.invoke('cancel-doc', {
+      body: { docType: 'nfe', recordId: nfeId, justificativa }
+    })
 
-      if (accounts && accounts.length > 0) {
-        throw new Error('Não é possível cancelar a Nota Fiscal: existem cobranças ativas no financeiro vinculadas a ela. Cancele as cobranças primeiro.')
-      }
-    }
+    if (error) throw new Error(`Erro de conexão ao cancelar NF-e: ${error.message}`)
+    if (!data.success) throw new Error(data.error || 'Erro ao cancelar NF-e na Sefaz')
 
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    const { data, error } = await supabase
+    const { data: nfeData, error: nfeError } = await supabase
       .from('nfe_records')
-      .update({
-        status: 'Cancelada',
-        error_message: `Cancelada: ${justificativa}`
-      })
+      .select('*')
       .eq('id', nfeId)
-      .eq('company_id', companyId)
-      .select()
       .single()
-    
-    if (error) throw error
-    return data as NfeRecord
+
+    if (nfeError) throw nfeError
+    return nfeData as NfeRecord
   },
   
+  async consultarNfe(companyId: string, nfeId: string) {
+    const { data, error } = await supabase.functions.invoke('consult-doc', {
+      body: { docType: 'nfe', recordId: nfeId }
+    })
+
+    if (error) throw new Error(`Erro de conexão: ${error.message}`)
+    if (!data.success) throw new Error(data.error || 'Erro ao consultar status da NF-e')
+
+    const { data: nfeData, error: nfeError } = await supabase
+      .from('nfe_records')
+      .select('*')
+      .eq('id', nfeId)
+      .single()
+
+    if (nfeError) throw nfeError
+    return nfeData as NfeRecord
+  },
+
+  async emitirCce(companyId: string, nfeId: string, correcao: string) {
+    if (correcao.length < 15 || correcao.length > 1000) {
+      throw new Error('A correção deve ter entre 15 e 1000 caracteres.')
+    }
+
+    const { data, error } = await supabase.functions.invoke('cce-nfe', {
+      body: { recordId: nfeId, correcao }
+    })
+
+    if (error) throw new Error(`Erro de conexão ao emitir CCe: ${error.message}`)
+    if (!data.success) throw new Error(data.error || 'Erro ao emitir CCe na Sefaz')
+
+    return data.data
+  },
+
   async getPdfUrl(nfeId: string) {
-    // Retornaria a URL real. No mock, retornamos um dummy.
-    return 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
+    const { data: nfe } = await supabase.from('nfe_records').select('pdf_url').eq('id', nfeId).single()
+    return nfe?.pdf_url || null
   }
 }

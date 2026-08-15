@@ -79,7 +79,7 @@ export const financeApi = {
     }
 
     const nfeList = order.nfe as any[]
-    const isNfeEmitida = nfeList && nfeList.length > 0 && nfeList[0].status === 'Emitida'
+    const isNfeEmitida = nfeList && nfeList.length > 0 && nfeList[0].status === 'autorizado'
 
     if (!isNfeEmitida) {
       throw new Error('Pedido não pode ser faturado. É necessário emitir e autorizar a Nota Fiscal primeiro.')

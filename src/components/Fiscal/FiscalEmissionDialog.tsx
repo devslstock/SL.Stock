@@ -62,14 +62,11 @@ export function FiscalEmissionDialog({
       // Emitir NFe
       const nfe = await nfeApi.emitirNfe(company!.id, orderId)
       
-      // Faturar pedido (gera cobranças)
-      await financeApi.faturarPedido(orderId)
-      
       return nfe
     },
     onSuccess: (nfe) => {
       setNfeRecord(nfe)
-      toast.success('Nota Fiscal emitida e cobranças geradas com sucesso!')
+      toast.success('Nota Fiscal enviada para processamento com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
       setSendStep(1)
@@ -271,7 +268,7 @@ export function FiscalEmissionDialog({
               </div>
               
               <div className="bg-orange-50 text-orange-800 p-3 rounded text-sm">
-                <strong>Atenção:</strong> Após clicar em Emitir, a Nota Fiscal será processada e as cobranças financeiras serão geradas automaticamente.
+                <strong>Atenção:</strong> Após clicar em Emitir, a Nota Fiscal será enviada para a SEFAZ. Você deve aguardar a autorização para gerar o faturamento (cobranças).
               </div>
             </>
           )}

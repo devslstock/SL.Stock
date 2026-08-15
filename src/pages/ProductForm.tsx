@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, Package, Save, CheckCircle2, AlertCircle, X, Plus, Trash2, Lock } from 'lucide-react'
+import { ArrowLeft, Package, Save, CheckCircle2, AlertCircle, X, Plus, Trash2, Lock, Loader2, Search } from 'lucide-react'
 
 export default function ProductForm() {
   const { id } = useParams()
@@ -119,6 +119,49 @@ export default function ProductForm() {
 
   // Preços por tabela: chave é o table_id, valor é um objeto { price, discount }
   const [prices, setPrices] = useState<Record<string, { price: number, discount_percent: number }>>({})
+
+  const [isSearchingNcm, setIsSearchingNcm] = useState(false)
+  const [isSearchingCfop, setIsSearchingCfop] = useState(false)
+
+  const handleSearchNcm = async () => {
+    if (!formData.ncm) {
+      toast.error('Preencha o código NCM para consultar')
+      return
+    }
+    setIsSearchingNcm(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('focus-auxiliary', {
+        body: { type: 'ncm', searchParams: { codigo: formData.ncm.replace(/\D/g, '') } }
+      })
+      if (error) throw error
+      if (!data.success) throw new Error(data.error)
+      toast.success(`NCM encontrado: ${data.data.descricao}`)
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao consultar NCM')
+    } finally {
+      setIsSearchingNcm(false)
+    }
+  }
+
+  const handleSearchCfop = async () => {
+    if (!formData.cfop) {
+      toast.error('Preencha o código CFOP para consultar')
+      return
+    }
+    setIsSearchingCfop(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('focus-auxiliary', {
+        body: { type: 'cfop', searchParams: { codigo: formData.cfop.replace(/\D/g, '') } }
+      })
+      if (error) throw error
+      if (!data.success) throw new Error(data.error)
+      toast.success(`CFOP encontrado: ${data.data.descricao}`)
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao consultar CFOP')
+    } finally {
+      setIsSearchingCfop(false)
+    }
+  }
 
   // Fetch product if editing
   const { data: product, isLoading: isProductLoading } = useQuery({
@@ -615,7 +658,12 @@ export default function ProductForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
                 <div className="space-y-2">
                   <Label htmlFor="ncm" className="text-xs font-bold uppercase text-muted-foreground">NCM</Label>
-                  <Input id="ncm" value={formData.ncm || ''} onChange={e => setFormData({...formData, ncm: e.target.value})} placeholder="Ex: 85171231" />
+                  <div className="flex gap-2">
+                    <Input id="ncm" value={formData.ncm || ''} onChange={e => setFormData({...formData, ncm: e.target.value})} placeholder="Ex: 85171231" />
+                    <Button type="button" variant="outline" size="icon" onClick={handleSearchNcm} disabled={isSearchingNcm || !formData.ncm} title="Consultar NCM">
+                      {isSearchingNcm ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cest" className="text-xs font-bold uppercase text-muted-foreground">CEST</Label>
@@ -637,7 +685,12 @@ export default function ProductForm() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase text-muted-foreground">CFOP Padrão</Label>
-                  <Input value={formData.cfop || ''} onChange={e => setFormData({...formData, cfop: e.target.value})} />
+                  <div className="flex gap-2">
+                    <Input value={formData.cfop || ''} onChange={e => setFormData({...formData, cfop: e.target.value})} />
+                    <Button type="button" variant="outline" size="icon" onClick={handleSearchCfop} disabled={isSearchingCfop || !formData.cfop} title="Consultar CFOP">
+                      {isSearchingCfop ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase text-muted-foreground">CST Padrão</Label>

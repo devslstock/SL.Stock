@@ -156,17 +156,14 @@ export default function RouteClients() {
 
   const emitMdfeMutation = useMutation({
     mutationFn: async () => {
-      if (!company?.focusnfe_token || !company?.focusnfe_env) throw new Error('Token Focus NFe não configurado')
-      if (!mdfeRecord?.payload) throw new Error('MDF-e não configurado')
+      const { data, error } = await supabase.functions.invoke('emit-mdfe', {
+        body: { deliveryRouteId: id }
+      })
 
-      const ref = `MDFE-${id}` // Usando ID da rota como referencia
-      const config = { token: company.focusnfe_token, env: company.focusnfe_env }
-      const res = await focusNfeApi.emitirMdfe(ref, mdfeRecord.payload, config)
-      
-      // Update db status
-      await supabase.from('mdfe_records').update({ status: 'processando' }).eq('id', mdfeRecord.id)
-      
-      return res
+      if (error) throw new Error(`Erro na conexão: ${error.message}`)
+      if (!data.success) throw new Error(data.error || 'Erro ao emitir MDF-e')
+
+      return data
     },
     onSuccess: () => {
       toast.success('Emissão de MDF-e iniciada!')
@@ -177,29 +174,21 @@ export default function RouteClients() {
 
   const checkMdfeStatusMutation = useMutation({
     mutationFn: async () => {
-      if (!company?.focusnfe_token || !company?.focusnfe_env) throw new Error('Token Focus NFe não configurado')
-      const ref = `MDFE-${id}`
-      const config = { token: company.focusnfe_token, env: company.focusnfe_env }
-      const res = await focusNfeApi.consultarMdfe(ref, config)
-      
-      if (res.status === 'autorizado') {
-        await supabase.from('mdfe_records').update({ 
-          status: 'autorizado', 
-          xml_url: res.caminho_xml_nota_fiscal, 
-          pdf_url: res.caminho_danfe 
-        }).eq('id', mdfeRecord!.id)
-      } else if (res.status === 'erro_autorizacao') {
-        await supabase.from('mdfe_records').update({ 
-          status: 'erro_autorizacao', 
-          error_message: res.erros ? JSON.stringify(res.erros) : 'Erro de autorização' 
-        }).eq('id', mdfeRecord!.id)
-      } else if (res.status === 'cancelado') {
-        await supabase.from('mdfe_records').update({ status: 'cancelado' }).eq('id', mdfeRecord!.id)
-      } else if (res.status === 'encerrado') {
-        await supabase.from('mdfe_records').update({ status: 'encerrado' }).eq('id', mdfeRecord!.id)
+      if (!mdfeRecord?.id) throw new Error('Registro de MDF-e não encontrado')
+
+      const { data, error } = await supabase.functions.invoke('consult-doc', {
+        body: { docType: 'mdfe', recordId: mdfeRecord.id }
+      })
+
+      if (error) throw new Error(`Erro de conexão: ${error.message}`)
+      if (!data.success) {
+         if (data.status === 'nao_encontrado') {
+           return { status: 'nao_encontrado' }
+         }
+         throw new Error(data.error || 'Erro ao consultar status')
       }
 
-      return res
+      return data.data
     },
     onSuccess: () => {
       refetchMdfe()
@@ -210,15 +199,19 @@ export default function RouteClients() {
 
   const cancelarMdfeMutation = useMutation({
     mutationFn: async () => {
-      if (!company?.focusnfe_token || !company?.focusnfe_env) throw new Error('Token Focus NFe não configurado')
-      const ref = `MDFE-${id}`
-      const config = { token: company.focusnfe_token, env: company.focusnfe_env }
+      if (!mdfeRecord?.id) throw new Error('Registro de MDF-e não encontrado')
+      
       const justificativa = prompt('Digite a justificativa de cancelamento (mínimo 15 caracteres):')
       if (!justificativa || justificativa.length < 15) throw new Error('Justificativa inválida')
       
-      const res = await focusNfeApi.cancelarMdfe(ref, justificativa, config)
-      await supabase.from('mdfe_records').update({ status: 'cancelado' }).eq('id', mdfeRecord!.id)
-      return res
+      const { data, error } = await supabase.functions.invoke('cancel-doc', {
+        body: { docType: 'mdfe', recordId: mdfeRecord.id, justificativa }
+      })
+
+      if (error) throw new Error(`Erro de conexão: ${error.message}`)
+      if (!data.success) throw new Error(data.error || 'Erro ao cancelar')
+
+      return data.data
     },
     onSuccess: () => {
       refetchMdfe()
@@ -229,17 +222,20 @@ export default function RouteClients() {
 
   const encerrarMdfeMutation = useMutation({
     mutationFn: async () => {
-      if (!company?.focusnfe_token || !company?.focusnfe_env) throw new Error('Token Focus NFe não configurado')
-      const ref = `MDFE-${id}`
-      const config = { token: company.focusnfe_token, env: company.focusnfe_env }
+      if (!mdfeRecord?.id) throw new Error('Registro de MDF-e não encontrado')
       
       const uf = prompt('UF de encerramento (ex: SP):')
       const codMun = prompt('Código IBGE do município de encerramento:')
       if (!uf || !codMun) throw new Error('UF e Código IBGE são obrigatórios')
 
-      const res = await focusNfeApi.encerrarMdfe(ref, uf, codMun, config)
-      await supabase.from('mdfe_records').update({ status: 'encerrado' }).eq('id', mdfeRecord!.id)
-      return res
+      const { data, error } = await supabase.functions.invoke('encerrar-mdfe', {
+        body: { recordId: mdfeRecord.id, uf, codigo_municipio: codMun }
+      })
+
+      if (error) throw new Error(`Erro de conexão: ${error.message}`)
+      if (!data.success) throw new Error(data.error || 'Erro ao encerrar')
+
+      return data.data
     },
     onSuccess: () => {
       refetchMdfe()

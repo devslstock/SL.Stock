@@ -1128,3 +1128,42 @@ export interface Vehicle {
   created_at?: string
   updated_at?: string
 }
+
+export interface NfeRecord {
+  id: string
+  company_id: string
+  sales_order_id: string
+  focus_reference: string
+  status: 'processando' | 'autorizado' | 'rejeitado' | 'cancelado' | 'erro' | 'erro_autorizacao'
+  access_key?: string | null
+  xml_url?: string | null
+  pdf_url?: string | null
+  error_message?: string | null
+  created_at: string
+  updated_at?: string
+}
+
+export interface MdfeRecord {
+  id: string
+  company_id: string
+  delivery_route_id: string
+  focus_reference: string
+  status: 'pendente' | 'processando' | 'autorizado' | 'rejeitado' | 'cancelado' | 'erro' | 'erro_autorizacao' | 'encerrado'
+  access_key?: string | null
+  xml_url?: string | null
+  pdf_url?: string | null
+  error_message?: string | null
+  payload?: any | null
+  created_at: string
+  updated_at?: string
+}
+
+export interface FocusWebhookLog {
+  id: string
+  company_id: string
+  focus_reference: string
+  event_type: string
+  payload: any
+  processed: boolean
+  created_at: string
+}
