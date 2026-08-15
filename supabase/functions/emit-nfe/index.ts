@@ -38,7 +38,6 @@ serve(async (req: Request) => {
 
     const { salesOrderId, fiscalOperationId } = await req.json();
     if (!salesOrderId) throw new Error("salesOrderId is required");
-    if (!fiscalOperationId) throw new Error("fiscalOperationId is required");
 
     // Get Company info for Focus NFe token
     const { data: company, error: companyError } = await adminClient
@@ -68,13 +67,22 @@ serve(async (req: Request) => {
     if (orderError || !order) throw new Error("Sales order not found");
 
     // Get Fiscal Operation
-    const { data: fiscalOp, error: fiscalOpError } = await adminClient
-      .from('fiscal_operations')
-      .select('*')
-      .eq('id', fiscalOperationId)
-      .single();
+    let fiscalOpQuery = adminClient.from('fiscal_operations').select('*');
+    
+    if (fiscalOperationId) {
+      fiscalOpQuery = fiscalOpQuery.eq('id', fiscalOperationId);
+    } else {
+      const opName = order.operacao_fiscal || 'Venda de mercadoria';
+      fiscalOpQuery = fiscalOpQuery.ilike('name', opName).eq('company_id', callerProfile.company_id);
+    }
 
-    if (fiscalOpError || !fiscalOp) throw new Error("Fiscal operation not found");
+    const { data: fiscalOpData, error: fiscalOpError } = await fiscalOpQuery.limit(1);
+    
+    if (fiscalOpError || !fiscalOpData || fiscalOpData.length === 0) {
+      throw new Error("Fiscal operation not found for name: " + (order.operacao_fiscal || 'Venda de mercadoria'));
+    }
+    
+    const fiscalOp = fiscalOpData[0];
 
     const isInterState = company.garage_state !== order.customer.state;
     const cfop = isInterState ? fiscalOp.cfop_inter : fiscalOp.cfop_intra;
