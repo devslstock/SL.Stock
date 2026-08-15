@@ -72,8 +72,8 @@ serve(async (req: Request) => {
     if (fiscalOperationId) {
       fiscalOpQuery = fiscalOpQuery.eq('id', fiscalOperationId);
     } else {
-      const opName = order.operacao_fiscal || 'Venda de mercadoria';
-      fiscalOpQuery = fiscalOpQuery.ilike('name', opName).eq('company_id', callerProfile.company_id);
+      const opCodeOrName = order.operacao_fiscal || 'Venda de mercadoria';
+      fiscalOpQuery = fiscalOpQuery.or(`code.eq.${opCodeOrName},name.ilike.${opCodeOrName}`).eq('company_id', callerProfile.company_id);
     }
 
     const { data: fiscalOpData, error: fiscalOpError } = await fiscalOpQuery.limit(1);
