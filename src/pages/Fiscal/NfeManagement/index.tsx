@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
-import { FileText, Search, Printer, XCircle, Filter, ChevronDown, ChevronUp, CheckCircle, RefreshCw, Layers } from 'lucide-react'
+import { FileText, Search, Printer, XCircle, Filter, ChevronDown, ChevronUp, CheckCircle, RefreshCw, Layers, Loader2 } from 'lucide-react'
 import { Pagination } from '@/components/ui/Pagination'
 import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
 
