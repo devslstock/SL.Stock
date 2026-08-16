@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Search, Filter } from 'lucide-react'
+import { Building2, Search, Filter, Plus, Edit2, CheckCircle2, XCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 import { receiptMethodsApi } from '@/api/receiptMethods'
@@ -64,101 +64,111 @@ export default function ReceiptMethods() {
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50/50">
-      <div className="bg-[#48638b] text-white px-4 py-2 flex items-center gap-2 font-semibold">
-        Formas de cobrança e contas bancárias
-      </div>
-
-      <div className="bg-white p-2 border-b">
-        <fieldset className="border border-gray-300 p-2 rounded-sm relative mt-2 inline-block">
-          <legend className="text-xs text-gray-500 absolute -top-2.5 bg-white px-1 ml-2">Filtros (clique para configurar: <Filter className="inline h-3 w-3" />)</legend>
-          <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-medium">Ativa</label>
-              <select
-                className="h-6 border rounded px-1 bg-white text-xs outline-none"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="Ativo">Sim</option>
-                <option value="Inativo">Não</option>
-                <option value="all">Todas</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2 relative">
-              <label className="text-xs font-medium">Banco</label>
-              <Input
-                className="h-6 w-32 pl-1 pr-6 text-xs rounded-sm border-gray-300"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <Search className="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" />
-            </div>
+      <div className="border-b bg-white px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Formas de Cobrança / Contas</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Cadastre e gerencie bancos, contas, chaves PIX e outros meios utilizados para receber pagamentos.
+            </p>
           </div>
-        </fieldset>
+          <Button onClick={() => { setEditingMethod(null); setIsModalOpen(true); }} className="bg-primary hover:bg-primary/90 text-white gap-2">
+            <Plus className="h-4 w-4" /> Nova forma de cobrança
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Pesquisar por banco, conta ou meio..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-400" />
+            <select
+              className="h-10 border rounded-md px-3 bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">Todos os status</option>
+              <option value="Ativo">Ativos</option>
+              <option value="Inativo">Inativos</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-[#e9ecef] p-1 flex items-center gap-2 border-b border-gray-300">
-        <Button onClick={() => { setEditingMethod(null); setIsModalOpen(true); }} className="bg-[#8ec21f] hover:bg-[#7ba619] text-white h-7 px-3 text-sm font-semibold rounded-sm">
-          Novo
-        </Button>
-        <Button variant="outline" className="h-7 px-3 text-xs bg-white rounded-sm border-gray-300">
-          Ocultar filtros
-        </Button>
-      </div>
-
-      <div className="bg-white border-b border-gray-300 min-h-[calc(100vh-250px)]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-[#e9ecef] border-b border-gray-300">
-              <tr>
-                <th className="px-2 py-1.5 font-normal text-gray-700 w-16 border-r border-gray-300"></th>
-                <th className="px-2 py-1.5 font-normal text-gray-700 border-r border-gray-300">Banco</th>
-                <th className="px-2 py-1.5 font-normal text-gray-700 border-r border-gray-300">Agência</th>
-                <th className="px-2 py-1.5 font-normal text-gray-700 border-r border-gray-300">Conta</th>
-                <th className="px-2 py-1.5 font-normal text-gray-700 border-r border-gray-300">Meio de pagamento</th>
-                <th className="px-2 py-1.5 font-normal text-gray-700 border-r border-gray-300">Conta contábil</th>
-                <th className="px-2 py-1.5 font-normal text-gray-700">Carteira</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
+      <div className="p-6">
+        <div className="bg-white rounded-lg border shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50/50 border-b">
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">Carregando...</td>
+                  <th className="px-4 py-3 font-medium text-gray-600">Banco</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">Agência</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">Conta</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">Meio de pagamento</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">Conta contábil</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">Carteira</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">Status</th>
+                  <th className="px-4 py-3 font-medium text-gray-600 text-right">Ações</th>
                 </tr>
-              ) : filteredMethods.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">Nenhuma conta/forma de cobrança encontrada.</td>
-                </tr>
-              ) : (
-                filteredMethods.map((method: ReceiptMethod, index: number) => (
-                  <tr key={method.id} className={`border-b border-gray-100 last:border-0 hover:bg-[#f1cd56] cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-[#f8f9fa]'}`} onClick={() => handleEdit(method)}>
-                    <td className="px-2 py-1 flex items-center gap-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(method); }}
-                        className="text-red-600 hover:text-red-800 font-bold px-1"
-                        title={method.status === 'Ativo' ? 'Inativar' : 'Ativar'}
-                      >
-                        ×
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleEdit(method); }}
-                        className="text-orange-500 hover:text-orange-700 text-[10px]"
-                        title="Editar"
-                      >
-                        ✎
-                      </button>
-                    </td>
-                    <td className="px-2 py-1 whitespace-nowrap">{method.bank || '-'}</td>
-                    <td className="px-2 py-1">{method.agency ? `${method.agency}` : '-'}</td>
-                    <td className="px-2 py-1">{method.account_number ? `${method.account_number}${method.account_digit ? '-' + method.account_digit : ''}` : '-'}</td>
-                    <td className="px-2 py-1">{method.payment_method || method.type || '-'}</td>
-                    <td className="px-2 py-1 truncate max-w-[200px]">{method.accounting_account || '-'}</td>
-                    <td className="px-2 py-1">{method.portfolio || ''}</td>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">Carregando...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : filteredMethods.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">Nenhuma conta/forma de cobrança encontrada.</td>
+                  </tr>
+                ) : (
+                  filteredMethods.map((method: ReceiptMethod) => (
+                    <tr key={method.id} className="border-b last:border-0 hover:bg-gray-50/50">
+                      <td className="px-4 py-3 font-medium">{method.bank || '-'}</td>
+                      <td className="px-4 py-3 text-gray-600">{method.agency ? `${method.agency}` : '-'}</td>
+                      <td className="px-4 py-3 text-gray-600">{method.account_number ? `${method.account_number}${method.account_digit ? '-' + method.account_digit : ''}` : '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
+                          {method.payment_method || method.type || '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 truncate max-w-[200px]">{method.accounting_account || '-'}</td>
+                      <td className="px-4 py-3 text-gray-600">{method.portfolio || '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${method.status === 'Ativo' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+                          {method.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleToggleStatus(method)}
+                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                            title={method.status === 'Ativo' ? 'Inativar' : 'Ativar'}
+                          >
+                            {method.status === 'Ativo' ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                          </button>
+                          <button
+                            onClick={() => handleEdit(method)}
+                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                            title="Editar"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
