@@ -1204,16 +1204,31 @@ export default function AdminOrderEdit() {
          />
       )}
 
-      {editingDetailItem && (
-        <ItemDetailsModal 
-          item={editingDetailItem} 
-          isOpen={!!editingDetailItem} 
-          onClose={() => setEditingDetailItem(null)} 
-          onSave={(updatedItem) => {
-            setLocalItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i))
-          }} 
-        />
-      )}
+        {editingDetailItem && (() => {
+          const currentIndex = localItems.findIndex(i => i.id === editingDetailItem.id);
+          const hasNextItem = currentIndex !== -1 && currentIndex < localItems.length - 1;
+          
+          return (
+            <ItemDetailsModal 
+              item={editingDetailItem} 
+              isOpen={!!editingDetailItem} 
+              isEditable={isEditable}
+              hasNextItem={hasNextItem}
+              onClose={() => setEditingDetailItem(null)} 
+              onSave={(updatedItem) => {
+                setLocalItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i))
+              }} 
+              onSaveAndNext={(updatedItem) => {
+                setLocalItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i))
+                if (hasNextItem) {
+                  setEditingDetailItem(localItems[currentIndex + 1]);
+                } else {
+                  setEditingDetailItem(null);
+                }
+              }}
+            />
+          );
+        })()}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, ChevronDown, ChevronRight, Info } from 'lucide-react'
+import { X, Save, ChevronDown, ChevronRight, Info, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,20 +7,63 @@ import { Label } from '@/components/ui/label'
 interface ItemDetailsModalProps {
   item: any
   isOpen: boolean
+  isEditable?: boolean
+  hasNextItem?: boolean
   onClose: () => void
   onSave: (updatedItem: any) => void
+  onSaveAndNext?: (updatedItem: any) => void
 }
 
-export function ItemDetailsModal({ item, isOpen, onClose, onSave }: ItemDetailsModalProps) {
+const PIS_COFINS_OPTIONS = [
+  { value: "01", label: "01 - Operação tributável com alíquota básica" },
+  { value: "02", label: "02 - Operação tributável com alíquota diferenciada" },
+  { value: "03", label: "03 - Operação tributável com alíquota por unidade de medida de produto" },
+  { value: "04", label: "04 - Operação tributável monofásica - revenda a alíquota zero" },
+  { value: "05", label: "05 - Operação tributável por substituição tributária" },
+  { value: "06", label: "06 - Operação tributável a alíquota zero" },
+  { value: "07", label: "07 - Operação isenta da contribuição" },
+  { value: "08", label: "08 - Operação sem incidência da contribuição" },
+  { value: "09", label: "09 - Operação com suspensão da contribuição" },
+  { value: "49", label: "49 - Outras operações de saída" },
+  { value: "99", label: "99 - Outras operações" }
+]
+
+const ICMS_OPTIONS = [
+  { value: "101", label: "101 - Tributada pelo simples nacional com permissão de crédito" },
+  { value: "102", label: "102 - Tributada pelo simples nacional sem permissão de crédito" },
+  { value: "103", label: "103 - Isenção do icms no simples nacional para faixa de receita bruta" },
+  { value: "201", label: "201 - Tributada pelo simples nacional com permissão de crédito e com cobrança do icms por substituição tributária" },
+  { value: "202", label: "202 - Tributada pelo simples nacional sem permissão de crédito e com cobrança do icms por substituição tributária" },
+  { value: "203", label: "203 - Isenção do icms no simples nacional para faixa de receita bruta e com cobrança do icms por substituição tributária" },
+  { value: "300", label: "300 - Imune" },
+  { value: "400", label: "400 - Não tributada pelo simples nacional" },
+  { value: "500", label: "500 - Icms cobrado anteriormente por substituição tributária (substituído) ou por antecipação" },
+  { value: "900", label: "900 - Outros" }
+]
+
+export function ItemDetailsModal({ item, isOpen, isEditable = true, hasNextItem = false, onClose, onSave, onSaveAndNext }: ItemDetailsModalProps) {
   const [formData, setFormData] = useState<any>({})
   const [openSections, setOpenSections] = useState({
-    fiscal: true,
-    impostos: true
+    fiscal: false,
+    impostos: false
   })
 
   useEffect(() => {
     if (item && isOpen) {
-      setFormData({ ...item })
+      setFormData({ 
+        ...item,
+        cfop: item.cfop || item.product?.cfop || '',
+        ncm: item.ncm || item.product?.ncm || '',
+        cest: item.cest || item.product?.cest || '',
+        csosn: item.csosn || item.product?.csosn || item.product?.cst || '',
+        icms_rate: item.icms_rate !== undefined && item.icms_rate !== null ? item.icms_rate : (item.product?.icms_rate || ''),
+        pis_cst: item.pis_cst || item.product?.pis_cst || '',
+        pis_rate: item.pis_rate !== undefined && item.pis_rate !== null ? item.pis_rate : (item.product?.pis_rate || ''),
+        cofins_cst: item.cofins_cst || item.product?.cofins_cst || '',
+        cofins_rate: item.cofins_rate !== undefined && item.cofins_rate !== null ? item.cofins_rate : (item.product?.cofins_rate || ''),
+        ipi_rate: item.ipi_rate !== undefined && item.ipi_rate !== null ? item.ipi_rate : (item.product?.ipi_rate || ''),
+        origin: item.origin || item.product?.origin || '0'
+      })
     }
   }, [item, isOpen])
 
@@ -31,12 +74,29 @@ export function ItemDetailsModal({ item, isOpen, onClose, onSave }: ItemDetailsM
   }
 
   const handleChange = (field: string, value: any) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }))
+    setFormData((prev: any) => {
+      const updated = { ...prev, [field]: value }
+      if (['quantity', 'unit_price', 'discount_percent'].includes(field)) {
+        const qty = parseFloat(updated.quantity) || 0;
+        const price = parseFloat(updated.unit_price) || 0;
+        const discount = parseFloat(updated.discount_percent) || 0;
+        const subtotal = qty * price;
+        updated.total_price = subtotal - (subtotal * (discount / 100));
+        updated.net_price = updated.total_price;
+      }
+      return updated
+    })
   }
 
   const handleSave = () => {
     onSave(formData)
     onClose()
+  }
+
+  const handleSaveAndNext = () => {
+    if (onSaveAndNext) {
+      onSaveAndNext(formData)
+    }
   }
 
   return (
@@ -53,68 +113,89 @@ export function ItemDetailsModal({ item, isOpen, onClose, onSave }: ItemDetailsM
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
           
-          {/* Header Info */}
-          <div className="grid grid-cols-12 gap-3 pb-4 border-b">
-            <div className="col-span-2 space-y-1">
-              <Label className="text-xs">Código</Label>
-              <Input value={item.product?.code || ''} disabled className="h-8 bg-muted/30" />
-            </div>
-            <div className="col-span-6 space-y-1">
-              <Label className="text-xs">Descrição</Label>
-              <Input value={item.product?.description || ''} disabled className="h-8 bg-muted/30" />
-            </div>
+          {/* Main Info */}
+          <div className="grid grid-cols-12 gap-4">
             <div className="col-span-2 space-y-1">
               <Label className="text-xs">Quantidade</Label>
-              <Input type="number" value={formData.quantity || 0} onChange={e => handleChange('quantity', Number(e.target.value))} className="h-8" />
+              <Input 
+                type="number" 
+                value={formData.quantity || 0} 
+                onChange={e => handleChange('quantity', Number(e.target.value))} 
+                disabled={!isEditable}
+                className="h-8" 
+              />
             </div>
-            <div className="col-span-2 space-y-1">
+            <div className="col-span-3 space-y-1">
               <Label className="text-xs">Valor Unitário</Label>
-              <Input type="number" step="0.01" value={formData.unit_price || 0} onChange={e => handleChange('unit_price', Number(e.target.value))} className="h-8" />
+              <Input 
+                type="number" step="0.01" 
+                value={formData.unit_price || 0} 
+                onChange={e => handleChange('unit_price', Number(e.target.value))} 
+                disabled={!isEditable}
+                className="h-8" 
+              />
             </div>
-            <div className="col-span-2 space-y-1">
+            <div className="col-span-3 space-y-1">
               <Label className="text-xs">Desconto (%)</Label>
-              <Input type="number" step="0.01" value={formData.discount_percent || 0} onChange={e => handleChange('discount_percent', Number(e.target.value))} className="h-8 text-red-600 font-medium" />
+              <Input 
+                type="number" step="0.01" 
+                value={formData.discount_percent || 0} 
+                onChange={e => handleChange('discount_percent', Number(e.target.value))} 
+                disabled={!isEditable}
+                className="h-8" 
+              />
+            </div>
+            <div className="col-span-4 space-y-1">
+              <Label className="text-xs font-bold text-emerald-600 dark:text-emerald-500">Valor Total</Label>
+              <Input 
+                value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(formData.total_price || 0)} 
+                disabled 
+                className="h-8 font-bold bg-emerald-50 dark:bg-emerald-950/20" 
+              />
             </div>
           </div>
 
-          {/* Dados Fiscais Section */}
+          {/* Fiscal Section */}
           <div className="border rounded-md overflow-hidden">
             <button 
               className="w-full flex items-center p-2 bg-muted/50 hover:bg-muted/80 text-sm font-medium transition-colors"
               onClick={() => toggleSection('fiscal')}
             >
               {openSections.fiscal ? <ChevronDown className="h-4 w-4 mr-2" /> : <ChevronRight className="h-4 w-4 mr-2" />}
-              Dados Fiscais
+              Dados Fiscais Básicos
             </button>
             
             {openSections.fiscal && (
-              <div className="p-3 bg-card border-t grid grid-cols-12 gap-3">
-                <div className="col-span-2 space-y-1">
+              <div className="p-4 grid grid-cols-12 gap-4 bg-card border-t">
+                <div className="col-span-4 space-y-1">
                   <Label className="text-xs">NCM</Label>
                   <Input 
                     placeholder={item.product?.ncm || ''} 
                     value={formData.ncm || ''} 
                     onChange={e => handleChange('ncm', e.target.value)} 
+                    disabled={!isEditable}
                     className="h-8" 
                   />
                 </div>
-                <div className="col-span-2 space-y-1">
+                <div className="col-span-3 space-y-1">
                   <Label className="text-xs">CEST</Label>
                   <Input 
                     placeholder={item.product?.cest || ''} 
                     value={formData.cest || ''} 
                     onChange={e => handleChange('cest', e.target.value)} 
+                    disabled={!isEditable}
                     className="h-8" 
                   />
                 </div>
                 <div className="col-span-3 space-y-1">
                   <Label className="text-xs">Origem da Mercadoria</Label>
                   <Input 
-                    placeholder={item.product?.origin || '0 - Nacional'} 
+                    placeholder={item.product?.origin || '0'} 
                     value={formData.origin || ''} 
                     onChange={e => handleChange('origin', e.target.value)} 
+                    disabled={!isEditable}
                     className="h-8" 
                   />
                 </div>
@@ -124,15 +205,7 @@ export function ItemDetailsModal({ item, isOpen, onClose, onSave }: ItemDetailsM
                     placeholder={item.product?.cfop || 'Ex: 5102'} 
                     value={formData.cfop || ''} 
                     onChange={e => handleChange('cfop', e.target.value)} 
-                    className="h-8" 
-                  />
-                </div>
-                <div className="col-span-3 space-y-1">
-                  <Label className="text-xs">Operação Fiscal (CSOSN/CST)</Label>
-                  <Input 
-                    placeholder={item.product?.csosn || item.product?.cst || 'Ex: 101, 102, 500'} 
-                    value={formData.csosn || ''} 
-                    onChange={e => handleChange('csosn', e.target.value)} 
+                    disabled={!isEditable}
                     className="h-8" 
                   />
                 </div>
@@ -152,7 +225,7 @@ export function ItemDetailsModal({ item, isOpen, onClose, onSave }: ItemDetailsM
               onClick={() => toggleSection('impostos')}
             >
               {openSections.impostos ? <ChevronDown className="h-4 w-4 mr-2" /> : <ChevronRight className="h-4 w-4 mr-2" />}
-              Impostos (Alíquotas)
+              Impostos (CST/CSOSN e Alíquotas)
             </button>
             
             {openSections.impostos && (
@@ -160,69 +233,87 @@ export function ItemDetailsModal({ item, isOpen, onClose, onSave }: ItemDetailsM
                 <table className="w-full text-sm text-left">
                   <thead className="bg-muted/30 text-xs border-b">
                     <tr>
-                      <th className="p-2 font-semibold">Imposto</th>
+                      <th className="p-2 font-semibold w-24">Imposto</th>
                       <th className="p-2 font-semibold">CST/CSOSN Específico</th>
-                      <th className="p-2 font-semibold">Alíquota (%)</th>
+                      <th className="p-2 font-semibold w-32">Alíquota (%)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     <tr className="hover:bg-muted/20">
                       <td className="p-2 font-medium border-r bg-amber-50 dark:bg-amber-900/10">ICMS</td>
                       <td className="p-2">
-                        <Input 
-                          placeholder={item.product?.csosn || ''} 
+                        <select 
                           value={formData.csosn || ''} 
                           onChange={e => handleChange('csosn', e.target.value)}
-                          className="h-7 text-xs bg-transparent border-transparent hover:border-border focus:bg-background" 
-                        />
+                          disabled={!isEditable}
+                          className="w-full h-8 px-2 text-xs bg-background border rounded-md"
+                        >
+                          <option value="">Padrão do Produto ({item.product?.csosn || item.product?.cst || 'N/A'})</option>
+                          {ICMS_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </td>
                       <td className="p-2">
                         <Input 
                           type="number" step="0.01" 
                           placeholder={item.product?.icms_rate?.toString() || ''} 
                           value={formData.icms_rate || ''} 
-                          onChange={e => handleChange('icms_rate', Number(e.target.value))}
-                          className="h-7 text-xs bg-transparent border-transparent hover:border-border focus:bg-background" 
+                          onChange={e => handleChange('icms_rate', e.target.value === '' ? '' : Number(e.target.value))}
+                          disabled={!isEditable}
+                          className="h-8 text-xs bg-transparent border-border" 
                         />
                       </td>
                     </tr>
                     <tr className="hover:bg-muted/20">
                       <td className="p-2 font-medium border-r">PIS</td>
                       <td className="p-2">
-                        <Input 
-                          placeholder={item.product?.pis_cst || ''} 
+                        <select 
                           value={formData.pis_cst || ''} 
                           onChange={e => handleChange('pis_cst', e.target.value)}
-                          className="h-7 text-xs bg-transparent border-transparent hover:border-border focus:bg-background" 
-                        />
+                          disabled={!isEditable}
+                          className="w-full h-8 px-2 text-xs bg-background border rounded-md"
+                        >
+                          <option value="">Padrão do Produto ({item.product?.pis_cst || 'N/A'})</option>
+                          {PIS_COFINS_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </td>
                       <td className="p-2">
                         <Input 
                           type="number" step="0.01" 
                           placeholder={item.product?.pis_rate?.toString() || ''} 
                           value={formData.pis_rate || ''} 
-                          onChange={e => handleChange('pis_rate', Number(e.target.value))}
-                          className="h-7 text-xs bg-transparent border-transparent hover:border-border focus:bg-background" 
+                          onChange={e => handleChange('pis_rate', e.target.value === '' ? '' : Number(e.target.value))}
+                          disabled={!isEditable}
+                          className="h-8 text-xs bg-transparent border-border" 
                         />
                       </td>
                     </tr>
                     <tr className="hover:bg-muted/20">
                       <td className="p-2 font-medium border-r">COFINS</td>
                       <td className="p-2">
-                        <Input 
-                          placeholder={item.product?.cofins_cst || ''} 
+                        <select 
                           value={formData.cofins_cst || ''} 
                           onChange={e => handleChange('cofins_cst', e.target.value)}
-                          className="h-7 text-xs bg-transparent border-transparent hover:border-border focus:bg-background" 
-                        />
+                          disabled={!isEditable}
+                          className="w-full h-8 px-2 text-xs bg-background border rounded-md"
+                        >
+                          <option value="">Padrão do Produto ({item.product?.cofins_cst || 'N/A'})</option>
+                          {PIS_COFINS_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </td>
                       <td className="p-2">
                         <Input 
                           type="number" step="0.01" 
                           placeholder={item.product?.cofins_rate?.toString() || ''} 
                           value={formData.cofins_rate || ''} 
-                          onChange={e => handleChange('cofins_rate', Number(e.target.value))}
-                          className="h-7 text-xs bg-transparent border-transparent hover:border-border focus:bg-background" 
+                          onChange={e => handleChange('cofins_rate', e.target.value === '' ? '' : Number(e.target.value))}
+                          disabled={!isEditable}
+                          className="h-8 text-xs bg-transparent border-border" 
                         />
                       </td>
                     </tr>
@@ -234,8 +325,9 @@ export function ItemDetailsModal({ item, isOpen, onClose, onSave }: ItemDetailsM
                           type="number" step="0.01" 
                           placeholder={item.product?.ipi_rate?.toString() || ''} 
                           value={formData.ipi_rate || ''} 
-                          onChange={e => handleChange('ipi_rate', Number(e.target.value))}
-                          className="h-7 text-xs bg-transparent border-transparent hover:border-border focus:bg-background" 
+                          onChange={e => handleChange('ipi_rate', e.target.value === '' ? '' : Number(e.target.value))}
+                          disabled={!isEditable}
+                          className="h-8 text-xs bg-transparent border-border" 
                         />
                       </td>
                     </tr>
@@ -250,10 +342,21 @@ export function ItemDetailsModal({ item, isOpen, onClose, onSave }: ItemDetailsM
         {/* Footer */}
         <div className="p-3 border-t bg-muted/20 flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={onClose}>Cancelar</Button>
-          <Button variant="default" size="sm" onClick={handleSave} className="bg-green-600 hover:bg-green-700">
-            <Save className="h-4 w-4 mr-2" />
-            Salvar
-          </Button>
+          
+          {isEditable && (
+            <>
+              {hasNextItem && onSaveAndNext && (
+                <Button variant="secondary" size="sm" onClick={handleSaveAndNext} className="font-medium">
+                  Salvar e Próximo
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+              <Button variant="default" size="sm" onClick={handleSave} className="bg-green-600 hover:bg-green-700">
+                <Save className="h-4 w-4 mr-2" />
+                Salvar
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
