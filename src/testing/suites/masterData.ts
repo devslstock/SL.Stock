@@ -19,7 +19,7 @@ export const masterDataTests: TestBattery[] = [
             company_id: ctx.companyId,
             code: testSku,
             description: 'Produto Teste QA',
-            price: 50.00,
+            sales_price: 50.00,
             active: true
           }).select('id').single();
 
@@ -65,9 +65,9 @@ export const masterDataTests: TestBattery[] = [
           const cnpj = `00${Date.now()}`.substring(0, 14);
           const { data, error } = await supabase.from('customers').insert({
             company_id: ctx.companyId,
-            name: 'Cliente QA Test',
+            legal_name: 'Cliente QA Test',
             document: cnpj,
-            route: 'ROTA_QA_TESTE',
+            address: 'ROTA_QA_TESTE',
             city: 'São Paulo',
             state: 'SP'
           }).select('id').single();

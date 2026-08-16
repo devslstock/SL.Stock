@@ -14,10 +14,13 @@ export const salesTests: TestBattery[] = [
       {
         name: 'Criar Pedido de Venda Mock',
         run: async (ctx) => {
-          const { data, error } = await supabase.from('orders').insert({
+          const { data, error } = await supabase.from('sales_orders').insert({
             company_id: ctx.companyId,
-            status: 'pending',
+            status: 'Digitação',
             total_amount: 0,
+            net_amount: 0,
+            total_discount: 0,
+            order_number: Date.now() % 100000,
             notes: 'TESTE AUTOMATIZADO QA'
           }).select('id').single();
 
@@ -31,7 +34,7 @@ export const salesTests: TestBattery[] = [
     cleanup: async (ctx) => {
       const id = (globalThis as any).__TEST_VEN_ORDER_ID;
       if (id) {
-        await supabase.from('orders').delete().eq('id', id);
+        await supabase.from('sales_orders').delete().eq('id', id);
         delete (globalThis as any).__TEST_VEN_ORDER_ID;
         ctx.log('Pedido limpo do sistema.');
       }

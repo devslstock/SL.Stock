@@ -45,6 +45,13 @@ export class TestRunner {
     appendLog('info', `Iniciando bateria [${battery.id}] ${battery.name} (${battery.tests.length} testes)`);
 
     try {
+      if (!ctx.companyId) {
+        appendLog('info', 'Obtendo company_id genérico de fallback...');
+        const { supabase } = await import('@/lib/supabase');
+        const { data } = await supabase.from('companies').select('id').limit(1).single();
+        if (data?.id) ctx.companyId = data.id;
+      }
+
       // 1. SETUP
       if (battery.setup) {
         appendLog('info', 'Executando Setup da bateria...');

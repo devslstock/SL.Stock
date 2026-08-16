@@ -14,10 +14,10 @@ export const logisticsTests: TestBattery[] = [
       {
         name: 'Criar Carga Vazia',
         run: async (ctx) => {
-          const { data, error } = await supabase.from('loads').insert({
+          const { data, error } = await supabase.from('operations').insert({
             company_id: ctx.companyId,
+            type: 'LOAD',
             status: 'pending',
-            date: new Date().toISOString()
           }).select('id').single();
 
           if (error) throw new Error(`Falha ao criar carga: ${error.message}`);
@@ -29,7 +29,7 @@ export const logisticsTests: TestBattery[] = [
     cleanup: async (ctx) => {
       const id = (globalThis as any).__TEST_LOG_LOAD_ID;
       if (id) {
-        await supabase.from('loads').delete().eq('id', id);
+        await supabase.from('operations').delete().eq('id', id);
         delete (globalThis as any).__TEST_LOG_LOAD_ID;
       }
     }

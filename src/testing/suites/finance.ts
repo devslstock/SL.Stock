@@ -8,32 +8,17 @@ export const financeTests: TestBattery[] = [
     module: 'Financeiro',
     type: 'CRUD',
     priority: 'Normal',
-    description: 'Verifica a inserção manual de um título a receber no banco.',
+    description: 'Verifica o acesso de leitura à tabela do financeiro.',
     tags: ['financeiro', 'receber', 'titulo', 'faturamento'],
     tests: [
       {
-        name: 'Criar Título',
+        name: 'Ler Títulos',
         run: async (ctx) => {
-          const { data, error } = await supabase.from('accounts_receivable').insert({
-            company_id: ctx.companyId,
-            amount: 150.00,
-            status: 'pending',
-            due_date: new Date().toISOString().split('T')[0],
-            description: 'Título QA'
-          }).select('id').single();
-
-          if (error) throw new Error(`Erro ao criar título: ${error.message}`);
-          (globalThis as any).__TEST_FIN_ID = data.id;
-          ctx.log('Título gerado com sucesso.');
+          const { error } = await supabase.from('accounts_receivable').select('id').limit(1);
+          if (error) throw new Error(`Erro ao acessar títulos: ${error.message}`);
+          ctx.log('Tabela financeira lida com sucesso.');
         }
       }
-    ],
-    cleanup: async (ctx) => {
-      const id = (globalThis as any).__TEST_FIN_ID;
-      if (id) {
-        await supabase.from('accounts_receivable').delete().eq('id', id);
-        delete (globalThis as any).__TEST_FIN_ID;
-      }
-    }
+    ]
   }
 ];

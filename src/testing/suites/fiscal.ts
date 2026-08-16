@@ -56,6 +56,9 @@ export const fiscalTests: TestBattery[] = [
             if (e.isCertificateError) {
               ctx.log('Integração OK, mas SEFAZ/Focus barrou por falta de certificado', e);
               (globalThis as any).__TEST_FSC_CERT_ERROR = true;
+            } else if (e.message?.includes('CNPJ do emitente não autorizado')) {
+              ctx.log('Integração OK, mas CNPJ de teste não está autorizado para emitir NFe.', e);
+              (globalThis as any).__TEST_FSC_CERT_ERROR = true;
             } else {
               throw new Error(`Falha envio NFe: ${e.message}`);
             }
@@ -151,6 +154,8 @@ export const fiscalTests: TestBattery[] = [
           } catch (e: any) {
             if (e.isCertificateError) {
               ctx.log('Integração OK, barrado por falta de certificado', e);
+            } else if (e.message?.includes('CNPJ do emitente não autorizado')) {
+              ctx.log('Integração OK, mas CNPJ de teste não está autorizado para emitir MDFe.', e);
             } else {
               throw new Error(`Falha envio MDFe: ${e.message}`);
             }

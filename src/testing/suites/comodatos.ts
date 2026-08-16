@@ -16,9 +16,10 @@ export const comodatosTests: TestBattery[] = [
         run: async (ctx) => {
           const { data, error } = await supabase.from('equipments').insert({
             company_id: ctx.companyId,
-            serial_number: `QA-SER-${Date.now()}`,
+            patrimony: `QA-SER-${Date.now()}`,
             model: 'Geladeira Teste QA',
-            status: 'available'
+            type: 'Test',
+            status: 'Teste'
           }).select('id').single();
 
           if (error) throw new Error(`Erro ao criar equipamento: ${error.message}`);
