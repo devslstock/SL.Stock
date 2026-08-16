@@ -74,7 +74,7 @@ export class TestRunner {
       errorMsg = e.message || 'Erro desconhecido';
       stackTrace = e.stack;
       
-      if (errorMsg.includes('row-level security policy')) {
+      if (errorMsg?.includes('row-level security policy')) {
         status = 'BLOQUEADO';
         appendLog('warning', `Bateria bloqueada (RLS): O usuário atual não possui permissão para executar esta operação no banco de dados. Autentique-se com uma conta compatível para rodar este teste de inserção.`);
       } else {
