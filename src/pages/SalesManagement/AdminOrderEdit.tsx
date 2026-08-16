@@ -368,6 +368,42 @@ export default function AdminOrderEdit() {
     }
   }
 
+  const handleApplyGlobalDiscount = async () => {
+    if (formData.desconto_valor <= 0) return
+
+    const tProdutosSemDesconto = localItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0)
+    if (tProdutosSemDesconto === 0) return
+
+    const isPercentage = formData.discount_type === '%'
+    const globalDiscountPercentage = isPercentage ? formData.desconto_valor : (formData.desconto_valor / tProdutosSemDesconto) * 100
+
+    const newItems = localItems.map(item => {
+      const updated = { ...item, discount_percent: globalDiscountPercentage }
+      updated.total_price = (updated.quantity * updated.unit_price) * (1 - (globalDiscountPercentage / 100))
+      updated.net_price = updated.total_price
+      return updated
+    })
+
+    setLocalItems(newItems)
+    setFormData(prev => ({ ...prev, desconto_valor: 0 }))
+    
+    toast.success('Desconto rateado proporcionalmente nos itens!')
+
+    try {
+      const { salesApi } = await import('@/api/sales')
+      await Promise.all(newItems.map(item => 
+        salesApi.updateSalesOrderItem(item.id, { 
+          discount_percent: item.discount_percent,
+          total_price: item.total_price,
+          net_price: item.net_price
+        })
+      ))
+      await salesApi.updateSalesOrder(id!, { total_discount: 0 })
+    } catch (e) {
+      console.error('Erro ao salvar rateio do desconto', e)
+    }
+  }
+
   const handleUpdatePricesFromTable = async () => {
     if (!formData.price_table_id) {
       toast.warning('Selecione uma tabela de preços primeiro.')
@@ -976,7 +1012,31 @@ export default function AdminOrderEdit() {
                       <option value="%">Desconto em %</option>
                     </select>
                  </td>
-                 <td><Input className="h-7 text-right text-red-600" type="number" value={formData.desconto_valor} onChange={e => setFormData({...formData, desconto_valor: Number(e.target.value)})} /></td>
+                 <td>
+                   <div className="flex gap-1" title="Digite e clique fora (ou aperte Enter) para ratear nos itens">
+                     <Input 
+                       className="h-7 text-right text-red-600 flex-1" 
+                       type="number" 
+                       value={formData.desconto_valor} 
+                       onChange={e => setFormData({...formData, desconto_valor: Number(e.target.value)})}
+                       onBlur={handleApplyGlobalDiscount}
+                       onKeyDown={(e) => {
+                         if (e.key === 'Enter') {
+                           e.preventDefault()
+                           handleApplyGlobalDiscount()
+                         }
+                       }}
+                     />
+                     <button
+                       type="button"
+                       onClick={handleApplyGlobalDiscount}
+                       className="h-7 px-2 bg-muted/30 hover:bg-muted border border-border rounded text-xs flex items-center justify-center font-bold text-muted-foreground"
+                       title="Ratear agora"
+                     >
+                       Ratear
+                     </button>
+                   </div>
+                 </td>
                </tr>
                <tr>
                  <td className="text-left font-bold pt-2 border-t border-border">Valor total do pedido</td>
