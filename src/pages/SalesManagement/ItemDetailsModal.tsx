@@ -31,7 +31,7 @@ export function ItemDetailsModal({ item, isOpen, onClose, onSave }: ItemDetailsM
   }
 
   const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev: any) => ({ ...prev, [field]: value }))
   }
 
   const handleSave = () => {
