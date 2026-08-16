@@ -3,6 +3,7 @@ import { X, Save, Search, Building2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 import { receiptMethodsApi } from '@/api/receiptMethods'
+import { BRAZILIAN_BANKS } from '@/utils/banks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
@@ -232,8 +233,14 @@ export function ReceiptMethodFormModal({ isOpen, onClose, methodToEdit }: Props)
                           placeholder="Ex: 001 - Banco do Brasil"
                           value={formData.bank || ''}
                           onChange={e => setFormData({ ...formData, bank: e.target.value })}
+                          list="brazilian-banks"
                         />
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <datalist id="brazilian-banks">
+                          {BRAZILIAN_BANKS.map(b => (
+                            <option key={b.code} value={`${b.code} - ${b.name}`} />
+                          ))}
+                        </datalist>
                       </div>
                     </div>
                   )}
