@@ -126,6 +126,7 @@ import { PlanGuard } from './components/PlanGuard'
 import AccountsReceivable from './pages/Finance/AccountsReceivable'
 import PendingBilling from './pages/Finance/PendingBilling'
 import AccountsPayable from './pages/Finance/AccountsPayable'
+import ReceiptMethods from './pages/Finance/ReceiptMethods'
 
 function App() {
   return (
@@ -191,6 +192,7 @@ function App() {
             <Route path="/financeiro/contas-receber" element={<AccountsReceivable />} />
             <Route path="/financeiro/faturamento" element={<PendingBilling />} />
             <Route path="/financeiro/contas-pagar" element={<AccountsPayable />} />
+            <Route path="/financeiro/formas-recebimento" element={<ReceiptMethods />} />
 
             {/* Sales App (Moved into AppLayout) */}
             <Route path="/vendas" element={<Navigate to="/vendas/pedidos" replace />} />

@@ -290,6 +290,33 @@ export interface CustomerPaymentCondition {
   payment_condition?: PaymentCondition
 }
 
+export interface ReceiptMethod {
+  id: string
+  company_id: string
+  name: string
+  type: 'banco' | 'pix' | 'outros'
+  
+  bank?: string | null
+  bank_code?: string | null
+  agency?: string | null
+  account_number?: string | null
+  account_digit?: string | null
+  account_type?: string | null
+  
+  pix_key_type?: string | null
+  pix_key?: string | null
+  linked_bank?: string | null
+  linked_account?: string | null
+  
+  holder_name?: string | null
+  holder_document?: string | null
+  notes?: string | null
+  status: 'Ativo' | 'Inativo'
+  
+  created_at: string
+  updated_at: string
+}
+
 export interface SalesOrder {
   id: string
   order_number: number
