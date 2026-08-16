@@ -12,7 +12,7 @@ import { suggestTestsForDiagnostic } from '@/testing/diagnostic';
 import { TestRunner } from '@/testing/runner';
 import type { TestCase, TestExecutionResult, TestLog } from '@/testing/types';
 import { toast } from '@/components/ui/toaster';
-import FocusNFeTestPanel from '../FocusNFeTester';
+import FocusNFeTestPanel from '../FocusNFeTestPanel';
 import { Copy } from 'lucide-react';
 
 // Inicializa o registry
