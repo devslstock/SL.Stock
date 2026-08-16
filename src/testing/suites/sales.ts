@@ -20,7 +20,6 @@ export const salesTests: TestBattery[] = [
             total_amount: 0,
             net_amount: 0,
             total_discount: 0,
-            order_number: Date.now() % 100000,
             notes: 'TESTE AUTOMATIZADO QA'
           }).select('id').single();
 

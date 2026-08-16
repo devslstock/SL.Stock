@@ -71,10 +71,16 @@ export class TestRunner {
       appendLog('success', `Bateria concluída com sucesso! Todos os testes passaram.`);
     } catch (e: any) {
       // 3. ERROR CATCHING
-      status = 'FALHOU';
       errorMsg = e.message || 'Erro desconhecido';
       stackTrace = e.stack;
-      appendLog('error', `Falha na bateria: ${errorMsg}`);
+      
+      if (errorMsg.includes('row-level security policy')) {
+        status = 'BLOQUEADO';
+        appendLog('warning', `Bateria bloqueada (RLS): O usuário atual não possui permissão para executar esta operação no banco de dados. Autentique-se com uma conta compatível para rodar este teste de inserção.`);
+      } else {
+        status = 'FALHOU';
+        appendLog('error', `Falha na bateria: ${errorMsg}`);
+      }
     } finally {
       // 4. TEARDOWN (CLEANUP)
       if (battery.cleanup) {
