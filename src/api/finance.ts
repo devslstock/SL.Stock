@@ -252,5 +252,38 @@ export const financeApi = {
 
     if (error) throw error
     return data && data.length > 0
+  },
+
+  getCustomerDebt: async (customerId: string): Promise<number> => {
+    const { data: userData } = await supabase.auth.getUser()
+    if (!userData.user) return 0
+
+    const { data: userRecord } = await supabase
+      .from('users')
+      .select('company_id')
+      .eq('auth_user_id', userData.user.id)
+      .single()
+
+    if (!userRecord) return 0
+
+    let query = supabase
+      .from('accounts_receivable')
+      .select('installment_value')
+      .eq('customer_id', customerId)
+      .not('status', 'eq', 'pago')
+      .not('status', 'eq', 'cancelado')
+
+    if (userRecord.company_id) {
+      query = query.eq('company_id', userRecord.company_id)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Error fetching customer debt:', error)
+      return 0
+    }
+    
+    return data ? data.reduce((acc, curr) => acc + (curr.installment_value || 0), 0) : 0
   }
 }

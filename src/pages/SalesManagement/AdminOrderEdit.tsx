@@ -375,7 +375,7 @@ export default function AdminOrderEdit() {
     await updatePricesFromTable(formData.price_table_id)
   }
 
-  const handleSave = (newStatus?: string) => {
+  const handleSave = async (newStatus?: string) => {
     if (formData.custom_payment_condition) {
        const oCond = paymentConditions.find((pc: any) => pc.id === formData.payment_condition_id)
        const dInt = oCond?.interval_days || 30
@@ -402,6 +402,25 @@ export default function AdminOrderEdit() {
     }
 
     const net_amount = total_amount + formData.frete + formData.seguro + formData.outras_despesas - final_discount
+
+    if (newStatus === 'Aprovado' && formData.customer_id) {
+      const customerInfo = order?.customer || customers.find((c: any) => c.id === formData.customer_id)
+      const creditLimit = customerInfo?.credit_limit || 0
+      
+      if (creditLimit > 0) {
+        try {
+          const currentDebt = await financeApi.getCustomerDebt(formData.customer_id)
+          if ((currentDebt + net_amount) > creditLimit) {
+            const confirmed = window.confirm(`ATENÇÃO: Este pedido fará o cliente exceder o limite de crédito!\n\nLimite de Crédito: ${formatCurrency(creditLimit)}\nDívida Atual (vencidas e pendentes): ${formatCurrency(currentDebt)}\nValor deste Pedido: ${formatCurrency(net_amount)}\nTotal após Aprovação: ${formatCurrency(currentDebt + net_amount)}\n\nDeseja aprovar o pedido mesmo assim?`)
+            if (!confirmed) {
+              return
+            }
+          }
+        } catch (e) {
+          console.error("Erro ao verificar limite de crédito", e)
+        }
+      }
+    }
 
     const updates = {
       status: newStatus || formData.status,
