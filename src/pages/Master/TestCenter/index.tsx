@@ -12,6 +12,8 @@ import { suggestTestsForDiagnostic } from '@/testing/diagnostic';
 import { TestRunner } from '@/testing/runner';
 import type { TestCase, TestExecutionResult, TestLog } from '@/testing/types';
 import { toast } from '@/components/ui/toaster';
+import FocusNFeTestPanel from '../FocusNFeTester';
+import { Copy } from 'lucide-react';
 
 // Inicializa o registry
 initializeTestRegistry();
@@ -87,14 +89,15 @@ export function TestCenter() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Painel Esquerdo: Seleção e Controle */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className={activeTab === 'focusnfe' ? 'lg:col-span-3 space-y-6' : 'lg:col-span-1 space-y-6'}>
           <Card>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <CardHeader className="pb-2">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="baterias">Baterias</TabsTrigger>
                   <TabsTrigger value="diagnostic">Diagnóstico</TabsTrigger>
                   <TabsTrigger value="all">Todos</TabsTrigger>
+                  <TabsTrigger value="focusnfe">Focus NFe</TabsTrigger>
                 </TabsList>
               </CardHeader>
               
@@ -153,17 +156,33 @@ export function TestCenter() {
                     ))}
                   </div>
                 </TabsContent>
+                
+                <TabsContent value="focusnfe" className="space-y-4">
+                  <div className="bg-card rounded-lg border">
+                    <FocusNFeTestPanel />
+                  </div>
+                </TabsContent>
               </CardContent>
             </Tabs>
           </Card>
         </div>
 
         {/* Painel Direito: Console e Resultados */}
-        <div className="lg:col-span-2 space-y-6">
+        {activeTab !== 'focusnfe' && (
+          <div className="lg:col-span-2 space-y-6">
           <Card className="h-full flex flex-col min-h-[600px]">
-            <CardHeader>
-              <CardTitle>Console de Execução</CardTitle>
-              <CardDescription>Acompanhe os logs em tempo real das baterias.</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle>Console de Execução</CardTitle>
+                <CardDescription>Acompanhe os logs em tempo real das baterias.</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+                const text = currentLogs.map(l => `[${l.time}] ${l.message} ${l.data ? JSON.stringify(l.data) : ''}`).join('\n');
+                navigator.clipboard.writeText(text);
+                toast.success('Logs copiados para a área de transferência!');
+              }}>
+                <Copy className="h-4 w-4" /> Copiar
+              </Button>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col gap-4">
               {/* Resumo Resultados */}
@@ -208,6 +227,7 @@ export function TestCenter() {
             </CardContent>
           </Card>
         </div>
+        )}
       </div>
     </div>
   );

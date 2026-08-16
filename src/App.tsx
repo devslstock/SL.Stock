@@ -246,7 +246,6 @@ function App() {
               <Route path="/saas/campanhas" element={<SaaSCampanhas />} />
               <Route path="/saas/anotacoes" element={<SaaSNotes />} />
               <Route path="/saas/leads" element={<SaaSLeads />} />
-              <Route path="/saas/focus-nfe" element={<FocusNFeTestPanel />} />
               <Route path="/saas/test-center" element={<TestCenter />} />
             </Route>
           </Route>
