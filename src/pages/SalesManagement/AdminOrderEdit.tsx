@@ -1215,11 +1215,38 @@ export default function AdminOrderEdit() {
               isEditable={isEditable}
               hasNextItem={hasNextItem}
               onClose={() => setEditingDetailItem(null)} 
-              onSave={(updatedItem) => {
+              onSave={async (updatedItem) => {
                 setLocalItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i))
+                try {
+                  const { salesApi } = await import('@/api/sales')
+                  await salesApi.updateSalesOrderItem(updatedItem.id, {
+                    quantity: updatedItem.quantity,
+                    unit_price: updatedItem.unit_price,
+                    discount_percent: updatedItem.discount_percent || 0,
+                    total_price: updatedItem.total_price,
+                    net_price: updatedItem.total_price,
+                    cfop: updatedItem.cfop, csosn: updatedItem.csosn, cst: updatedItem.cst, icms_rate: updatedItem.icms_rate, pis_cst: updatedItem.pis_cst, pis_rate: updatedItem.pis_rate, cofins_cst: updatedItem.cofins_cst, cofins_rate: updatedItem.cofins_rate, ipi_rate: updatedItem.ipi_rate, ncm: updatedItem.ncm, cest: updatedItem.cest, origin: updatedItem.origin
+                  })
+                } catch (e) {
+                  console.error('Erro ao salvar item', e)
+                }
               }} 
-              onSaveAndNext={(updatedItem) => {
+              onSaveAndNext={async (updatedItem) => {
                 setLocalItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i))
+                try {
+                  const { salesApi } = await import('@/api/sales')
+                  await salesApi.updateSalesOrderItem(updatedItem.id, {
+                    quantity: updatedItem.quantity,
+                    unit_price: updatedItem.unit_price,
+                    discount_percent: updatedItem.discount_percent || 0,
+                    total_price: updatedItem.total_price,
+                    net_price: updatedItem.total_price,
+                    cfop: updatedItem.cfop, csosn: updatedItem.csosn, cst: updatedItem.cst, icms_rate: updatedItem.icms_rate, pis_cst: updatedItem.pis_cst, pis_rate: updatedItem.pis_rate, cofins_cst: updatedItem.cofins_cst, cofins_rate: updatedItem.cofins_rate, ipi_rate: updatedItem.ipi_rate, ncm: updatedItem.ncm, cest: updatedItem.cest, origin: updatedItem.origin
+                  })
+                } catch (e) {
+                  console.error('Erro ao salvar item', e)
+                }
+                
                 if (hasNextItem) {
                   setEditingDetailItem(localItems[currentIndex + 1]);
                 } else {

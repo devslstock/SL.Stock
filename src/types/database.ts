@@ -380,6 +380,18 @@ export interface SalesOrderItem {
   net_price: number
   total_price: number
   created_at: string
+  cfop?: string | null
+  csosn?: string | null
+  cst?: string | null
+  pis_cst?: string | null
+  pis_rate?: number | null
+  cofins_cst?: string | null
+  cofins_rate?: number | null
+  icms_rate?: number | null
+  ipi_rate?: number | null
+  ncm?: string | null
+  cest?: string | null
+  origin?: string | null
   
   product?: Product
 }
