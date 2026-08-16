@@ -7,7 +7,7 @@ import {
   Clock, History, UserIcon, FileSignature, Box, Building2, Banknote,
   Megaphone, StickyNote, MapPin, Bell, ShieldCheck, LogOut, Lock,
   ChevronDown, Map, Tag, Briefcase, HelpCircle, Wifi, WifiOff, RefreshCw, Receipt,
-  FileText, DollarSign, ArrowDown
+  FileText, DollarSign, ArrowDown, FileJson
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
@@ -615,6 +615,20 @@ export default function AppLayout() {
               >
                 <Users className={cn("h-4.5 w-4.5", location.pathname === '/saas/leads' && "text-purple-500")} />
                 Leads & Contatos
+              </Link>
+
+              <Link
+                to="/saas/focus-nfe"
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  location.pathname === '/saas/focus-nfe'
+                    ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
+                    : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
+                )}
+              >
+                <FileJson className={cn("h-4.5 w-4.5", location.pathname === '/saas/focus-nfe' && "text-purple-500")} />
+                Testes Focus NFe
               </Link>
             </div>
           )}

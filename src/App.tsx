@@ -102,6 +102,7 @@ import PriceTablesList from './pages/Master/PriceTables/index'
 import PriceTableForm from './pages/Master/PriceTables/Form'
 import PaymentConditionsList from './pages/Master/PaymentConditions/index'
 import PaymentConditionForm from './pages/Master/PaymentConditions/Form'
+import FocusNFeTestPanel from './pages/Master/FocusNFeTestPanel'
 
 import DeliveriesList from './pages/Deliveries/index'
 import CreateDelivery from './pages/Deliveries/CreateDelivery'
@@ -244,6 +245,7 @@ function App() {
               <Route path="/saas/campanhas" element={<SaaSCampanhas />} />
               <Route path="/saas/anotacoes" element={<SaaSNotes />} />
               <Route path="/saas/leads" element={<SaaSLeads />} />
+              <Route path="/saas/focus-nfe" element={<FocusNFeTestPanel />} />
             </Route>
           </Route>
         </Route>
