@@ -169,6 +169,7 @@ export default function NewOrder() {
         total_amount: 0,
         total_discount: 0,
         net_amount: 0,
+        operacao_fiscal: '5405',
         notes: null,
         delivery_date: null
       })
@@ -305,6 +306,7 @@ export default function NewOrder() {
         total_amount: order.total_amount,
         total_discount: order.total_discount,
         net_amount: order.net_amount,
+        operacao_fiscal: order.operacao_fiscal || '5405',
         notes: order.notes,
         delivery_date: order.delivery_date
       })

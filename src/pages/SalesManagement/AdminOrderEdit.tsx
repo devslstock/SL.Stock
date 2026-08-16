@@ -154,7 +154,7 @@ export default function AdminOrderEdit() {
         obs_internas: order.obs_internas || '',
         obs_fisco: order.obs_fisco || '',
         obs_contribuinte: order.obs_contribuinte || '',
-        operacao_fiscal: order.operacao_fiscal || '',
+        operacao_fiscal: order.operacao_fiscal || '5405',
         nfe_series: order.nfe_series || 3,
         forma_pagamento: order.forma_pagamento || '',
         condicao_frete: order.condicao_frete || ''
