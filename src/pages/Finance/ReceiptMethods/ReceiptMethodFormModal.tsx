@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Save, Search } from 'lucide-react'
+import { X, Save, Search, Building2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 import { receiptMethodsApi } from '@/api/receiptMethods'
