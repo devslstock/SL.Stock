@@ -602,21 +602,8 @@ export default function AdminOrderEdit() {
                         ) : (
                           <div className="p-2 text-[12px] text-muted-foreground text-center">Nenhum cliente encontrado</div>
                         )}
-                  
-      {editingDetailItem && (
-        <ItemDetailsModal 
-          item={editingDetailItem} 
-          isOpen={!!editingDetailItem} 
-          onClose={() => setEditingDetailItem(null)} 
-          onSave={(updatedItem) => {
-            setLocalItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i))
-          }} 
-        />
-      )}
-    </div>
-  )
-}
-
+                      </div>
+                    )}
                   </div>
                   {formData.customer_id && (
                     <Button 
@@ -818,8 +805,9 @@ export default function AdminOrderEdit() {
             </thead>
             <tbody className="divide-y divide-border">
               {localItems.map((item: any, index) => {
+                
                 return (
-                  <tr key={item.id} className="hover:bg-muted/30 cursor-pointer" onDoubleClick={() => isEditable && setEditingDetailItem(item)}>
+                  <tr key={item.id} className="hover:bg-muted/30">
                     <td className="p-2">
                       <input 
                         type="checkbox" 
@@ -834,31 +822,64 @@ export default function AdminOrderEdit() {
                       />
                     </td>
                     <td className="p-2 flex gap-1">
-                        {isEditable && (
-                          <>
-                            <button onClick={(e) => { e.stopPropagation(); removeItem(item.id); }} className="text-red-500 hover:text-red-700" title="Excluir"><Trash2 className="h-4 w-4"/></button>
-                            <button onClick={(e) => { e.stopPropagation(); setEditingDetailItem(item); }} className="text-orange-500 hover:text-orange-700" title="Editar Detalhes (Duplo Clique)"><Edit2 className="h-4 w-4"/></button>
-                          </>
-                        )}
-                      </td>
+                      {false ? (
+                        <button onClick={() => setEditingDetailItem(null)} className="text-green-600 hover:text-green-700" title="Confirmar Edição"><Check className="h-4 w-4"/></button>
+                      ) : (
+                        <>
+                          {isEditable && (
+                            <>
+                              <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700" title="Excluir"><Trash2 className="h-4 w-4"/></button>
+                              <button onClick={() => setEditingDetailItem(item)} className="text-orange-500 hover:text-orange-700" title="Editar"><Edit2 className="h-4 w-4"/></button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </td>
                     <td className="p-2">{index + 1}</td>
                     <td className="p-2">{item.product?.code || ''}</td>
                     <td className="p-2 font-medium">{item.product?.description}</td>
                     
                     {/* Editable Quantidade */}
                     <td className="p-2 text-right bg-amber-100 dark:bg-amber-900/40 font-bold">
-                        {item.quantity.toFixed(4)}
-                      </td>
+                      {false ? (
+                        <Input 
+                          type="number" 
+                          className="h-7 w-20 text-right text-[13px] ml-auto p-1" 
+                          value={item.quantity} 
+                          onChange={(e) => handleUpdateItem(item.id, 'quantity', Number(e.target.value))} 
+                        />
+                      ) : (
+                        item.quantity.toFixed(4)
+                      )}
+                    </td>
                     <td className="p-2 text-muted-foreground">{item.product?.unit || 'un'}</td>
                     
                     {/* Editable Unit Price */}
                     <td className="p-2 text-right">
-                        {formatCurrency(item.unit_price)}
-                      </td>
+                      {false ? (
+                        <Input 
+                          type="number" 
+                          className="h-7 w-24 text-right text-[13px] ml-auto p-1" 
+                          value={item.unit_price} 
+                          onChange={(e) => handleUpdateItem(item.id, 'unit_price', Number(e.target.value))} 
+                        />
+                      ) : (
+                        formatCurrency(item.unit_price)
+                      )}
+                    </td>
                     
                     {/* Editable Discount */}
                     <td className="p-2 text-right">
-                      {`${item.discount_percent || 0}%`}
+                      {false ? (
+                        <Input 
+                          type="number" 
+                          className="h-7 w-16 text-right text-[13px] ml-auto p-1" 
+                          value={item.discount_percent || 0} 
+                          onChange={(e) => handleUpdateItem(item.id, 'discount_percent', Number(e.target.value))} 
+                        />
+                      ) : (
+                        `${item.discount_percent || 0}%`
+                      )}
                     </td>
                     
                     <td className="p-2 text-right bg-amber-100 dark:bg-amber-900/40 font-bold text-amber-900 dark:text-amber-100">{formatCurrency(item.total_price)}</td>
@@ -1181,6 +1202,17 @@ export default function AdminOrderEdit() {
                // navigate removido para manter o usuário na tela
             }}
          />
+      )}
+
+      {editingDetailItem && (
+        <ItemDetailsModal 
+          item={editingDetailItem} 
+          isOpen={!!editingDetailItem} 
+          onClose={() => setEditingDetailItem(null)} 
+          onSave={(updatedItem) => {
+            setLocalItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i))
+          }} 
+        />
       )}
     </div>
   )
