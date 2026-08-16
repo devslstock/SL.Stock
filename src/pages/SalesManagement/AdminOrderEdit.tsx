@@ -1187,14 +1187,22 @@ export default function AdminOrderEdit() {
                           </tr>
                         </thead>
                         <tbody>
-                          {parsedPayment.installments.map((inst) => (
-                            <tr key={inst.installmentNumber} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
-                              <td className="p-1.5 px-2 font-medium">{inst.installmentNumber}/{parsedPayment.installments.length}</td>
-                              <td className="p-1.5 px-2">{inst.days} dias</td>
-                              <td className="p-1.5 px-2">{inst.dueDate.toLocaleDateString('pt-BR')}</td>
-                              <td className="p-1.5 px-2 text-right text-emerald-600 font-medium">{formatCurrency(inst.amount)}</td>
-                            </tr>
-                          ))}
+                            {parsedPayment.installments.length === 0 ? (
+                              <tr>
+                                <td colSpan={4} className="p-2 text-center text-muted-foreground font-medium bg-muted/20">
+                                  Parcelas definidas manualmente ou importadas (Fixa).
+                                </td>
+                              </tr>
+                            ) : (
+                              parsedPayment.installments.map((inst) => (
+                                <tr key={inst.installmentNumber} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
+                                  <td className="p-1.5 px-2 font-medium">{inst.installmentNumber}/{parsedPayment.installments.length}</td>
+                                  <td className="p-1.5 px-2">{inst.days} dias</td>
+                                  <td className="p-1.5 px-2">{inst.dueDate.toLocaleDateString('pt-BR')}</td>
+                                  <td className="p-1.5 px-2 text-right text-emerald-600 font-medium">{formatCurrency(inst.amount)}</td>
+                                </tr>
+                              ))
+                            )}
                         </tbody>
                       </table>
                     </div>

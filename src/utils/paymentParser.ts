@@ -16,95 +16,126 @@ export function parsePaymentCondition(
   }
 
   const conditionStr = text.trim().toLowerCase()
-  let daysArray: number[] = []
-
-  // Regra 4: À vista
-  if (
-    conditionStr.includes('vista') || 
-    conditionStr.includes('dinheiro') || 
-    conditionStr.includes('pix')
-  ) {
-    daysArray = [0]
-  }
-  // Regras para sequências explícitas (Regra 1) ou parcelas (Regra 2) ou prazo único (Regra 3)
-  else {
-    // Tenta encontrar uma sequência usando delimitadores explícitos: ;, /, ou ,
-    // Ex: "0; 7; 14; 28" ou "30/60/90" ou "30,60"
-    if (/[;/,]/.test(conditionStr)) {
-      const parts = conditionStr.split(/[;/,]/)
-      
-      let allValid = true
-      const parsedDays = parts.map(p => {
-        const num = parseInt(p.replace(/\D/g, ''), 10)
-        if (isNaN(num)) allValid = false
-        return num
-      })
-
-      if (allValid && parsedDays.length > 1) {
-        daysArray = parsedDays
-      }
-    }
-
-    if (daysArray.length === 0) {
-      // Extrai todos os números
-      const matches = conditionStr.match(/\d+/g)
-      
-      if (matches) {
-        // Se há vários números mas não tinha os delimitadores explícitos, talvez seja algo estranho.
-        // Vamos tentar verificar se é Regra 2 (Quantidade de parcelas) ex: "3x", "3 parcelas"
-        const isInstallmentsFormat = /x|parcela|vezes/i.test(conditionStr)
-        const isDaysFormat = /dia/i.test(conditionStr)
-
-        if (matches.length === 1) {
-          const num = parseInt(matches[0], 10)
-          
-          if (isInstallmentsFormat) {
-            // Regra 2: "3x", "3 parcelas" -> usa o intervalo padrão
-            const interval = defaultInterval > 0 ? defaultInterval : 30
-            for (let i = 1; i <= num; i++) {
-              daysArray.push(i * interval)
-            }
-          } else if (isDaysFormat || num > 12) {
-            // Regra 3: "30 Dias" ou apenas "30"
-            daysArray = [num]
-          } else {
-            // Se for apenas um número pequeno sem indicação, assumimos que é uma parcela para X dias.
-            // O usuário pode querer dizer 1 parcela de 3 dias, ou 3 parcelas?
-            // Para não quebrar o "30", mas ao mesmo tempo evitar ambiguidade com "3"
-            daysArray = [num]
-          }
-        } else if (matches.length > 1) {
-          // Ex: "30 60 90" com espaços
-          daysArray = matches.map(n => parseInt(n, 10))
-        }
-      }
-    }
-  }
-
-  if (daysArray.length === 0) {
-    return { 
-      installments: [], 
-      isValid: false, 
-      error: "Não foi possível interpretar a condição de pagamento. Verifique o formato informado." 
-    }
-  }
-
-  // Gera as parcelas
-  const amountPerInstallment = totalAmount / daysArray.length
   
-  const installments: PaymentInstallment[] = daysArray.map((days, index) => {
-    // Calcula a data de vencimento
+  if (conditionStr === 'fixa') {
+    return { installments: [], isValid: true }
+  }
+
+  // Pre-process: replace / and , with space
+  const normalized = conditionStr.replace(/[/,;]/g, ' ')
+  
+  // Split into tokens
+  const rawTokens = normalized.split(/\s+/).filter(t => t.length > 0)
+  
+  const items: { days: number, percentage: number | null }[] = []
+  let currentPercentage: number | null = null
+  let lastDay = 0
+  
+  // Also support "à vista" or "dinheiro" or "pix" as "0"
+  if (rawTokens.length === 1 && (conditionStr.includes('vista') || conditionStr.includes('dinheiro') || conditionStr.includes('pix'))) {
+    rawTokens[0] = '0'
+  }
+
+  let errorMsg: string | undefined = undefined
+
+  for (const token of rawTokens) {
+    if (token.endsWith('%')) {
+      const val = parseFloat(token.replace('%', ''))
+      if (!isNaN(val)) {
+        currentPercentage = val / 100
+      }
+    } else if (token.endsWith('x')) {
+      const val = parseInt(token.replace('x', ''), 10)
+      if (!isNaN(val) && val > 0) {
+        const interval = defaultInterval > 0 ? defaultInterval : 30
+        for (let i = 1; i <= val; i++) {
+          items.push({ 
+            days: lastDay + (i * interval), 
+            percentage: currentPercentage !== null ? currentPercentage / val : null 
+          })
+        }
+        currentPercentage = null
+      } else {
+        errorMsg = `Número de parcelas inválido: ${token}`
+        break
+      }
+    } else {
+      const val = parseInt(token, 10)
+      if (!isNaN(val)) {
+        items.push({ days: val, percentage: currentPercentage })
+        lastDay = val
+        currentPercentage = null
+      } else {
+        // Ignora tokens que não são números válidos como "dias", "parcelas", "em"
+        // ex: "30 dias" -> ["30", "dias"]
+      }
+    }
+  }
+
+  if (errorMsg) {
+    return { installments: [], isValid: false, error: errorMsg }
+  }
+
+  if (items.length === 0) {
+    return { installments: [], isValid: false, error: "Formato de condição não reconhecido." }
+  }
+
+  // Distribute remaining percentages
+  let explicitSum = 0
+  let nullCount = 0
+  
+  for (const item of items) {
+    if (item.percentage !== null) {
+      explicitSum += item.percentage
+    } else {
+      nullCount++
+    }
+  }
+
+  if (explicitSum > 1.001) {
+    return { installments: [], isValid: false, error: "A soma das porcentagens excede 100%." }
+  }
+
+  if (nullCount > 0) {
+    // There's remaining amount to distribute
+    const remaining = Math.max(0, 1 - explicitSum)
+    const defaultPct = remaining / nullCount
+    for (const item of items) {
+      if (item.percentage === null) {
+        item.percentage = defaultPct
+      }
+    }
+  } else if (explicitSum < 0.999) {
+    return { installments: [], isValid: false, error: "A soma das porcentagens informadas não atinge 100%." }
+  }
+
+  // Generate installments
+  const installments: PaymentInstallment[] = items.map((item, index) => {
     const dueDate = new Date(baseDate.getTime())
-    // Remove o fuso horário para não virar o dia anterior se baseDate for YYYY-MM-DDT00:00:00Z
-    dueDate.setUTCDate(dueDate.getUTCDate() + days)
+    dueDate.setUTCDate(dueDate.getUTCDate() + item.days)
     
     return {
       installmentNumber: index + 1,
-      days,
+      days: item.days,
       dueDate,
-      amount: amountPerInstallment
+      amount: totalAmount * (item.percentage || 0)
     }
   })
+
+  // Round amounts and fix last installment rounding difference
+  let sumAmounts = 0
+  for (let i = 0; i < installments.length; i++) {
+    // keep 2 decimal places
+    installments[i].amount = Math.round(installments[i].amount * 100) / 100
+    if (i < installments.length - 1) {
+      sumAmounts += installments[i].amount
+    }
+  }
+  
+  if (installments.length > 0) {
+    const lastAmount = totalAmount - sumAmounts
+    installments[installments.length - 1].amount = Math.round(lastAmount * 100) / 100
+  }
 
   return { installments, isValid: true }
 }
