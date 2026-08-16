@@ -102,10 +102,11 @@ export function TestCenter() {
           <Card>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <CardHeader className="pb-2">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="modulos">Módulos</TabsTrigger>
                   <TabsTrigger value="diagnostic">Diagnóstico</TabsTrigger>
                   <TabsTrigger value="all">Catálogo</TabsTrigger>
+                  <TabsTrigger value="audit">Auditoria</TabsTrigger>
                 </TabsList>
               </CardHeader>
               
@@ -195,6 +196,46 @@ export function TestCenter() {
                         </Button>
                       </div>
                     ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="audit" className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-card/50 p-3 rounded border text-center">
+                        <span className="text-2xl font-bold text-primary">{allBatteries.length}</span>
+                        <p className="text-xs text-muted-foreground">Baterias</p>
+                      </div>
+                      <div className="bg-card/50 p-3 rounded border text-center">
+                        <span className="text-2xl font-bold text-green-500">
+                          {allBatteries.reduce((acc, b) => acc + b.tests.length, 0)}
+                        </span>
+                        <p className="text-xs text-muted-foreground">Testes Individuais</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-card/50 p-3 rounded border space-y-3">
+                      <h3 className="font-bold text-sm flex items-center gap-2">
+                        <ListFilter className="w-4 h-4" /> Cobertura por Módulo
+                      </h3>
+                      <div className="space-y-2">
+                        {CATEGORIES.map(cat => {
+                          const count = testRegistry.getBatteriesByModule(cat).length;
+                          const percentage = allBatteries.length > 0 ? Math.round((count / allBatteries.length) * 100) : 0;
+                          return (
+                            <div key={cat} className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span>{cat}</span>
+                                <span className="font-bold">{count} ({percentage}%)</span>
+                              </div>
+                              <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                                <div className="h-full bg-primary transition-all" style={{ width: `${percentage}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </TabsContent>
               </CardContent>
