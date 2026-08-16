@@ -51,7 +51,7 @@ export const authTests: TestBattery[] = [
             
             // O RLS normal deveria retornar vazio ou erro dependendo da rule (geralmente array vazio)
             ctx.log('Resultado do RLS anon:', { data, error: error?.message });
-            ctx.assert(!error || (data as any[])?.length === 0, 'O banco deveria barrar ou retornar vazio por RLS para usuários anônimos na tabela products.');
+            ctx.assert(!error || (data as unknown as any[])?.length === 0, 'O banco deveria barrar ou retornar vazio por RLS para usuários anônimos na tabela products.');
           } else {
              ctx.log('Usuário autenticado no ambiente de testes. Pulando verificação puramente anônima.');
           }
