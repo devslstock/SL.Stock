@@ -727,7 +727,22 @@ export default function AdminOrderEdit() {
                     menu: (base) => ({
                       ...base,
                       fontSize: '13px',
-                      zIndex: 50
+                      zIndex: 50,
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))'
+                    }),
+                    option: (base, state) => ({
+                      ...base,
+                      backgroundColor: state.isFocused ? 'hsl(var(--muted))' : 'transparent',
+                      color: 'hsl(var(--foreground))',
+                      cursor: 'pointer',
+                      '&:active': {
+                        backgroundColor: 'hsl(var(--muted))'
+                      }
+                    }),
+                    singleValue: (base) => ({
+                      ...base,
+                      color: 'hsl(var(--foreground))'
                     })
                   }}
                 />
