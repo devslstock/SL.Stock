@@ -18,6 +18,7 @@ import { ProductSearchInline } from '../SalesApp/NewOrder/ProductSearchInline'
 import { supabase } from '@/lib/supabase'
 import { parsePaymentCondition } from '@/utils/paymentParser'
 import { FiscalEmissionDialog } from '@/components/Fiscal/FiscalEmissionDialog'
+import { ItemDetailsModal } from './ItemDetailsModal'
 
 export default function AdminOrderEdit() {
   const { id } = useParams<{ id: string }>()
@@ -84,7 +85,7 @@ export default function AdminOrderEdit() {
 
   const [customerSearch, setCustomerSearch] = useState('')
   const [showCustomerResults, setShowCustomerResults] = useState(false)
-  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [editingDetailItem, setEditingDetailItem] = useState<any | null>(null)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [showFaturarMenu, setShowFaturarMenu] = useState(false)
   const [showFiscalDialog, setShowFiscalDialog] = useState(false)
@@ -601,8 +602,21 @@ export default function AdminOrderEdit() {
                         ) : (
                           <div className="p-2 text-[12px] text-muted-foreground text-center">Nenhum cliente encontrado</div>
                         )}
-                      </div>
-                    )}
+                  
+      {editingDetailItem && (
+        <ItemDetailsModal 
+          item={editingDetailItem} 
+          isOpen={!!editingDetailItem} 
+          onClose={() => setEditingDetailItem(null)} 
+          onSave={(updatedItem) => {
+            setLocalItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i))
+          }} 
+        />
+      )}
+    </div>
+  )
+}
+
                   </div>
                   {formData.customer_id && (
                     <Button 

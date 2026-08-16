@@ -127,8 +127,12 @@ serve(async (req: Request) => {
       informacoes_adicionais_contribuinte: fiscalOp.default_message || "",
       itens: order.items.map((item: any, index: number) => {
         let itemCfop = cfop; // Padrao do cabecalho
-        if (item.product.cfop) {
-          const baseCfop = item.product.cfop.replace(/\D/g, '');
+        
+        // CFOP priority: Item Override > Product > Header
+        const baseProductCfop = item.cfop || item.product.cfop;
+        
+        if (baseProductCfop) {
+          const baseCfop = baseProductCfop.replace(/\D/g, '');
           if (baseCfop.length === 4) {
             const firstDigit = baseCfop.charAt(0);
             const rest = baseCfop.substring(1);
@@ -155,31 +159,46 @@ serve(async (req: Request) => {
           quantidade_comercial: item.quantity,
           valor_unitario_comercial: item.unit_price,
           valor_bruto: item.total_price,
-          codigo_ncm: item.product.ncm || "00000000",
-          icms_origem: item.product.origin || "0",
+          codigo_ncm: item.ncm || item.product.ncm || "00000000",
+          icms_origem: item.origin || item.product.origin || "0",
         };
 
         if (isSimplesNacional) {
-          const itemCsosn = item.product.csosn || fiscalOp.csosn || "102";
+          const itemCsosn = item.csosn || item.product.csosn || fiscalOp.csosn || "102";
           itemPayload.icms_situacao_tributaria = itemCsosn;
           
           if (itemCsosn === "101") {
-            const icmsRate = item.product.icms_rate || 0;
+            const icmsRate = item.icms_rate !== undefined && item.icms_rate !== null ? item.icms_rate : (item.product.icms_rate || 0);
             if (icmsRate > 0) {
               itemPayload.icms_percentual_credito = icmsRate;
               itemPayload.icms_valor_credito = parseFloat(((item.total_price * icmsRate) / 100).toFixed(2));
             }
           }
         } else {
-          itemPayload.icms_situacao_tributaria = fiscalOp.cst || "00";
+          itemPayload.icms_situacao_tributaria = item.cst || item.product.cst || fiscalOp.cst || "00";
         }
 
-        // Add PIS and COFINS if they exist and company is not Simples (simplified approach)
-        if (!isSimplesNacional) {
-          itemPayload.pis_situacao_tributaria = "01";
-          itemPayload.pis_aliquota_porcentual = fiscalOp.pis_rate || 0;
-          itemPayload.cofins_situacao_tributaria = "01";
-          itemPayload.cofins_aliquota_porcentual = fiscalOp.cofins_rate || 0;
+        const pisCst = item.pis_cst || item.product.pis_cst || "01";
+        const pisRate = item.pis_rate !== undefined && item.pis_rate !== null ? item.pis_rate : (item.product.pis_rate || fiscalOp.pis_rate || 0);
+        
+        const cofinsCst = item.cofins_cst || item.product.cofins_cst || "01";
+        const cofinsRate = item.cofins_rate !== undefined && item.cofins_rate !== null ? item.cofins_rate : (item.product.cofins_rate || fiscalOp.cofins_rate || 0);
+        
+        const ipiRate = item.ipi_rate !== undefined && item.ipi_rate !== null ? item.ipi_rate : (item.product.ipi_rate || 0);
+
+        if (pisRate > 0 || pisCst !== "01" || !isSimplesNacional) {
+          itemPayload.pis_situacao_tributaria = pisCst;
+          if (pisRate > 0) itemPayload.pis_aliquota_porcentual = pisRate;
+        }
+        
+        if (cofinsRate > 0 || cofinsCst !== "01" || !isSimplesNacional) {
+          itemPayload.cofins_situacao_tributaria = cofinsCst;
+          if (cofinsRate > 0) itemPayload.cofins_aliquota_porcentual = cofinsRate;
+        }
+
+        if (ipiRate > 0) {
+          itemPayload.ipi_situacao_tributaria = "50"; // Simplified default
+          itemPayload.ipi_aliquota_porcentual = ipiRate;
         }
 
         return itemPayload;
