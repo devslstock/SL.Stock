@@ -294,7 +294,13 @@ export interface ReceiptMethod {
   id: string
   company_id: string
   name: string
-  type: 'banco' | 'pix' | 'outros'
+  type?: 'banco' | 'pix' | 'outros' | null // Making optional as we move to payment_method
+  payment_method?: string | null
+  
+  is_receivable?: boolean
+  is_payable?: boolean
+  accounting_account?: string | null
+  financial_institution?: string | null
   
   bank?: string | null
   bank_code?: string | null
@@ -303,10 +309,39 @@ export interface ReceiptMethod {
   account_digit?: string | null
   account_type?: string | null
   
+  // Boleto fields
+  portfolio?: string | null
+  payment_location?: string | null
+  agreement_code?: string | null
+  contract_number?: string | null
+  fine_after_due?: number | null
+  fine_type?: string | null
+  interest_after_due?: number | null
+  interest_type?: string | null
+  protest_days?: number | null
+  protest_action?: string | null
+  grant_discount?: boolean
+  remittance_environment?: string | null
+  integration_type?: string | null
+  liquidation_date_type?: string | null
+  credit_date_type?: string | null
+  next_slip_number?: number | null
+  next_remittance_number?: number | null
+  generate_nfe_record?: boolean
+  confirmed_with_manager?: boolean
+  sum_tariff_on_return?: boolean
+  
+  // PIX/Link fields
   pix_key_type?: string | null
   pix_key?: string | null
   linked_bank?: string | null
   linked_account?: string | null
+  validation_credential_1?: string | null
+  validation_credential_2?: string | null
+  pix_validity_hours?: number | null
+  link_validity_days?: number | null
+  max_installments?: number | null
+  show_product_description?: boolean
   
   holder_name?: string | null
   holder_document?: string | null

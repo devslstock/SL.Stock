@@ -52,4 +52,4 @@ create policy "Users can delete receipt methods of their company"
 -- Triggers for updated_at
 create trigger update_receipt_methods_updated_at
     before update on public.receipt_methods
-    for each row execute function public.update_updated_at_column();
+    for each row execute function set_updated_at();
