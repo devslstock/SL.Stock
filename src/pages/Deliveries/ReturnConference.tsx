@@ -360,6 +360,7 @@ export default function ReturnConference() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="pl-9 h-12 bg-background/50 border-primary/30"
+              inputMode="numeric"
             />
             {showDropdown && (
               <div className="absolute z-50 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">

@@ -1488,6 +1488,7 @@ export default function RouteClients() {
                 placeholder="Ex: 154200" 
                 value={checklistKm}
                 onChange={e => setChecklistKm(e.target.value)}
+                inputMode="decimal"
               />
             </div>
             <div className="space-y-2">
@@ -1498,6 +1499,7 @@ export default function RouteClients() {
                 placeholder="Ex: -18.5" 
                 value={checklistTemp}
                 onChange={e => setChecklistTemp(e.target.value)}
+                inputMode="decimal"
               />
             </div>
           </div>

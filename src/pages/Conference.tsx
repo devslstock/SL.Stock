@@ -1008,6 +1008,7 @@ export default function Conference() {
                       onChange={e => setScanInput(e.target.value)} 
                       placeholder="Cod. de Barras" 
                       className="h-12 text-lg font-mono pr-12" 
+                      inputMode="numeric"
                       autoFocus 
                     />
                     <Button type="button" onClick={() => setIsCameraOpen(true)} size="icon" variant="ghost" className="absolute right-1 top-7 h-10 w-10 text-muted-foreground hover:text-primary"><Camera className="h-5 w-5" /></Button>

@@ -432,6 +432,7 @@ export default function ClientConference() {
                   onKeyDown={handleScan}
                   placeholder="Bipar cód..."
                   className="pl-10 h-12 text-lg font-mono bg-background border-primary/30 focus-visible:border-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]"
+                  inputMode="numeric"
                   autoFocus
                 />
               </div>
