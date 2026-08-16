@@ -2,9 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Play, CheckCircle2, XCircle, AlertTriangle, FileJson, Info } from 'lucide-react';
+import { Loader2, Play, CheckCircle2, XCircle, AlertTriangle, FileJson, Info, Copy } from 'lucide-react';
 import { focusNfeApi } from '@/api/focusNfe';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/toaster';
 
 interface TestStep {
   id: string;
@@ -39,6 +40,18 @@ export default function FocusNFeTestPanel() {
   const addLog = (msg: string, data?: any) => {
     const time = new Date().toLocaleTimeString();
     setLogs(prev => [...prev, { time, msg, data }]);
+  };
+
+  const handleCopyLogs = () => {
+    if (logs.length === 0) return;
+    const logText = logs.map(l => {
+      let str = `[${l.time}] ${l.msg}`;
+      if (l.data) str += `\n${JSON.stringify(l.data, null, 2)}`;
+      return str;
+    }).join('\n\n');
+    
+    navigator.clipboard.writeText(logText);
+    toast.success('Logs copiados para a área de transferência!');
   };
 
   useEffect(() => {
@@ -245,8 +258,11 @@ export default function FocusNFeTestPanel() {
         </Card>
 
         <Card className="flex flex-col h-[600px]">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle className="flex items-center gap-2"><FileJson className="h-5 w-5" /> Console Interno</CardTitle>
+            <Button variant="outline" size="sm" onClick={handleCopyLogs} disabled={logs.length === 0} className="gap-2 h-8">
+              <Copy className="h-4 w-4" /> Copiar
+            </Button>
           </CardHeader>
           <CardContent className="flex-1 p-0 overflow-hidden relative bg-black/95 m-4 mt-0 rounded-md border border-border">
             <div ref={logContainerRef} className="absolute inset-0 overflow-y-auto p-4 font-mono text-xs space-y-2">
