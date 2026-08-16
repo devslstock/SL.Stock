@@ -235,7 +235,9 @@ export function ItemDetailsModal({ item, isOpen, isEditable = true, hasNextItem 
                     <tr>
                       <th className="p-2 font-semibold w-24">Imposto</th>
                       <th className="p-2 font-semibold">CST/CSOSN Específico</th>
+                      <th className="p-2 font-semibold w-32 text-right">Base de Cálculo</th>
                       <th className="p-2 font-semibold w-32">Alíquota (%)</th>
+                      <th className="p-2 font-semibold w-32 text-right">Valor</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -254,6 +256,9 @@ export function ItemDetailsModal({ item, isOpen, isEditable = true, hasNextItem 
                           ))}
                         </select>
                       </td>
+                      <td className="p-2 text-right font-medium text-muted-foreground">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(formData.total_price || 0)}
+                      </td>
                       <td className="p-2">
                         <Input 
                           type="number" step="0.01" 
@@ -263,6 +268,9 @@ export function ItemDetailsModal({ item, isOpen, isEditable = true, hasNextItem 
                           disabled={!isEditable}
                           className="h-8 text-xs bg-transparent border-border" 
                         />
+                      </td>
+                      <td className="p-2 text-right font-bold text-emerald-600 dark:text-emerald-500">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(((formData.total_price || 0) * (Number(formData.icms_rate) || 0)) / 100)}
                       </td>
                     </tr>
                     <tr className="hover:bg-muted/20">
@@ -280,6 +288,9 @@ export function ItemDetailsModal({ item, isOpen, isEditable = true, hasNextItem 
                           ))}
                         </select>
                       </td>
+                      <td className="p-2 text-right font-medium text-muted-foreground">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(formData.total_price || 0)}
+                      </td>
                       <td className="p-2">
                         <Input 
                           type="number" step="0.01" 
@@ -289,6 +300,9 @@ export function ItemDetailsModal({ item, isOpen, isEditable = true, hasNextItem 
                           disabled={!isEditable}
                           className="h-8 text-xs bg-transparent border-border" 
                         />
+                      </td>
+                      <td className="p-2 text-right font-bold text-emerald-600 dark:text-emerald-500">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(((formData.total_price || 0) * (Number(formData.pis_rate) || 0)) / 100)}
                       </td>
                     </tr>
                     <tr className="hover:bg-muted/20">
@@ -306,6 +320,9 @@ export function ItemDetailsModal({ item, isOpen, isEditable = true, hasNextItem 
                           ))}
                         </select>
                       </td>
+                      <td className="p-2 text-right font-medium text-muted-foreground">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(formData.total_price || 0)}
+                      </td>
                       <td className="p-2">
                         <Input 
                           type="number" step="0.01" 
@@ -316,10 +333,16 @@ export function ItemDetailsModal({ item, isOpen, isEditable = true, hasNextItem 
                           className="h-8 text-xs bg-transparent border-border" 
                         />
                       </td>
+                      <td className="p-2 text-right font-bold text-emerald-600 dark:text-emerald-500">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(((formData.total_price || 0) * (Number(formData.cofins_rate) || 0)) / 100)}
+                      </td>
                     </tr>
                     <tr className="hover:bg-muted/20">
                       <td className="p-2 font-medium border-r">IPI</td>
                       <td className="p-2 text-muted-foreground text-xs italic pl-4">Apenas Alíquota</td>
+                      <td className="p-2 text-right font-medium text-muted-foreground">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(formData.total_price || 0)}
+                      </td>
                       <td className="p-2">
                         <Input 
                           type="number" step="0.01" 
@@ -329,6 +352,9 @@ export function ItemDetailsModal({ item, isOpen, isEditable = true, hasNextItem 
                           disabled={!isEditable}
                           className="h-8 text-xs bg-transparent border-border" 
                         />
+                      </td>
+                      <td className="p-2 text-right font-bold text-emerald-600 dark:text-emerald-500">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(((formData.total_price || 0) * (Number(formData.ipi_rate) || 0)) / 100)}
                       </td>
                     </tr>
                   </tbody>
