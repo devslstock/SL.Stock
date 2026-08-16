@@ -457,7 +457,32 @@ export default function AdminOrderEdit() {
     const itemTotal = (item.quantity * item.unit_price) * (1 - (item.discount_percent || 0) / 100)
     return acc + itemTotal
   }, 0)
-  
+
+  const totalImpostos = localItems.reduce((acc, item) => {
+    const itemTotal = (item.quantity * item.unit_price) * (1 - (item.discount_percent || 0) / 100)
+    
+    if (item.pis_rate) {
+      acc.pisBase += itemTotal
+      acc.pisValor += (itemTotal * item.pis_rate) / 100
+    }
+    
+    if (item.cofins_rate) {
+      acc.cofinsBase += itemTotal
+      acc.cofinsValor += (itemTotal * item.cofins_rate) / 100
+    }
+    
+    if (item.icms_rate) {
+      acc.icmsBase += itemTotal
+      acc.icmsValor += (itemTotal * item.icms_rate) / 100
+    }
+    
+    return acc
+  }, {
+    pisBase: 0, pisValor: 0,
+    cofinsBase: 0, cofinsValor: 0,
+    icmsBase: 0, icmsValor: 0
+  })
+
   let descontoCalculado = 0
   if (formData.discount_type === 'R$') {
     descontoCalculado = formData.desconto_valor
@@ -962,35 +987,66 @@ export default function AdminOrderEdit() {
         </div>
 
         <div className="bg-card border border-border p-3 rounded-md shadow-sm">
-           <div className="font-semibold mb-2 pb-1 border-b border-border">Impostos (Estimativa / Cálculo)</div>
-           <table className="w-full text-[12px] text-right">
+           <table className="w-full text-[12px] text-right border-collapse">
              <thead className="bg-muted/50 border-b border-border">
                <tr>
-                 <th className="text-left p-1">Imposto</th>
-                 <th className="p-1">Base de cálculo</th>
-                 <th className="p-1">Valor</th>
+                 <th className="text-left p-1 border-r border-border font-medium">Imposto</th>
+                 <th className="p-1 border-r border-border font-medium">Base de cálculo</th>
+                 <th className="p-1 font-medium">Valor</th>
                </tr>
              </thead>
              <tbody>
-               <tr className="bg-amber-100 dark:bg-amber-900/30">
-                 <td className="text-left p-1 font-bold">PIS</td>
-                 <td className="p-1">0,00</td>
+               <tr className="bg-amber-100 dark:bg-amber-900/30 border-b border-border">
+                 <td className="text-left p-1 font-bold border-r border-border text-amber-900 dark:text-amber-100">PIS</td>
+                 <td className="p-1 border-r border-border font-medium">{formatCurrency(totalImpostos.pisBase)}</td>
+                 <td className="p-1 font-bold text-amber-600 dark:text-amber-500">{formatCurrency(totalImpostos.pisValor)}</td>
+               </tr>
+               <tr className="border-b border-border">
+                 <td className="text-left p-1 border-r border-border text-muted-foreground">COFINS</td>
+                 <td className="p-1 border-r border-border font-medium text-muted-foreground">{formatCurrency(totalImpostos.cofinsBase)}</td>
+                 <td className="p-1 font-medium text-muted-foreground">{formatCurrency(totalImpostos.cofinsValor)}</td>
+               </tr>
+               <tr className="border-b border-border">
+                 <td className="text-left p-1 border-r border-border text-muted-foreground">ICMS</td>
+                 <td className="p-1 border-r border-border font-medium text-muted-foreground">{formatCurrency(totalImpostos.icmsBase)}</td>
+                 <td className="p-1 font-medium text-muted-foreground">{formatCurrency(totalImpostos.icmsValor)}</td>
+               </tr>
+               <tr className="border-b border-border text-muted-foreground">
+                 <td className="text-left p-1 border-r border-border">ICMS anterior</td>
+                 <td className="p-1 border-r border-border">0,00</td>
                  <td className="p-1">0,00</td>
                </tr>
-               <tr>
-                 <td className="text-left p-1 font-bold">COFINS</td>
+               <tr className="text-muted-foreground">
+                 <td className="text-left p-1 border-r border-border">ICMS ST anterior</td>
+                 <td className="p-1 border-r border-border">0,00</td>
                  <td className="p-1">0,00</td>
-                 <td className="p-1">0,00</td>
-               </tr>
-               <tr>
-                 <td className="text-left p-1 font-bold">ICMS</td>
-                 <td className="p-1">{formatCurrency(totalProdutos)}</td>
-                 <td className="p-1">{formatCurrency(totalProdutos * 0.18)}</td>
                </tr>
              </tbody>
            </table>
-           <div className="mt-4 p-2 bg-muted/30 rounded border border-border text-xs text-muted-foreground">
-             * A integração com motor fiscal fará o preenchimento automático das alíquotas baseadas na NCM e CFOP ao faturar.
+
+           <div className="mt-4 grid grid-cols-1 gap-3 text-[12px]">
+             <div className="border border-border p-2 rounded-sm relative mt-2">
+               <div className="absolute -top-2.5 left-2 bg-card px-1 text-muted-foreground font-semibold">IBS UF</div>
+               <div className="flex justify-between items-center px-1 mt-1">
+                 <span className="text-muted-foreground flex items-center">Base de cálculo <Input className="h-6 w-20 ml-2 text-right text-xs bg-muted/20" readOnly value="0,00" /></span>
+                 <span className="text-muted-foreground flex items-center">Valor <Input className="h-6 w-20 ml-2 text-right text-xs bg-muted/20" readOnly value="0,00" /></span>
+               </div>
+             </div>
+             
+             <div className="border border-border p-2 rounded-sm relative mt-2">
+               <div className="absolute -top-2.5 left-2 bg-card px-1 text-muted-foreground font-semibold">CBS</div>
+               <div className="flex justify-between items-center px-1 mt-1">
+                 <span className="text-muted-foreground flex items-center">Base de cálculo <Input className="h-6 w-20 ml-2 text-right text-xs bg-muted/20" readOnly value="0,00" /></span>
+                 <span className="text-muted-foreground flex items-center">Valor <Input className="h-6 w-20 ml-2 text-right text-xs bg-muted/20" readOnly value="0,00" /></span>
+               </div>
+             </div>
+             
+             <div className="border border-border p-2 rounded-sm relative mt-2">
+               <div className="absolute -top-2.5 left-2 bg-card px-1 text-muted-foreground font-semibold">Valor aproximado dos tributos</div>
+               <div className="flex items-center px-1 mt-1">
+                 <span className="text-muted-foreground flex items-center">Alíquota do Simples Nacional <Input className="h-6 w-20 mx-2 text-right text-xs bg-muted/20" readOnly value="0,00" /> %</span>
+               </div>
+             </div>
            </div>
         </div>
       </div>
