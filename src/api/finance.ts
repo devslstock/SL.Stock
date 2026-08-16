@@ -238,13 +238,17 @@ export const financeApi = {
 
     if (!userRecord) throw new Error('User not found')
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('accounts_receivable')
       .select('id')
-      .eq('company_id', userRecord.company_id)
       .eq('customer_id', customerId)
       .eq('status', 'vencido')
-      .limit(1)
+      
+    if (userRecord.company_id) {
+      query = query.eq('company_id', userRecord.company_id)
+    }
+
+    const { data, error } = await query.limit(1)
 
     if (error) throw error
     return data && data.length > 0
