@@ -65,24 +65,22 @@ export default function FocusNFeTestPanel() {
     let mdfePayload: any = null;
 
     try {
-      // 1. AUTH-001
+      // 1. AUTH-001 e EMP-001 (Unificados na consulta da empresa)
       updateStep('AUTH-001', 'running');
       try {
-        await focusNfeApi.testFocusAuthentication();
-        updateStep('AUTH-001', 'success', 'Conexão e Autenticação OK');
-      } catch (e: any) {
-        updateStep('AUTH-001', 'error', e.message, e);
-        throw e; // Interrompe tudo se não autenticar
-      }
-
-      // 2. EMP-001
-      updateStep('EMP-001', 'running');
-      try {
         const emp = await focusNfeApi.checkCompany(cnpj);
+        updateStep('AUTH-001', 'success', 'Conexão e Autenticação OK');
+        
+        updateStep('EMP-001', 'running');
         updateStep('EMP-001', 'success', `Empresa encontrada: ${emp.nome}`, emp);
       } catch (e: any) {
-        // Se der 404, marcamos como warning
-        updateStep('EMP-001', 'warning', `Aviso Empresa: ${e.message}. Continuando testes.`, e);
+        if (e.statusCode === 401 || e.isAuthenticationError) {
+           updateStep('AUTH-001', 'error', e.message, e);
+           throw e; // Interrompe tudo se não autenticar
+        } else {
+           updateStep('AUTH-001', 'success', 'Conexão OK, mas CNPJ não encontrado.');
+           updateStep('EMP-001', 'warning', `Aviso Empresa: ${e.message}. Continuando testes.`, e);
+        }
       }
 
       // 3. NFE-001

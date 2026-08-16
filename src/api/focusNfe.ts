@@ -47,14 +47,6 @@ export const focusNfeApi = {
   // ==========================================
 
   /**
-   * AUTH-001: Testa autenticação usando chamada simples
-   */
-  async testFocusAuthentication() {
-    // Usamos o endpoint de consultar empresas limitando a 1 para teste leve
-    return focusFetch('/v2/empresas?offset=0&limit=1', { method: 'GET' });
-  },
-
-  /**
    * Verifica se a empresa (CNPJ) já está configurada
    */
   async checkCompany(cnpj: string) {
