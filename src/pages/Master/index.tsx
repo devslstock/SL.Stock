@@ -314,14 +314,9 @@ export default function MasterPanel() {
           <h1 className="text-2xl font-bold gradient-text">Gestão SaaS</h1>
           <p className="text-muted-foreground">Gerencie seus clientes e empresas cadastradas.</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/saas/test-center')} className="gap-2 text-purple-600 border-purple-200 hover:bg-purple-50">
-            <ShieldCheck className="h-4 w-4" /> Central de Testes
-          </Button>
-          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Nova Empresa
-          </Button>
-        </div>
+        <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" /> Nova Empresa
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
