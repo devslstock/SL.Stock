@@ -10,7 +10,7 @@ import { testRegistry } from '@/testing/registry';
 import { initializeTestRegistry } from '@/testing/suites';
 import { suggestTestsForDiagnostic } from '@/testing/diagnostic';
 import { TestRunner } from '@/testing/runner';
-import { TestCase, TestExecutionResult, TestLog } from '@/testing/types';
+import type { TestCase, TestExecutionResult, TestLog } from '@/testing/types';
 import { toast } from '@/components/ui/toaster';
 
 // Inicializa o registry
@@ -35,7 +35,7 @@ export function TestCenter() {
     const suggestions = suggestTestsForDiagnostic(diagnosticText, allTests);
     setSelectedTests(suggestions);
     if (suggestions.length === 0) {
-      toast({ title: 'Diagnóstico', description: 'Nenhum teste específico encontrado. Tente outras palavras-chave.', variant: 'destructive' });
+      toast.error('Nenhum teste específico encontrado. Tente outras palavras-chave.');
     }
   };
 
@@ -61,7 +61,7 @@ export function TestCenter() {
     
     setActiveTestId(null);
     setIsRunning(false);
-    toast({ title: 'Bateria Concluída', description: 'Todos os testes selecionados foram executados.' });
+    toast.success('Bateria Concluída: Todos os testes selecionados foram executados.');
   };
 
   const getStatusIcon = (status?: string) => {

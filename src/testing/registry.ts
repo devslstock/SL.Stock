@@ -1,4 +1,4 @@
-import { TestCase } from './types';
+import type { TestCase } from './types';
 
 // O Registry armazena todos os testes disponíveis no sistema.
 // Ele é populado em runtime quando as baterias são importadas.

@@ -1,4 +1,4 @@
-import { TestCase, TestContext, TestExecutionResult, TestLog, TestStatus } from './types';
+import type { TestCase, TestContext, TestExecutionResult, TestLog, TestStatus } from './types';
 
 export class TestRunner {
   

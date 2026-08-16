@@ -1,4 +1,4 @@
-import { TestCase } from '../types';
+import type { TestCase } from '../types';
 import { supabase } from '@/lib/supabase';
 
 export const smokeTests: TestCase[] = [

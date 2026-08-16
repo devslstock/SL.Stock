@@ -1,4 +1,4 @@
-import { TestCase } from './types';
+import type { TestCase } from './types';
 
 /**
  * Normaliza strings para facilitar a busca ignorando acentos e maiúsculas
