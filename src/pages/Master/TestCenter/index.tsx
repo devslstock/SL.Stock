@@ -12,7 +12,6 @@ import { suggestTestsForDiagnostic } from '@/testing/diagnostic';
 import { TestRunner } from '@/testing/runner';
 import type { TestBattery, TestExecutionResult, TestLog } from '@/testing/types';
 import { toast } from '@/components/ui/toaster';
-import FocusNFeTestPanel from '../FocusNFeTestPanel';
 import { CATEGORIES } from '@/testing/catalog';
 
 // Inicializa o registry
@@ -99,15 +98,14 @@ export function TestCenter() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Painel Esquerdo: Seleção e Controle */}
-        <div className={activeTab === 'focusnfe' ? 'lg:col-span-3 space-y-6' : 'lg:col-span-1 space-y-6'}>
+        <div className="lg:col-span-1 space-y-6">
           <Card>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <CardHeader className="pb-2">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="modulos">Módulos</TabsTrigger>
                   <TabsTrigger value="diagnostic">Diagnóstico</TabsTrigger>
                   <TabsTrigger value="all">Catálogo</TabsTrigger>
-                  <TabsTrigger value="focusnfe">Focus NFe</TabsTrigger>
                 </TabsList>
               </CardHeader>
               
@@ -199,20 +197,13 @@ export function TestCenter() {
                     ))}
                   </div>
                 </TabsContent>
-                
-                <TabsContent value="focusnfe" className="space-y-4">
-                  <div className="bg-card rounded-lg border">
-                    <FocusNFeTestPanel />
-                  </div>
-                </TabsContent>
               </CardContent>
             </Tabs>
           </Card>
         </div>
 
         {/* Painel Direito: Console e Resultados */}
-        {activeTab !== 'focusnfe' && (
-          <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6">
           <Card className="h-full flex flex-col min-h-[600px]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
@@ -273,7 +264,6 @@ export function TestCenter() {
             </CardContent>
           </Card>
         </div>
-        )}
       </div>
     </div>
   );
