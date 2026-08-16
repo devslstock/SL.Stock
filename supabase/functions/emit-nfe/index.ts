@@ -126,11 +126,31 @@ serve(async (req: Request) => {
       },
       informacoes_adicionais_contribuinte: fiscalOp.default_message || "",
       itens: order.items.map((item: any, index: number) => {
+        let itemCfop = cfop; // Padrao do cabecalho
+        if (item.product.cfop) {
+          const baseCfop = item.product.cfop.replace(/\D/g, '');
+          if (baseCfop.length === 4) {
+            const firstDigit = baseCfop.charAt(0);
+            const rest = baseCfop.substring(1);
+            if (isInterState) {
+              if (firstDigit === '5') itemCfop = '6' + rest;
+              else if (firstDigit === '1') itemCfop = '2' + rest;
+              else itemCfop = baseCfop;
+            } else {
+              if (firstDigit === '6') itemCfop = '5' + rest;
+              else if (firstDigit === '2') itemCfop = '1' + rest;
+              else itemCfop = baseCfop;
+            }
+          } else {
+            itemCfop = baseCfop;
+          }
+        }
+
         const itemPayload: any = {
           numero_item: index + 1,
           codigo_produto: item.product.code,
           descricao: item.product.description,
-          cfop: cfop,
+          cfop: itemCfop,
           unidade_comercial: item.product.unit_measure || "UN",
           quantidade_comercial: item.quantity,
           valor_unitario_comercial: item.unit_price,
