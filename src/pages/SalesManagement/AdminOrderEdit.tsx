@@ -368,7 +368,7 @@ export default function AdminOrderEdit() {
   }
 
   const handleApplyGlobalDiscount = async () => {
-    if (formData.desconto_valor <= 0) return
+    if (formData.desconto_valor < 0) return
 
     const tProdutosSemDesconto = localItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0)
     if (tProdutosSemDesconto === 0) return
