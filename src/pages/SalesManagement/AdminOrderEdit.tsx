@@ -145,7 +145,7 @@ export default function AdminOrderEdit() {
         notes: order.notes || '',
         customer_id: order.customer_id || '',
         sales_rep_id: order.sales_rep_id || '',
-        price_table_id: order.price_table_id || '',
+        price_table_id: order.price_table_id || order.customer?.price_table_id || '',
         desconto_valor: order.total_discount || 0,
         frete: order.frete || 0,
         seguro: order.seguro || 0,
@@ -286,7 +286,7 @@ export default function AdminOrderEdit() {
       const tableData = await priceTablesApi.getPriceTable(tableId)
       const tableItems = tableData?.price_table_items || []
       
-      setLocalItems(prevItems => prevItems.map(item => {
+      const newItems = localItems.map(item => {
         const tableItem = tableItems.find((pti: any) => pti.product_id === item.product_id)
         if (tableItem) {
           const newPrice = tableItem.price
@@ -295,14 +295,9 @@ export default function AdminOrderEdit() {
           return updated
         }
         return item
-      }))
-      const total = localItems.reduce((acc, i) => acc + (i.quantity * i.unit_price), 0)
-      const calcSubtotal = total
-      const final_discount = formData.discount_type === 'R$' ? formData.desconto_valor : (total * formData.desconto_valor / 100)
-      const calcNet = calcSubtotal - final_discount
-      await salesApi.updateSalesOrder(id!, { total_amount: calcSubtotal, net_amount: calcNet })
-      toast.success('Preços atualizados com base na tabela!')
-      queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
+      })
+      setLocalItems(newItems)
+      toast.info('Valores atualizados na tela! Clique em Salvar Alterações para gravar.')
     } catch (e: any) {
       toast.error('Erro ao atualizar preços: ' + e.message)
     } finally {
