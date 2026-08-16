@@ -1214,9 +1214,12 @@ export default function AdminOrderEdit() {
                onChange={e => setFormData({...formData, condicao_frete: e.target.value})}
              >
                <option value="">Selecione...</option>
-               <option value="0">0 - Por conta do remetente (CIF)</option>
-               <option value="1">1 - Por conta do destinatário (FOB)</option>
+               <option value="0">0 - Contratação do frete por conta do remetente (CIF)</option>
+               <option value="1">1 - Contratação do frete por conta do destinatário (FOB)</option>
+               <option value="2">2 - Contratação do frete por conta de terceiros</option>
                <option value="3">3 - Transporte próprio por conta do remetente</option>
+               <option value="4">4 - Transporte próprio por conta do destinatário</option>
+               <option value="9">9 - Sem ocorrência de transporte</option>
              </select>
            </div>
          </div>
