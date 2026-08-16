@@ -4,66 +4,70 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, Search, PlayCircle, ShieldAlert, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Activity, Search, PlayCircle, ShieldAlert, CheckCircle2, XCircle, Clock, Copy, ListFilter } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { testRegistry } from '@/testing/registry';
 import { initializeTestRegistry } from '@/testing/suites';
 import { suggestTestsForDiagnostic } from '@/testing/diagnostic';
 import { TestRunner } from '@/testing/runner';
-import type { TestCase, TestExecutionResult, TestLog } from '@/testing/types';
+import type { TestBattery, TestExecutionResult, TestLog } from '@/testing/types';
 import { toast } from '@/components/ui/toaster';
 import FocusNFeTestPanel from '../FocusNFeTestPanel';
-import { Copy } from 'lucide-react';
+import { CATEGORIES } from '@/testing/catalog';
 
 // Inicializa o registry
 initializeTestRegistry();
 
 export function TestCenter() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('baterias');
+  const [activeTab, setActiveTab] = useState('modulos');
   
-  const [selectedTests, setSelectedTests] = useState<TestCase[]>([]);
+  const [selectedBatteries, setSelectedBatteries] = useState<TestBattery[]>([]);
   const [diagnosticText, setDiagnosticText] = useState('');
   
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<Record<string, TestExecutionResult>>({});
   const [currentLogs, setCurrentLogs] = useState<TestLog[]>([]);
-  const [activeTestId, setActiveTestId] = useState<string | null>(null);
+  const [activeBatteryId, setActiveBatteryId] = useState<string | null>(null);
 
-  const allTests = testRegistry.getAllTests();
+  // Filters for complete list
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterModule, setFilterModule] = useState('Todos');
+
+  const allBatteries = testRegistry.getAllBatteries();
 
   const handleDiagnosticSearch = () => {
     if (!diagnosticText.trim()) return;
-    const suggestions = suggestTestsForDiagnostic(diagnosticText, allTests);
-    setSelectedTests(suggestions);
+    const suggestions = suggestTestsForDiagnostic(diagnosticText, allBatteries as any); // Adaptado no futuro
+    setSelectedBatteries(suggestions as any);
     if (suggestions.length === 0) {
-      toast.error('Nenhum teste específico encontrado. Tente outras palavras-chave.');
+      toast.error('Nenhum teste específico encontrado para o relato.');
     }
   };
 
-  const executeTests = async (testsToRun: TestCase[]) => {
-    if (testsToRun.length === 0) return;
+  const executeBatteries = async (batteriesToRun: TestBattery[]) => {
+    if (batteriesToRun.length === 0) return;
     
     setIsRunning(true);
     setResults({});
     setCurrentLogs([]);
     
-    for (const test of testsToRun) {
-      setActiveTestId(test.id);
+    for (const battery of batteriesToRun) {
+      setActiveBatteryId(battery.id);
       
-      const result = await TestRunner.runTest(
-        test,
+      const result = await TestRunner.runBattery(
+        battery,
         user?.id,
         user?.company_id,
         (logs) => setCurrentLogs(logs)
       );
       
-      setResults(prev => ({ ...prev, [test.id]: result }));
+      setResults(prev => ({ ...prev, [battery.id]: result }));
     }
     
-    setActiveTestId(null);
+    setActiveBatteryId(null);
     setIsRunning(false);
-    toast.success('Bateria Concluída: Todos os testes selecionados foram executados.');
+    toast.success('Bateria Concluída: Todas as baterias selecionadas foram executadas.');
   };
 
   const getStatusIcon = (status?: string) => {
@@ -75,6 +79,12 @@ export function TestCenter() {
     }
   };
 
+  const filteredBatteries = allBatteries.filter(b => {
+    const matchSearch = b.name.toLowerCase().includes(searchQuery.toLowerCase()) || b.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchModule = filterModule === 'Todos' || b.module === filterModule;
+    return matchSearch && matchModule;
+  });
+
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
       <div>
@@ -83,7 +93,7 @@ export function TestCenter() {
           Central de Testes e Diagnóstico
         </h1>
         <p className="text-muted-foreground mt-2">
-          Sistema profissional de validação e diagnóstico integrado. Isola dados e não afeta produção.
+          Sistema profissional de validação de Qualidade (QA). {allBatteries.length} baterias disponíveis.
         </p>
       </div>
 
@@ -94,28 +104,39 @@ export function TestCenter() {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <CardHeader className="pb-2">
                 <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="baterias">Baterias</TabsTrigger>
+                  <TabsTrigger value="modulos">Módulos</TabsTrigger>
                   <TabsTrigger value="diagnostic">Diagnóstico</TabsTrigger>
-                  <TabsTrigger value="all">Todos</TabsTrigger>
+                  <TabsTrigger value="all">Catálogo</TabsTrigger>
                   <TabsTrigger value="focusnfe">Focus NFe</TabsTrigger>
                 </TabsList>
               </CardHeader>
               
               <CardContent>
-                <TabsContent value="baterias" className="space-y-4">
-                  <Button variant="outline" className="w-full justify-start" onClick={() => executeTests(testRegistry.getTestsByCategory('Sistema'))}>
-                    <PlayCircle className="w-4 h-4 mr-2" /> Smoke Test (Infra)
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => executeTests(testRegistry.getTestsByCategory('Estoque'))}>
-                    <PlayCircle className="w-4 h-4 mr-2" /> Bateria: Estoque
-                  </Button>
+                <TabsContent value="modulos" className="space-y-4">
+                  <div className="space-y-2">
+                    {CATEGORIES.map(cat => {
+                      const batteriesInModule = testRegistry.getBatteriesByModule(cat);
+                      if (batteriesInModule.length === 0) return null;
+                      return (
+                        <div key={cat} className="p-3 border rounded bg-card/50">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-bold text-sm">{cat}</span>
+                            <Badge variant="secondary">{batteriesInModule.length} baterias</Badge>
+                          </div>
+                          <Button size="sm" variant="outline" className="w-full" onClick={() => executeBatteries(batteriesInModule)} disabled={isRunning}>
+                            <PlayCircle className="w-4 h-4 mr-2" /> Rodar Baterias do Módulo
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="diagnostic" className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Relato do Problema</label>
+                    <label className="text-sm font-medium">Relato do Problema do Cliente</label>
                     <textarea 
-                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
+                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground min-h-[100px]"
                       placeholder="Ex: Produto cadastrado não aparece no estoque após dar entrada..."
                       value={diagnosticText}
                       onChange={(e) => setDiagnosticText(e.target.value)}
@@ -125,33 +146,55 @@ export function TestCenter() {
                     </Button>
                   </div>
                   
-                  {selectedTests.length > 0 && (
+                  {selectedBatteries.length > 0 && (
                     <div className="mt-4 space-y-2">
-                      <h4 className="text-sm font-semibold">Testes Sugeridos:</h4>
+                      <h4 className="text-sm font-semibold">Baterias Sugeridas:</h4>
                       <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                        {selectedTests.map(t => (
+                        {selectedBatteries.map(t => (
                           <div key={t.id} className="text-xs bg-secondary/50 p-2 rounded flex justify-between items-center">
                             <span>{t.id} - {t.name}</span>
                           </div>
                         ))}
                       </div>
-                      <Button className="w-full mt-2" variant="default" onClick={() => executeTests(selectedTests)} disabled={isRunning}>
-                        Executar Selecionados
+                      <Button className="w-full mt-2" variant="default" onClick={() => executeBatteries(selectedBatteries)} disabled={isRunning}>
+                        Executar Sugeridas
                       </Button>
                     </div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="all" className="space-y-4">
-                  <div className="max-h-[400px] overflow-y-auto space-y-2">
-                    {allTests.map(test => (
-                      <div key={test.id} className="flex flex-col p-3 border rounded-md bg-card">
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Buscar bateria..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-8"
+                    />
+                    <select 
+                      className="h-8 rounded-md border bg-background text-sm px-2"
+                      value={filterModule}
+                      onChange={(e) => setFilterModule(e.target.value)}
+                    >
+                      <option value="Todos">Todos</option>
+                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="max-h-[400px] overflow-y-auto space-y-2 pr-1">
+                    {filteredBatteries.map(battery => (
+                      <div key={battery.id} className="flex flex-col p-3 border rounded-md bg-card hover:bg-muted/20 transition-colors">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="font-bold text-sm">{test.id}</span>
-                          <Badge variant="secondary">{test.category}</Badge>
+                          <span className="font-bold text-sm text-primary">{battery.id}</span>
+                          <Badge variant="outline">{battery.type}</Badge>
                         </div>
-                        <span className="text-xs text-muted-foreground mb-2">{test.name}</span>
-                        <Button size="sm" variant="outline" onClick={() => executeTests([test])} disabled={isRunning}>Executar Individual</Button>
+                        <span className="text-sm font-medium mb-1">{battery.name}</span>
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {battery.tags?.map(t => <span key={t} className="text-[10px] text-muted-foreground bg-secondary/30 px-1 rounded">#{t}</span>)}
+                        </div>
+                        <Button size="sm" variant="secondary" className="w-full" onClick={() => executeBatteries([battery])} disabled={isRunning}>
+                          <PlayCircle className="w-4 h-4 mr-2" /> Executar
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -189,10 +232,13 @@ export function TestCenter() {
               {Object.keys(results).length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
                   {Object.values(results).map(res => (
-                    <div key={res.testId} className="flex items-center gap-2 p-2 border rounded bg-secondary/20">
-                      {getStatusIcon(res.status)}
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold">{res.testId}</span>
+                    <div key={res.batteryId} className="flex flex-col gap-1 p-2 border rounded bg-secondary/20">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(res.status)}
+                        <span className="text-xs font-bold truncate" title={res.batteryId}>{res.batteryId}</span>
+                      </div>
+                      <div className="flex justify-between items-center px-1">
+                        <span className="text-[10px] text-muted-foreground">{res.testsPassed}/{res.testsTotal} pass</span>
                         <span className="text-[10px] text-muted-foreground">{res.durationMs.toFixed(0)}ms</span>
                       </div>
                     </div>

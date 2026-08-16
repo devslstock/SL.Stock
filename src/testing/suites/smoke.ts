@@ -1,47 +1,45 @@
-import type { TestCase } from '../types';
+import type { TestBattery } from '../types';
 import { supabase } from '@/lib/supabase';
 
-export const smokeTests: TestCase[] = [
+export const smokeTests: TestBattery[] = [
   {
     id: 'SMOKE-001',
-    name: 'Conexão com Supabase',
-    category: 'Sistema',
-    type: 'DATABASE',
+    name: 'Dashboard — Verificação de Infraestrutura Base',
+    module: 'Dashboard',
+    type: 'Integração',
     priority: 'Crítica',
-    description: 'Verifica se o banco de dados Supabase está online e respondendo.',
-    keywords: ['banco', 'supabase', 'conexao', 'offline'],
-    run: async (ctx) => {
-      ctx.log('Testando conexão com Supabase invocando select limit 1...');
-      
-      const { data, error } = await supabase.from('companies').select('id').limit(1);
-      
-      if (error) {
-        throw new Error(`Falha ao conectar no Supabase: ${error.message}`);
+    description: 'Verifica se o banco de dados Supabase e o proxy da Vercel estão online.',
+    tags: ['banco', 'supabase', 'conexao', 'offline', 'api', 'vercel', 'serverless'],
+    tests: [
+      {
+        name: 'Conexão com Banco de Dados Supabase',
+        run: async (ctx) => {
+          ctx.log('Testando conexão com Supabase invocando select limit 1...');
+          
+          const { data, error } = await supabase.from('companies').select('id').limit(1);
+          
+          if (error) {
+            throw new Error(`Falha ao conectar no Supabase: ${error.message}`);
+          }
+          
+          ctx.assert(Array.isArray(data), 'Resposta do Supabase não é um array válido');
+          ctx.log('Conexão estabelecida com sucesso.', data);
+        }
+      },
+      {
+        name: 'Conexão com Proxy Serverless (Vercel API)',
+        run: async (ctx) => {
+          ctx.log('Testando ping no /api/focus-proxy...');
+          
+          try {
+            const res = await fetch('/api/focus-proxy', { method: 'OPTIONS' });
+            ctx.assert(res.ok, `Proxy retornou status ${res.status}`);
+            ctx.log('Proxy Vercel está online e aceitando conexões.');
+          } catch (err: any) {
+            throw new Error(`Falha ao contactar a API interna Vercel: ${err.message}`);
+          }
+        }
       }
-      
-      ctx.assert(Array.isArray(data), 'Resposta do Supabase não é um array válido');
-      ctx.log('Conexão estabelecida com sucesso.', data);
-    }
-  },
-  {
-    id: 'SMOKE-002',
-    name: 'Verificação de Ambiente Proxy (Vercel)',
-    category: 'APIs',
-    type: 'API',
-    priority: 'Alta',
-    description: 'Testa se as Serverless Functions estão respondendo (Proxy NFe)',
-    keywords: ['api', 'vercel', 'serverless', 'proxy', 'offline'],
-    run: async (ctx) => {
-      ctx.log('Testando ping no /api/focus-proxy...');
-      
-      try {
-        // Envia um OPTIONS para o proxy apenas para ver se ele retorna 200 rápido
-        const res = await fetch('/api/focus-proxy', { method: 'OPTIONS' });
-        ctx.assert(res.ok, `Proxy retornou status ${res.status}`);
-        ctx.log('Proxy Vercel está online e aceitando conexões.');
-      } catch (err: any) {
-        throw new Error(`Falha ao contactar a API interna Vercel: ${err.message}`);
-      }
-    }
+    ]
   }
 ];

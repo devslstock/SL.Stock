@@ -1,35 +1,49 @@
-import type { TestCase } from './types';
+import type { TestBattery } from './types';
+import { FUNCTIONALITY_CATALOG } from './catalog';
 
-// O Registry armazena todos os testes disponíveis no sistema.
+// O Registry armazena todas as baterias disponíveis no sistema.
 // Ele é populado em runtime quando as baterias são importadas.
 class TestRegistry {
-  private tests: Map<string, TestCase> = new Map();
+  private batteries: Map<string, TestBattery> = new Map();
 
-  register(testCase: TestCase) {
-    if (this.tests.has(testCase.id)) {
-      console.warn(`[TestRegistry] Aviso: Teste com ID ${testCase.id} já registrado. Sobrescrevendo.`);
+  register(battery: TestBattery) {
+    if (this.batteries.has(battery.id)) {
+      console.warn(`[TestRegistry] Aviso: Bateria com ID ${battery.id} já registrada. Sobrescrevendo.`);
     }
-    this.tests.set(testCase.id, testCase);
+    
+    // Validate if the battery's module exists in the catalog
+    const catalogEntry = FUNCTIONALITY_CATALOG.find(f => f.id === battery.id);
+    if (!catalogEntry) {
+      console.warn(`[TestRegistry] Aviso: Bateria ${battery.id} não mapeada no catálogo oficial (FUNCTIONALITY_CATALOG).`);
+    }
+
+    this.batteries.set(battery.id, battery);
   }
 
-  registerMany(testCases: TestCase[]) {
-    testCases.forEach(tc => this.register(tc));
+  registerMany(batteries: TestBattery[]) {
+    batteries.forEach(b => this.register(b));
   }
 
-  getTest(id: string): TestCase | undefined {
-    return this.tests.get(id);
+  getBattery(id: string): TestBattery | undefined {
+    return this.batteries.get(id);
   }
 
-  getAllTests(): TestCase[] {
-    return Array.from(this.tests.values());
+  getAllBatteries(): TestBattery[] {
+    return Array.from(this.batteries.values());
   }
 
-  getTestsByCategory(category: string): TestCase[] {
-    return this.getAllTests().filter(t => t.category === category);
+  getBatteriesByModule(moduleName: string): TestBattery[] {
+    return this.getAllBatteries().filter(b => b.module === moduleName);
+  }
+
+  getBatteriesByTags(tags: string[]): TestBattery[] {
+    return this.getAllBatteries().filter(b => 
+      b.tags && tags.some(t => b.tags!.includes(t))
+    );
   }
 
   clear() {
-    this.tests.clear();
+    this.batteries.clear();
   }
 }
 

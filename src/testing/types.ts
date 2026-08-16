@@ -1,17 +1,4 @@
-export type TestCategory = 
-  | 'Sistema' | 'Autenticação' | 'Usuários' | 'Permissões' 
-  | 'Produtos' | 'Estoque' | 'Entradas' | 'Saídas' | 'Pedidos' 
-  | 'Coleta' | 'Conferência' | 'Rotas' | 'Entregas' | 'Clientes'
-  | 'Fornecedores' | 'Fiscal' | 'NF-e' | 'MDF-e' | 'Relatórios'
-  | 'Importação' | 'Exportação' | 'Integrações' | 'Notificações'
-  | 'Banco de dados' | 'APIs' | 'Responsividade' | 'Segurança'
-  | 'Performance' | 'Regressão' | 'Diagnóstico';
-
-export type TestType = 'UNIT' | 'INTEGRATION' | 'API' | 'E2E' | 'DATABASE' | 'SECURITY' | 'PERFORMANCE' | 'MANUAL';
-
-export type TestPriority = 'Baixa' | 'Normal' | 'Alta' | 'Crítica';
-
-export type TestStatus = 'PASSOU' | 'FALHOU' | 'BLOQUEADO' | 'NÃO EXECUTADO' | 'EM EXECUÇÃO' | 'NÃO APLICÁVEL';
+export type TestStatus = 'PASSOU' | 'FALHOU' | 'BLOQUEADO' | 'NÃO EXECUTADO' | 'EM EXECUÇÃO';
 
 export interface TestLog {
   time: string;
@@ -28,32 +15,40 @@ export interface TestContext {
   companyId?: string;
 }
 
-export interface TestCase {
+export interface TestStep {
+  name: string;
+  run: (ctx: TestContext) => Promise<void>;
+}
+
+export interface TestBattery {
   id: string;
   name: string;
-  category: TestCategory;
-  type: TestType;
-  priority: TestPriority;
+  module: string;
   description: string;
-  prerequisites?: string[];
-  estimatedTimeMs?: number;
+  type: 'CRUD' | 'Operacional' | 'Fluxo' | 'Permissão' | 'Integração' | 'Offline' | 'Relatório' | 'E2E';
+  priority?: 'Alta' | 'Normal' | 'Crítica' | 'Baixa';
+  tags?: string[];
+  dependsOn?: string[]; // IDs das baterias que precisam passar antes desta
   
-  /** Lista de tags ou palavras-chave para ajudar a IA de diagnóstico a achar o teste */
-  keywords?: string[];
-
-  /** A função que efetivamente executa o teste */
-  run: (ctx: TestContext) => Promise<void>;
+  /** Executado uma vez antes de todos os testes da bateria */
+  setup?: (ctx: TestContext) => Promise<void>;
   
-  /** Função de limpeza, executada sempre no final (mesmo se o teste falhar) */
+  /** Lista de testes granulares da bateria */
+  tests: TestStep[];
+  
+  /** Executado no final, independentemente de sucesso ou falha */
   cleanup?: (ctx: TestContext) => Promise<void>;
 }
 
 export interface TestExecutionResult {
-  testId: string;
+  batteryId: string;
   status: TestStatus;
   durationMs: number;
   logs: TestLog[];
   error?: string;
   stackTrace?: string;
   executedAt: Date;
+  testsPassed: number;
+  testsTotal: number;
 }
+

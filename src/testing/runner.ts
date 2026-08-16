@@ -1,12 +1,12 @@
-import type { TestCase, TestContext, TestExecutionResult, TestLog, TestStatus } from './types';
+import type { TestBattery, TestContext, TestExecutionResult, TestLog, TestStatus } from './types';
 
 export class TestRunner {
   
   /**
-   * Executa um único teste, injetando o contexto isolado.
+   * Executa uma bateria completa de testes iterando por seus passos internos.
    */
-  static async runTest(
-    test: TestCase, 
+  static async runBattery(
+    battery: TestBattery, 
     authUserId?: string, 
     companyId?: string,
     onLogUpdate?: (logs: TestLog[]) => void
@@ -17,6 +17,7 @@ export class TestRunner {
     let status: TestStatus = 'EM EXECUÇÃO';
     let errorMsg: string | undefined;
     let stackTrace: string | undefined;
+    let testsPassed = 0;
 
     const appendLog = (level: TestLog['level'], message: string, data?: any) => {
       logs.push({ time: new Date().toLocaleTimeString(), level, message, data });
@@ -41,33 +42,45 @@ export class TestRunner {
       }
     };
 
-    appendLog('info', `Iniciando teste [${test.id}] ${test.name}`);
+    appendLog('info', `Iniciando bateria [${battery.id}] ${battery.name} (${battery.tests.length} testes)`);
 
     try {
-      // 1. RUN
-      await test.run(ctx);
+      // 1. SETUP
+      if (battery.setup) {
+        appendLog('info', 'Executando Setup da bateria...');
+        await battery.setup(ctx);
+      }
+
+      // 2. RUN TESTS
+      for (let i = 0; i < battery.tests.length; i++) {
+        const step = battery.tests[i];
+        appendLog('info', `▶ Executando Teste ${i+1}/${battery.tests.length}: ${step.name}`);
+        await step.run(ctx);
+        testsPassed++;
+        appendLog('success', `✓ Teste passou: ${step.name}`);
+      }
+
       status = 'PASSOU';
-      appendLog('success', `Teste concluído com sucesso.`);
+      appendLog('success', `Bateria concluída com sucesso! Todos os testes passaram.`);
     } catch (e: any) {
-      // 2. ERROR CATCHING
+      // 3. ERROR CATCHING
       status = 'FALHOU';
       errorMsg = e.message || 'Erro desconhecido';
       stackTrace = e.stack;
-      appendLog('error', `Falha no teste: ${errorMsg}`);
+      appendLog('error', `Falha na bateria: ${errorMsg}`);
     } finally {
-      // 3. TEARDOWN (CLEANUP)
-      if (test.cleanup) {
+      // 4. TEARDOWN (CLEANUP)
+      if (battery.cleanup) {
         appendLog('info', 'Executando rotina de limpeza (cleanup)...');
         try {
-          await test.cleanup(ctx);
+          await battery.cleanup(ctx);
           appendLog('success', 'Limpeza concluída.');
         } catch (cleanupError: any) {
           appendLog('error', `Falha ao executar limpeza: ${cleanupError.message}`);
           if (status === 'PASSOU') {
              // Se o teste passou mas o cleanup falhou, consideramos como alerta ou falha parcial.
-             // Para rigor, mantemos o status, mas registramos o erro crítico.
              status = 'FALHOU';
-             errorMsg = `Teste passou, mas CLEANUP falhou: ${cleanupError.message}`;
+             errorMsg = `Bateria passou, mas CLEANUP falhou: ${cleanupError.message}`;
           }
         }
       }
@@ -76,13 +89,15 @@ export class TestRunner {
     const durationMs = performance.now() - startTime;
 
     return {
-      testId: test.id,
+      batteryId: battery.id,
       status,
       durationMs,
       logs,
       error: errorMsg,
       stackTrace,
-      executedAt: new Date()
+      executedAt: new Date(),
+      testsPassed,
+      testsTotal: battery.tests.length
     };
   }
 }
