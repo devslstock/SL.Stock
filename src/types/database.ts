@@ -136,6 +136,48 @@ export interface MdfeRecord {
   updated_at: string
 }
 
+export interface CostCenter {
+  id: string
+  company_id: string
+  code: string
+  name: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AccountingAccount {
+  id: string
+  company_id: string
+  code: string
+  classification?: string | null
+  name: string
+  nickname?: string | null
+  parent_id?: string | null
+  type: 'Sintética' | 'Analítica'
+  finality?: string | null
+  is_favorite: boolean
+  is_active: boolean
+  nature?: string | null
+  aggregation_code?: string | null
+  sped_referential_account?: string | null
+  cost_center_required: 'Opcional' | 'Obrigatório' | 'Não utilizar'
+  sales_order_required: 'Opcional' | 'Obrigatório' | 'Não utilizar'
+  created_at: string
+  updated_at: string
+}
+
+export interface AccountingAccountCostCenter {
+  id: string
+  accounting_account_id: string
+  cost_center_id: string
+  referential_account?: string | null
+  aggregation_code?: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface CompanyPayment {
   id: string
   company_id: string

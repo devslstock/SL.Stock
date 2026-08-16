@@ -63,6 +63,7 @@ const navGroups: NavGroup[] = [
       { label: 'Contas a Receber', icon: DollarSign, path: '/financeiro/contas-receber', permission: 'can_manage_finance' },
       { label: 'Contas a Pagar (Em breve)', icon: Banknote, path: '/financeiro/contas-pagar', permission: 'can_manage_finance' }, // Placeholder
       { label: 'Formas de Cobrança / Contas', icon: Building2, path: '/financeiro/formas-recebimento', permission: 'can_manage_finance' },
+      { label: 'Contas Contábeis', icon: Receipt, path: '/financeiro/contas-contabeis', permission: 'can_manage_finance' },
       { label: 'Tabela de Preços', icon: Tag, path: '/cadastros/tabelas-de-preco', permission: 'can_manage_price_tables' },
       { label: 'Condições de Pagamento', icon: Banknote, path: '/cadastros/condicoes-pagamento', permission: 'can_manage_payment_conditions' }
     ]

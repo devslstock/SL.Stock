@@ -127,6 +127,7 @@ import AccountsReceivable from './pages/Finance/AccountsReceivable'
 import PendingBilling from './pages/Finance/PendingBilling'
 import AccountsPayable from './pages/Finance/AccountsPayable'
 import ReceiptMethods from './pages/Finance/ReceiptMethods'
+import AccountingAccounts from './pages/Finance/AccountingAccounts'
 
 function App() {
   return (
@@ -193,6 +194,7 @@ function App() {
             <Route path="/financeiro/faturamento" element={<PendingBilling />} />
             <Route path="/financeiro/contas-pagar" element={<AccountsPayable />} />
             <Route path="/financeiro/formas-recebimento" element={<ReceiptMethods />} />
+            <Route path="/financeiro/contas-contabeis" element={<AccountingAccounts />} />
 
             {/* Sales App (Moved into AppLayout) */}
             <Route path="/vendas" element={<Navigate to="/vendas/pedidos" replace />} />
