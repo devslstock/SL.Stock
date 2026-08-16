@@ -124,6 +124,36 @@ export const salesApi = {
     return data as SalesOrder
   },
 
+  async getCustomerRecentProducts(customerId: string, limit: number = 3) {
+    // Busca os ultimos pedidos do cliente
+    const { data: orders, error: ordersError } = await supabase
+      .from('sales_orders')
+      .select('id')
+      .eq('customer_id', customerId)
+      .not('status', 'eq', 'Digitação') // Pega os já concluídos
+      .not('status', 'eq', 'Cancelado')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (ordersError) throw ordersError
+    if (!orders || orders.length === 0) return []
+
+    const orderIds = orders.map((o: any) => o.id)
+
+    // Busca os itens desses pedidos
+    const { data: items, error: itemsError } = await supabase
+      .from('sales_order_items')
+      .select('product_id')
+      .in('sales_order_id', orderIds)
+
+    if (itemsError) throw itemsError
+    if (!items) return []
+
+    // Retorna array com IDs únicos
+    const uniqueProductIds = Array.from(new Set(items.map((i: any) => i.product_id)))
+    return uniqueProductIds as string[]
+  },
+
   async createSalesOrder(order: Omit<SalesOrder, 'id' | 'order_number' | 'created_at' | 'updated_at' | 'customer' | 'sales_rep' | 'payment_condition' | 'price_table' | 'items'> & { order_number?: number }) {
     
     const { data, error } = await supabase

@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ActionMenu, ActionMenuItem } from '@/components/ui/action-menu'
 import { Pagination } from '@/components/ui/Pagination'
 import { toast } from '@/components/ui/toaster'
-import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight, ScanLine, ArrowUpDown, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, Package, Upload, Archive, FileDown, ArrowRight, ScanLine, ArrowUpDown, ArrowUp, ArrowDown, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, X, Star, Tag } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
@@ -748,7 +748,33 @@ export default function Products() {
                     {product.external_code && <div className="text-xs text-muted-foreground" title="Cód. Externo / EAN">EAN: {product.external_code}</div>}
                     {product.factory_code && <div className="text-xs text-blue-500" title="Cód. Fábrica">Fáb: {product.factory_code}</div>}
                   </TableCell>
-                  <TableCell className="font-medium">{product.description}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <span className="flex-1">{product.description}</span>
+                      {isManager && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={`h-6 w-6 ${product.is_highlight ? 'text-amber-500' : 'text-muted-foreground opacity-30 hover:opacity-100'}`} 
+                            onClick={(e) => { e.stopPropagation(); updateMutation.mutate({ id: product.id, data: { is_highlight: !product.is_highlight } }); }} 
+                            title="Marcar como Destaque"
+                          >
+                            <Star className="h-4 w-4" fill={product.is_highlight ? 'currentColor' : 'none'} />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={`h-6 w-6 ${product.is_promotion ? 'text-blue-500' : 'text-muted-foreground opacity-30 hover:opacity-100'}`} 
+                            onClick={(e) => { e.stopPropagation(); updateMutation.mutate({ id: product.id, data: { is_promotion: !product.is_promotion } }); }} 
+                            title="Marcar como Promoção"
+                          >
+                            <Tag className="h-4 w-4" fill={product.is_promotion ? 'currentColor' : 'none'} />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {product.group_name && <Badge variant="secondary">{product.group_name}</Badge>}
                   </TableCell>

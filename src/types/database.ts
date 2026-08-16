@@ -433,6 +433,8 @@ export interface Product {
   cofins_cst?: string | null
   icms_rate?: number | null
   active?: boolean
+  is_promotion?: boolean | null
+  is_highlight?: boolean | null
   created_at: string
   
   // Novas propriedades (Mega Formulário)

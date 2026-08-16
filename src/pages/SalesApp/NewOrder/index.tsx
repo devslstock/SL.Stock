@@ -617,6 +617,7 @@ export default function NewOrder() {
             <h2 className="text-sm font-bold uppercase tracking-wider">Adicionar Produtos</h2>
           </div>
           <ProductSearchInline 
+            customerId={order.customer_id}
             currentItems={order.items?.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity })) || []}
             priceTableId={order.customer?.price_table_id}
             onUpdateQuantity={handleUpdateQuantityFromSearch}

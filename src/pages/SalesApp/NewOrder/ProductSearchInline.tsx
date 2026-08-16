@@ -8,18 +8,29 @@ import { toast } from '@/components/ui/toaster'
 
 interface ProductSearchInlineProps {
   priceTableId?: string | null
+  customerId?: string | null
   currentItems: any[]
   onUpdateQuantity: (productId: string, quantity: number, price: number) => void
 }
 
-export function ProductSearchInline({ priceTableId, currentItems, onUpdateQuantity }: ProductSearchInlineProps) {
+export function ProductSearchInline({ priceTableId, customerId, currentItems, onUpdateQuantity }: ProductSearchInlineProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [activeTab, setActiveTab] = useState<'all' | 'repositions' | 'promotions' | 'highlights'>('all')
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['products'],
     queryFn: productsApi.getProducts,
+  })
+
+  const { data: recentProductIds = [], isLoading: isLoadingRecent } = useQuery({
+    queryKey: ['recent_products', customerId],
+    queryFn: async () => {
+      if (!customerId) return []
+      const { salesApi } = await import('@/api/sales')
+      return salesApi.getCustomerRecentProducts(customerId, 3)
+    },
+    enabled: !!customerId && activeTab === 'repositions'
   })
 
   const { data: priceTableData } = useQuery({
@@ -59,11 +70,20 @@ export function ProductSearchInline({ priceTableId, currentItems, onUpdateQuanti
     
     // Filtro por abas
     if (activeTab === 'promotions') {
-      filtered = []
+      filtered = filtered.filter((p: any) => p.is_promotion === true)
     } else if (activeTab === 'highlights') {
-      filtered = []
+      // Destaques: tem estrela OU foram criados nos últimos X dias (vamos ordenar os mais recentes)
+      // Como a especificação diz "estrela de destaque para ou recentemente cadastrados", 
+      // vou pegar is_highlight === true. Se houver ordenação, ela entra depois.
+      filtered = filtered.filter((p: any) => p.is_highlight === true)
+      
+      // Se não houver muitos destaques marcados manualmente, podemos opcionalmente pegar os mais recentes
+      // Mas para manter a lógica fiel: só os que estão marcados ou os top 10 mais recentes
+      if (filtered.length === 0) {
+         filtered = [...productsWithPrices].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 15)
+      }
     } else if (activeTab === 'repositions') {
-      filtered = []
+      filtered = filtered.filter((p: any) => recentProductIds.includes(p.id))
     }
 
     if (selectedCategory && activeTab === 'all') {
@@ -80,7 +100,9 @@ export function ProductSearchInline({ priceTableId, currentItems, onUpdateQuanti
     }
     
     return filtered.slice(0, 50)
-  }, [productsWithPrices, searchTerm, selectedCategory, activeTab])
+  }, [productsWithPrices, searchTerm, selectedCategory, activeTab, recentProductIds])
+
+  const isLoading = isLoadingProducts || (activeTab === 'repositions' && isLoadingRecent)
 
   const handleUpdate = (productId: string, delta: number) => {
     const product = productsWithPrices.find(p => p.id === productId)
