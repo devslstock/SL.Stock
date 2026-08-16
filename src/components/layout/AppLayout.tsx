@@ -630,6 +630,20 @@ export default function AppLayout() {
                 <FileJson className={cn("h-4.5 w-4.5", location.pathname === '/saas/focus-nfe' && "text-purple-500")} />
                 Testes Focus NFe
               </Link>
+
+              <Link
+                to="/saas/test-center"
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  location.pathname === '/saas/test-center'
+                    ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
+                    : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
+                )}
+              >
+                <ShieldCheck className={cn("h-4.5 w-4.5", location.pathname === '/saas/test-center' && "text-purple-500")} />
+                Central de Testes
+              </Link>
             </div>
           )}
           
