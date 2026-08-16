@@ -160,7 +160,16 @@ serve(async (req: Request) => {
         };
 
         if (isSimplesNacional) {
-          itemPayload.icms_situacao_tributaria = fiscalOp.csosn || "102";
+          const itemCsosn = item.product.csosn || fiscalOp.csosn || "102";
+          itemPayload.icms_situacao_tributaria = itemCsosn;
+          
+          if (itemCsosn === "101") {
+            const icmsRate = item.product.icms_rate || 0;
+            if (icmsRate > 0) {
+              itemPayload.icms_percentual_credito = icmsRate;
+              itemPayload.icms_valor_credito = parseFloat(((item.total_price * icmsRate) / 100).toFixed(2));
+            }
+          }
         } else {
           itemPayload.icms_situacao_tributaria = fiscalOp.cst || "00";
         }
