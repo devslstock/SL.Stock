@@ -50,6 +50,8 @@ export function parseFocusError(errorData: any, statusCode: number, endpoint: st
     apiMsg = errorData.erros.map((e: any) => e.mensagem || JSON.stringify(e)).join(', ');
   } else if (errorData?.codigo) {
     apiMsg = `Código: ${errorData.codigo}`;
+  } else if (errorData?.error) {
+    apiMsg = errorData.error;
   } else if (typeof errorData === 'string') {
     apiMsg = errorData;
   }
