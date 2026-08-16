@@ -434,7 +434,7 @@ export default function NewOrder() {
       const calcNet = calcSubtotal - (order.total_discount || 0);
 
       await salesApi.updateSalesOrder(orderId, { 
-        status: 'Aprovado',
+        status: 'Digitação',
         total_amount: calcSubtotal,
         net_amount: calcNet
       })
