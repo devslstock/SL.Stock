@@ -242,8 +242,7 @@ export default function AdminOrderEdit() {
   const handleFaturar = () => {
     // Calcular as parcelas e total localmente para validar
     const tProdutos = localItems.reduce((acc, item) => acc + (item.quantity * item.unit_price) * (1 - (item.discount_percent || 0) / 100), 0)
-    const dCalculado = formData.discount_type === 'R$' ? formData.desconto_valor : tProdutos * (formData.desconto_valor / 100)
-    const tPedido = tProdutos + formData.frete + formData.seguro + formData.outras_despesas - dCalculado
+    const tPedido = tProdutos + formData.frete + formData.seguro + formData.outras_despesas
     const oCond = paymentConditions.find((pc: any) => pc.id === formData.payment_condition_id)
     const dInt = oCond?.interval_days || 30
     
@@ -385,7 +384,6 @@ export default function AdminOrderEdit() {
     })
 
     setLocalItems(newItems)
-    setFormData(prev => ({ ...prev, desconto_valor: 0 }))
     
     toast.success('Desconto rateado proporcionalmente nos itens!')
 
@@ -398,7 +396,8 @@ export default function AdminOrderEdit() {
           net_price: item.net_price
         })
       ))
-      await salesApi.updateSalesOrder(id!, { total_discount: 0 })
+      // Salva no pedido principal para manter visível o valor original digitado
+      await salesApi.updateSalesOrder(id!, { total_discount: formData.desconto_valor })
     } catch (e) {
       console.error('Erro ao salvar rateio do desconto', e)
     }
@@ -523,10 +522,14 @@ export default function AdminOrderEdit() {
   if (formData.discount_type === 'R$') {
     descontoCalculado = formData.desconto_valor
   } else {
-    descontoCalculado = totalProdutos * (formData.desconto_valor / 100)
+    // Calculamos o desconto baseado no total bruto se necessário
+    const tPuro = localItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0)
+    descontoCalculado = tPuro * (formData.desconto_valor / 100)
   }
 
-  const totalPedido = totalProdutos + formData.frete + formData.seguro + formData.outras_despesas - descontoCalculado
+  // O totalPedido não subtrai o descontoCalculado novamente, 
+  // porque os descontos já foram rateados nos itens (totalProdutos já é o valor com desconto)
+  const totalPedido = totalProdutos + formData.frete + formData.seguro + formData.outras_despesas
 
   const originalCondition = paymentConditions.find((pc: any) => pc.id === formData.payment_condition_id)
   const defaultInterval = originalCondition?.interval_days || 30
