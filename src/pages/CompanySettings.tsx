@@ -11,6 +11,7 @@ import { geocodeAddress } from '@/api/routing'
 
 import { backupApi } from '@/api/backup'
 import { saasApi } from '@/api/saas'
+import { focusIntegrationApi } from '@/api/focusIntegration'
 import { supabase } from '@/lib/supabase'
 import { Database, Download, Upload, Crown, Star, CheckCircle2, ArrowUpCircle, Image as ImageIcon, Receipt, Key as KeyIcon, ShieldCheck } from 'lucide-react'
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation'
@@ -29,8 +30,6 @@ export default function CompanySettings() {
     enabled: !!company?.id && isManager
   })
 
-
-
   if (!isManager) {
     return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
   }
@@ -41,6 +40,11 @@ export default function CompanySettings() {
   const [isRestoring, setIsRestoring] = useState(false)
   const [restoreProgress, setRestoreProgress] = useState('')
   
+  // Integração Fiscal
+  const [certificateFile, setCertificateFile] = useState<File | null>(null)
+  const [certificatePassword, setCertificatePassword] = useState('')
+  const [isSyncingFiscal, setIsSyncingFiscal] = useState(false)
+
   const fileInputRef = import('react').then(m => m.useRef<HTMLInputElement>(null))
   // Resolving useRef synchronously since it's inside component:
   // Actually, we can just use React.useRef. We already import { useState, useEffect, useRef } from 'react' if we add it.
@@ -184,6 +188,27 @@ export default function CompanySettings() {
       toast.error(error.message || 'Erro ao gerar backup')
     } finally {
       setIsBackingUp(false)
+    }
+  }
+
+  async function handleSyncFiscal() {
+    if (!company?.id) return
+    if (certificateFile && !certificatePassword) {
+      toast.error('Informe a senha do certificado para prosseguir.')
+      return
+    }
+    
+    setIsSyncingFiscal(true)
+    try {
+      await focusIntegrationApi.syncCompany(company.id, false, certificateFile || undefined, certificatePassword || undefined)
+      toast.success('Sincronização com Focus NFe concluída!')
+      setCertificateFile(null)
+      setCertificatePassword('')
+      queryClient.invalidateQueries({ queryKey: ['company_settings'] })
+    } catch (err: any) {
+      toast.error('Erro na sincronização fiscal: ' + err.message)
+    } finally {
+      setIsSyncingFiscal(false)
     }
   }
 
@@ -557,6 +582,66 @@ export default function CompanySettings() {
         </div>
 
 
+
+        {/* Integração Fiscal */}
+        <div className="glass-card p-6 border-t-4 border-t-purple-500">
+          <div className="flex items-center gap-2 mb-4 text-lg font-bold text-foreground">
+            <ShieldCheck className="h-5 w-5 text-purple-500" />
+            Integração Fiscal e Certificado Digital
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Para que o sistema consiga emitir notas fiscais, você precisa sincronizar os dados da sua empresa com a Receita Federal através da nossa mensageria. Envie seu Certificado Digital A1.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
+              <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Arquivo do Certificado (A1 / .pfx)
+              </label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".pfx,.p12"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) setCertificateFile(file)
+                  }}
+                />
+                <Button type="button" variant="outline" className="w-full justify-start text-left bg-background pointer-events-none">
+                  {certificateFile ? certificateFile.name : 'Clique para selecionar o certificado...'}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
+              <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                <KeyIcon className="h-4 w-4" /> Senha do Certificado
+              </label>
+              <Input
+                type="password"
+                placeholder="Senha de instalação do certificado"
+                value={certificatePassword}
+                onChange={e => setCertificatePassword(e.target.value)}
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <Button
+                type="button"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                onClick={handleSyncFiscal}
+                disabled={isSyncingFiscal}
+              >
+                {isSyncingFiscal ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                {isSyncingFiscal ? 'Sincronizando...' : 'Salvar e Sincronizar com a Receita Federal'}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Ao clicar em sincronizar, todas as alterações salvas acima também serão enviadas para a mensageria.
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Backup de Dados */}
         <div className="glass-card p-6 border-t-4 border-t-orange-500">
