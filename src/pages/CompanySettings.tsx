@@ -13,7 +13,7 @@ import { backupApi } from '@/api/backup'
 import { saasApi } from '@/api/saas'
 import { focusIntegrationApi } from '@/api/focusIntegration'
 import { supabase } from '@/lib/supabase'
-import { Database, Download, Upload, Crown, Star, CheckCircle2, ArrowUpCircle, Image as ImageIcon, Receipt, Key as KeyIcon, ShieldCheck } from 'lucide-react'
+import { Database, Download, Upload, Crown, Star, CheckCircle2, ArrowUpCircle, Image as ImageIcon, Receipt, Key as KeyIcon, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation'
 
 export default function CompanySettings() {
@@ -690,7 +690,7 @@ export default function CompanySettings() {
                     variant="outline"
                     className="whitespace-nowrap"
                     onClick={async () => {
-                      if (!companyData.focus_nfe_status || companyData.focus_nfe_status !== 'SINCRONIZADA') {
+                      if (!companyData?.focus_nfe_status || companyData.focus_nfe_status !== 'SINCRONIZADA') {
                         toast.error('Você precisa primeiro salvar e sincronizar a empresa.')
                         return
                       }
