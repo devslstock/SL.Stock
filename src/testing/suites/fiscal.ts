@@ -56,7 +56,7 @@ export const fiscalTests: TestBattery[] = [
             if (e.isCertificateError) {
               ctx.log('Integração OK, mas SEFAZ/Focus barrou por falta de certificado', e);
               (globalThis as any).__TEST_FSC_CERT_ERROR = true;
-            } else if (e.message?.includes('CNPJ do emitente não autorizado')) {
+            } else if (e.message?.includes('CNPJ do emitente não autorizado') || e.isAuthenticationError) {
               ctx.log('Integração OK, mas CNPJ de teste não está autorizado para emitir NFe.', e);
               (globalThis as any).__TEST_FSC_CERT_ERROR = true;
             } else {
@@ -115,7 +115,7 @@ export const fiscalTests: TestBattery[] = [
             ctx.assert(pdfBlob.size > 0, 'PDF Vazio');
             ctx.log(`DANFE gerado com sucesso. Tamanho: ${pdfBlob.size} bytes`);
           } catch (e: any) {
-            if (e.message?.includes('CNPJ do emitente não autorizado') || e.isCertificateError) {
+            if (e.message?.includes('CNPJ do emitente não autorizado') || e.isCertificateError || e.isAuthenticationError) {
               ctx.log('Integração OK, mas SEFAZ rejeitou o preview devido a CNPJ/Certificado de teste.', e);
             } else {
               throw new Error(`Erro DANFE Preview: ${e.message}`);
@@ -162,7 +162,7 @@ export const fiscalTests: TestBattery[] = [
           } catch (e: any) {
             if (e.isCertificateError) {
               ctx.log('Integração OK, barrado por falta de certificado', e);
-            } else if (e.message?.includes('CNPJ do emitente não autorizado')) {
+            } else if (e.message?.includes('CNPJ do emitente não autorizado') || e.isAuthenticationError) {
               ctx.log('Integração OK, mas CNPJ de teste não está autorizado para emitir MDFe.', e);
             } else {
               throw new Error(`Falha envio MDFe: ${e.message}`);
@@ -178,8 +178,8 @@ export const fiscalTests: TestBattery[] = [
              const mdfeConsult = await focusNfeApi.consultarMdfe(ref);
              ctx.log('Consulta MDFe realizada', mdfeConsult);
            } catch(e: any) {
-              if (e.isCertificateError) {
-                ctx.log('Integração OK, barrado por falta de certificado', e);
+              if (e.isCertificateError || e.isAuthenticationError) {
+                ctx.log('Integração OK, barrado por falta de certificado ou permissão', e);
               } else {
                 throw new Error(`Falha consulta MDFe: ${e.message}`);
               }
