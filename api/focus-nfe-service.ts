@@ -71,16 +71,22 @@ export default async function handler(req, res) {
       let endpoint = `/v2/empresas`
       let existingId = company.focus_nfe_empresa_id
 
-      const getRes = await fetch(`${baseUrl}/v2/empresas/${cnpjNumeros}`, {
+      const getRes = await fetch(`${baseUrl}/v2/empresas?cnpj=${cnpjNumeros}`, {
         method: 'GET',
         headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
       })
 
       if (getRes.status === 200) {
         const existingFocusData = await getRes.json()
-        existingId = existingFocusData.id
-        method = 'PUT'
-        endpoint = `/v2/empresas/${existingId}`
+        if (Array.isArray(existingFocusData) && existingFocusData.length > 0) {
+          existingId = existingFocusData[0].id
+          method = 'PUT'
+          endpoint = `/v2/empresas/${existingId}`
+        } else if (existingFocusData && existingFocusData.id) {
+          existingId = existingFocusData.id
+          method = 'PUT'
+          endpoint = `/v2/empresas/${existingId}`
+        }
       }
 
       // Build payload
@@ -114,9 +120,8 @@ export default async function handler(req, res) {
         payload.senha_certificado = certificatePassword
       }
 
-      if (isDryRun) {
-        endpoint += '?dry_run=1'
-      }
+      // NOTE: `dry_run` param is for NF-e emission endpoints, not for companies.
+      // The environment for companies is dictated purely by the provided Token.
 
       const syncRes = await fetch(`${baseUrl}${endpoint}`, {
         method,
