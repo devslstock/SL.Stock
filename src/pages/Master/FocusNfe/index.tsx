@@ -84,7 +84,7 @@ export default function SaaSFocusNfe() {
       <div className="flex-1 p-8">
         <div className="max-w-6xl mx-auto">
           {activeTab === 'overview' && <OverviewTab />}
-          {activeTab === 'settings' && <SettingsTab initialSettings={settings} />}
+          {activeTab === 'settings' && <SettingsTab initialSettings={settings || null} />}
           {activeTab === 'companies' && <CompaniesTab />}
           {activeTab === 'logs' && <LogsTab />}
         </div>
