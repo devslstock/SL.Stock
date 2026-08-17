@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { focusIntegrationApi } from '@/api/focusIntegration'
-import { parseNfeXml, NfeParsed } from '@/utils/xmlParser'
+import { parseNfeXml, type NfeParsed } from '@/utils/xmlParser'
 import { useAuth } from '@/contexts/AuthContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ interface NfeRecebidasImportModalProps {
 }
 
 export function NfeRecebidasImportModal({ isOpen, onClose, chaveNfe }: NfeRecebidasImportModalProps) {
-  const { currentCompany } = useAuth()
+  const { company } = useAuth()
   const queryClient = useQueryClient()
   const [parsedData, setParsedData] = useState<NfeParsed | null>(null)
   
@@ -36,18 +36,14 @@ export function NfeRecebidasImportModal({ isOpen, onClose, chaveNfe }: NfeRecebi
       await supabase
         .from('nfe_recebidas')
         .update({ xml_content: xml })
-        .eq('company_id', currentCompany?.id)
+        .eq('company_id', company?.id)
         .eq('chave_nfe', chaveNfe)
 
       setParsedData(nfe)
       return nfe
     },
     onError: (error: any) => {
-      toast({
-        title: 'Erro ao baixar XML',
-        description: error.message,
-        variant: 'destructive',
-      })
+      toast.error(error.message)
       onClose()
     }
   })
@@ -55,7 +51,7 @@ export function NfeRecebidasImportModal({ isOpen, onClose, chaveNfe }: NfeRecebi
   // IMPORT TO SYSTEM MUTATION
   const importMutation = useMutation({
     mutationFn: async () => {
-      if (!parsedData || !currentCompany?.id) throw new Error('Dados não disponíveis')
+      if (!parsedData || !company?.id) throw new Error('Dados não disponíveis')
       
       // THIS IS WHERE WE MAP TO SYSTEM:
       // In a real scenario we would:
@@ -67,23 +63,19 @@ export function NfeRecebidasImportModal({ isOpen, onClose, chaveNfe }: NfeRecebi
       const { error } = await supabase
         .from('nfe_recebidas')
         .update({ status_importacao: 'importada' })
-        .eq('company_id', currentCompany.id)
+        .eq('company_id', company.id)
         .eq('chave_nfe', chaveNfe)
 
       if (error) throw error
       return true
     },
     onSuccess: () => {
-      toast({ title: 'Nota fiscal importada com sucesso!' })
+      toast.success('Nota fiscal importada com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['nfe-recebidas'] })
       onClose()
     },
     onError: (error: any) => {
-      toast({
-        title: 'Erro ao importar',
-        description: error.message,
-        variant: 'destructive',
-      })
+      toast.error(error.message)
     }
   })
 

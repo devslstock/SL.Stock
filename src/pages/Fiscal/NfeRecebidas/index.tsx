@@ -12,7 +12,7 @@ import { Pagination } from '@/components/ui/Pagination'
 import { NfeRecebidasImportModal } from '@/components/Fiscal/NfeRecebidasImportModal'
 
 export default function NfeRecebidas() {
-  const { currentCompany } = useAuth()
+  const { company } = useAuth()
   const queryClient = useQueryClient()
   
   const [searchTerm, setSearchTerm] = useState('')
@@ -23,29 +23,29 @@ export default function NfeRecebidas() {
 
   // FETCH DB NFEs
   const { data: dbNfes = [], isLoading: isLoadingDb, refetch } = useQuery({
-    queryKey: ['nfe-recebidas', currentCompany?.id],
+    queryKey: ['nfe-recebidas', company?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('nfe_recebidas')
         .select('*')
-        .eq('company_id', currentCompany?.id)
+        .eq('company_id', company?.id)
         .order('data_emissao', { ascending: false })
 
       if (error) throw error
       return data
     },
-    enabled: !!currentCompany?.id
+    enabled: !!company?.id
   })
 
   // SYNC MUTATION
   const syncMutation = useMutation({
     mutationFn: async () => {
-      if (!currentCompany?.cnpj) throw new Error('Empresa sem CNPJ')
+      if (!company?.cnpj) throw new Error('Empresa sem CNPJ')
       // get max version
       const { data } = await supabase
         .from('nfe_recebidas')
         .select('versao')
-        .eq('company_id', currentCompany.id)
+        .eq('company_id', company.id)
         .order('versao', { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -53,12 +53,12 @@ export default function NfeRecebidas() {
       const versao = data?.versao || 0
       
       // Call Focus API
-      const result = await focusIntegrationApi.syncNfesRecebidas(currentCompany.cnpj.replace(/\D/g, ''), versao)
+      const result = await focusIntegrationApi.syncNfesRecebidas(company.cnpj.replace(/\D/g, ''), versao)
       
       // Insert new records to DB
       if (result.data && Array.isArray(result.data)) {
         const insertData = result.data.map((nfe: any) => ({
-          company_id: currentCompany.id,
+          company_id: company.id,
           chave_nfe: nfe.chave_nfe,
           nome_emitente: nfe.nome_emitente,
           documento_emitente: nfe.documento_emitente,
@@ -81,18 +81,11 @@ export default function NfeRecebidas() {
       return result
     },
     onSuccess: (result) => {
-      toast({
-        title: 'Sincronização concluída',
-        description: `Foram sincronizadas ${result.data?.length || 0} notas fiscais.`,
-      })
+      toast.success(`Foram sincronizadas ${result.data?.length || 0} notas fiscais.`)
       refetch()
     },
     onError: (error: any) => {
-      toast({
-        title: 'Erro ao sincronizar',
-        description: error.message,
-        variant: 'destructive',
-      })
+      toast.error(error.message)
     }
   })
 
@@ -105,21 +98,17 @@ export default function NfeRecebidas() {
       await supabase
         .from('nfe_recebidas')
         .update({ manifestacao_destinatario: tipo })
-        .eq('company_id', currentCompany?.id)
+        .eq('company_id', company?.id)
         .eq('chave_nfe', chave)
 
       return result
     },
     onSuccess: () => {
-      toast({ title: 'Manifestação registrada com sucesso!' })
+      toast.success('Manifestação registrada com sucesso!')
       refetch()
     },
     onError: (error: any) => {
-      toast({
-        title: 'Erro na manifestação',
-        description: error.message,
-        variant: 'destructive',
-      })
+      toast.error(error.message)
     }
   })
 
@@ -165,7 +154,7 @@ export default function NfeRecebidas() {
         
         <Button 
           onClick={() => syncMutation.mutate()} 
-          disabled={syncMutation.isPending || !currentCompany?.cnpj}
+          disabled={syncMutation.isPending || !company?.cnpj}
           className="w-full sm:w-auto shadow-sm"
         >
           {syncMutation.isPending ? (
@@ -296,6 +285,8 @@ export default function NfeRecebidas() {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
+              totalItems={filteredNfes.length}
+              itemsPerPage={itemsPerPage}
             />
           </div>
         )}
