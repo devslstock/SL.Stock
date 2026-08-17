@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { Trash2, Plus, RefreshCw, Save, FileText } from 'lucide-react'
+import { Trash2, Plus, RefreshCw, Save, FileText, ShieldAlert } from 'lucide-react'
 import type { FiscalSeries } from '@/types/database'
+import { InutilizacaoModal } from '@/components/Fiscal/InutilizacaoModal'
 
 export function FiscalSeriesManager() {
   const { company } = useAuth()
@@ -28,6 +29,9 @@ export function FiscalSeriesManager() {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
+
+  const [isInutilizacaoOpen, setIsInutilizacaoOpen] = useState(false)
+  const [inutilizacaoSerie, setInutilizacaoSerie] = useState<string | null>(null)
 
   const createMutation = useMutation({
     mutationFn: (newSeries: any) => fiscalSeriesApi.createSeries({ ...newSeries, company_id: companyId }),
@@ -242,6 +246,14 @@ export function FiscalSeriesManager() {
             </div>
           )}
       </div>
+      <InutilizacaoModal 
+        isOpen={isInutilizacaoOpen}
+        onClose={() => {
+          setIsInutilizacaoOpen(false)
+          setInutilizacaoSerie(null)
+        }}
+        serie={inutilizacaoSerie}
+      />
     </div>
   )
 }

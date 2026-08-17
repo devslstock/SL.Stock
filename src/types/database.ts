@@ -81,6 +81,7 @@ export interface Company {
   focus_nfe_last_error?: string | null
   focus_nfe_created_at?: string | null
   focus_nfe_updated_at?: string | null
+  focus_nfe_cert_expires_at?: string | null
   created_at: string
 }
 

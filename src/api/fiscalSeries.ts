@@ -62,6 +62,16 @@ export const fiscalSeriesApi = {
     return true
   },
   
+  async incrementSeriesNextNumber(companyId: string, documentType: string) {
+    // Busca a série ativa para aquele tipo (NFE, NFCE, etc)
+    const series = await this.getActiveSeriesForType(companyId, documentType)
+    if (!series) return null
+    
+    return await this.updateSeries(series.id, {
+      next_number: (series.next_number || 1) + 1
+    })
+  },
+  
   async incrementNextNumber(id: string) {
     const { data, error } = await supabase.rpc('increment_fiscal_series_number', { series_id: id })
     if (error) {

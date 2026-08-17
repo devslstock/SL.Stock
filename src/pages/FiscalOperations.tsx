@@ -194,6 +194,18 @@ export default function FiscalOperations() {
       toast.error('Preencha os campos obrigatórios (Nome e CFOP)')
       return
     }
+    
+    // Validar CFOP (exatamente 4 dígitos numéricos)
+    const cfopRegex = /^[0-9]{4}$/
+    if (!cfopRegex.test(formData.cfop_intra.trim())) {
+      toast.error('O CFOP Interno (Dentro do Estado) deve conter exatamente 4 números (ex: 5102).')
+      return
+    }
+    if (formData.cfop_inter && !cfopRegex.test(formData.cfop_inter.trim())) {
+      toast.error('O CFOP Externo (Fora do Estado) deve conter exatamente 4 números (ex: 6102).')
+      return
+    }
+
     saveMutation.mutate(formData)
   }
   

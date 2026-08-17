@@ -150,5 +150,43 @@ export const focusIntegrationApi = {
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || 'Erro ao baixar o XML')
     return data
+  },
+
+  // =====================================
+  // INUTILIZAÇÃO DE SÉRIE
+  // =====================================
+  async inutilizarNumeracao(cnpj: string, serie: string, numeroInicial: string, numeroFinal: string, justificativa: string) {
+    const res = await fetch('/api/focus-nfe-service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'INUTILIZAR_NFE',
+        cnpj: cnpj.replace(/\D/g, ''),
+        serie,
+        numero_inicial: numeroInicial,
+        numero_final: numeroFinal,
+        justificativa
+      })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Erro ao inutilizar numeração')
+    return data
+  },
+
+  // =====================================
+  // WEBHOOKS
+  // =====================================
+  async criarWebhook(cnpj: string) {
+    const res = await fetch('/api/focus-nfe-service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'CRIAR_WEBHOOK',
+        cnpj: cnpj.replace(/\D/g, '')
+      })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Erro ao configurar webhooks')
+    return data
   }
 }

@@ -165,6 +165,7 @@ export default async function handler(req, res) {
           focus_nfe_sync_status: 'OK',
           focus_nfe_last_sync: new Date().toISOString(),
           focus_nfe_updated_at: new Date().toISOString(),
+          focus_nfe_cert_expires_at: syncData.data_validade_certificado ? new Date(syncData.data_validade_certificado).toISOString() : null,
           ...(method === 'POST' ? { focus_nfe_created_at: new Date().toISOString() } : {})
         }).eq('id', companyId)
       }
@@ -269,6 +270,74 @@ export default async function handler(req, res) {
 
       const xmlText = await getRes.text()
       return res.status(200).json({ success: true, xml: xmlText })
+    }
+
+    // 8. INUTILIZAR NUMERACAO
+    if (action === 'INUTILIZAR_NFE') {
+      const { cnpj, serie, numero_inicial, numero_final, justificativa } = req.body
+      if (!cnpj || !serie || !numero_inicial || !numero_final || !justificativa) {
+        return res.status(400).json({ error: 'Dados insuficientes para inutilização' })
+      }
+      
+      const baseUrl = 'https://api.focusnfe.com.br'
+      const payload = {
+        cnpj,
+        serie,
+        numero_inicial,
+        numero_final,
+        justificativa
+      }
+
+      const postRes = await fetch(`${baseUrl}/v2/nfe/inutilizacao`, {
+        method: 'POST',
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const responseData = await postRes.json().catch(() => ({}))
+      
+      if (!postRes.ok) {
+        return res.status(postRes.status).json({ error: responseData.mensagem || 'Erro ao inutilizar numeração', detalhes: responseData })
+      }
+
+      return res.status(200).json({ success: true, data: responseData })
+    }
+
+    // 9. CRIAR WEBHOOK
+    if (action === 'CRIAR_WEBHOOK') {
+      const { cnpj } = req.body
+      if (!cnpj) return res.status(400).json({ error: 'CNPJ obrigatório' })
+      
+      const baseUrl = 'https://api.focusnfe.com.br'
+      
+      // We will register a webhook for multiple events: NFe, NFe Recebidas
+      // The exact URL would normally be determined by process.env.PUBLIC_URL or req.headers.host
+      // Because we are on vercel, we can infer it or assume a known env var.
+      const host = req.headers.host || 'slstock.com'
+      const protocol = host.includes('localhost') ? 'http' : 'https'
+      const webhookUrl = `${protocol}://${host}/api/webhook/focus`
+
+      const events = ['nfe', 'nfes_recebidas']
+      const results = []
+
+      for (const event of events) {
+        const payload = {
+          cnpj,
+          event,
+          url: webhookUrl
+        }
+
+        const postRes = await fetch(`${baseUrl}/v2/hooks`, {
+          method: 'POST',
+          headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+
+        const data = await postRes.json().catch(() => ({}))
+        results.push({ event, status: postRes.status, data })
+      }
+
+      return res.status(200).json({ success: true, results })
     }
 
     return res.status(400).json({ error: 'Ação inválida' })

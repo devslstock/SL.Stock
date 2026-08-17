@@ -639,6 +639,73 @@ export default function CompanySettings() {
               <p className="text-xs text-muted-foreground text-center mt-2">
                 Ao clicar em sincronizar, todas as alterações salvas acima também serão enviadas para a mensageria.
               </p>
+
+              {companyData?.focus_nfe_cert_expires_at && (
+                (() => {
+                  const daysLeft = Math.ceil((new Date(companyData.focus_nfe_cert_expires_at).getTime() - new Date().getTime()) / (1000 * 3600 * 24))
+                  if (daysLeft < 0) {
+                    return (
+                      <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-md flex items-start gap-3 text-red-700">
+                        <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="font-bold">Certificado Digital Vencido!</h4>
+                          <p className="text-sm">O certificado digital expirou em {new Date(companyData.focus_nfe_cert_expires_at).toLocaleDateString()}. Você não conseguirá emitir novas notas até renovar.</p>
+                        </div>
+                      </div>
+                    )
+                  }
+                  if (daysLeft <= 30) {
+                    return (
+                      <div className="mt-4 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-md flex items-start gap-3 text-amber-700">
+                        <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="font-bold">Certificado Próximo do Vencimento</h4>
+                          <p className="text-sm">O certificado digital irá expirar em {daysLeft} dias ({new Date(companyData.focus_nfe_cert_expires_at).toLocaleDateString()}). Providencie a renovação.</p>
+                        </div>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-500 rounded-r-md flex items-center gap-3 text-green-700 text-sm">
+                      <ShieldCheck className="h-5 w-5 flex-shrink-0" />
+                      <span>Certificado válido até {new Date(companyData.focus_nfe_cert_expires_at).toLocaleDateString()}</span>
+                    </div>
+                  )
+                })()
+              )}
+
+              <div className="mt-6 border-t border-border pt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/30 p-4 rounded-lg">
+                  <div>
+                    <h4 className="font-bold flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 text-purple-500" />
+                      Webhooks de Retorno
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      Receba atualizações de status da SEFAZ em tempo real.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="whitespace-nowrap"
+                    onClick={async () => {
+                      if (!companyData.focus_nfe_status || companyData.focus_nfe_status !== 'SINCRONIZADA') {
+                        toast.error('Você precisa primeiro salvar e sincronizar a empresa.')
+                        return
+                      }
+                      try {
+                        await focusIntegrationApi.criarWebhook(companyData.cnpj!)
+                        toast.success('Webhooks configurados com sucesso!')
+                      } catch (e: any) {
+                        toast.error(e.message)
+                      }
+                    }}
+                  >
+                    Ativar Notificações
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

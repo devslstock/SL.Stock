@@ -8,6 +8,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { nfeApi } from '@/api/nfe'
 import { financeApi } from '@/api/finance'
 import { focusNfeApi } from '@/api/focusNfe'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { focusIntegrationApi } from '@/api/focusIntegration'
+import { fiscalSeriesApi } from '@/api/fiscalSeries'
 import { companiesApi } from '@/api/companies'
 import { Receipt, Loader2, Send, FileText, CheckCircle2, AlertTriangle } from 'lucide-react'
 
@@ -146,6 +149,13 @@ export function FiscalEmissionDialog({
                       // if (status.status === 'autorizado') break
                     }
                     
+                    // Increment the sequence in our DB
+                    try {
+                      await fiscalSeriesApi.incrementSeriesNextNumber(company!.id, 'NFE')
+                    } catch (e) {
+                      console.error('Falha ao incrementar a numeração da série:', e)
+                    }
+                    
                     toast.success('Nota Fiscal Autorizada pela SEFAZ!')
                     setSendStep(2)
                   } catch (err: any) {
@@ -252,20 +262,35 @@ export function FiscalEmissionDialog({
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {order?.items?.map((item: any) => (
-                        <tr key={item.id} className="hover:bg-muted/10">
-                          <td className="p-2">{item.product?.description}</td>
-                          <td className="p-2 text-center">{item.product?.ncm || '-'}</td>
-                          <td className="p-2 text-center">-</td>
-                          <td className="p-2 text-right">{item.quantity}</td>
-                          <td className="p-2 text-right">R$ {item.unit_price?.toFixed(2)}</td>
-                          <td className="p-2 text-right">R$ {item.total_price?.toFixed(2)}</td>
-                        </tr>
-                      ))}
+                      {order?.items?.map((item: any) => {
+                        const ncm = item.product?.ncm?.replace(/\D/g, '') || ''
+                        const isNcmValid = ncm.length === 8
+                        
+                        return (
+                          <tr key={item.id} className="hover:bg-muted/10">
+                            <td className="p-2">{item.product?.description}</td>
+                            <td className={`p-2 text-center ${!isNcmValid ? 'text-red-500 font-bold' : ''}`} title={!isNcmValid ? 'NCM Inválido (deve ter 8 dígitos)' : ''}>
+                              {item.product?.ncm || 'FALTANTE'}
+                              {!isNcmValid && <AlertTriangle className="inline-block h-3 w-3 ml-1" />}
+                            </td>
+                            <td className="p-2 text-center">-</td>
+                            <td className="p-2 text-right">{item.quantity}</td>
+                            <td className="p-2 text-right">R$ {item.unit_price?.toFixed(2)}</td>
+                            <td className="p-2 text-right">R$ {item.total_price?.toFixed(2)}</td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
               </div>
+              
+              {order?.items?.some((i: any) => (i.product?.ncm?.replace(/\D/g, '') || '').length !== 8) && (
+                <div className="bg-red-50 text-red-800 p-3 border-l-4 border-red-500 rounded text-sm flex gap-2 items-center">
+                  <AlertTriangle className="h-5 w-5" />
+                  <strong>Atenção:</strong> Há produtos com NCM inválido (devem conter exatamente 8 dígitos). A SEFAZ rejeitará a nota se enviada assim.
+                </div>
+              )}
               
               <div className="bg-orange-50 text-orange-800 p-3 rounded text-sm">
                 <strong>Atenção:</strong> Após clicar em Emitir, a Nota Fiscal será enviada para a SEFAZ. Você deve aguardar a autorização para gerar o faturamento (cobranças).
