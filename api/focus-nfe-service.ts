@@ -56,9 +56,8 @@ export default async function handler(req, res) {
       // Get global settings to check env (homologacao vs producao)
       const { data: settings } = await supabase.from('focus_nfe_settings').select('*').limit(1).single()
       const isHomologacao = settings?.environment === 'homologacao'
-      const baseUrl = isHomologacao ? 'https://homologacao.focusnfe.com.br' : 'https://api.focusnfe.com.br'
-      
       // Fetch company
+      const baseUrl = 'https://api.focusnfe.com.br'
       const { data: company, error: companyErr } = await supabase.from('companies').select('*').eq('id', companyId).single()
       if (companyErr || !company) return res.status(404).json({ error: 'Empresa não encontrada' })
 
