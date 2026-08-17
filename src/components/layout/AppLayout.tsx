@@ -577,6 +577,27 @@ export default function AppLayout() {
                 Acessos Globais
               </Link>
 
+              <div className="pt-4 mt-4 border-t border-border/40">
+                <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Integrações</p>
+                <Link
+                  to="/saas/focus-nfe"
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    location.pathname.startsWith('/saas/focus-nfe')
+                      ? "bg-purple-500/15 text-purple-500 border border-purple-500/20"
+                      : "text-muted-foreground hover:text-purple-500 hover:bg-muted/50"
+                  )}
+                >
+                  <RefreshCw className={cn("h-4.5 w-4.5", location.pathname.startsWith('/saas/focus-nfe') && "text-purple-500")} />
+                  Focus NFe
+                </Link>
+              </div>
+
+              <div className="pt-4 mt-4 border-t border-border/40">
+                <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Módulos</p>
+              </div>
+
               <Link
                 to="/saas/campanhas"
                 onClick={() => setSidebarOpen(false)}

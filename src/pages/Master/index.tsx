@@ -175,6 +175,7 @@ export default function MasterPanel() {
     }
 
     setIsSubmitting(true);
+    let targetCompanyId = editingCompanyId;
     try {
       if (editingCompanyId) {
         // Edit mode
@@ -211,6 +212,7 @@ export default function MasterPanel() {
           focusnfe_env: focusEnv,
           tax_regime: taxRegime as any
         });
+        targetCompanyId = newCompany.id;
 
         await usersApi.createUser({
           name: adminName,
@@ -230,6 +232,31 @@ export default function MasterPanel() {
 
         toast.success('Empresa e administrador criados com sucesso!');
       }
+
+      // -------------------------------------------------------------
+      // INÍCIO: Integração Automática Focus NFe
+      // -------------------------------------------------------------
+      try {
+        const { focusIntegrationApi } = await import('@/api/focusIntegration');
+        const settings = await focusIntegrationApi.getSettings();
+        if (settings?.is_active) {
+          const isNew = !editingCompanyId;
+          if ((isNew && settings.auto_register) || (!isNew && settings.auto_sync)) {
+            toast.info('Iniciando sincronização com Focus NFe em background...');
+            if (targetCompanyId) {
+              // Executa de forma assíncrona para não travar a tela
+              focusIntegrationApi.syncCompany(targetCompanyId, false)
+                .then(() => toast.success('Empresa sincronizada com a Focus NFe!'))
+                .catch((e: any) => toast.error('Sincronização Focus falhou: ' + e.message));
+            }
+          }
+        }
+      } catch (syncError) {
+        console.error('Erro na automação Focus NFe:', syncError);
+      }
+      // -------------------------------------------------------------
+      // FIM: Integração Automática Focus NFe
+      // -------------------------------------------------------------
 
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setIsModalOpen(false);

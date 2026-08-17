@@ -10,6 +10,7 @@ import { comodatosTests } from './comodatos';
 import { saasTests } from './saas';
 import { offlineTests } from './offline';
 import { fiscalTests } from './fiscal';
+import { focusIntegrationSuite } from './focusIntegration';
 
 export function initializeTestRegistry() {
   testRegistry.clear();
@@ -25,6 +26,7 @@ export function initializeTestRegistry() {
   testRegistry.registerMany(saasTests);
   testRegistry.registerMany(offlineTests);
   testRegistry.registerMany(fiscalTests);
+  testRegistry.registerMany(focusIntegrationSuite);
   
   console.log(`[TestRegistry] Registradas ${testRegistry.getAllBatteries().length} baterias.`);
 }

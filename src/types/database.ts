@@ -74,6 +74,41 @@ export interface Company {
   focusnfe_token?: string | null
   focusnfe_env?: 'producao' | 'homologacao' | null
   tax_regime?: 'simples_nacional' | 'regime_normal' | null
+  focus_nfe_empresa_id?: string | null
+  focus_nfe_status?: 'NAO_CONFIGURADA' | 'PENDENTE' | 'SINCRONIZANDO' | 'SINCRONIZADA' | 'ERRO' | 'DESATIVADA'
+  focus_nfe_sync_status?: string | null
+  focus_nfe_last_sync?: string | null
+  focus_nfe_last_error?: string | null
+  focus_nfe_created_at?: string | null
+  focus_nfe_updated_at?: string | null
+  created_at: string
+}
+
+export interface FocusNfeSettings {
+  id: string
+  is_active: boolean
+  environment: 'homologacao' | 'producao'
+  auto_register: boolean
+  auto_sync: boolean
+  enable_nfe: boolean
+  enable_nfce: boolean
+  enable_nfse: boolean
+  enable_receive_nfe: boolean
+  enable_receive_cte: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface FocusNfeSyncLog {
+  id: string
+  company_id: string
+  operation: 'CREATE' | 'UPDATE' | 'TEST'
+  endpoint?: string | null
+  result: 'SUCCESS' | 'ERROR'
+  http_status?: number | null
+  message?: string | null
+  duration_ms?: number | null
+  created_by?: string | null
   created_at: string
 }
 

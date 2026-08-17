@@ -23,6 +23,7 @@ import SaaSTeam from './pages/Master/Team'
 import SaaSCampanhas from './pages/Master/Campaigns'
 import SaaSNotes from './pages/Master/Notes'
 import SaaSLeads from './pages/Master/Leads'
+import SaaSFocusNfe from './pages/Master/FocusNfe/index'
 import ImportPriceTables from './pages/ImportPriceTables'
 import { ThemeProvider } from './components/ThemeProvider'
 import ChangePassword from './pages/ChangePassword'
@@ -248,6 +249,7 @@ function App() {
               <Route path="/saas/financeiro" element={<SaaSFinance />} />
               <Route path="/saas/acessos" element={<SaaSTeam />} />
               <Route path="/saas/campanhas" element={<SaaSCampanhas />} />
+              <Route path="/saas/focus-nfe" element={<SaaSFocusNfe />} />
               <Route path="/saas/anotacoes" element={<SaaSNotes />} />
               <Route path="/saas/leads" element={<SaaSLeads />} />
               <Route path="/saas/test-center" element={<TestCenter />} />

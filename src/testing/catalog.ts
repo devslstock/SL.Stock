@@ -185,6 +185,13 @@ export const FUNCTIONALITY_CATALOG = [
     tipo: "Integração",
     rota: "/fiscal/notas"
   },
+  {
+    id: "FCS-INT-001",
+    nome: "Integração Global Focus NFe",
+    modulo: "Fiscal",
+    tipo: "Integração",
+    rota: "/saas/focus-nfe"
+  },
 
   // ==============================
   // OFFLINE E SINCRONIZAÇÃO
