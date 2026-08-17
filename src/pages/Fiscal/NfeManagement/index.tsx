@@ -12,7 +12,6 @@ import { FileText, Search, Printer, XCircle, Filter, ChevronDown, ChevronUp, Che
 import { Pagination } from '@/components/ui/Pagination'
 import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
 import { NfeBackupsModal } from '@/components/Fiscal/NfeBackupsModal'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -232,13 +231,15 @@ export default function NfeManagement() {
   return (
     <div className="p-4 sm:p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500 pb-24">
       {isBeginningOfMonth && (
-        <Alert className="bg-primary/10 border-primary/20 text-primary">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Lembrete Contábil</AlertTitle>
-          <AlertDescription className="text-sm mt-1">
-            Já estamos no início do mês! Não se esqueça de baixar o <b>Backup XML</b> das notas emitidas no mês anterior para enviar à sua contabilidade. Clique no botão "Backups e XMLs" ao lado.
-          </AlertDescription>
-        </Alert>
+        <div className="bg-primary/10 border border-primary/20 text-primary p-4 rounded-md flex gap-3 items-start">
+          <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-semibold">Lembrete Contábil</h4>
+            <p className="text-sm mt-1">
+              Já estamos no início do mês! Não se esqueça de baixar o <b>Backup XML</b> das notas emitidas no mês anterior para enviar à sua contabilidade. Clique no botão "Backups e XMLs" ao lado.
+            </p>
+          </div>
+        </div>
       )}
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -487,12 +488,11 @@ export default function NfeManagement() {
       {emitNfeOrderId && (
         <NfeEmissionModal 
           isOpen={true} 
-          onClose={() => setEmitNfeOrderId(null)} 
-          orderId={emitNfeOrderId}
-          onSuccess={() => {
+          onClose={() => {
             setEmitNfeOrderId(null)
             refetch()
-          }}
+          }} 
+          orderId={emitNfeOrderId}
         />
       )}
       <NfeBackupsModal isOpen={isBackupsModalOpen} onClose={() => setIsBackupsModalOpen(false)} />

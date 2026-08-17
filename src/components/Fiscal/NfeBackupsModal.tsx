@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Download, Loader2, Archive, AlertCircle } from 'lucide-react'
 import { focusIntegrationApi } from '@/api/focusIntegration'
 import { useAuth } from '@/contexts/AuthContext'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 interface NfeBackupsModalProps {
   isOpen: boolean
@@ -46,13 +45,15 @@ export function NfeBackupsModal({ isOpen, onClose }: NfeBackupsModalProps) {
         </DialogHeader>
 
         <div className="space-y-4">
-          <Alert className="bg-amber-50 text-amber-800 border-amber-200">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertTitle>Atenção Contábil</AlertTitle>
-            <AlertDescription className="text-xs mt-1 text-amber-700">
-              O backup completo é gerado no primeiro dia de cada mês, contendo as notas do mês anterior. Recomendamos efetuar o download a partir do <b>dia 2</b>. Mantenha esses arquivos guardados por no mínimo 5 anos.
-            </AlertDescription>
-          </Alert>
+          <div className="bg-amber-50 text-amber-800 border border-amber-200 p-4 rounded-md flex gap-3 items-start">
+            <AlertCircle className="h-5 w-5 mt-0.5 text-amber-600 flex-shrink-0" />
+            <div>
+              <h4 className="font-semibold">Atenção Contábil</h4>
+              <p className="text-xs mt-1 text-amber-700">
+                O backup completo é gerado no primeiro dia de cada mês, contendo as notas do mês anterior. Recomendamos efetuar o download a partir do <b>dia 2</b>. Mantenha esses arquivos guardados por no mínimo 5 anos.
+              </p>
+            </div>
+          </div>
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
