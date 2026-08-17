@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
-import { FileText, Search, Printer, XCircle, Filter, ChevronDown, ChevronUp, CheckCircle, RefreshCw, Layers, Loader2 } from 'lucide-react'
+import { FileText, Search, Printer, XCircle, Filter, ChevronDown, ChevronUp, CheckCircle, RefreshCw, Layers, Loader2, Archive, AlertCircle } from 'lucide-react'
 import { Pagination } from '@/components/ui/Pagination'
 import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
+import { NfeBackupsModal } from '@/components/Fiscal/NfeBackupsModal'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -43,6 +45,7 @@ export default function NfeManagement() {
   
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([])
   const [emitNfeOrderId, setEmitNfeOrderId] = useState<string | null>(null)
+  const [isBackupsModalOpen, setIsBackupsModalOpen] = useState(false)
   
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
@@ -223,8 +226,21 @@ export default function NfeManagement() {
     toast.success(`Consulta Síncrona concluída. Sucesso: ${sucesso}. Erros: ${erro}.`)
   }
 
+  const today = new Date()
+  const isBeginningOfMonth = today.getDate() >= 2 && today.getDate() <= 10
+
   return (
     <div className="p-4 sm:p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500 pb-24">
+      {isBeginningOfMonth && (
+        <Alert className="bg-primary/10 border-primary/20 text-primary">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Lembrete Contábil</AlertTitle>
+          <AlertDescription className="text-sm mt-1">
+            Já estamos no início do mês! Não se esqueça de baixar o <b>Backup XML</b> das notas emitidas no mês anterior para enviar à sua contabilidade. Clique no botão "Backups e XMLs" ao lado.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black text-foreground flex items-center gap-2">
@@ -235,6 +251,11 @@ export default function NfeManagement() {
             Tratamento fiscal dos pedidos faturados
           </p>
         </div>
+        
+        <Button onClick={() => setIsBackupsModalOpen(true)} variant="outline" className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/10">
+          <Archive className="mr-2 h-4 w-4" />
+          Backups e XMLs
+        </Button>
       </div>
 
       <div className="bg-card p-4 rounded-xl shadow-sm border border-border space-y-4">
@@ -465,14 +486,16 @@ export default function NfeManagement() {
 
       {emitNfeOrderId && (
         <NfeEmissionModal 
-          isOpen={!!emitNfeOrderId} 
-          onClose={() => {
+          isOpen={true} 
+          onClose={() => setEmitNfeOrderId(null)} 
+          orderId={emitNfeOrderId}
+          onSuccess={() => {
             setEmitNfeOrderId(null)
             refetch()
-          }} 
-          orderId={emitNfeOrderId} 
+          }}
         />
       )}
+      <NfeBackupsModal isOpen={isBackupsModalOpen} onClose={() => setIsBackupsModalOpen(false)} />
 
       {selectedOrderIds.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4 flex flex-col sm:flex-row items-center justify-between z-50 gap-4 slide-in-from-bottom-4 animate-in duration-300">

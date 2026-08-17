@@ -172,6 +172,34 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, data: syncData })
     }
 
+    if (action === 'GET_BACKUPS') {
+      const { companyId } = req.body
+      if (!companyId) return res.status(400).json({ error: 'companyId ausente' })
+
+      const { data: company, error: companyErr } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .single()
+      
+      if (companyErr || !company) return res.status(400).json({ error: 'Empresa não encontrada' })
+      if (!company.cnpj) return res.status(400).json({ error: 'Empresa sem CNPJ cadastrado' })
+
+      const cnpjNumeros = company.cnpj.replace(/\D/g, '')
+      const getRes = await fetch(`${baseUrl}/v2/backups/${cnpjNumeros}.json`, {
+        method: 'GET',
+        headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
+      })
+
+      const responseData = await getRes.json()
+
+      if (!getRes.ok) {
+        return res.status(getRes.status).json({ error: responseData.mensagem || 'Erro ao buscar backups' })
+      }
+
+      return res.status(200).json({ success: true, data: responseData })
+    }
+
     return res.status(400).json({ error: 'Ação inválida' })
 
   } catch (error: any) {

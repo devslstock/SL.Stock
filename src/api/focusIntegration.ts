@@ -75,6 +75,17 @@ export const focusIntegrationApi = {
     return data
   },
 
+  async getBackups(companyId: string) {
+    const res = await fetch('/api/focus-nfe-service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'GET_BACKUPS', companyId })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Erro ao consultar backups fiscais')
+    return data.data
+  },
+
   async syncCompany(companyId: string, isDryRun = false, certificateFile?: File, certificatePassword?: string) {
     // If we have a file, we need to send as FormData or base64
     let body: any = { action: 'SYNC_COMPANY', companyId, isDryRun }
