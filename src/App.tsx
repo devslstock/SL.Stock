@@ -16,6 +16,7 @@ import FiscalVehicles from './pages/Fiscal/Registers/Vehicles'
 import FiscalDrivers from './pages/Fiscal/Registers/Drivers'
 import NfeManagement from './pages/Fiscal/NfeManagement/index'
 import { FiscalSeriesManager } from './pages/Fiscal/Registers/FiscalSeriesManager'
+import NfeRecebidas from './pages/Fiscal/NfeRecebidas/index'
 import Login from './pages/Login'
 import MasterPanel from './pages/Master'
 import SaaSFinance from './pages/Master/Finance'
@@ -215,6 +216,7 @@ function App() {
               <Route path="/fiscal/cadastros/condutores" element={<FiscalDrivers />} />
               <Route path="/fiscal/cadastros/series" element={<FiscalSeriesManager />} />
               <Route path="/fiscal/notas" element={<NfeManagement />} />
+              <Route path="/fiscal/nfe-recebidas" element={<NfeRecebidas />} />
               <Route path="/acesso" element={<AccessControl />} />
             </Route>
              <Route path="/ajuda" element={<HelpAndSupport />} />

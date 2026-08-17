@@ -9,7 +9,8 @@ ADD COLUMN IF NOT EXISTS focus_nfe_created_at timestamp with time zone,
 ADD COLUMN IF NOT EXISTS focus_nfe_updated_at timestamp with time zone;
 
 -- 2. Create focus_nfe_settings (Global Settings)
-CREATE TABLE public.focus_nfe_settings (
+DROP TABLE IF EXISTS public.focus_nfe_settings CASCADE;
+CREATE TABLE IF NOT EXISTS public.focus_nfe_settings (
   id uuid DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
   -- Em um sistema multi-tenant, se for por empresa, tem company_id. 
   -- Se for "Painel Global" para TODAS as empresas, pode ser um singleton sem company_id.
@@ -38,7 +39,7 @@ CREATE TABLE public.focus_nfe_settings (
 -- Habilitar RLS em settings
 ALTER TABLE public.focus_nfe_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Super admins can manage focus_nfe_settings" ON public.focus_nfe_settings FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.role = 'superadmin')
+  EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.is_super_admin = true)
 );
 
 -- Inserir um registro singleton
@@ -46,6 +47,7 @@ INSERT INTO public.focus_nfe_settings (is_active) VALUES (false) ON CONFLICT DO 
 
 
 -- 3. Create focus_nfe_sync_logs
+DROP TABLE IF EXISTS public.focus_nfe_sync_logs CASCADE;
 CREATE TABLE public.focus_nfe_sync_logs (
   id uuid DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
   company_id uuid REFERENCES public.companies(id) ON DELETE CASCADE,
@@ -61,12 +63,19 @@ CREATE TABLE public.focus_nfe_sync_logs (
 
 ALTER TABLE public.focus_nfe_sync_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Super admins and company admins can read logs" ON public.focus_nfe_sync_logs FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND (users.role = 'superadmin' OR users.company_id = focus_nfe_sync_logs.company_id))
+  EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND (users.is_super_admin = true OR users.company_id = focus_nfe_sync_logs.company_id))
 );
 CREATE POLICY "Super admins can insert logs" ON public.focus_nfe_sync_logs FOR INSERT WITH CHECK (
-  EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.role = 'superadmin')
+  EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.is_super_admin = true)
 );
 
 -- Triggers for updated_at
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = timezone('utc'::text, now());
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.focus_nfe_settings
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

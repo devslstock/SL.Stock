@@ -200,6 +200,77 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, data: responseData })
     }
 
+    // 5. GET NFES RECEBIDAS
+    if (action === 'GET_NFES_RECEBIDAS') {
+      const { cnpj, versao, pendente } = req.body
+      if (!cnpj) return res.status(400).json({ error: 'CNPJ obrigatório' })
+      
+      const baseUrl = 'https://api.focusnfe.com.br'
+      let queryParams = `?cnpj=${cnpj}`
+      if (versao !== undefined) queryParams += `&versao=${versao}`
+      if (pendente) queryParams += `&pendente=1`
+
+      const getRes = await fetch(`${baseUrl}/v2/nfes_recebidas${queryParams}`, {
+        method: 'GET',
+        headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
+      })
+
+      const responseData = await getRes.json().catch(() => ({}))
+      
+      if (!getRes.ok) {
+        return res.status(getRes.status).json({ error: responseData.mensagem || 'Erro ao buscar notas recebidas' })
+      }
+
+      // We should also pass max_version down so frontend can store it
+      const maxVersion = getRes.headers.get('X-Max-Version')
+      
+      return res.status(200).json({ success: true, data: responseData, max_version: maxVersion ? parseInt(maxVersion) : undefined })
+    }
+
+    // 6. MANIFESTAR NFE
+    if (action === 'MANIFESTAR_NFE') {
+      const { chave, manifestacao, justificativa } = req.body
+      if (!chave || !manifestacao) return res.status(400).json({ error: 'Chave e manifestação obrigatórios' })
+      
+      const baseUrl = 'https://api.focusnfe.com.br'
+      const payload: any = { manifestacao }
+      if (justificativa) payload.justificativa = justificativa
+
+      const postRes = await fetch(`${baseUrl}/v2/nfes_recebidas/${chave}/manifesto`, {
+        method: 'POST',
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const responseData = await postRes.json().catch(() => ({}))
+      
+      if (!postRes.ok) {
+        return res.status(postRes.status).json({ error: responseData.mensagem || 'Erro ao manifestar nota' })
+      }
+
+      return res.status(200).json({ success: true, data: responseData })
+    }
+
+    // 7. BAIXAR XML NFE
+    if (action === 'BAIXAR_XML_NFE') {
+      const { chave } = req.body
+      if (!chave) return res.status(400).json({ error: 'Chave obrigatória' })
+      
+      const baseUrl = 'https://api.focusnfe.com.br'
+      const getRes = await fetch(`${baseUrl}/v2/nfes_recebidas/${chave}.xml`, {
+        method: 'GET',
+        headers: { 'Authorization': authHeader, 'Accept': 'application/xml, text/xml, */*' }
+      })
+
+      if (!getRes.ok) {
+        const errorText = await getRes.text()
+        return res.status(getRes.status).json({ error: 'Erro ao baixar XML', details: errorText })
+      }
+
+      const xmlText = await getRes.text()
+      return res.status(200).json({ success: true, xml: xmlText })
+    }
+
     return res.status(400).json({ error: 'Ação inválida' })
 
   } catch (error: any) {

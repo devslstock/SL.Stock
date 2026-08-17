@@ -7,7 +7,7 @@ import {
   Clock, History, UserIcon, FileSignature, Box, Building2, Banknote,
   Megaphone, StickyNote, MapPin, Bell, ShieldCheck, LogOut, Lock,
   ChevronDown, Map, Tag, Briefcase, HelpCircle, Wifi, WifiOff, RefreshCw, Receipt,
-  FileText, DollarSign, ArrowDown, FileJson
+  FileText, DollarSign, ArrowDown, FileJson, FileDown
 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/contexts/AuthContext'
@@ -53,8 +53,9 @@ const navGroups: NavGroup[] = [
     title: 'FISCAL',
     items: [
       { label: 'Gestão de Pedidos', icon: FileSignature, path: '/vendas/gestao', permission: 'can_manage_sales' },
-      { label: 'Notas Fiscais', icon: FileText, path: '/fiscal/notas', permission: 'can_manage_sales' }, // Placeholder permission and path
-      { label: 'Cadastros', icon: FileText, path: '/fiscal/cadastros', permission: 'can_manage_company' }
+      { label: 'Notas Fiscais', icon: FileText, path: '/fiscal/notas', permission: 'can_manage_sales' },
+      { label: 'Cadastros', icon: FileText, path: '/fiscal/cadastros', permission: 'can_manage_company' },
+      { label: 'NF-e Recebidas', icon: FileDown, path: '/fiscal/nfe-recebidas', permission: 'can_manage_company' }
     ]
   },
   {

@@ -113,5 +113,42 @@ export const focusIntegrationApi = {
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || data.mensagem || 'Erro ao sincronizar empresa')
     return data
+  },
+
+  // =====================================
+  // NFE RECEBIDAS (Entrada de XML)
+  // =====================================
+
+  async syncNfesRecebidas(cnpj: string, versao?: number, pendente?: boolean) {
+    const res = await fetch('/api/focus-nfe-service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'GET_NFES_RECEBIDAS', cnpj, versao, pendente })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Erro ao sincronizar notas recebidas')
+    return data
+  },
+
+  async manifestarNfe(chave: string, manifestacao: 'ciencia' | 'confirma' | 'desconhecimento' | 'nao_realizada', justificativa?: string) {
+    const res = await fetch('/api/focus-nfe-service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'MANIFESTAR_NFE', chave, manifestacao, justificativa })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Erro ao registrar manifestação')
+    return data
+  },
+
+  async baixarXmlRecebido(chave: string) {
+    const res = await fetch('/api/focus-nfe-service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'BAIXAR_XML_NFE', chave })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Erro ao baixar o XML')
+    return data
   }
 }
