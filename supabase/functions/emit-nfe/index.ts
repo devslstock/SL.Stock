@@ -58,7 +58,7 @@ serve(async (req: Request) => {
     // Get Company info for Focus NFe token using the order's company_id
     const { data: company, error: companyError } = await adminClient
       .from('companies')
-      .select('id, focusnfe_token, focusnfe_env, tax_regime, cnpj, name, garage_address, garage_number, garage_neighborhood, garage_city, garage_state, garage_cep')
+      .select('id, focusnfe_token, focusnfe_env, tax_regime, cnpj, name, garage_address, garage_number, garage_neighborhood, garage_city, garage_state, garage_cep, state_registration')
       .eq('id', order.company_id)
       .single();
 
