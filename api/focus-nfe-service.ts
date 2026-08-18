@@ -160,6 +160,7 @@ export default async function handler(req, res) {
       if (!isDryRun) {
         await supabase.from('companies').update({
           focus_nfe_empresa_id: existingId || syncData.id,
+          focusnfe_token: isHomologacao ? syncData.token_homologacao : syncData.token_producao,
           focus_nfe_status: 'SINCRONIZADA',
           focus_nfe_last_error: null,
           focus_nfe_sync_status: 'OK',
