@@ -165,15 +165,15 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh }: NfeDetail
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Valor do Frete</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(order.freight_value || 0)}</span>
+                  <span className="font-medium text-gray-900">{formatCurrency(order.frete || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Valor do Seguro</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(order.insurance_value || 0)}</span>
+                  <span className="font-medium text-gray-900">{formatCurrency(order.seguro || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Descontos</span>
-                  <span className="font-medium text-red-500">-{formatCurrency(order.discount_value || 0)}</span>
+                  <span className="font-medium text-red-500">-{formatCurrency(order.total_discount || 0)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-base pt-3 border-t mt-3">
                   <span className="text-gray-800">Valor Total da Nota</span>
@@ -185,7 +185,7 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh }: NfeDetail
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">Informações Adicionais</h3>
               <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md min-h-[120px] whitespace-pre-wrap font-mono">
-                {nfe?.payload?.informacoes_adicionais_contribuinte || 'Nenhuma informação complementar enviada na nota.'}
+                {order.obs_contribuinte || order.obs_fisco || 'Nenhuma informação complementar enviada na nota.'}
               </div>
             </div>
           </div>
