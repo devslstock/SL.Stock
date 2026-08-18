@@ -74,7 +74,7 @@ serve(async (req: Request) => {
       fiscalOpQuery = fiscalOpQuery.eq('id', fiscalOperationId);
     } else {
       const opCodeOrName = order.operacao_fiscal || 'Venda de mercadoria';
-      fiscalOpQuery = fiscalOpQuery.or(`code.eq.${opCodeOrName},name.ilike.${opCodeOrName}`).eq('company_id', callerProfile.company_id);
+      fiscalOpQuery = fiscalOpQuery.or(`code.eq.${opCodeOrName},name.ilike.${opCodeOrName}`).eq('company_id', order.company_id);
     }
 
     const { data: fiscalOpData, error: fiscalOpError } = await fiscalOpQuery.limit(1);
@@ -214,7 +214,7 @@ serve(async (req: Request) => {
     const { data: record, error: recordError } = await adminClient
       .from('nfe_records')
       .insert({
-        company_id: callerProfile.company_id,
+        company_id: order.company_id,
         sales_order_id: salesOrderId,
         focus_reference: referenceId,
         status: 'processando'
