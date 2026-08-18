@@ -36,7 +36,22 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh }: NfeDetail
     })
   }
 
-  const isError = nfStatus === 'erro' || nfStatus === 'rejeitada' || nfStatus === 'cancelada'
+  const isError = nfStatus === 'erro' || nfStatus === 'rejeitada' || nfStatus === 'cancelada' || nfStatus === 'erro_autorizacao'
+  
+  // Helper to parse Focus NFe error JSON if it's a stringified array/object
+  const getReadableErrorMessage = (msg: string | null) => {
+    if (!msg) return ''
+    try {
+      const parsed = JSON.parse(msg)
+      if (Array.isArray(parsed)) {
+        return parsed.map(err => err.mensagem || err.codigo || JSON.stringify(err)).join('\n')
+      }
+      if (parsed.mensagem) return parsed.mensagem
+      return msg
+    } catch {
+      return msg
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -63,7 +78,7 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh }: NfeDetail
               <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
               <div>
                 <h4 className="font-bold">Atenção: A SEFAZ rejeitou a nota ou ocorreu um erro de validação</h4>
-                <p className="text-sm mt-1 whitespace-pre-wrap">{nfe.error_message}</p>
+                <p className="text-sm mt-1 whitespace-pre-wrap">{getReadableErrorMessage(nfe.error_message)}</p>
               </div>
             </div>
           )}
