@@ -65,7 +65,8 @@ export default function CompanySettings() {
     garage_lat: '',
     garage_lng: '',
     additional_info: '',
-    logo_url: ''
+    logo_url: '',
+    focusnfe_env: 'homologacao' as 'producao' | 'homologacao'
   })
 
   useEffect(() => {
@@ -86,7 +87,8 @@ export default function CompanySettings() {
         garage_lat: companyData.garage_lat ? companyData.garage_lat.toString() : '',
         garage_lng: companyData.garage_lng ? companyData.garage_lng.toString() : '',
         additional_info: companyData.additional_info || '',
-        logo_url: companyData.logo_url || ''
+        logo_url: companyData.logo_url || '',
+        focusnfe_env: companyData.focusnfe_env || 'homologacao'
       })
     }
   }, [companyData])
