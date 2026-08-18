@@ -93,13 +93,20 @@ export default function NfeManagement() {
   }
   
   const getOrderNfeStatus = (order: any) => {
-    if (!order.nfe || order.nfe.length === 0) return 'Aguardando emissão'
-    return order.nfe[0].status
+    if (!order.nfe || order.nfe.length === 0) {
+      if (order.status === 'Faturado') return 'Aguardando emissão'
+      return 'N/A'
+    }
+    // Retorna o status do registro mais recente
+    const sortedNfe = [...order.nfe].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    return sortedNfe[0].status
   }
 
   const getOrderNfeRecord = (order: any) => {
     if (!order.nfe || order.nfe.length === 0) return null
-    return order.nfe[0]
+    // Retorna o registro mais recente
+    const sortedNfe = [...order.nfe].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    return sortedNfe[0]
   }
 
   const handleBatchEmit = async () => {
