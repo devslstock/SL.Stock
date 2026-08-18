@@ -442,7 +442,7 @@ export default function NfeManagement() {
                     </td>
                     <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
-                        {nfStatus === 'Aguardando emissão' || nfStatus === 'Rejeitada' ? (
+                        {nfStatus === 'Aguardando emissão' || nfStatus === 'Rejeitada' || nfStatus === 'erro_autorizacao' || nfStatus === 'erro' ? (
                           <Button size="sm" className="h-8 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setEmitNfeOrderId(order.id)}>
                             <FileText className="h-4 w-4 mr-1" /> Emitir NF-e
                           </Button>
