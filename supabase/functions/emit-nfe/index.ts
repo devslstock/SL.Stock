@@ -99,6 +99,7 @@ serve(async (req: Request) => {
       finalidade_emissao: 1,
       consumidor_final: 1,
       presenca_comprador: 1,
+      modalidade_frete: 9,
       valor_frete: 0,
       valor_seguro: 0,
       valor_total: order.total_amount,
