@@ -39,17 +39,7 @@ serve(async (req: Request) => {
     const { salesOrderId, fiscalOperationId } = await req.json();
     if (!salesOrderId) throw new Error("salesOrderId is required");
 
-    // Get Company info for Focus NFe token
-    const { data: company, error: companyError } = await adminClient
-      .from('companies')
-      .select('focusnfe_token, focusnfe_env, tax_regime, cnpj, name, garage_address, garage_number, garage_neighborhood, garage_city, garage_state, garage_cep')
-      .eq('id', callerProfile.company_id)
-      .single();
-
-    if (companyError || !company) throw new Error("Company not found");
-    if (!company.focusnfe_token) throw new Error("A empresa não configurou o Token da Focus NFe");
-
-    // Get Sales Order info
+    // Get Sales Order info FIRST so we know which company it belongs to
     const { data: order, error: orderError } = await adminClient
       .from('sales_orders')
       .select(`
@@ -61,11 +51,22 @@ serve(async (req: Request) => {
         )
       `)
       .eq('id', salesOrderId)
-      .eq('company_id', callerProfile.company_id)
       .single();
 
-    if (orderError || !order) throw new Error("Sales order not found");
+    if (orderError || !order) throw new Error("Sales Order not found");
 
+    // Get Company info for Focus NFe token using the order's company_id
+    const { data: company, error: companyError } = await adminClient
+      .from('companies')
+      .select('id, focusnfe_token, focusnfe_env, tax_regime, cnpj, name, garage_address, garage_number, garage_neighborhood, garage_city, garage_state, garage_cep')
+      .eq('id', order.company_id)
+      .single();
+
+    if (companyError || !company) {
+      console.error("Company fetch error:", companyError);
+      throw new Error("Company not found: " + (companyError?.message || 'Missing data'));
+    }
+    if (!company.focusnfe_token) throw new Error("A empresa não configurou o Token da Focus NFe");
     // Get Fiscal Operation
     let fiscalOpQuery = adminClient.from('fiscal_operations').select('*');
     
