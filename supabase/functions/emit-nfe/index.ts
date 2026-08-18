@@ -103,19 +103,26 @@ serve(async (req: Request) => {
       valor_seguro: 0,
       valor_total: order.total_amount,
       valor_produtos: order.net_amount,
-      destinatario: {
-        nome: order.customer.legal_name || order.customer.fantasy_name || order.customer.nickname,
-        cpf_cnpj: order.customer.document?.replace(/\D/g, ''),
-        inscricao_estadual: "ISENTO", // Precisa vir do cliente futuramente
-        logradouro: order.customer.address,
-        numero: order.customer.number,
-        bairro: order.customer.neighborhood,
-        municipio: order.customer.city,
-        uf: order.customer.state,
-        cep: order.customer.cep?.replace(/\D/g, '')
-      },
+      cnpj_emitente: company.cnpj?.replace(/\D/g, ''),
+      nome_emitente: company.name,
+      logradouro_emitente: company.garage_address,
+      numero_emitente: company.garage_number,
+      bairro_emitente: company.garage_neighborhood,
+      municipio_emitente: company.garage_city,
+      uf_emitente: company.garage_state,
+      cep_emitente: company.garage_cep?.replace(/\D/g, ''),
+      nome_destinatario: order.customer.legal_name || order.customer.fantasy_name || order.customer.nickname,
+      cpf_destinatario: order.customer.document?.replace(/\D/g, '').length === 11 ? order.customer.document.replace(/\D/g, '') : undefined,
+      cnpj_destinatario: order.customer.document?.replace(/\D/g, '').length > 11 ? order.customer.document.replace(/\D/g, '') : undefined,
+      inscricao_estadual_destinatario: "ISENTO",
+      logradouro_destinatario: order.customer.address,
+      numero_destinatario: order.customer.number,
+      bairro_destinatario: order.customer.neighborhood,
+      municipio_destinatario: order.customer.city,
+      uf_destinatario: order.customer.state,
+      cep_destinatario: order.customer.cep?.replace(/\D/g, ''),
       informacoes_adicionais_contribuinte: fiscalOp.default_message || "",
-      itens: order.items.map((item: any, index: number) => {
+      items: order.items.map((item: any, index: number) => {
         let itemCfop = cfop; // Padrao do cabecalho
         
         // CFOP priority: Item Override > Product > Header
@@ -213,32 +220,15 @@ serve(async (req: Request) => {
 
     if (recordError) throw new Error("Erro ao criar registro NFe: " + recordError.message);
 
-    // Fetch Master Token
-    const { data: settings } = await adminClient
-      .from('focus_nfe_settings')
-      .select('focus_api_token')
-      .limit(1)
-      .single();
-
-    if (!settings?.focus_api_token) {
-      throw new Error("Token Master da Focus NFe não configurado globalmente.");
-    }
-
-    // White Label emission: Use Master Token, ref in URL = CNPJ, ref in body = referenceId
-    const tokenBase64 = btoa(`${settings.focus_api_token}:`);
-    const cleanCnpj = company.cnpj?.replace(/\D/g, '');
-    const focusApiUrl = baseUrl + `?ref=${cleanCnpj}` + (isDryRun ? '&dry_run=1' : '');
-    
-    // Set referenceId inside the payload
-    const finalPayload = { ...nfePayload, ref: referenceId };
-
-    const focusRes = await fetch(focusApiUrl, {
+    // 2. Chamar Focus NFe
+    const tokenBase64 = btoa(`${company.focusnfe_token}:`);
+    const focusRes = await fetch(baseUrl + `?ref=${referenceId}`, {
       method: "POST",
       headers: {
         "Authorization": `Basic ${tokenBase64}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(finalPayload)
+      body: JSON.stringify(nfePayload)
     });
 
     const focusData = await focusRes.json();
