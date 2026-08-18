@@ -149,8 +149,29 @@ serve(async (req: Request) => {
           }
         }
 
-        const rawOrigin = item.origin || item.product.origin || "0";
-        const cleanOrigin = String(rawOrigin).replace(/\D/g, '').charAt(0) || "0";
+        const rawOrigin = String(item.origin || item.product.origin || "0").trim();
+        let cleanOrigin = "0";
+
+        if (rawOrigin.match(/^[0-8]/)) {
+          cleanOrigin = rawOrigin.charAt(0);
+        } else if (rawOrigin.toLowerCase().includes("nacional")) {
+          if (rawOrigin.includes("> 40%") || rawOrigin.includes("superior a 40%") && rawOrigin.includes("inferior ou igual a 70%")) cleanOrigin = "3";
+          else if (rawOrigin.includes("processos produtivos básicos") || rawOrigin.includes("básicos")) cleanOrigin = "4";
+          else if (rawOrigin.includes("<= 40%") || rawOrigin.includes("inferior ou igual a 40%")) cleanOrigin = "5";
+          else if (rawOrigin.includes("> 70%") || rawOrigin.includes("superior a 70%")) cleanOrigin = "8";
+          else cleanOrigin = "0";
+        } else if (rawOrigin.toLowerCase().includes("estrangeira")) {
+          if (rawOrigin.includes("adquirida no mercado interno")) {
+            if (rawOrigin.includes("sem similar nacional") || rawOrigin.includes("camex")) cleanOrigin = "7";
+            else cleanOrigin = "2";
+          } else {
+            // importação direta
+            if (rawOrigin.includes("sem similar nacional") || rawOrigin.includes("camex")) cleanOrigin = "6";
+            else cleanOrigin = "1";
+          }
+        } else {
+          cleanOrigin = rawOrigin.replace(/\D/g, '').charAt(0) || "0";
+        }
 
         const itemPayload: any = {
           numero_item: index + 1,
