@@ -112,6 +112,7 @@ serve(async (req: Request) => {
       municipio_emitente: company.garage_city,
       uf_emitente: company.garage_state,
       cep_emitente: company.garage_cep?.replace(/\D/g, ''),
+      inscricao_estadual_emitente: "ISENTO",
       nome_destinatario: order.customer.legal_name || order.customer.fantasy_name || order.customer.nickname,
       cpf_destinatario: order.customer.document?.replace(/\D/g, '').length === 11 ? order.customer.document.replace(/\D/g, '') : undefined,
       cnpj_destinatario: order.customer.document?.replace(/\D/g, '').length > 11 ? order.customer.document.replace(/\D/g, '') : undefined,
@@ -148,6 +149,9 @@ serve(async (req: Request) => {
           }
         }
 
+        const rawOrigin = item.origin || item.product.origin || "0";
+        const cleanOrigin = String(rawOrigin).replace(/\D/g, '').charAt(0) || "0";
+
         const itemPayload: any = {
           numero_item: index + 1,
           codigo_produto: item.product.code,
@@ -158,7 +162,7 @@ serve(async (req: Request) => {
           valor_unitario_comercial: item.unit_price,
           valor_bruto: item.total_price,
           codigo_ncm: item.ncm || item.product.ncm || "00000000",
-          icms_origem: item.origin || item.product.origin || "0",
+          icms_origem: cleanOrigin,
         };
 
         if (isSimplesNacional) {
