@@ -99,7 +99,7 @@ export function FiscalEmissionDialog({
                 ) : (
                   <>
                     <Receipt className="h-12 w-12 text-orange-500 mb-2" />
-                    <p className="text-center">A nota será transmitida para a Receita Federal através da API da Focus NFe.</p>
+                    <p className="text-center">A nota será transmitida para a Receita Federal.</p>
                   </>
                 )}
               </div>
@@ -112,7 +112,7 @@ export function FiscalEmissionDialog({
                 
                 <Button disabled={isSendingToSefaz || !companyData?.focusnfe_token} onClick={async () => {
                   if (!companyData?.focusnfe_token) {
-                    toast.error('O Token da Focus NFe não está configurado na empresa.')
+                    toast.error('A conta não está configurada para emissão fiscal.')
                     return
                   }
                   
