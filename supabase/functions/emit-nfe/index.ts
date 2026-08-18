@@ -112,7 +112,7 @@ serve(async (req: Request) => {
       municipio_emitente: company.garage_city,
       uf_emitente: company.garage_state,
       cep_emitente: company.garage_cep?.replace(/\D/g, ''),
-      inscricao_estadual_emitente: "ISENTO",
+      inscricao_estadual_emitente: company.state_registration || "ISENTO",
       nome_destinatario: order.customer.legal_name || order.customer.fantasy_name || order.customer.nickname,
       cpf_destinatario: order.customer.document?.replace(/\D/g, '').length === 11 ? order.customer.document.replace(/\D/g, '') : undefined,
       cnpj_destinatario: order.customer.document?.replace(/\D/g, '').length > 11 ? order.customer.document.replace(/\D/g, '') : undefined,

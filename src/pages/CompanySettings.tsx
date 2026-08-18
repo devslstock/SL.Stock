@@ -53,6 +53,7 @@ export default function CompanySettings() {
     name: '',
     fantasy_name: '',
     cnpj: '',
+    state_registration: '',
     phone: '',
     email: '',
     garage_cep: '',
@@ -75,6 +76,7 @@ export default function CompanySettings() {
         name: companyData.name || '',
         fantasy_name: companyData.fantasy_name || '',
         cnpj: companyData.cnpj || '',
+        state_registration: companyData.state_registration || '',
         phone: companyData.phone || '',
         email: companyData.email || '',
         garage_cep: companyData.garage_cep || '',
@@ -346,6 +348,15 @@ export default function CompanySettings() {
                 value={formData.name} 
                 onChange={e => setFormData({...formData, name: e.target.value})} 
                 required
+                disabled={!isMaster}
+              />
+            </div>
+            <div className="md:col-span-4">
+              <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Inscrição Estadual</label>
+              <Input 
+                value={formData.state_registration} 
+                onChange={e => setFormData({...formData, state_registration: e.target.value})} 
+                placeholder="Isento ou Número"
                 disabled={!isMaster}
               />
             </div>

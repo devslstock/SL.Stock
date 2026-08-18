@@ -59,6 +59,7 @@ export interface Company {
   garage_neighborhood?: string | null
   garage_city?: string | null
   garage_state?: string | null
+  state_registration?: string | null
   fantasy_name?: string | null
   phone?: string | null
   email?: string | null
