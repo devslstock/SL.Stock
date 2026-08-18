@@ -12,6 +12,7 @@ import { FileText, Search, Printer, XCircle, Filter, ChevronDown, ChevronUp, Che
 import { Pagination } from '@/components/ui/Pagination'
 import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
 import { NfeBackupsModal } from '@/components/Fiscal/NfeBackupsModal'
+import { NfeDetailsModal } from '@/components/Fiscal/NfeDetailsModal'
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -45,6 +46,7 @@ export default function NfeManagement() {
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([])
   const [emitNfeOrderId, setEmitNfeOrderId] = useState<string | null>(null)
   const [isBackupsModalOpen, setIsBackupsModalOpen] = useState(false)
+  const [selectedDetailsOrder, setSelectedDetailsOrder] = useState<any>(null)
   
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
@@ -389,8 +391,12 @@ export default function NfeManagement() {
                   const nfeRecord = getOrderNfeRecord(order)
                   
                   return (
-                  <tr key={order.id} className="transition-colors hover:bg-muted/30">
-                    <td className="px-4 py-3 text-center w-12">
+                  <tr 
+                    key={order.id} 
+                    className="transition-colors hover:bg-muted/30 cursor-pointer"
+                    onClick={() => setSelectedDetailsOrder(order)}
+                  >
+                    <td className="px-4 py-3 text-center w-12" onClick={e => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedOrderIds.includes(order.id)}
@@ -427,7 +433,7 @@ export default function NfeManagement() {
                     <td className="px-4 py-3 text-center font-bold">
                       {nfeRecord?.nfe_number ? `${nfeRecord.nfe_number} / ${nfeRecord.nfe_series}` : '---'}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
                         {nfStatus === 'Aguardando emissão' || nfStatus === 'Rejeitada' ? (
                           <Button size="sm" className="h-8 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setEmitNfeOrderId(order.id)}>
@@ -495,6 +501,19 @@ export default function NfeManagement() {
           orderId={emitNfeOrderId}
         />
       )}
+
+      {selectedDetailsOrder && (
+        <NfeDetailsModal
+          isOpen={!!selectedDetailsOrder}
+          onClose={() => setSelectedDetailsOrder(null)}
+          order={selectedDetailsOrder}
+          onRefresh={() => {
+            // Se clicar em atualizar no Modal, vamos dar um refetch na lista
+            refetch()
+          }}
+        />
+      )}
+
       <NfeBackupsModal isOpen={isBackupsModalOpen} onClose={() => setIsBackupsModalOpen(false)} />
 
       {selectedOrderIds.length > 0 && (
