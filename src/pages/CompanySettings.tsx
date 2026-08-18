@@ -596,6 +596,20 @@ export default function CompanySettings() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
               <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" /> Ambiente Fiscal (Focus NFe)
+              </label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={formData.focusnfe_env || 'homologacao'}
+                onChange={e => setFormData({...formData, focusnfe_env: e.target.value as 'producao' | 'homologacao'})}
+              >
+                <option value="homologacao">Homologação (Testes sem valor fiscal)</option>
+                <option value="producao">Produção (Notas com valor fiscal real)</option>
+              </select>
+            </div>
+
+            <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
+              <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
                 <FileText className="h-4 w-4" /> Arquivo do Certificado (A1 / .pfx)
               </label>
               <div className="relative">
