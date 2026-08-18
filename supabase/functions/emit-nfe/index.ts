@@ -213,15 +213,32 @@ serve(async (req: Request) => {
 
     if (recordError) throw new Error("Erro ao criar registro NFe: " + recordError.message);
 
-    // 2. Chamar Focus NFe
-    const tokenBase64 = btoa(`${company.focusnfe_token}:`);
-    const focusRes = await fetch(baseUrl + `?ref=${referenceId}`, {
+    // Fetch Master Token
+    const { data: settings } = await adminClient
+      .from('focus_nfe_settings')
+      .select('focus_api_token')
+      .limit(1)
+      .single();
+
+    if (!settings?.focus_api_token) {
+      throw new Error("Token Master da Focus NFe não configurado globalmente.");
+    }
+
+    // White Label emission: Use Master Token, ref in URL = CNPJ, ref in body = referenceId
+    const tokenBase64 = btoa(`${settings.focus_api_token}:`);
+    const cleanCnpj = company.cnpj?.replace(/\D/g, '');
+    const focusApiUrl = baseUrl + `?ref=${cleanCnpj}` + (isDryRun ? '&dry_run=1' : '');
+    
+    // Set referenceId inside the payload
+    const finalPayload = { ...nfePayload, ref: referenceId };
+
+    const focusRes = await fetch(focusApiUrl, {
       method: "POST",
       headers: {
         "Authorization": `Basic ${tokenBase64}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(nfePayload)
+      body: JSON.stringify(finalPayload)
     });
 
     const focusData = await focusRes.json();
