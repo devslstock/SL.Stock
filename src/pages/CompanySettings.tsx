@@ -67,7 +67,8 @@ export default function CompanySettings() {
     garage_lng: '',
     additional_info: '',
     logo_url: '',
-    focusnfe_env: 'homologacao' as 'producao' | 'homologacao'
+    focusnfe_env: 'homologacao' as 'producao' | 'homologacao',
+    focusnfe_token: ''
   })
 
   useEffect(() => {
@@ -90,7 +91,8 @@ export default function CompanySettings() {
         garage_lng: companyData.garage_lng ? companyData.garage_lng.toString() : '',
         additional_info: companyData.additional_info || '',
         logo_url: companyData.logo_url || '',
-        focusnfe_env: companyData.focusnfe_env || 'homologacao'
+        focusnfe_env: companyData.focusnfe_env || 'homologacao',
+        focusnfe_token: companyData.focusnfe_token || ''
       })
     }
   }, [companyData])
@@ -608,17 +610,34 @@ export default function CompanySettings() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
-              <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4" /> Ambiente Fiscal (Focus NFe)
-              </label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={formData.focusnfe_env || 'homologacao'}
-                onChange={e => setFormData({...formData, focusnfe_env: e.target.value as 'producao' | 'homologacao'})}
-              >
-                <option value="homologacao">Homologação (Testes sem valor fiscal)</option>
-                <option value="producao">Produção (Notas com valor fiscal real)</option>
-              </select>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" /> Ambiente Fiscal (Focus NFe)
+                </label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={formData.focusnfe_env || 'homologacao'}
+                  onChange={e => setFormData({...formData, focusnfe_env: e.target.value as 'producao' | 'homologacao'})}
+                >
+                  <option value="homologacao">Homologação (Testes sem valor fiscal)</option>
+                  <option value="producao">Produção (Notas com valor fiscal real)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <KeyIcon className="h-4 w-4" /> Token da API (Focus NFe)
+                </label>
+                <Input
+                  placeholder="Cole aqui o Token da Focus NFe correspondente ao ambiente acima"
+                  value={formData.focusnfe_token || ''}
+                  onChange={e => setFormData({...formData, focusnfe_token: e.target.value})}
+                  type="password"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Obtenha seu token no painel da Focus NFe. Se você trocar de ambiente, certifique-se de colar o token correto (Homologação ou Produção).
+                </p>
+              </div>
             </div>
 
             <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
