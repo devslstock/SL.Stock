@@ -103,17 +103,6 @@ serve(async (req: Request) => {
       valor_seguro: 0,
       valor_total: order.total_amount,
       valor_produtos: order.net_amount,
-      emitente: {
-        cnpj: company.cnpj?.replace(/\D/g, ''),
-        nome: company.name,
-        logradouro: company.garage_address,
-        numero: company.garage_number,
-        bairro: company.garage_neighborhood,
-        municipio: company.garage_city,
-        uf: company.garage_state,
-        cep: company.garage_cep?.replace(/\D/g, ''),
-        inscricao_estadual: "ISENTO" // Precisa vir da empresa futuramente
-      },
       destinatario: {
         nome: order.customer.legal_name || order.customer.fantasy_name || order.customer.nickname,
         cpf_cnpj: order.customer.document?.replace(/\D/g, ''),
