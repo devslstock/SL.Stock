@@ -45,7 +45,7 @@ serve(async (req: Request) => {
 
     const { data: company, error: companyError } = await adminClient
       .from('companies')
-      .select('focusnfe_token')
+      .select('focusnfe_token, focusnfe_env')
       .eq('id', callerProfile.company_id)
       .single();
 
@@ -64,8 +64,15 @@ serve(async (req: Request) => {
       throw new Error(`O documento da NF-e ainda não está disponível. Status atual: ${nfe.status}`);
     }
 
-    const url = type === 'pdf' ? nfe.pdf_url : nfe.xml_url;
+    let url = type === 'pdf' ? nfe.pdf_url : nfe.xml_url;
     if (!url) throw new Error(`URL do ${type.toUpperCase()} não disponível.`);
+
+    if (!url.startsWith('http')) {
+      const baseUrl = company.focusnfe_env === 'producao' 
+        ? 'https://api.focusnfe.com.br'
+        : 'https://homologacao.focusnfe.com.br';
+      url = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    }
 
     const tokenBase64 = btoa(`${company.focusnfe_token}:`);
     
