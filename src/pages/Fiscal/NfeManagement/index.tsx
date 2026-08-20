@@ -110,12 +110,29 @@ export default function NfeManagement() {
     return sortedNfe[0]
   }
 
-  const handleDownloadDanfe = async (nfeId: string) => {
+  const handleViewDanfe = async (nfeId: string) => {
     if (!nfeId) return;
     try {
-      toast.info('Baixando PDF...');
-      const url = await nfeApi.downloadNfe(nfeId, 'pdf');
+      toast.info('Abrindo visualizador de PDF...');
+      const { url } = await nfeApi.downloadNfe(nfeId, 'pdf');
       window.open(url, '_blank');
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao visualizar PDF');
+    }
+  }
+
+  const handleDownloadDanfe = async (nfeRecord: any) => {
+    if (!nfeRecord?.id) return;
+    try {
+      toast.info('Baixando arquivo PDF...');
+      const { url } = await nfeApi.downloadNfe(nfeRecord.id, 'pdf');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `DANFE-NF-${nfeRecord.numero || nfeRecord.id.slice(0,8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (e: any) {
       toast.error(e.message || 'Erro ao baixar PDF');
     }
@@ -144,15 +161,15 @@ export default function NfeManagement() {
           // O downloadNfe retorna um Object URL apontando para o Blob.
           // Para o pdf-lib precisamos dos bytes originais.
           // Vamos fazer o fetch desse Blob local.
-          const objectUrl = await nfeApi.downloadNfe(nfe.id, 'pdf');
-          const response = await fetch(objectUrl);
+          const { url } = await nfeApi.downloadNfe(nfe.id, 'pdf');
+          const response = await fetch(url);
           const pdfBytes = await response.arrayBuffer();
           
           const pdfDoc = await PDFDocument.load(pdfBytes);
           const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
           copiedPages.forEach((page) => mergedPdf.addPage(page));
           
-          URL.revokeObjectURL(objectUrl); // Libera memória
+          URL.revokeObjectURL(url); // Libera memória
         } catch (e) {
           console.error(`Erro ao carregar PDF da NFe ${nfe.id}:`, e);
           toast.error(`Falha ao incorporar NF-e do pedido #${order.order_number || order.id.slice(0,5)}`);
@@ -532,9 +549,15 @@ export default function NfeManagement() {
                           <>
                             <Button size="sm" variant="outline" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={(e) => {
                               e.stopPropagation();
-                              if (nfeRecord?.id) handleDownloadDanfe(nfeRecord.id);
+                              if (nfeRecord?.id) handleViewDanfe(nfeRecord.id);
                             }}>
-                              <Printer className="h-4 w-4 mr-1" /> DANFE
+                              <Printer className="h-4 w-4 mr-1" /> Vis. DANFE
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={(e) => {
+                              e.stopPropagation();
+                              if (nfeRecord) handleDownloadDanfe(nfeRecord);
+                            }}>
+                              <Download className="h-4 w-4 mr-1" /> Baixar
                             </Button>
                             <Button size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={(e) => {
                               const correcao = window.prompt("Digite o texto da Carta de Correção (mínimo 15, máximo 1000 caracteres):")

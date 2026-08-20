@@ -172,14 +172,13 @@ export const nfeApi = {
     });
 
     if (error) {
-      throw new Error(`Erro ao baixar documento: ${error.message}`);
+      throw new Error(`Erro ao buscar documento: ${error.message}`);
     }
 
     if (!data.success) {
       throw new Error(data.error || 'Erro desconhecido ao baixar documento');
     }
 
-    // data.data is base64 string
     // Convert base64 to Blob
     const byteCharacters = atob(data.data);
     const byteNumbers = new Array(byteCharacters.length);
@@ -189,6 +188,15 @@ export const nfeApi = {
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: data.contentType });
     
-    return URL.createObjectURL(blob);
+    // For XML viewing we might need the text
+    let text = '';
+    if (type === 'xml') {
+      text = await blob.text();
+    }
+    
+    return {
+      url: URL.createObjectURL(blob),
+      text
+    };
   }
 }

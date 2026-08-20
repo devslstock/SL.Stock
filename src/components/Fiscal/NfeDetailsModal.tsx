@@ -14,6 +14,7 @@ import { NfeEventHistory } from './NfeEventHistory'
 import { CceModal } from './CceModal'
 import { CancelNfeModal } from './CancelNfeModal'
 import { EmailNfeModal } from './EmailNfeModal'
+import { XmlViewerModal } from './XmlViewerModal'
 import type { SalesOrder, NfeRecord } from '@/types/database'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/ui/toaster'
@@ -36,6 +37,12 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
   const [isDownloadingXml, setIsDownloadingXml] = useState(false)
+  
+  const [xmlViewerData, setXmlViewerData] = useState<{ isOpen: boolean, xmlString: string | null, filename: string }>({
+    isOpen: false,
+    xmlString: null,
+    filename: ''
+  })
 
   if (!order) return null
 
@@ -95,20 +102,45 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
     }
   }
 
-  const handleDownloadDoc = async (type: 'pdf' | 'xml') => {
+  const handleViewDoc = async (type: 'pdf' | 'xml') => {
     if (!nfe) return;
     
     if (type === 'pdf') setIsDownloadingPdf(true)
     else setIsDownloadingXml(true)
     
     try {
-      const url = await nfeApi.downloadNfe(nfe.id, type);
-      window.open(url, '_blank');
+      const { url, text } = await nfeApi.downloadNfe(nfe.id, type);
+      
+      if (type === 'pdf') {
+        window.open(url, '_blank');
+      } else {
+        setXmlViewerData({
+          isOpen: true,
+          xmlString: text,
+          filename: `NFe_${nfe.numero || nfe.id.slice(0,8)}.xml`
+        })
+      }
     } catch (err: any) {
-      toast.error(err.message || `Erro ao baixar ${type.toUpperCase()}`);
+      toast.error(err.message || `Erro ao visualizar ${type.toUpperCase()}`);
     } finally {
       if (type === 'pdf') setIsDownloadingPdf(false)
       else setIsDownloadingXml(false)
+    }
+  }
+
+  const handleDownloadOnly = async (type: 'pdf' | 'xml') => {
+    if (!nfe) return;
+    try {
+      const { url } = await nfeApi.downloadNfe(nfe.id, type);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type.toUpperCase()}_NFe_${nfe.numero || nfe.id.slice(0,8)}.${type}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast.error(err.message || `Erro ao baixar ${type.toUpperCase()}`);
     }
   }
 
@@ -294,13 +326,19 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             </Button>
           )}
 
-          <Button variant="outline" className="h-10 bg-white" onClick={() => handleDownloadDoc('xml')} disabled={!nfe?.xml_url || isDownloadingXml}>
+          <Button variant="outline" className="h-10 bg-white" onClick={() => handleViewDoc('xml')} disabled={!nfe?.xml_url || isDownloadingXml}>
             {isDownloadingXml ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-500" /> : <FileCode className="h-4 w-4 mr-2 text-gray-500" />}
+            Visualizar XML
+          </Button>
+          <Button variant="outline" className="h-10 bg-white" onClick={() => handleDownloadOnly('xml')} disabled={!nfe?.xml_url}>
             Baixar XML
           </Button>
-          <Button variant="outline" className="h-10 bg-white" onClick={() => handleDownloadDoc('pdf')} disabled={!nfe?.pdf_url || isDownloadingPdf}>
+          <Button variant="outline" className="h-10 bg-white" onClick={() => handleViewDoc('pdf')} disabled={!nfe?.pdf_url || isDownloadingPdf}>
             {isDownloadingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-500" /> : <Printer className="h-4 w-4 mr-2 text-gray-500" />}
             Visualizar PDF
+          </Button>
+          <Button variant="outline" className="h-10 bg-white" onClick={() => handleDownloadOnly('pdf')} disabled={!nfe?.pdf_url}>
+            Baixar PDF
           </Button>
           <Button variant="outline" className="h-10 bg-white" disabled={nfStatus !== 'autorizado'} onClick={() => setIsEmailModalOpen(true)}>
             <Mail className="h-4 w-4 mr-2 text-primary" /> Enviar por E-mail
@@ -334,6 +372,14 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             nfeId={nfe.id}
             defaultEmail={order.customer?.email || undefined}
           />
+          {xmlViewerData.isOpen && (
+            <XmlViewerModal
+              isOpen={xmlViewerData.isOpen}
+              onClose={() => setXmlViewerData(prev => ({ ...prev, isOpen: false }))}
+              xmlString={xmlViewerData.xmlString}
+              filename={xmlViewerData.filename}
+            />
+          )}
         </>
       )}
     </Dialog>

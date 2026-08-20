@@ -54,33 +54,73 @@ serve(async (req: Request) => {
 
     const { data: nfe, error: nfeError } = await adminClient
       .from('nfe_records')
-      .select('pdf_url, xml_url')
+      .select('pdf_url, xml_url, status')
       .eq('id', docId)
       .eq('company_id', callerProfile.company_id)
       .single();
 
-    if (nfeError || !nfe) throw new Error("Registro de NF-e não encontrado");
+    if (nfeError || !nfe) throw new Error("Registro de NF-e não encontrado ou pertence a outra empresa.");
+    if (nfe.status !== 'autorizado' && nfe.status !== 'cancelado') {
+      throw new Error(`O documento da NF-e ainda não está disponível. Status atual: ${nfe.status}`);
+    }
 
     const url = type === 'pdf' ? nfe.pdf_url : nfe.xml_url;
-    if (!url) throw new Error(`URL do ${type.toUpperCase()} não disponível`);
+    if (!url) throw new Error(`URL do ${type.toUpperCase()} não disponível.`);
 
     const tokenBase64 = btoa(`${company.focusnfe_token}:`);
     
-    // As URLs vindas do FocusNfe já são completas
-    const focusRes = await fetch(url, {
+    // Tratamento de redirecionamento 302 sem enviar o Authorization token pro Location
+    let focusRes = await fetch(url, {
       method: "GET",
+      redirect: "manual",
       headers: {
         "Authorization": `Basic ${tokenBase64}`,
       }
     });
 
+    if (focusRes.status === 302 || focusRes.status === 301 || focusRes.status === 303 || focusRes.status === 307) {
+      const location = focusRes.headers.get("location");
+      if (!location) throw new Error("Redirecionamento recebido sem a URL de destino (Location).");
+      
+      // Faz fetch na nova URL SEM o cabeçalho de Authorization para não quebrar a AWS/S3
+      focusRes = await fetch(location, {
+        method: "GET",
+      });
+    }
+
     if (!focusRes.ok) {
-      throw new Error(`Erro ao baixar ${type.toUpperCase()} da Focus NFe: ${focusRes.statusText}`);
+      // Lê o erro pra logar e repassar
+      const errText = await focusRes.text().catch(() => "Sem detalhes do erro");
+      console.error(`Erro Focus NFe (${focusRes.status}):`, errText);
+      throw new Error(`Erro ao baixar ${type.toUpperCase()} da Focus NFe: ${focusRes.status} ${focusRes.statusText}`);
     }
 
     const arrayBuffer = await focusRes.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
     
+    // Validação de Magic Bytes
+    if (uint8Array.length === 0) {
+      throw new Error("O arquivo retornado está vazio.");
+    }
+    
+    if (type === 'pdf') {
+      // Checar se inicia com %PDF (25 50 44 46)
+      if (uint8Array.length < 4 || uint8Array[0] !== 0x25 || uint8Array[1] !== 0x50 || uint8Array[2] !== 0x44 || uint8Array[3] !== 0x46) {
+        // Logar o que recebemos para debug
+        const firstBytes = new TextDecoder().decode(uint8Array.slice(0, 50));
+        console.error("Conteúdo recebido não é um PDF válido:", firstBytes);
+        throw new Error("Focus NFe não retornou um PDF válido (não contém %PDF).");
+      }
+    } else if (type === 'xml') {
+      // Checar se inicia com < (0x3C)
+      const firstChar = String.fromCharCode(uint8Array[0]);
+      if (firstChar !== '<') {
+        const firstBytes = new TextDecoder().decode(uint8Array.slice(0, 50));
+        console.error("Conteúdo recebido não é um XML válido:", firstBytes);
+        throw new Error("Focus NFe não retornou um XML válido.");
+      }
+    }
+
     // Encode Base64
     const CHUNK_SIZE = 0x8000;
     const c = [];
@@ -88,6 +128,8 @@ serve(async (req: Request) => {
       c.push(String.fromCharCode.apply(null, uint8Array.subarray(i, i + CHUNK_SIZE) as unknown as number[]));
     }
     const base64 = btoa(c.join(""));
+
+    console.log(`Documento ${type.toUpperCase()} para NF ${docId} baixado com sucesso. Status: 200 OK.`);
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -99,6 +141,7 @@ serve(async (req: Request) => {
     });
 
   } catch (error: any) {
+    console.error("Erro no download-nfe:", error.message);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
