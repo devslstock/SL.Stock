@@ -584,35 +584,6 @@ export default function AdminOrderEdit() {
           <span className="font-semibold">Pedido de venda</span>
         </div>
         <div className="flex gap-2">
-          {isAprovado && !isFaturado && (
-            <Button 
-              size="sm" 
-              onClick={handleFaturar} 
-              className="h-8 bg-green-600 hover:bg-green-700 text-white"
-              disabled={faturarMutation.isPending}
-            >
-              {faturarMutation.isPending ? 'Faturando...' : 'FATURAR PEDIDO'}
-            </Button>
-          )}
-
-          {isFaturado && !nfeRecord?.id && (
-            <Button 
-              size="sm" 
-              onClick={() => {
-                if (confirm('Deseja emitir a Nota Fiscal para este pedido?')) {
-                  emitirMutation.mutate()
-                }
-              }} 
-              className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={emitirMutation.isPending}
-            >
-              {emitirMutation.isPending ? 'Emitindo...' : 'Emitir NF'}
-            </Button>
-          )}
-
-          {isEditable && (
-            <Button size="sm" onClick={() => handleSave()} className="h-8">Salvar Alterações</Button>
-          )}
         </div>
       </div>
 
@@ -1333,40 +1304,45 @@ export default function AdminOrderEdit() {
                 <Printer className="h-4 w-4 mr-2" /> Imprimir
              </Button>
              <div className="flex inline-flex ml-4 items-center">
-               {nfeRecord?.status === 'autorizado' ? (
-                 <Button onClick={() => faturarMutation.mutate()} disabled={updateMutation.isPending || faturarMutation.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 rounded-r-none">
-                    Gerar Faturamento (Cobranças)
+                 <Button onClick={handleFaturar} disabled={updateMutation.isPending || faturarMutation.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 rounded-r-none">
+                    {faturarMutation.isPending ? 'Faturando...' : 'Faturar Pedido (Gerar Cobranças)'}
                  </Button>
-               ) : (
-                 <Button onClick={() => setShowFiscalDialog(true)} disabled={updateMutation.isPending} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded-r-none">
-                    {nfeRecord?.status === 'processando' ? 'Acompanhar Emissão (NF-e)' : nfeRecord?.status === 'erro_autorizacao' ? 'Corrigir e Re-emitir NF-e' : 'Emitir Nota Fiscal'}
+                 <div className="relative h-9">
+                   <Button 
+                     className={`bg-emerald-600 hover:bg-emerald-700 border-emerald-400 text-white font-bold h-9 rounded-l-none border-l px-2 flex items-center justify-center`}
+                     onClick={() => setShowFaturarMenu(!showFaturarMenu)}
+                   >
+                     <span className="text-xs">▼</span>
+                   </Button>
+                   {showFaturarMenu && (
+                      <div className="absolute bottom-full right-0 mb-1 bg-card border border-border shadow-md rounded flex flex-col min-w-[240px] z-50 overflow-hidden">
+                         <button 
+                            className="text-left px-4 py-3 hover:bg-muted text-sm font-medium transition-colors"
+                            onClick={() => {
+                               setShowFaturarMenu(false)
+                               if (selectedItems.length === 0) {
+                                 toast.warning('Selecione pelo menos um item na lista de produtos para faturar parcialmente.')
+                               } else {
+                                 toast.info(`Lógica para faturar ${selectedItems.length} itens separadamente será implementada na integração do ERP.`)
+                               }
+                            }}
+                         >
+                            Faturar os itens selecionados
+                         </button>
+                      </div>
+                   )}
+                 </div>
+             </div>
+           </>
+         ) : formData.status === 'Faturado' ? (
+           <>
+             <Button onClick={() => window.print()} variant="outline" className="h-9 font-bold">
+                <Printer className="h-4 w-4 mr-2" /> Imprimir
+             </Button>
+             <div className="flex inline-flex ml-4 items-center">
+                 <Button onClick={() => setShowFiscalDialog(true)} disabled={updateMutation.isPending} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded-md px-6">
+                    {nfeRecord?.status === 'processando' ? 'Acompanhar Emissão (NF-e)' : nfeRecord?.status === 'erro_autorizacao' ? 'Corrigir e Re-emitir NF-e' : nfeRecord?.status === 'autorizado' ? 'Ver NF-e Autorizada' : 'Emitir Nota Fiscal'}
                  </Button>
-               )}
-               <div className="relative h-9">
-                 <Button 
-                   className={`${nfeRecord?.status === 'autorizado' ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-400' : 'bg-blue-600 hover:bg-blue-700 border-blue-400'} text-white font-bold h-9 rounded-l-none border-l px-2 flex items-center justify-center`}
-                   onClick={() => setShowFaturarMenu(!showFaturarMenu)}
-                 >
-                   <span className="text-xs">▼</span>
-                 </Button>
-                 {showFaturarMenu && (
-                    <div className="absolute bottom-full right-0 mb-1 bg-card border border-border shadow-md rounded flex flex-col min-w-[240px] z-50 overflow-hidden">
-                       <button 
-                          className="text-left px-4 py-3 hover:bg-muted text-sm font-medium transition-colors"
-                          onClick={() => {
-                             setShowFaturarMenu(false)
-                             if (selectedItems.length === 0) {
-                               toast.warning('Selecione pelo menos um item na lista de produtos para faturar parcialmente.')
-                             } else {
-                               toast.info(`Lógica para faturar ${selectedItems.length} itens separadamente será implementada na integração do ERP.`)
-                             }
-                          }}
-                       >
-                          Faturar os itens selecionados
-                       </button>
-                    </div>
-                 )}
-               </div>
              </div>
            </>
          ) : (
