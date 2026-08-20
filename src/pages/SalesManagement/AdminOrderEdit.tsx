@@ -188,7 +188,18 @@ export default function AdminOrderEdit() {
             unit_price: item.unit_price,
             discount_percent: item.discount_percent || 0,
             total_price: item.total_price,
-            net_price: item.total_price
+            net_price: item.total_price,
+            ncm: item.ncm,
+            cfop: item.cfop,
+            origin: item.origin,
+            cst: item.cst,
+            csosn: item.csosn,
+            icms_rate: item.icms_rate,
+            ipi_rate: item.ipi_rate,
+            pis_rate: item.pis_rate,
+            cofins_rate: item.cofins_rate,
+            pis_cst: item.pis_cst,
+            cofins_cst: item.cofins_cst
           })
         } else {
           await salesApi.updateSalesOrderItem(item.id, {
@@ -196,7 +207,18 @@ export default function AdminOrderEdit() {
             unit_price: item.unit_price,
             discount_percent: item.discount_percent || 0,
             total_price: item.total_price,
-            net_price: item.total_price
+            net_price: item.total_price,
+            ncm: item.ncm,
+            cfop: item.cfop,
+            origin: item.origin,
+            cst: item.cst,
+            csosn: item.csosn,
+            icms_rate: item.icms_rate,
+            ipi_rate: item.ipi_rate,
+            pis_rate: item.pis_rate,
+            cofins_rate: item.cofins_rate,
+            pis_cst: item.pis_cst,
+            cofins_cst: item.cofins_cst
           })
         }
       }
