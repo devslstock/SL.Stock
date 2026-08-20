@@ -37,8 +37,18 @@ serve(async (req: Request) => {
 
     // url format: /get-nfe-status?id=uuid ou ref=string
     const url = new URL(req.url);
-    const nfeId = url.searchParams.get("id");
-    const refId = url.searchParams.get("ref");
+    let nfeId = url.searchParams.get("id");
+    let refId = url.searchParams.get("ref");
+
+    if (!nfeId && !refId && req.method === "POST") {
+      try {
+        const body = await req.json();
+        nfeId = body.id || body.nfeId;
+        refId = body.ref || body.refId;
+      } catch (e) {
+        // ignore JSON parse error
+      }
+    }
 
     if (!nfeId && !refId) throw new Error("nfeId or ref is required");
 

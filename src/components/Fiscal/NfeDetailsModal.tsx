@@ -74,8 +74,7 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
     setIsRefreshing(true)
     try {
       const { error } = await supabase.functions.invoke('get-nfe-status', {
-        body: {},
-        query: { id: nfe.id }
+        body: { id: nfe.id }
       })
       
       if (error) throw error
