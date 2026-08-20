@@ -258,7 +258,6 @@ export default function AdminOrderEdit() {
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
       toast.success('Pedido faturado com sucesso! Cobranças geradas.')
-      navigate('/financeiro/contas-receber') // ou para a página atual
     },
     onError: (e: any) => toast.error(`Erro ao faturar: ${e.message}`)
   })
