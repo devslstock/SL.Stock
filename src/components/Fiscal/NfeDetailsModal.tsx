@@ -70,6 +70,9 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             <Button variant="outline" size="sm" className="h-8 shadow-sm" onClick={onRefresh}>
               <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
             </Button>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose} aria-label="Fechar">
+              <XCircle className="h-5 w-5" />
+            </Button>
           </div>
         </DialogHeader>
 

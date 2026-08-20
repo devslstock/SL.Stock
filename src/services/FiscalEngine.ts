@@ -146,9 +146,13 @@ export class FiscalEngine {
             }
           }
         } else {
-          // TODO: Implementar CST para Regime Normal
-          const itemCst = item.cst || item.product.cst || "00"
-          itemPayload.icms_situacao_tributaria = itemCst
+          // Regime Normal – garantimos CST válido (não "00")
+          let finalCst = item.cst || item.product.cst || "10"; // fallback tributado integralmente
+          if (finalCst === "00") {
+            finalCst = "10"; // substitui código inválido por tributado integralmente
+          }
+          itemPayload.icms_situacao_tributaria = finalCst;
+
         }
 
         return itemPayload
