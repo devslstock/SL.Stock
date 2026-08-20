@@ -60,8 +60,6 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
         return parsed.map(err => err.mensagem || err.codigo || JSON.stringify(err)).join('\n')
       }
       if (parsed.mensagem) return parsed.mensagem
-      return msg
-    } catch {
     } catch {
       return msg
     }
