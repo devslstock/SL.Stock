@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NfeEventHistory } from './NfeEventHistory'
 import { CceModal } from './CceModal'
 import { CancelNfeModal } from './CancelNfeModal'
+import { EmailNfeModal } from './EmailNfeModal'
 import type { SalesOrder, NfeRecord } from '@/types/database'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/ui/toaster'
@@ -31,6 +32,7 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isCceModalOpen, setIsCceModalOpen] = useState(false)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
 
   if (!order) return null
 
@@ -278,6 +280,9 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
           <Button variant="outline" className="h-10 bg-white" onClick={() => window.open(nfe?.pdf_url || '', '_blank')} disabled={!nfe?.pdf_url}>
             <Printer className="h-4 w-4 mr-2 text-gray-500" /> Visualizar PDF
           </Button>
+          <Button variant="outline" className="h-10 bg-white" disabled={nfStatus !== 'autorizado'} onClick={() => setIsEmailModalOpen(true)}>
+            <Mail className="h-4 w-4 mr-2 text-primary" /> Enviar por E-mail
+          </Button>
           <Button variant="outline" className="h-10 bg-white text-amber-600 border-amber-200 hover:bg-amber-50" disabled={nfStatus !== 'autorizado'} onClick={() => setIsCceModalOpen(true)}>
             <FileText className="h-4 w-4 mr-2" /> Carta de Correção
           </Button>
@@ -300,6 +305,12 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             onClose={() => setIsCancelModalOpen(false)} 
             nfeId={nfe.id} 
             onSuccess={onRefresh} 
+          />
+          <EmailNfeModal
+            isOpen={isEmailModalOpen}
+            onClose={() => setIsEmailModalOpen(false)}
+            nfeId={nfe.id}
+            defaultEmail={order.customer?.email}
           />
         </>
       )}
