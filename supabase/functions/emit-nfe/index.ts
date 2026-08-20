@@ -90,20 +90,23 @@ serve(async (req: Request) => {
     const isSimplesNacional = company.tax_regime === 'simples_nacional' || !company.tax_regime;
     const referenceId = crypto.randomUUID();
 
+    // Construção do Payload (Fiscal Engine)
     const nfePayload = {
       referencia: referenceId,
-      natureza_operacao: "VENDA DE MERCADORIA",
+      natureza_operacao: fiscalOp.nature_of_operation || fiscalOp.name || "VENDA DE MERCADORIA",
       data_emissao: new Date().toISOString(),
       tipo_documento: 1,
-      local_destino: 1,
+      local_destino: isInterState ? 2 : 1,
       finalidade_emissao: 1,
-      consumidor_final: 1,
+      consumidor_final: fiscalOp.consumer_final ? 1 : 0,
       presenca_comprador: 1,
       modalidade_frete: 9,
-      valor_frete: 0,
-      valor_seguro: 0,
+      valor_frete: order.frete || 0,
+      valor_seguro: order.seguro || 0,
       valor_total: order.total_amount,
       valor_produtos: order.net_amount,
+      valor_desconto: order.total_discount || 0,
+
       cnpj_emitente: company.cnpj?.replace(/\D/g, ''),
       nome_emitente: company.name,
       logradouro_emitente: company.garage_address,
@@ -112,24 +115,26 @@ serve(async (req: Request) => {
       municipio_emitente: company.garage_city,
       uf_emitente: company.garage_state,
       cep_emitente: company.garage_cep?.replace(/\D/g, ''),
-      inscricao_estadual_emitente: company.state_registration || "ISENTO",
+      inscricao_estadual_emitente: company.state_registration?.replace(/\D/g, '') || "ISENTO",
+
       nome_destinatario: order.customer.legal_name || order.customer.fantasy_name || order.customer.nickname,
       cpf_destinatario: order.customer.document?.replace(/\D/g, '').length === 11 ? order.customer.document.replace(/\D/g, '') : undefined,
       cnpj_destinatario: order.customer.document?.replace(/\D/g, '').length > 11 ? order.customer.document.replace(/\D/g, '') : undefined,
-      inscricao_estadual_destinatario: "ISENTO",
+      inscricao_estadual_destinatario: order.customer.state_registration?.replace(/\D/g, '') || "ISENTO",
       logradouro_destinatario: order.customer.address,
       numero_destinatario: order.customer.number,
       bairro_destinatario: order.customer.neighborhood,
       municipio_destinatario: order.customer.city,
       uf_destinatario: order.customer.state,
       cep_destinatario: order.customer.cep?.replace(/\D/g, ''),
-      informacoes_adicionais_contribuinte: fiscalOp.default_message || "",
+      
+      informacoes_adicionais_contribuinte: order.obs_contribuinte || fiscalOp.contribuinte_info || "",
+      informacoes_adicionais_fisco: order.obs_fisco || fiscalOp.fisco_info || "",
+
       items: order.items.map((item: any, index: number) => {
-        let itemCfop = cfop; // Padrao do cabecalho
+        let itemCfop = cfop; 
         
-        // CFOP priority: Item Override > Product > Header
         const baseProductCfop = item.cfop || item.product.cfop;
-        
         if (baseProductCfop) {
           const baseCfop = baseProductCfop.replace(/\D/g, '');
           if (baseCfop.length === 4) {
@@ -165,7 +170,6 @@ serve(async (req: Request) => {
             if (rawOrigin.includes("sem similar nacional") || rawOrigin.includes("camex")) cleanOrigin = "7";
             else cleanOrigin = "2";
           } else {
-            // importação direta
             if (rawOrigin.includes("sem similar nacional") || rawOrigin.includes("camex")) cleanOrigin = "6";
             else cleanOrigin = "1";
           }
@@ -182,12 +186,12 @@ serve(async (req: Request) => {
           quantidade_comercial: item.quantity,
           valor_unitario_comercial: item.unit_price,
           valor_bruto: item.total_price,
-          codigo_ncm: item.ncm || item.product.ncm || "00000000",
+          codigo_ncm: (item.ncm || item.product.ncm || "00000000").replace(/\D/g, ''),
           icms_origem: cleanOrigin,
         };
 
         if (isSimplesNacional) {
-          const itemCsosn = item.csosn || item.product.csosn || fiscalOp.csosn || "102";
+          const itemCsosn = item.csosn || item.product.csosn || fiscalOp.document_situation || "102";
           itemPayload.icms_situacao_tributaria = itemCsosn;
           
           if (itemCsosn === "101") {
@@ -220,7 +224,7 @@ serve(async (req: Request) => {
         }
 
         if (ipiRate > 0) {
-          itemPayload.ipi_situacao_tributaria = "50"; // Simplified default
+          itemPayload.ipi_situacao_tributaria = "50"; 
           itemPayload.ipi_aliquota_porcentual = ipiRate;
         }
 
@@ -232,21 +236,34 @@ serve(async (req: Request) => {
       ? 'https://api.focusnfe.com.br/v2/nfe'
       : 'https://homologacao.focusnfe.com.br/v2/nfe';
 
-    // 1. Gravar registro preliminar no BD
+    // 1. Gravar registro preliminar no BD (Snapshot)
     const { data: record, error: recordError } = await adminClient
       .from('nfe_records')
       .insert({
         company_id: order.company_id,
         sales_order_id: salesOrderId,
         focus_reference: referenceId,
-        status: 'processando'
+        status: 'ENVIANDO', // Novo padrão em caixa alta
+        payload_snapshot: nfePayload, // Salvando snapshot fiscal imutável
+        operacao_fiscal: fiscalOp.name
       })
       .select()
       .single();
 
     if (recordError) throw new Error("Erro ao criar registro NFe: " + recordError.message);
 
-    // 2. Chamar Focus NFe
+    // 2. Gravar Evento de Emissão
+    await adminClient.from('nfe_events').insert({
+        company_id: order.company_id,
+        nfe_id: record.id,
+        event_type: 'EMISSAO',
+        status: 'ENVIANDO',
+        message: 'Nota fiscal gerada e enviada para processamento da Focus NFe',
+        payload: nfePayload,
+        created_by: callerUser.id
+    });
+
+    // 3. Chamar Focus NFe (Adapter)
     const tokenBase64 = btoa(`${company.focusnfe_token}:`);
     const focusRes = await fetch(baseUrl + `?ref=${referenceId}`, {
       method: "POST",
@@ -262,9 +279,20 @@ serve(async (req: Request) => {
     if (!focusRes.ok) {
       // Falha de validação inicial
       await adminClient.from('nfe_records').update({
-        status: 'erro',
+        status: 'ERRO',
         error_message: JSON.stringify(focusData)
       }).eq('id', record.id);
+      
+      await adminClient.from('nfe_events').insert({
+        company_id: order.company_id,
+        nfe_id: record.id,
+        event_type: 'REJEICAO_SISTEMA',
+        status: 'ERRO',
+        message: focusData.mensagem || 'Erro de validação na Focus NFe',
+        focus_code: focusData.codigo?.toString(),
+        payload: focusData,
+        created_by: callerUser.id
+      });
 
       return new Response(JSON.stringify({ 
         success: false, 
@@ -277,6 +305,10 @@ serve(async (req: Request) => {
     }
 
     // Sucesso, a nota foi enviada para processamento
+    await adminClient.from('nfe_records').update({
+      status: 'PROCESSANDO'
+    }).eq('id', record.id);
+
     return new Response(JSON.stringify({ 
       success: true, 
       message: "Nota fiscal enviada para processamento",
