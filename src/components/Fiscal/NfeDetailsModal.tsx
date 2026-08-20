@@ -330,15 +330,9 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             {isDownloadingXml ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-500" /> : <FileCode className="h-4 w-4 mr-2 text-gray-500" />}
             Visualizar XML
           </Button>
-          <Button variant="outline" className="h-10 bg-white" onClick={() => handleDownloadOnly('xml')} disabled={!nfe?.xml_url}>
-            Baixar XML
-          </Button>
           <Button variant="outline" className="h-10 bg-white" onClick={() => handleViewDoc('pdf')} disabled={!nfe?.pdf_url || isDownloadingPdf}>
             {isDownloadingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-500" /> : <Printer className="h-4 w-4 mr-2 text-gray-500" />}
-            Visualizar PDF
-          </Button>
-          <Button variant="outline" className="h-10 bg-white" onClick={() => handleDownloadOnly('pdf')} disabled={!nfe?.pdf_url}>
-            Baixar PDF
+            Visualizar DANFE
           </Button>
           <Button variant="outline" className="h-10 bg-white" disabled={nfStatus !== 'autorizado'} onClick={() => setIsEmailModalOpen(true)}>
             <Mail className="h-4 w-4 mr-2 text-primary" /> Enviar por E-mail

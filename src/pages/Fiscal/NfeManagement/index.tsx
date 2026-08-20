@@ -553,12 +553,6 @@ export default function NfeManagement() {
                             }}>
                               <Printer className="h-4 w-4 mr-1" /> Vis. DANFE
                             </Button>
-                            <Button size="sm" variant="outline" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={(e) => {
-                              e.stopPropagation();
-                              if (nfeRecord) handleDownloadDanfe(nfeRecord);
-                            }}>
-                              <Download className="h-4 w-4 mr-1" /> Baixar
-                            </Button>
                             <Button size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={(e) => {
                               const correcao = window.prompt("Digite o texto da Carta de Correção (mínimo 15, máximo 1000 caracteres):")
                               if (correcao) {
