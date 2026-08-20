@@ -11,7 +11,12 @@ import { Input } from '@/components/ui/input'
 import { Printer, RefreshCw, XCircle, FileText, AlertTriangle, FileCode } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NfeEventHistory } from './NfeEventHistory'
+import { CceModal } from './CceModal'
+import { CancelNfeModal } from './CancelNfeModal'
 import type { SalesOrder, NfeRecord } from '@/types/database'
+import { supabase } from '@/lib/supabase'
+import { toast } from '@/components/ui/toaster'
+import { Loader2 } from 'lucide-react'
 
 interface NfeDetailsModalProps {
   isOpen: boolean
@@ -23,6 +28,10 @@ interface NfeDetailsModalProps {
 
 export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: NfeDetailsModalProps) {
   const [activeTab, setActiveTab] = useState('resumo')
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isCceModalOpen, setIsCceModalOpen] = useState(false)
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
+
   if (!order) return null
 
   const nfe = order.nfe && order.nfe.length > 0 ? order.nfe[0] : null
@@ -53,7 +62,34 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
       if (parsed.mensagem) return parsed.mensagem
       return msg
     } catch {
+    } catch {
       return msg
+    }
+  }
+
+  const handleRefreshStatus = async () => {
+    if (!nfe) {
+      onRefresh()
+      return
+    }
+    
+    setIsRefreshing(true)
+    try {
+      const { error } = await supabase.functions.invoke('get-nfe-status', {
+        body: {},
+        query: { id: nfe.id }
+      })
+      
+      if (error) throw error
+      
+      toast.success('Status sincronizado com a SEFAZ!')
+      onRefresh()
+    } catch (err: any) {
+      console.error('Erro ao buscar status NFe:', err)
+      toast.error(err.message || 'Erro ao sincronizar status')
+      onRefresh() // Atualiza a tela mesmo em erro pra puxar DB
+    } finally {
+      setIsRefreshing(false)
     }
   }
 
@@ -70,8 +106,9 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             </DialogTitle>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="h-8 shadow-sm" onClick={onRefresh}>
-              <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
+            <Button variant="outline" size="sm" className="h-8 shadow-sm" onClick={handleRefreshStatus} disabled={isRefreshing}>
+              {isRefreshing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Atualizar
             </Button>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose} aria-label="Fechar">
               <XCircle className="h-5 w-5" />
@@ -244,14 +281,31 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
           <Button variant="outline" className="h-10 bg-white" onClick={() => window.open(nfe?.pdf_url || '', '_blank')} disabled={!nfe?.pdf_url}>
             <Printer className="h-4 w-4 mr-2 text-gray-500" /> Visualizar PDF
           </Button>
-          <Button variant="outline" className="h-10 bg-white text-amber-600 border-amber-200 hover:bg-amber-50" disabled={nfStatus !== 'autorizado'}>
+          <Button variant="outline" className="h-10 bg-white text-amber-600 border-amber-200 hover:bg-amber-50" disabled={nfStatus !== 'autorizado'} onClick={() => setIsCceModalOpen(true)}>
             <FileText className="h-4 w-4 mr-2" /> Carta de Correção
           </Button>
-          <Button variant="outline" className="h-10 bg-white text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700" disabled={nfStatus !== 'autorizado'}>
+          <Button variant="outline" className="h-10 bg-white text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700" disabled={nfStatus !== 'autorizado'} onClick={() => setIsCancelModalOpen(true)}>
             <XCircle className="h-4 w-4 mr-2" /> Cancelar NF-e
           </Button>
         </div>
       </DialogContent>
+
+      {nfe && (
+        <>
+          <CceModal 
+            isOpen={isCceModalOpen} 
+            onClose={() => setIsCceModalOpen(false)} 
+            nfeId={nfe.id} 
+            onSuccess={onRefresh} 
+          />
+          <CancelNfeModal 
+            isOpen={isCancelModalOpen} 
+            onClose={() => setIsCancelModalOpen(false)} 
+            nfeId={nfe.id} 
+            onSuccess={onRefresh} 
+          />
+        </>
+      )}
     </Dialog>
   )
 }
