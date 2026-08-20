@@ -50,16 +50,24 @@ export class FiscalEngine {
       inscricao_estadual_emitente: company.state_registration?.replace(/\D/g, '') || "ISENTO",
 
       // Dados do Destinatário
-      nome_destinatario: order.customer.legal_name || order.customer.fantasy_name || order.customer.nickname,
-      cpf_destinatario: order.customer.document?.replace(/\D/g, '').length === 11 ? order.customer.document.replace(/\D/g, '') : undefined,
-      cnpj_destinatario: order.customer.document?.replace(/\D/g, '').length > 11 ? order.customer.document.replace(/\D/g, '') : undefined,
-      inscricao_estadual_destinatario: order.customer.state_registration?.replace(/\D/g, '') || "ISENTO",
-      logradouro_destinatario: order.customer.address,
-      numero_destinatario: order.customer.number,
-      bairro_destinatario: order.customer.neighborhood,
-      municipio_destinatario: order.customer.city,
-      uf_destinatario: order.customer.state,
-      cep_destinatario: order.customer.cep?.replace(/\D/g, ''),
+      nome_destinatario: order.customer?.legal_name ?? order.customer?.fantasy_name ?? order.customer?.nickname ?? '',
+      // Normaliza documento (CPF/CNPJ) removendo caracteres não numéricos
+      cpf_destinatario: (() => {
+        const doc = order.customer?.document?.replace(/\D/g, '');
+        return doc && doc.length === 11 ? doc : undefined;
+      })(),
+      cnpj_destinatario: (() => {
+        const doc = order.customer?.document?.replace(/\D/g, '');
+        return doc && doc.length > 11 ? doc : undefined;
+      })(),
+      // Inscrição estadual não está presente no tipo Customer, usamos ISENTO como padrão
+      inscricao_estadual_destinatario: "ISENTO",
+      logradouro_destinatario: order.customer?.address,
+      numero_destinatario: order.customer?.number,
+      bairro_destinatario: order.customer?.neighborhood,
+      municipio_destinatario: order.customer?.city,
+      uf_destinatario: order.customer?.state,
+      cep_destinatario: order.customer?.cep?.replace(/\D/g, ''),
 
       informacoes_adicionais_contribuinte: order.obs_contribuinte || fiscalOp.contribuinte_info || "",
       informacoes_adicionais_fisco: order.obs_fisco || fiscalOp.fisco_info || "",
