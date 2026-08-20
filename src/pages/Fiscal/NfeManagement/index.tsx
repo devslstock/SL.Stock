@@ -540,13 +540,14 @@ export default function NfeManagement() {
                     <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
                         {nfStatus === 'Aguardando emissão' || nfStatus === 'Rejeitada' || nfStatus === 'erro_autorizacao' || nfStatus === 'erro' ? (
-                          <Button size="sm" className="h-8 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setEmitNfeOrderId(order.id)}>
+                          <Button type="button" size="sm" className="h-8 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setEmitNfeOrderId(order.id)}>
                             <FileText className="h-4 w-4 mr-1" /> Emitir NF-e
                           </Button>
                         ) : null}
 
                         {nfStatus === 'processando' && (
-                          <Button size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={async () => {
+                          <Button type="button" size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={async (e) => {
+                            e.preventDefault();
                             if (!company?.id || !nfeRecord?.id) return
                             try {
                               await nfeApi.consultarNfe(company.id, nfeRecord.id)
@@ -562,13 +563,16 @@ export default function NfeManagement() {
                         
                         {nfStatus === 'autorizado' && (
                           <>
-                            <Button size="sm" variant="outline" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={(e) => {
+                            <Button type="button" size="sm" variant="outline" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
                               if (nfeRecord?.id) handleViewDanfe(nfeRecord.id);
                             }}>
                               <Printer className="h-4 w-4 mr-1" /> Vis. DANFE
                             </Button>
-                            <Button size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={(e) => {
+                            <Button type="button" size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               const correcao = window.prompt("Digite o texto da Carta de Correção (mínimo 15, máximo 1000 caracteres):")
                               if (correcao) {
                                 cceMutation.mutate({ nfeId: nfeRecord.id, correcao })
@@ -576,7 +580,9 @@ export default function NfeManagement() {
                             }} disabled={cceMutation.isPending}>
                               <FileText className="h-4 w-4 mr-1" /> Carta de Correção (CCe)
                             </Button>
-                            <Button size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => {
+                            <Button type="button" size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               const just = window.prompt("Digite a justificativa de cancelamento (mínimo 15 caracteres):")
                               if (just) {
                                 cancelMutation.mutate({ nfeId: nfeRecord.id, justify: just })

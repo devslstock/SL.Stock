@@ -326,28 +326,28 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
 
         {/* Footer Actions */}
         <div className="p-4 bg-gray-50 border-t flex flex-wrap gap-3 justify-end rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <Button variant="outline" className="h-10 bg-white" onClick={onClose}>
+          <Button type="button" variant="outline" className="h-10 bg-white" onClick={onClose}>
             Fechar
           </Button>
 
           {(nfStatus === 'aguardando emissão' || nfStatus === 'rejeitada' || nfStatus === 'erro_autorizacao' || nfStatus === 'erro') && onEmit && (
-            <Button className="h-10 bg-orange-500 hover:bg-orange-600 text-white" onClick={onEmit}>
+            <Button type="button" className="h-10 bg-orange-500 hover:bg-orange-600 text-white" onClick={onEmit}>
               <FileText className="h-4 w-4 mr-2" /> {nfe ? 'Reenviar NF-e' : 'Emitir NF-e'}
             </Button>
           )}
 
-          <Button variant="outline" className="h-10 bg-white" onClick={() => handleViewDoc('xml')} disabled={!nfe?.xml_url || isDownloadingXml}>
+          <Button type="button" variant="outline" className="h-10 bg-white" onClick={(e) => { e.preventDefault(); handleViewDoc('xml'); }} disabled={!nfe?.xml_url || isDownloadingXml}>
             {isDownloadingXml ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-500" /> : <FileCode className="h-4 w-4 mr-2 text-gray-500" />}
             Visualizar XML
           </Button>
-          <Button variant="outline" className="h-10 bg-white" onClick={() => handleViewDoc('pdf')} disabled={!nfe?.pdf_url || isDownloadingPdf}>
+          <Button type="button" variant="outline" className="h-10 bg-white" onClick={(e) => { e.preventDefault(); handleViewDoc('pdf'); }} disabled={!nfe?.pdf_url || isDownloadingPdf}>
             {isDownloadingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-500" /> : <Printer className="h-4 w-4 mr-2 text-gray-500" />}
             Visualizar DANFE
           </Button>
-          <Button variant="outline" className="h-10 bg-white" disabled={nfStatus !== 'autorizado'} onClick={() => setIsEmailModalOpen(true)}>
+          <Button type="button" variant="outline" className="h-10 bg-white" disabled={nfStatus !== 'autorizado'} onClick={(e) => { e.preventDefault(); setIsEmailModalOpen(true); }}>
             <Mail className="h-4 w-4 mr-2 text-primary" /> Enviar por E-mail
           </Button>
-          <Button variant="outline" className="h-10 bg-white text-amber-600 border-amber-200 hover:bg-amber-50" disabled={nfStatus !== 'autorizado'} onClick={() => setIsCceModalOpen(true)}>
+          <Button type="button" variant="outline" className="h-10 bg-white text-amber-600 border-amber-200 hover:bg-amber-50" disabled={nfStatus !== 'autorizado'} onClick={(e) => { e.preventDefault(); setIsCceModalOpen(true); }}>
             <FileText className="h-4 w-4 mr-2" /> Carta de Correção
           </Button>
           <Button variant="outline" className="h-10 bg-white text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700" disabled={nfStatus !== 'autorizado'} onClick={() => setIsCancelModalOpen(true)}>
