@@ -22,6 +22,7 @@ interface NfeDetailsModalProps {
 }
 
 export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: NfeDetailsModalProps) {
+  const [activeTab, setActiveTab] = useState('resumo')
   if (!order) return null
 
   const nfe = order.nfe && order.nfe.length > 0 ? order.nfe[0] : null
@@ -89,7 +90,7 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             </div>
           )}
 
-          <Tabs defaultValue="resumo" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full max-w-[400px] mb-6 grid grid-cols-2 bg-gray-100/80 p-1">
               <TabsTrigger value="resumo" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Resumo da NF-e</TabsTrigger>
               <TabsTrigger value="historico" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Histórico de Eventos</TabsTrigger>
