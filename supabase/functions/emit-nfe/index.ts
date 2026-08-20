@@ -209,6 +209,17 @@ serve(async (req: Request) => {
         }
 
         const pisCst = item.pis_cst || item.product.pis_cst || "01";
+        
+        // Dados de ICMS ST Retido Anteriormente (CSOSN 500 / CST 60)
+        if (item.product) {
+          if (item.product.icms_st_base_ret !== null && item.product.icms_st_base_ret !== undefined) itemPayload.icms_base_calculo_st_retido = item.product.icms_st_base_ret;
+          if (item.product.icms_st_value_ret !== null && item.product.icms_st_value_ret !== undefined) itemPayload.icms_valor_st_retido = item.product.icms_st_value_ret;
+          if (item.product.icms_fcp_st_base_ret !== null && item.product.icms_fcp_st_base_ret !== undefined) itemPayload.icms_base_calculo_fcp_st_retido = item.product.icms_fcp_st_base_ret;
+          if (item.product.icms_fcp_st_value_ret !== null && item.product.icms_fcp_st_value_ret !== undefined) itemPayload.icms_valor_fcp_st_retido = item.product.icms_fcp_st_value_ret;
+          if (item.product.icms_fcp_st_rate_ret !== null && item.product.icms_fcp_st_rate_ret !== undefined) itemPayload.icms_aliquota_fcp_st_retido = item.product.icms_fcp_st_rate_ret;
+          if (item.product.consumer_supported_rate !== null && item.product.consumer_supported_rate !== undefined) itemPayload.icms_aliquota_suportada_consumidor_final = item.product.consumer_supported_rate;
+          if (item.product.icms_substitute_value !== null && item.product.icms_substitute_value !== undefined) itemPayload.icms_valor_substituto = item.product.icms_substitute_value;
+        }
         const pisRate = item.pis_rate !== undefined && item.pis_rate !== null ? item.pis_rate : (item.product.pis_rate || fiscalOp.pis_rate || 0);
         
         const cofinsCst = item.cofins_cst || item.product.cofins_cst || "01";
