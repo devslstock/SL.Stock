@@ -178,6 +178,8 @@ export default function AdminOrderEdit() {
         await salesApi.deleteSalesOrderItem(delId)
       }
       
+      const numOrNull = (val: any) => (val === "" || val === null || val === undefined) ? null : Number(val);
+
       const newItemsToInsert = []
       for (const item of localItems) {
         if (!item.id || item.id.startsWith('temp-')) {
@@ -194,10 +196,10 @@ export default function AdminOrderEdit() {
             origin: item.origin,
             cst: item.cst,
             csosn: item.csosn,
-            icms_rate: item.icms_rate,
-            ipi_rate: item.ipi_rate,
-            pis_rate: item.pis_rate,
-            cofins_rate: item.cofins_rate,
+            icms_rate: numOrNull(item.icms_rate),
+            ipi_rate: numOrNull(item.ipi_rate),
+            pis_rate: numOrNull(item.pis_rate),
+            cofins_rate: numOrNull(item.cofins_rate),
             pis_cst: item.pis_cst,
             cofins_cst: item.cofins_cst
           })
@@ -213,10 +215,10 @@ export default function AdminOrderEdit() {
             origin: item.origin,
             cst: item.cst,
             csosn: item.csosn,
-            icms_rate: item.icms_rate,
-            ipi_rate: item.ipi_rate,
-            pis_rate: item.pis_rate,
-            cofins_rate: item.cofins_rate,
+            icms_rate: numOrNull(item.icms_rate),
+            ipi_rate: numOrNull(item.ipi_rate),
+            pis_rate: numOrNull(item.pis_rate),
+            cofins_rate: numOrNull(item.cofins_rate),
             pis_cst: item.pis_cst,
             cofins_cst: item.cofins_cst
           })
