@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Printer, RefreshCw, XCircle, FileText, AlertTriangle, FileCode } from 'lucide-react'
+import { Printer, RefreshCw, XCircle, FileText, AlertTriangle, FileCode, Mail } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NfeEventHistory } from './NfeEventHistory'
 import { CceModal } from './CceModal'
@@ -310,7 +310,7 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             isOpen={isEmailModalOpen}
             onClose={() => setIsEmailModalOpen(false)}
             nfeId={nfe.id}
-            defaultEmail={order.customer?.email}
+            defaultEmail={order.customer?.email || undefined}
           />
         </>
       )}
