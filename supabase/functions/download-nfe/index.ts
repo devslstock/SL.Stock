@@ -28,7 +28,7 @@ serve(async (req: Request) => {
 
     const { data: callerProfile, error: profileError } = await adminClient
       .from('users')
-      .select('company_id')
+      .select('company_id, role')
       .eq('auth_user_id', callerUser.id)
       .single();
 
@@ -43,23 +43,27 @@ serve(async (req: Request) => {
       throw new Error("Type must be 'pdf' or 'xml'");
     }
 
+    const { data: nfe, error: nfeError } = await adminClient
+      .from('nfe_records')
+      .select('pdf_url, xml_url, status, company_id')
+      .eq('id', docId)
+      .single();
+
+    if (nfeError || !nfe) throw new Error("Registro de NF-e não encontrado.");
+    
+    if (callerProfile.role !== 'master' && nfe.company_id !== callerProfile.company_id) {
+        throw new Error("Registro de NF-e não pertence à sua empresa.");
+    }
+
     const { data: company, error: companyError } = await adminClient
       .from('companies')
       .select('focusnfe_token, focusnfe_env')
-      .eq('id', callerProfile.company_id)
+      .eq('id', nfe.company_id)
       .single();
 
     if (companyError || !company) throw new Error("Company not found");
     if (!company.focusnfe_token) throw new Error("A empresa não configurou o Token da Focus NFe");
 
-    const { data: nfe, error: nfeError } = await adminClient
-      .from('nfe_records')
-      .select('pdf_url, xml_url, status')
-      .eq('id', docId)
-      .eq('company_id', callerProfile.company_id)
-      .single();
-
-    if (nfeError || !nfe) throw new Error("Registro de NF-e não encontrado ou pertence a outra empresa.");
     if (nfe.status !== 'autorizado' && nfe.status !== 'cancelado') {
       throw new Error(`O documento da NF-e ainda não está disponível. Status atual: ${nfe.status}`);
     }
