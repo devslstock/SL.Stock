@@ -1,4 +1,4 @@
-import { SalesOrder, Company, FiscalOperation, Customer } from '@/types/database'
+import type { SalesOrder, Company, FiscalOperation, Customer } from '@/types/database'
 
 export class FiscalEngine {
   /**
@@ -12,7 +12,7 @@ export class FiscalEngine {
   }): any {
     const { order, company, fiscalOp, serieNumber } = params
 
-    const isInterState = company.garage_state !== order.customer.state
+    const isInterState = company.garage_state !== order.customer?.state
     const cfopHeader = isInterState ? fiscalOp.cfop_inter : fiscalOp.cfop_intra
     const isSimplesNacional = company.tax_regime === 'simples_nacional' || !company.tax_regime
     
