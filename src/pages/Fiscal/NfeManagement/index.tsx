@@ -514,9 +514,10 @@ export default function NfeManagement() {
           isOpen={!!selectedDetailsOrder}
           onClose={() => setSelectedDetailsOrder(null)}
           order={selectedDetailsOrder}
-          onRefresh={() => {
-            // Se clicar em atualizar no Modal, vamos dar um refetch na lista
-            refetch()
+          onRefresh={refetch}
+          onEmit={() => {
+            setSelectedDetailsOrder(null)
+            setEmitNfeOrderId(selectedDetailsOrder.id)
           }}
         />
       )}

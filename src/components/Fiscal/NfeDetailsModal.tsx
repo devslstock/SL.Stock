@@ -16,9 +16,10 @@ interface NfeDetailsModalProps {
   onClose: () => void
   order: (SalesOrder & { nfe: NfeRecord[] }) | null
   onRefresh: () => void
+  onEmit?: () => void
 }
 
-export function NfeDetailsModal({ isOpen, onClose, order, onRefresh }: NfeDetailsModalProps) {
+export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: NfeDetailsModalProps) {
   if (!order) return null
 
   const nfe = order.nfe && order.nfe.length > 0 ? order.nfe[0] : null
@@ -208,6 +209,16 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh }: NfeDetail
 
         {/* Footer Actions */}
         <div className="p-4 bg-gray-50 border-t flex flex-wrap gap-3 justify-end rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <Button variant="outline" className="h-10 bg-white" onClick={onClose}>
+            Fechar
+          </Button>
+
+          {(nfStatus === 'aguardando emissão' || nfStatus === 'rejeitada' || nfStatus === 'erro_autorizacao' || nfStatus === 'erro') && onEmit && (
+            <Button className="h-10 bg-orange-500 hover:bg-orange-600 text-white" onClick={onEmit}>
+              <FileText className="h-4 w-4 mr-2" /> {nfe ? 'Reenviar NF-e' : 'Emitir NF-e'}
+            </Button>
+          )}
+
           <Button variant="outline" className="h-10 bg-white" onClick={() => window.open(nfe?.xml_url || '', '_blank')} disabled={!nfe?.xml_url}>
             <FileCode className="h-4 w-4 mr-2 text-gray-500" /> Baixar XML
           </Button>
