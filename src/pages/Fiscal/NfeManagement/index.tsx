@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
-import { FileText, Search, Printer, XCircle, Filter, ChevronDown, ChevronUp, CheckCircle, RefreshCw, Layers, Loader2, Archive, AlertCircle } from 'lucide-react'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { FileText, Printer, FileDown, Search, Filter, AlertTriangle, CheckCircle, RefreshCw, XCircle, FileCode, Mail, Save, FileUp, Download, ChevronDown, ChevronUp, Layers, Loader2, Archive, AlertCircle } from 'lucide-react'
 import { Pagination } from '@/components/ui/Pagination'
 import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
 import { NfeBackupsModal } from '@/components/Fiscal/NfeBackupsModal'
@@ -128,7 +130,7 @@ export default function NfeManagement() {
       const { url } = await nfeApi.downloadNfe(nfeRecord.id, 'pdf');
       const a = document.createElement('a');
       a.href = url;
-      a.download = `DANFE-NF-${nfeRecord.numero || nfeRecord.id.slice(0,8)}.pdf`;
+      a.download = `DANFE-NF-${nfeRecord.nfe_number || nfeRecord.id.slice(0,8)}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

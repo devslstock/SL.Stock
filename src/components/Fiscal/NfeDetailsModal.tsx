@@ -117,7 +117,7 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
         setXmlViewerData({
           isOpen: true,
           xmlString: text,
-          filename: `NFe_${nfe.numero || nfe.id.slice(0,8)}.xml`
+          filename: `NFe_${nfe.nfe_number || nfe.id.slice(0,8)}.xml`
         })
       }
     } catch (err: any) {
@@ -134,7 +134,7 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
       const { url } = await nfeApi.downloadNfe(nfe.id, type);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${type.toUpperCase()}_NFe_${nfe.numero || nfe.id.slice(0,8)}.${type}`;
+      a.download = `${type.toUpperCase()}_NFe_${nfe.nfe_number || nfe.id.slice(0,8)}.${type}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
