@@ -513,7 +513,7 @@ export default function NfeManagement() {
         <NfeDetailsModal
           isOpen={!!selectedDetailsOrder}
           onClose={() => setSelectedDetailsOrder(null)}
-          order={selectedDetailsOrder}
+          order={orders.find(o => o.id === selectedDetailsOrder.id) || selectedDetailsOrder}
           onRefresh={refetch}
           onEmit={() => {
             setSelectedDetailsOrder(null)
