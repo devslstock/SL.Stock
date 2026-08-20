@@ -113,11 +113,26 @@ export default function NfeManagement() {
   const handleViewDanfe = async (nfeId: string) => {
     if (!nfeId) return;
     try {
-      toast.info('Abrindo visualizador de PDF...');
+      toast.info('Carregando PDF...');
       const { url } = await nfeApi.downloadNfe(nfeId, 'pdf');
-      window.open(url, '_blank');
+      
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // No celular, abrir blob em nova aba costuma dar tela branca. O ideal é forçar o download.
+        // O sistema operacional do celular irá abrir o leitor nativo.
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `DANFE-${nfeId.slice(0,8)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        // Desktop
+        window.open(url, '_blank');
+      }
     } catch (e: any) {
-      toast.error(e.message || 'Erro ao visualizar PDF');
+      toast.error(e.message || 'Erro ao carregar PDF');
     }
   }
 

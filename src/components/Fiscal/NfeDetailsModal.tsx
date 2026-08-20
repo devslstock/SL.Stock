@@ -112,7 +112,17 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
       const { url, text } = await nfeApi.downloadNfe(nfe.id, type);
       
       if (type === 'pdf') {
-        window.open(url, '_blank');
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `DANFE-${nfe.nfe_number || nfe.id.slice(0,8)}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } else {
+          window.open(url, '_blank');
+        }
       } else {
         setXmlViewerData({
           isOpen: true,
