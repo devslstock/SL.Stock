@@ -93,15 +93,19 @@ serve(async (req: Request) => {
       
       // Update DB if status changed
       if (status !== nfeRecord.status) {
-        await adminClient.from('nfe_records').update({
+        const { error: updateError } = await adminClient.from('nfe_records').update({
           status: status || nfeRecord.status,
           xml_url: caminho_xml_nota_fiscal || nfeRecord.xml_url,
           pdf_url: caminho_danfe || nfeRecord.pdf_url,
-          chave_acesso: focusData.chave_nfe || nfeRecord.chave_acesso,
-          serie: focusData.serie || nfeRecord.serie,
-          numero: focusData.numero || nfeRecord.numero,
+          access_key: focusData.chave_nfe || nfeRecord.access_key,
+          nfe_series: focusData.serie || nfeRecord.nfe_series,
+          nfe_number: focusData.numero || nfeRecord.nfe_number,
           error_message: status === 'erro_autorizacao' ? JSON.stringify(focusData.erros) : null
         }).eq('id', nfeRecord.id);
+        
+        if (updateError) {
+          console.error("Update error:", updateError);
+        }
 
         // Inserir evento de mudança de status
         await adminClient.from('nfe_events').insert({
