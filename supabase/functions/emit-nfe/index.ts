@@ -191,7 +191,8 @@ serve(async (req: Request) => {
         };
 
         if (isSimplesNacional) {
-          const itemCsosn = item.csosn || item.product.csosn || fiscalOp.document_situation || "102";
+          let itemCsosn = item.csosn || item.product.csosn || fiscalOp.document_situation || "102";
+          itemCsosn = String(itemCsosn).split(" - ")[0].replace(/\D/g, "") || "102";
           itemPayload.icms_situacao_tributaria = itemCsosn;
           
           if (itemCsosn === "101") {
@@ -202,7 +203,9 @@ serve(async (req: Request) => {
             }
           }
         } else {
-          itemPayload.icms_situacao_tributaria = item.cst || item.product.cst || fiscalOp.cst || "00";
+          let finalCst = String(item.cst || item.product.cst || fiscalOp.cst || "00");
+          finalCst = finalCst.split(" - ")[0].replace(/\D/g, "") || "00";
+          itemPayload.icms_situacao_tributaria = finalCst;
         }
 
         const pisCst = item.pis_cst || item.product.pis_cst || "01";
