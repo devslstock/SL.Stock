@@ -283,25 +283,49 @@ serve(async (req: Request) => {
       : 'https://homologacao.focusnfe.com.br/v2/nfe';
 
     // 1. Gravar registro preliminar no BD (Snapshot)
-    const { data: record, error: recordError } = await adminClient
+    let recordId: string;
+    
+    // Check if record already exists for this sales_order
+    const { data: existingRecord } = await adminClient
       .from('nfe_records')
-      .insert({
-        company_id: order.company_id,
-        sales_order_id: salesOrderId,
-        focus_reference: referenceId,
-        status: 'ENVIANDO', // Novo padrão em caixa alta
-        payload_snapshot: nfePayload, // Salvando snapshot fiscal imutável
-        operacao_fiscal: fiscalOp.name
-      })
-      .select()
-      .single();
-
-    if (recordError) throw new Error("Erro ao criar registro NFe: " + recordError.message);
+      .select('id')
+      .eq('sales_order_id', salesOrderId)
+      .maybeSingle();
+      
+    if (existingRecord) {
+      recordId = existingRecord.id;
+      const { error: updateError } = await adminClient
+        .from('nfe_records')
+        .update({
+          focus_reference: referenceId,
+          status: 'ENVIANDO',
+          payload_snapshot: nfePayload,
+          operacao_fiscal: fiscalOp.name,
+          error_message: null
+        })
+        .eq('id', recordId);
+      if (updateError) throw new Error("Erro ao atualizar registro NFe: " + updateError.message);
+    } else {
+      const { data: record, error: recordError } = await adminClient
+        .from('nfe_records')
+        .insert({
+          company_id: order.company_id,
+          sales_order_id: salesOrderId,
+          focus_reference: referenceId,
+          status: 'ENVIANDO', // Novo padrão em caixa alta
+          payload_snapshot: nfePayload, // Salvando snapshot fiscal imutável
+          operacao_fiscal: fiscalOp.name
+        })
+        .select()
+        .single();
+      if (recordError) throw new Error("Erro ao criar registro NFe: " + recordError.message);
+      recordId = record.id;
+    }
 
     // 2. Gravar Evento de Emissão
     await adminClient.from('nfe_events').insert({
         company_id: order.company_id,
-        nfe_id: record.id,
+        nfe_id: recordId,
         event_type: 'EMISSAO',
         status: 'ENVIANDO',
         message: 'Nota fiscal gerada e enviada para processamento da Focus NFe',
@@ -327,11 +351,11 @@ serve(async (req: Request) => {
       await adminClient.from('nfe_records').update({
         status: 'ERRO',
         error_message: JSON.stringify(focusData)
-      }).eq('id', record.id);
+      }).eq('id', recordId);
       
       await adminClient.from('nfe_events').insert({
         company_id: order.company_id,
-        nfe_id: record.id,
+        nfe_id: recordId,
         event_type: 'REJEICAO_SISTEMA',
         status: 'ERRO',
         message: focusData.mensagem || 'Erro de validação na Focus NFe',
