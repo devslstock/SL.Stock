@@ -116,6 +116,15 @@ export default async function handler(req, res) {
         recebe_cte: settings?.enable_receive_cte || false
       }
 
+      // Tratamento da logo para a NF-e
+      if (company.exibir_logo_nf && company.logo_url) {
+        // Remover prefixo do data URL (ex: "data:image/png;base64,")
+        const base64Data = company.logo_url.replace(/^data:image\/[a-z]+;base64,/, '')
+        payload.logo = base64Data
+      } else {
+        payload.logo = null // Forçar remoção caso tenha sido desativado
+      }
+
       if (certificateBase64) {
         payload.arquivo_certificado_base64 = certificateBase64
         payload.senha_certificado = certificatePassword

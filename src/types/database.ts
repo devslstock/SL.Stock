@@ -65,6 +65,7 @@ export interface Company {
   email?: string | null
   additional_info?: string | null
   logo_url?: string | null
+  exibir_logo_nf?: boolean
   garage_lat?: number | null
   garage_lng?: number | null
   maxiprod_api_token?: string | null
