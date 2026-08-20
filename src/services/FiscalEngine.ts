@@ -26,9 +26,9 @@ export class FiscalEngine {
       tipo_documento: 1, // 1 = Saída, 0 = Entrada
       local_destino: isInterState ? 2 : 1, // 1 = Interna, 2 = Interestadual
       finalidade_emissao: 1, // 1 = Normal
-      consumidor_final: fiscalOp.consumer_final ? 1 : 0,
+      consumidor_final: order.customer?.ie_indicator === 9 ? 1 : (fiscalOp.consumer_final ? 1 : 0),
       presenca_comprador: 1, // Operação presencial
-      modalidade_frete: 9, // Sem frete padrão, pode ser aprimorado
+      modalidade_frete: order.condicao_frete || 9,
       valor_frete: order.frete || 0,
       valor_seguro: order.seguro || 0,
       valor_total: order.total_amount,
@@ -45,6 +45,7 @@ export class FiscalEngine {
       numero_emitente: company.garage_number,
       bairro_emitente: company.garage_neighborhood,
       municipio_emitente: company.garage_city,
+      codigo_municipio_emitente: company.ibge_code,
       uf_emitente: company.garage_state,
       cep_emitente: company.garage_cep?.replace(/\D/g, ''),
       inscricao_estadual_emitente: company.state_registration?.replace(/\D/g, '') || "ISENTO",
@@ -66,8 +67,10 @@ export class FiscalEngine {
       numero_destinatario: order.customer?.number,
       bairro_destinatario: order.customer?.neighborhood,
       municipio_destinatario: order.customer?.city,
+      codigo_municipio_destinatario: order.customer?.ibge_code,
       uf_destinatario: order.customer?.state,
       cep_destinatario: order.customer?.cep?.replace(/\D/g, ''),
+      indicador_inscricao_estadual_destinatario: order.customer?.ie_indicator || 9,
 
       informacoes_adicionais_contribuinte: order.obs_contribuinte || fiscalOp.contribuinte_info || "",
       informacoes_adicionais_fisco: order.obs_fisco || fiscalOp.fisco_info || "",
@@ -163,4 +166,29 @@ export class FiscalEngine {
 
     return payload
   }
+
+  /**
+   * Pre-emission validation
+   */
+  static validate(params: {
+    order: SalesOrder & { customer: Customer; items: any[] }
+    company: Company
+    fiscalOp: FiscalOperation
+  }): string[] {
+    const { order, company } = params
+    const errors: string[] = []
+
+    if (!company.ibge_code) errors.push("A empresa não possui Código IBGE configurado.")
+    if (!order.customer?.ibge_code) errors.push("O cliente destinatário não possui Código IBGE configurado.")
+    
+    order.items.forEach((item, index) => {
+      const ncm = (item.ncm || item.product?.ncm || "").replace(/\D/g, '')
+      if (!ncm || ncm.length !== 8) {
+        errors.push(`Produto da linha ${index + 1} não possui NCM válido (8 dígitos).`)
+      }
+    })
+
+    return errors
+  }
 }
+

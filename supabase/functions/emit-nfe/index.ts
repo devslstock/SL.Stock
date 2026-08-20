@@ -48,7 +48,8 @@ serve(async (req: Request) => {
         items:sales_order_items(
           *,
           product:products(*)
-        )
+        ),
+        carrier:carriers(*)
       `)
       .eq('id', salesOrderId)
       .single();
@@ -58,7 +59,7 @@ serve(async (req: Request) => {
     // Get Company info for Focus NFe token using the order's company_id
     const { data: company, error: companyError } = await adminClient
       .from('companies')
-      .select('id, focusnfe_token, focusnfe_env, tax_regime, cnpj, name, garage_address, garage_number, garage_neighborhood, garage_city, garage_state, garage_cep, state_registration')
+      .select('id, focusnfe_token, focusnfe_env, tax_regime, cnpj, name, garage_address, garage_number, garage_neighborhood, garage_city, garage_state, garage_cep, state_registration, ibge_code')
       .eq('id', order.company_id)
       .single();
 
@@ -98,9 +99,9 @@ serve(async (req: Request) => {
       tipo_documento: 1,
       local_destino: isInterState ? 2 : 1,
       finalidade_emissao: 1,
-      consumidor_final: fiscalOp.consumer_final ? 1 : 0,
+      consumidor_final: order.customer.ie_indicator === 9 ? 1 : (fiscalOp.consumer_final ? 1 : 0),
       presenca_comprador: 1,
-      modalidade_frete: 9,
+      modalidade_frete: order.condicao_frete || 9,
       valor_frete: order.frete || 0,
       valor_seguro: order.seguro || 0,
       valor_total: order.total_amount,
@@ -115,6 +116,7 @@ serve(async (req: Request) => {
       municipio_emitente: company.garage_city,
       uf_emitente: company.garage_state,
       cep_emitente: company.garage_cep?.replace(/\D/g, ''),
+      codigo_municipio_emitente: company.ibge_code,
       inscricao_estadual_emitente: company.state_registration?.replace(/\D/g, '') || "ISENTO",
 
       nome_destinatario: order.customer.legal_name || order.customer.fantasy_name || order.customer.nickname,
@@ -127,9 +129,37 @@ serve(async (req: Request) => {
       municipio_destinatario: order.customer.city,
       uf_destinatario: order.customer.state,
       cep_destinatario: order.customer.cep?.replace(/\D/g, ''),
+      codigo_municipio_destinatario: order.customer.ibge_code,
+      indicador_inscricao_estadual_destinatario: order.customer.ie_indicator || 9,
       
       informacoes_adicionais_contribuinte: order.obs_contribuinte || fiscalOp.contribuinte_info || "",
       informacoes_adicionais_fisco: order.obs_fisco || fiscalOp.fisco_info || "",
+
+      pagamentos: [{
+        forma_pagamento: "99", // 99 - Outros (fallback genérico, precisa ser refinado no front-end para enviar tPag correto)
+        valor_pagamento: order.total_amount
+      }],
+
+      ...(order.carrier ? {
+        transportadora: {
+          cnpj: order.carrier.document?.replace(/\D/g, '').length > 11 ? order.carrier.document.replace(/\D/g, '') : undefined,
+          cpf: order.carrier.document?.replace(/\D/g, '').length === 11 ? order.carrier.document.replace(/\D/g, '') : undefined,
+          nome_razao_social: order.carrier.legal_name,
+          inscricao_estadual: order.carrier.ie?.replace(/\D/g, ''),
+          endereco_completo: `${order.carrier.address}${order.carrier.number ? ', ' + order.carrier.number : ''}`,
+          municipio: order.carrier.city,
+          uf: order.carrier.state
+        }
+      } : {}),
+
+      ...(order.volume_qty ? {
+        volumes: [{
+          quantidade: order.volume_qty,
+          especie: order.volume_species || 'VOLUMES',
+          peso_bruto: order.gross_weight,
+          peso_liquido: order.net_weight
+        }]
+      } : {}),
 
       items: order.items.map((item: any, index: number) => {
         let itemCfop = cfop; 
@@ -219,6 +249,8 @@ serve(async (req: Request) => {
           if (item.product.icms_fcp_st_rate_ret !== null && item.product.icms_fcp_st_rate_ret !== undefined) itemPayload.icms_aliquota_fcp_st_retido = item.product.icms_fcp_st_rate_ret;
           if (item.product.consumer_supported_rate !== null && item.product.consumer_supported_rate !== undefined) itemPayload.icms_aliquota_suportada_consumidor_final = item.product.consumer_supported_rate;
           if (item.product.icms_substitute_value !== null && item.product.icms_substitute_value !== undefined) itemPayload.icms_valor_substituto = item.product.icms_substitute_value;
+          if (item.product.icms_percentual_reducao_bc !== null && item.product.icms_percentual_reducao_bc !== undefined) itemPayload.icms_reducao_base_calculo = item.product.icms_percentual_reducao_bc;
+          if (item.product.icms_percentual_diferimento !== null && item.product.icms_percentual_diferimento !== undefined) itemPayload.icms_percentual_diferimento = item.product.icms_percentual_diferimento;
         }
         const pisRate = item.pis_rate !== undefined && item.pis_rate !== null ? item.pis_rate : (item.product.pis_rate || fiscalOp.pis_rate || 0);
         

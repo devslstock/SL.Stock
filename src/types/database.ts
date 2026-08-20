@@ -83,6 +83,7 @@ export interface Company {
   focus_nfe_created_at?: string | null
   focus_nfe_updated_at?: string | null
   focus_nfe_cert_expires_at?: string | null
+  ibge_code?: string | null
   created_at: string
 }
 
@@ -280,6 +281,8 @@ export interface Customer {
   po_box: string | null
   city: string | null
   state: string | null
+  ibge_code?: string | null
+  ie_indicator?: number | null
   latitude?: number | null
   longitude?: number | null
   phone1: string | null
@@ -451,6 +454,11 @@ export interface SalesOrder {
   frete?: number
   seguro?: number
   outras_despesas?: number
+  carrier_id?: string | null
+  volume_qty?: number | null
+  volume_species?: string | null
+  gross_weight?: number | null
+  net_weight?: number | null
   obs_internas?: string | null
   obs_fisco?: string | null
   obs_contribuinte?: string | null
@@ -464,8 +472,29 @@ export interface SalesOrder {
   sales_rep?: SalesRep
   payment_condition?: PaymentCondition
   price_table?: PriceTable
+  carrier?: Carrier
   items?: SalesOrderItem[]
   order_group?: OrderGroup
+}
+
+export interface Carrier {
+  id: string
+  company_id: string
+  document: string
+  legal_name: string
+  fantasy_name?: string | null
+  ie?: string | null
+  address?: string | null
+  number?: string | null
+  complement?: string | null
+  neighborhood?: string | null
+  city?: string | null
+  state?: string | null
+  cep?: string | null
+  ibge_code?: string | null
+  active: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface AccountReceivable {
@@ -627,6 +656,8 @@ export interface Product {
   icms_substitute_value?: number | null
   consumer_supported_rate?: number | null
   icms_fcp_st_rate_ret?: number | null
+  icms_percentual_reducao_bc?: number | null
+  icms_percentual_diferimento?: number | null
   fiscal_gender?: string | null
   asset_identification?: string | null
   anp_code?: string | null
