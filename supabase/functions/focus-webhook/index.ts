@@ -63,7 +63,9 @@ serve(async (req: Request) => {
       };
       
       if (payload.status === 'autorizado') {
-        updateData.access_key = payload.chave_nfe;
+        updateData.chave_acesso = payload.chave_nfe;
+        updateData.numero = payload.numero;
+        updateData.serie = payload.serie;
         updateData.xml_url = payload.caminho_xml_nota_fiscal;
         updateData.pdf_url = payload.caminho_danfe;
       } else if (payload.status === 'erro_autorizacao' || payload.status === 'cancelado') {
@@ -80,7 +82,9 @@ serve(async (req: Request) => {
       };
       
       if (payload.status === 'autorizado') {
-        updateData.access_key = payload.chave_mdfe || payload.chave_nfe; // Depende da doc exata
+        updateData.chave_acesso = payload.chave_mdfe || payload.chave_nfe;
+        updateData.numero = payload.numero;
+        updateData.serie = payload.serie;
         updateData.xml_url = payload.caminho_xml;
         updateData.pdf_url = payload.caminho_pdf;
       } else if (payload.status === 'erro_autorizacao' || payload.status === 'cancelado') {

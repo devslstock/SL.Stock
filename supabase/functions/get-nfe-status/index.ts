@@ -87,8 +87,22 @@ serve(async (req: Request) => {
           status: status || nfeRecord.status,
           xml_url: caminho_xml_nota_fiscal || nfeRecord.xml_url,
           pdf_url: caminho_danfe || nfeRecord.pdf_url,
+          chave_acesso: focusData.chave_nfe || nfeRecord.chave_acesso,
+          serie: focusData.serie || nfeRecord.serie,
+          numero: focusData.numero || nfeRecord.numero,
           error_message: status === 'erro_autorizacao' ? JSON.stringify(focusData.erros) : null
         }).eq('id', nfeRecord.id);
+
+        // Inserir evento de mudança de status
+        await adminClient.from('nfe_events').insert({
+          company_id: callerProfile.company_id,
+          nfe_id: nfeRecord.id,
+          event_type: status === 'autorizado' ? 'AUTORIZACAO' : status === 'erro_autorizacao' ? 'REJEICAO_SEFAZ' : status.toUpperCase(),
+          status: status,
+          message: status === 'autorizado' ? 'Nota Fiscal autorizada pela SEFAZ' : status === 'erro_autorizacao' ? 'Nota Fiscal rejeitada pela SEFAZ' : 'Status atualizado pela Focus NFe',
+          payload: focusData,
+          created_by: callerUser.id
+        });
       }
 
       return new Response(JSON.stringify(focusData), {
