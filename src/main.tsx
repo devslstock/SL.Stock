@@ -9,7 +9,14 @@ import { ThemeProvider } from './components/ThemeProvider'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutos
+    },
+  },
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
