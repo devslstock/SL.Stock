@@ -34,7 +34,20 @@ export function CancelNfeModal({ isOpen, onClose, nfeId, onSuccess }: CancelNfeM
       })
 
       if (error) throw error
-      if (data?.success === false) throw new Error(data.error || 'Erro desconhecido')
+      if (data?.success === false) {
+        let errorMsg = data.error || 'Erro desconhecido'
+        if (data.details) {
+          if (data.details.mensagem) errorMsg += `: ${data.details.mensagem}`
+          else if (Array.isArray(data.details)) {
+            errorMsg += `: ${data.details.map((d: any) => d.mensagem || JSON.stringify(d)).join(', ')}`
+          } else if (data.details.erros && Array.isArray(data.details.erros)) {
+            errorMsg += `: ${data.details.erros.map((d: any) => d.mensagem || JSON.stringify(d)).join(', ')}`
+          } else {
+            errorMsg += `: ${JSON.stringify(data.details)}`
+          }
+        }
+        throw new Error(errorMsg)
+      }
 
       toast.success('NF-e cancelada com sucesso!')
       onSuccess()
