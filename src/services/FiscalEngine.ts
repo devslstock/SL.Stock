@@ -135,7 +135,9 @@ export class FiscalEngine {
 
         // Simples Nacional: CSOSN / Regimes Normais: CST
         if (isSimplesNacional) {
-          const itemCsosn = item.csosn || item.product.csosn || fiscalOp.document_situation || "102"
+          let itemCsosn = item.csosn || item.product.csosn || fiscalOp.document_situation || "102"
+          // Extrai apenas os números (ex: "102 - Tributada..." vira "102")
+          itemCsosn = String(itemCsosn).split(" - ")[0].replace(/\D/g, "") || "102"
           itemPayload.icms_situacao_tributaria = itemCsosn
           
           if (itemCsosn === "101") {
@@ -146,13 +148,13 @@ export class FiscalEngine {
             }
           }
         } else {
-          // Regime Normal – garantimos CST válido (não "00")
-          let finalCst = item.cst || item.product.cst || "10"; // fallback tributado integralmente
-          if (finalCst === "00") {
-            finalCst = "10"; // substitui código inválido por tributado integralmente
-          }
+          // Regime Normal – extrair apenas o código (ex: "00 - Tributada integralmente" -> "00")
+          let finalCst = String(item.cst || item.product.cst || "00");
+          finalCst = finalCst.split(" - ")[0].trim(); // Pega apenas a parte antes do traço
+          // Removemos caracteres não numéricos e garantimos ao menos "00"
+          finalCst = finalCst.replace(/\D/g, "") || "00";
+          
           itemPayload.icms_situacao_tributaria = finalCst;
-
         }
 
         return itemPayload
