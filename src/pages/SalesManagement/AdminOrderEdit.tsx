@@ -568,7 +568,7 @@ export default function AdminOrderEdit() {
   const selectedCustomer = customers.find((c: any) => c.id === formData.customer_id)
   const isEditable = !formData.status || formData.status === 'Digitação'
   
-  const isNfeEmitida = nfeRecord?.status === 'Emitida'
+  const isFaturado = formData.status === 'Faturado'
   const isAprovado = formData.status === 'Aprovado'
 
   return (
@@ -583,7 +583,18 @@ export default function AdminOrderEdit() {
           <span className="font-semibold">Pedido de venda</span>
         </div>
         <div className="flex gap-2">
-          {isAprovado && !isNfeEmitida && (
+          {isAprovado && !isFaturado && (
+            <Button 
+              size="sm" 
+              onClick={handleFaturar} 
+              className="h-8 bg-green-600 hover:bg-green-700 text-white"
+              disabled={faturarMutation.isPending}
+            >
+              {faturarMutation.isPending ? 'Faturando...' : 'FATURAR PEDIDO'}
+            </Button>
+          )}
+
+          {isFaturado && !nfeRecord?.id && (
             <Button 
               size="sm" 
               onClick={() => {
@@ -595,17 +606,6 @@ export default function AdminOrderEdit() {
               disabled={emitirMutation.isPending}
             >
               {emitirMutation.isPending ? 'Emitindo...' : 'Emitir NF'}
-            </Button>
-          )}
-
-          {isAprovado && isNfeEmitida && (
-            <Button 
-              size="sm" 
-              onClick={handleFaturar} 
-              className="h-8 bg-green-600 hover:bg-green-700 text-white"
-              disabled={faturarMutation.isPending}
-            >
-              {faturarMutation.isPending ? 'Faturando...' : 'FATURAR PEDIDO'}
             </Button>
           )}
 

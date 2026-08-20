@@ -78,12 +78,6 @@ export const financeApi = {
       throw new Error('Pedido não encontrado')
     }
 
-    const nfeList = order.nfe as any[]
-    const isNfeEmitida = nfeList && nfeList.length > 0 && nfeList[0].status === 'autorizado'
-
-    if (!isNfeEmitida) {
-      throw new Error('Pedido não pode ser faturado. É necessário emitir e autorizar a Nota Fiscal primeiro.')
-    }
     if (order.status === 'Faturado') throw new Error('Este pedido já foi faturado')
     
     // 2. Checar se já existem contas a receber (proteção extra de idempotência)
@@ -117,7 +111,7 @@ export const financeApi = {
       amount: inst.amount,
       due_date: inst.dueDate.toISOString().split('T')[0],
       status: 'pendente',
-      payment_method: 'boleto' // Mock, no futuro buscar da order
+      payment_method: order.forma_pagamento || 'Boleto'
     }))
     
     // 4. Inserir contas a receber
