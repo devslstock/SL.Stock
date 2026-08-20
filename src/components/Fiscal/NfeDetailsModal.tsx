@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Printer, RefreshCw, XCircle, FileText, AlertTriangle, FileCode } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { NfeEventHistory } from './NfeEventHistory'
 import type { SalesOrder, NfeRecord } from '@/types/database'
 
 interface NfeDetailsModalProps {
@@ -87,127 +89,140 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             </div>
           )}
 
-          {/* Cabeçalho Superior (Destinatário e Dados NFe) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white p-5 rounded-lg border border-gray-200 shadow-sm space-y-4">
-              <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">Destinatário</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Nome / Razão Social</label>
-                  <p className="font-medium text-gray-900">{order.customer?.legal_name || order.customer?.nickname || order.customer?.fantasy_name}</p>
-                </div>
-                <div>
-                  <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">CNPJ / CPF</label>
-                  <p className="font-medium text-gray-900">{order.customer?.document || 'Não informado'}</p>
-                </div>
-                <div className="col-span-2">
-                  <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Endereço Completo</label>
-                  <p className="text-gray-800">
-                    {order.customer?.address || '---'}, {order.customer?.number || '---'} - {order.customer?.neighborhood || '---'}
-                    <br />
-                    {order.customer?.city || '---'}/{order.customer?.state || '---'} - CEP: {order.customer?.cep || '---'}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <Tabs defaultValue="resumo" className="w-full">
+            <TabsList className="w-full max-w-[400px] mb-6 grid grid-cols-2 bg-gray-100/80 p-1">
+              <TabsTrigger value="resumo" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Resumo da NF-e</TabsTrigger>
+              <TabsTrigger value="historico" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Histórico de Eventos</TabsTrigger>
+            </TabsList>
 
-            <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm space-y-4">
-              <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">Dados da Emissão</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Pedido Relacionado</label>
-                  <p className="font-medium text-primary cursor-pointer hover:underline">#{order.order_number || order.id.slice(0,8)}</p>
-                </div>
-                <div>
-                  <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Chave de Acesso</label>
-                  <Input readOnly value={nfe?.access_key || 'Não gerada'} className="h-8 mt-1 text-xs font-mono bg-gray-50 focus-visible:ring-0" />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Série / Número</label>
-                    <p className="font-medium text-gray-900">{nfe?.nfe_series || '-'} / {nfe?.nfe_number || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Data / Hora</label>
-                    <p className="text-gray-900">{formatDate(nfe?.issued_at || nfe?.created_at)}</p>
+            <TabsContent value="resumo" className="space-y-6 mt-0 border-0 p-0">
+              {/* Cabeçalho Superior (Destinatário e Dados NFe) */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white p-5 rounded-lg border border-gray-200 shadow-sm space-y-4">
+                  <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">Destinatário</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Nome / Razão Social</label>
+                      <p className="font-medium text-gray-900">{order.customer?.legal_name || order.customer?.nickname || order.customer?.fantasy_name}</p>
+                    </div>
+                    <div>
+                      <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">CNPJ / CPF</label>
+                      <p className="font-medium text-gray-900">{order.customer?.document || 'Não informado'}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Endereço Completo</label>
+                      <p className="text-gray-800">
+                        {order.customer?.address || '---'}, {order.customer?.number || '---'} - {order.customer?.neighborhood || '---'}
+                        <br />
+                        {order.customer?.city || '---'}/{order.customer?.state || '---'} - CEP: {order.customer?.cep || '---'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Produtos Tabela */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-            <div className="p-4 bg-gray-50/50 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-800">Produtos e Serviços</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-gray-500 uppercase bg-gray-50/80 border-b">
-                  <tr>
-                    <th className="px-5 py-3 font-semibold">Código</th>
-                    <th className="px-5 py-3 font-semibold">Descrição</th>
-                    <th className="px-5 py-3 font-semibold">NCM</th>
-                    <th className="px-5 py-3 font-semibold">CFOP</th>
-                    <th className="px-5 py-3 font-semibold">Qtde</th>
-                    <th className="px-5 py-3 font-semibold">Unid</th>
-                    <th className="px-5 py-3 font-semibold text-right">Vl Unit</th>
-                    <th className="px-5 py-3 font-semibold text-right">Vl Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {order.items?.map((item: any, i: number) => (
-                    <tr key={i} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-5 py-3 text-gray-600">{item.product?.code || item.product_id?.slice(0, 5)}</td>
-                      <td className="px-5 py-3 font-medium text-gray-900">{item.product?.description || item.description || 'Produto Sem Nome'}</td>
-                      <td className="px-5 py-3 text-gray-600">{item.product?.ncm || item.ncm || '---'}</td>
-                      <td className="px-5 py-3 text-gray-600">{item.product?.cfop || item.cfop || '---'}</td>
-                      <td className="px-5 py-3 font-medium">{item.quantity}</td>
-                      <td className="px-5 py-3 text-gray-600">{item.product?.unit_measure || 'UN'}</td>
-                      <td className="px-5 py-3 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
-                      <td className="px-5 py-3 text-right font-bold text-gray-900">{formatCurrency(item.total_price)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm space-y-4">
+                  <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">Dados da Emissão</h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Pedido Relacionado</label>
+                      <p className="font-medium text-primary cursor-pointer hover:underline">#{order.order_number || order.id.slice(0,8)}</p>
+                    </div>
+                    <div>
+                      <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Chave de Acesso</label>
+                      <Input readOnly value={nfe?.access_key || 'Não gerada'} className="h-8 mt-1 text-xs font-mono bg-gray-50 focus-visible:ring-0" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Série / Número</label>
+                        <p className="font-medium text-gray-900">{nfe?.nfe_series || '-'} / {nfe?.nfe_number || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-gray-500 text-xs font-bold uppercase tracking-wider">Data / Hora</label>
+                        <p className="text-gray-900">{formatDate(nfe?.issued_at || nfe?.created_at)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-          {/* Totais e Impostos */}
-          <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">Resumo Financeiro</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Total Produtos/Serviços</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(order.net_amount)}</span>
+              {/* Produtos Tabela */}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div className="p-4 bg-gray-50/50 border-b border-gray-200">
+                  <h3 className="font-semibold text-gray-800">Produtos e Serviços</h3>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Valor do Frete</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(order.frete || 0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Valor do Seguro</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(order.seguro || 0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Descontos</span>
-                  <span className="font-medium text-red-500">-{formatCurrency(order.total_discount || 0)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-base pt-3 border-t mt-3">
-                  <span className="text-gray-800">Valor Total da Nota</span>
-                  <span className="text-emerald-600">{formatCurrency(order.total_amount)}</span>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-gray-500 uppercase bg-gray-50/80 border-b">
+                      <tr>
+                        <th className="px-5 py-3 font-semibold">Código</th>
+                        <th className="px-5 py-3 font-semibold">Descrição</th>
+                        <th className="px-5 py-3 font-semibold">NCM</th>
+                        <th className="px-5 py-3 font-semibold">CFOP</th>
+                        <th className="px-5 py-3 font-semibold">Qtde</th>
+                        <th className="px-5 py-3 font-semibold">Unid</th>
+                        <th className="px-5 py-3 font-semibold text-right">Vl Unit</th>
+                        <th className="px-5 py-3 font-semibold text-right">Vl Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {order.items?.map((item: any, i: number) => (
+                        <tr key={i} className="hover:bg-gray-50/80 transition-colors">
+                          <td className="px-5 py-3 text-gray-600">{item.product?.code || item.product_id?.slice(0, 5)}</td>
+                          <td className="px-5 py-3 font-medium text-gray-900">{item.product?.description || item.description || 'Produto Sem Nome'}</td>
+                          <td className="px-5 py-3 text-gray-600">{item.product?.ncm || item.ncm || '---'}</td>
+                          <td className="px-5 py-3 text-gray-600">{item.product?.cfop || item.cfop || '---'}</td>
+                          <td className="px-5 py-3 font-medium">{item.quantity}</td>
+                          <td className="px-5 py-3 text-gray-600">{item.product?.unit_measure || 'UN'}</td>
+                          <td className="px-5 py-3 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
+                          <td className="px-5 py-3 text-right font-bold text-gray-900">{formatCurrency(item.total_price)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            </div>
-            
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">Informações Adicionais</h3>
-              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md min-h-[120px] whitespace-pre-wrap font-mono">
-                {order.obs_contribuinte || order.obs_fisco || 'Nenhuma informação complementar enviada na nota.'}
+
+              {/* Totais e Impostos */}
+              <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">Resumo Financeiro</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Total Produtos/Serviços</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(order.net_amount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Valor do Frete</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(order.frete || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Valor do Seguro</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(order.seguro || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Descontos</span>
+                      <span className="font-medium text-red-500">-{formatCurrency(order.total_discount || 0)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-base pt-3 border-t mt-3">
+                      <span className="text-gray-800">Valor Total da Nota</span>
+                      <span className="text-emerald-600">{formatCurrency(order.total_amount)}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">Informações Adicionais</h3>
+                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md min-h-[120px] whitespace-pre-wrap font-mono">
+                    {order.obs_contribuinte || order.obs_fisco || 'Nenhuma informação complementar enviada na nota.'}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="historico" className="mt-0 border-0 p-0">
+              <NfeEventHistory nfeId={nfe?.id} />
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Footer Actions */}
