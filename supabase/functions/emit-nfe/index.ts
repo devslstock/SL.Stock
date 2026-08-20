@@ -377,12 +377,12 @@ serve(async (req: Request) => {
     // Sucesso, a nota foi enviada para processamento
     await adminClient.from('nfe_records').update({
       status: 'PROCESSANDO'
-    }).eq('id', record.id);
+    }).eq('id', recordId);
 
     return new Response(JSON.stringify({ 
       success: true, 
       message: "Nota fiscal enviada para processamento",
-      nfeId: record.id,
+      nfeId: recordId,
       focusResponse: focusData
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
