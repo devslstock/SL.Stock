@@ -568,6 +568,7 @@ export default function AdminOrderEdit() {
   const selectedCustomer = customers.find((c: any) => c.id === formData.customer_id)
   const isEditable = !formData.status || formData.status === 'Digitação'
   
+  const isNfeEmitida = !!nfeRecord?.id
   const isFaturado = formData.status === 'Faturado'
   const isAprovado = formData.status === 'Aprovado'
 
