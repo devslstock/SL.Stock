@@ -18,6 +18,7 @@ import type { SalesOrder, NfeRecord } from '@/types/database'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/ui/toaster'
 import { Loader2 } from 'lucide-react'
+import { nfeApi } from '@/api/nfe'
 
 interface NfeDetailsModalProps {
   isOpen: boolean
@@ -33,6 +34,8 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
   const [isCceModalOpen, setIsCceModalOpen] = useState(false)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
+  const [isDownloadingXml, setIsDownloadingXml] = useState(false)
 
   if (!order) return null
 
@@ -89,6 +92,23 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
       onRefresh() // Atualiza a tela mesmo em erro pra puxar DB
     } finally {
       setIsRefreshing(false)
+    }
+  }
+
+  const handleDownloadDoc = async (type: 'pdf' | 'xml') => {
+    if (!nfe) return;
+    
+    if (type === 'pdf') setIsDownloadingPdf(true)
+    else setIsDownloadingXml(true)
+    
+    try {
+      const url = await nfeApi.downloadNfe(nfe.id, type);
+      window.open(url, '_blank');
+    } catch (err: any) {
+      toast.error(err.message || `Erro ao baixar ${type.toUpperCase()}`);
+    } finally {
+      if (type === 'pdf') setIsDownloadingPdf(false)
+      else setIsDownloadingXml(false)
     }
   }
 
@@ -274,11 +294,13 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
             </Button>
           )}
 
-          <Button variant="outline" className="h-10 bg-white" onClick={() => window.open(nfe?.xml_url || '', '_blank')} disabled={!nfe?.xml_url}>
-            <FileCode className="h-4 w-4 mr-2 text-gray-500" /> Baixar XML
+          <Button variant="outline" className="h-10 bg-white" onClick={() => handleDownloadDoc('xml')} disabled={!nfe?.xml_url || isDownloadingXml}>
+            {isDownloadingXml ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-500" /> : <FileCode className="h-4 w-4 mr-2 text-gray-500" />}
+            Baixar XML
           </Button>
-          <Button variant="outline" className="h-10 bg-white" onClick={() => window.open(nfe?.pdf_url || '', '_blank')} disabled={!nfe?.pdf_url}>
-            <Printer className="h-4 w-4 mr-2 text-gray-500" /> Visualizar PDF
+          <Button variant="outline" className="h-10 bg-white" onClick={() => handleDownloadDoc('pdf')} disabled={!nfe?.pdf_url || isDownloadingPdf}>
+            {isDownloadingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-500" /> : <Printer className="h-4 w-4 mr-2 text-gray-500" />}
+            Visualizar PDF
           </Button>
           <Button variant="outline" className="h-10 bg-white" disabled={nfStatus !== 'autorizado'} onClick={() => setIsEmailModalOpen(true)}>
             <Mail className="h-4 w-4 mr-2 text-primary" /> Enviar por E-mail

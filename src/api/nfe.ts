@@ -164,5 +164,31 @@ export const nfeApi = {
   async getPdfUrl(nfeId: string) {
     const { data: nfe } = await supabase.from('nfe_records').select('pdf_url').eq('id', nfeId).single()
     return nfe?.pdf_url || null
+  },
+
+  async downloadNfe(nfeId: string, type: 'pdf' | 'xml') {
+    const { data, error } = await supabase.functions.invoke('download-nfe', {
+      body: { docId: nfeId, type }
+    });
+
+    if (error) {
+      throw new Error(`Erro ao baixar documento: ${error.message}`);
+    }
+
+    if (!data.success) {
+      throw new Error(data.error || 'Erro desconhecido ao baixar documento');
+    }
+
+    // data.data is base64 string
+    // Convert base64 to Blob
+    const byteCharacters = atob(data.data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: data.contentType });
+    
+    return URL.createObjectURL(blob);
   }
 }

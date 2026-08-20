@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { nfeApi } from '@/api/nfe'
+import { PDFDocument } from 'pdf-lib'
 import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -107,6 +108,70 @@ export default function NfeManagement() {
     // Retorna o registro mais recente
     const sortedNfe = [...order.nfe].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     return sortedNfe[0]
+  }
+
+  const handleDownloadDanfe = async (nfeId: string) => {
+    if (!nfeId) return;
+    try {
+      toast.info('Baixando PDF...');
+      const url = await nfeApi.downloadNfe(nfeId, 'pdf');
+      window.open(url, '_blank');
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao baixar PDF');
+    }
+  }
+
+  const handleBatchPrint = async () => {
+    if (!company?.id) return
+    const elegiveis = orders.filter(o => selectedOrderIds.includes(o.id) && getOrderNfeRecord(o) && getOrderNfeStatus(o) === 'autorizado')
+    
+    if (elegiveis.length === 0) {
+      toast.warning('Nenhum pedido selecionado possui NF-e Autorizada para impressão.')
+      return
+    }
+
+    setIsBatchProcessing(true)
+    toast.info(`Gerando arquivo de impressão unificado com ${elegiveis.length} DANFEs...`)
+
+    try {
+      const mergedPdf = await PDFDocument.create();
+      
+      for (const order of elegiveis) {
+        const nfe = getOrderNfeRecord(order);
+        if (!nfe) continue;
+        
+        try {
+          // O downloadNfe retorna um Object URL apontando para o Blob.
+          // Para o pdf-lib precisamos dos bytes originais.
+          // Vamos fazer o fetch desse Blob local.
+          const objectUrl = await nfeApi.downloadNfe(nfe.id, 'pdf');
+          const response = await fetch(objectUrl);
+          const pdfBytes = await response.arrayBuffer();
+          
+          const pdfDoc = await PDFDocument.load(pdfBytes);
+          const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+          copiedPages.forEach((page) => mergedPdf.addPage(page));
+          
+          URL.revokeObjectURL(objectUrl); // Libera memória
+        } catch (e) {
+          console.error(`Erro ao carregar PDF da NFe ${nfe.id}:`, e);
+          toast.error(`Falha ao incorporar NF-e do pedido #${order.order_number || order.id.slice(0,5)}`);
+        }
+      }
+
+      const mergedPdfBytes = await mergedPdf.save();
+      const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      
+      window.open(url, '_blank');
+      setSelectedOrderIds([]);
+      toast.success('Arquivo de impressão gerado com sucesso!');
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Ocorreu um erro ao gerar o arquivo de impressão em lote.');
+    } finally {
+      setIsBatchProcessing(false);
+    }
   }
 
   const handleBatchEmit = async () => {
@@ -465,12 +530,13 @@ export default function NfeManagement() {
                         
                         {nfStatus === 'autorizado' && (
                           <>
-                            <Button size="sm" variant="outline" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => {
-                              window.open(nfeRecord?.pdf_url || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank')
+                            <Button size="sm" variant="outline" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={(e) => {
+                              e.stopPropagation();
+                              if (nfeRecord?.id) handleDownloadDanfe(nfeRecord.id);
                             }}>
                               <Printer className="h-4 w-4 mr-1" /> DANFE
                             </Button>
-                            <Button size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={() => {
+                            <Button size="sm" variant="outline" className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={(e) => {
                               const correcao = window.prompt("Digite o texto da Carta de Correção (mínimo 15, máximo 1000 caracteres):")
                               if (correcao) {
                                 cceMutation.mutate({ nfeId: nfeRecord.id, correcao })
@@ -556,9 +622,7 @@ export default function NfeManagement() {
               variant="outline" 
               className="h-9"
               disabled={isBatchProcessing}
-              onClick={() => {
-                toast.info("Impressão em lote será implementada após conexão com a API de NFe definitiva.")
-              }}
+              onClick={handleBatchPrint}
             >
               <Printer className="h-4 w-4 mr-2" /> Imprimir
             </Button>
