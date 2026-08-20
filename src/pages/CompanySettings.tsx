@@ -207,7 +207,7 @@ export default function CompanySettings() {
     setIsSyncingFiscal(true)
     try {
       await focusIntegrationApi.syncCompany(company.id, false, certificateFile || undefined, certificatePassword || undefined)
-      toast.success('Sincronização com Focus NFe concluída!')
+      toast.success('Sincronização fiscal concluída!')
       setCertificateFile(null)
       setCertificatePassword('')
       queryClient.invalidateQueries({ queryKey: ['company_settings'] })
@@ -612,7 +612,7 @@ export default function CompanySettings() {
             <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" /> Ambiente Fiscal (Focus NFe)
+                  <ShieldCheck className="h-4 w-4" /> Ambiente Fiscal (SEFAZ)
                 </label>
                 <select
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -626,16 +626,16 @@ export default function CompanySettings() {
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                  <KeyIcon className="h-4 w-4" /> Token da API (Focus NFe)
+                  <KeyIcon className="h-4 w-4" /> Token de Integração Fiscal
                 </label>
                 <Input
-                  placeholder="Cole aqui o Token da Focus NFe correspondente ao ambiente acima"
+                  placeholder="Cole aqui o Token correspondente ao ambiente acima"
                   value={formData.focusnfe_token || ''}
                   onChange={e => setFormData({...formData, focusnfe_token: e.target.value})}
                   type="password"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Obtenha seu token no painel da Focus NFe. Se você trocar de ambiente, certifique-se de colar o token correto (Homologação ou Produção).
+                  Obtenha seu token no painel do sistema fiscal. Se você trocar de ambiente, certifique-se de colar o token correto (Homologação ou Produção).
                 </p>
               </div>
             </div>

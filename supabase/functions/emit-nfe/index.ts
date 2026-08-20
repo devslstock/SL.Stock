@@ -358,7 +358,7 @@ serve(async (req: Request) => {
         nfe_id: recordId,
         event_type: 'REJEICAO_SISTEMA',
         status: 'ERRO',
-        message: focusData.mensagem || 'Erro de validação na Focus NFe',
+        message: focusData.mensagem || 'Erro de validação no processamento fiscal',
         focus_code: focusData.codigo?.toString(),
         payload: focusData,
         created_by: callerUser.id
@@ -366,7 +366,7 @@ serve(async (req: Request) => {
 
       return new Response(JSON.stringify({ 
         success: false, 
-        error: "Erro de validação na Focus NFe",
+        error: "Erro de validação no processamento fiscal",
         details: focusData 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

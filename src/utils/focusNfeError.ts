@@ -42,7 +42,7 @@ export class FocusNFeError extends Error {
 }
 
 export function parseFocusError(errorData: any, statusCode: number, endpoint: string, docType: 'nfe' | 'mdfe' | 'empresas' | 'auth' | 'webhook', ref?: string): FocusNFeError {
-  let apiMsg = 'Erro desconhecido na API Focus NFe';
+  let apiMsg = 'Erro desconhecido na comunicação com a SEFAZ';
   
   if (errorData?.mensagem) {
     apiMsg = errorData.mensagem;
@@ -71,7 +71,7 @@ export function parseFocusError(errorData: any, statusCode: number, endpoint: st
   } else if (statusCode === 415) {
     friendlyMessage = 'Formato não suportado (415). Verifique o Content-Type.';
   } else if (statusCode === 500 || statusCode === 502 || statusCode === 503 || statusCode === 504) {
-    friendlyMessage = `Ocorreu uma instabilidade na comunicação com a SEFAZ ou Focus NFe (Status ${statusCode}). Tente novamente mais tarde.`;
+    friendlyMessage = `Ocorreu uma instabilidade na comunicação com a SEFAZ (Status ${statusCode}). Tente novamente mais tarde.`;
   }
 
   return new FocusNFeError({

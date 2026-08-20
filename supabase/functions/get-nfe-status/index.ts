@@ -99,7 +99,7 @@ serve(async (req: Request) => {
           nfe_id: nfeRecord.id,
           event_type: status === 'autorizado' ? 'AUTORIZACAO' : status === 'erro_autorizacao' ? 'REJEICAO_SEFAZ' : status.toUpperCase(),
           status: status,
-          message: status === 'autorizado' ? 'Nota Fiscal autorizada pela SEFAZ' : status === 'erro_autorizacao' ? 'Nota Fiscal rejeitada pela SEFAZ' : 'Status atualizado pela Focus NFe',
+          message: status === 'autorizado' ? 'Nota Fiscal autorizada pela SEFAZ' : status === 'erro_autorizacao' ? 'Nota Fiscal rejeitada pela SEFAZ' : 'Status atualizado pela SEFAZ',
           payload: focusData,
           created_by: callerUser.id
         });

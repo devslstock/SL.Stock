@@ -103,9 +103,9 @@ export function NfeEventHistory({ nfeId }: NfeEventHistoryProps) {
               )}
               
               {event.focus_code && (
-                <div className="mt-2 text-xs font-mono text-gray-400">
-                  Código de Retorno: {event.focus_code}
-                </div>
+                <p className="text-xs text-gray-500 font-mono">
+                  Código de Retorno (SEFAZ): {event.focus_code}
+                </p>
               )}
             </div>
           </div>

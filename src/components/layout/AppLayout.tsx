@@ -591,7 +591,7 @@ export default function AppLayout() {
                   )}
                 >
                   <RefreshCw className={cn("h-4.5 w-4.5", location.pathname.startsWith('/saas/focus-nfe') && "text-purple-500")} />
-                  Focus NFe
+                  Configurações Fiscais
                 </Link>
               </div>
 
