@@ -126,6 +126,10 @@ serve(async (req: Request) => {
       throw new Error("Não foi possível recuperar as Chaves de Acesso das NF-es. Tente novamente.");
     }
 
+    if (!route.operation?.vehicle_plate) {
+      throw new Error("A rota não possui veículo com placa cadastrada. Cadastre a placa do veículo antes de emitir o MDF-e.");
+    }
+
     // Build MDF-e Payload
     const referenceId = crypto.randomUUID();
     const mdfePayload = {
@@ -139,7 +143,7 @@ serve(async (req: Request) => {
       municipio_carregamento: company.garage_city || "SAO PAULO",
       uf_carregamento: company.garage_state || "SP",
       veiculo_tracao: {
-        placa: (route.operation?.vehicle_plate || "ABC1234").replace(/[^a-zA-Z0-9]/g, ''),
+        placa: route.operation.vehicle_plate.replace(/[^a-zA-Z0-9]/g, ''),
         tara: "1000",
         capacidade_kg: "5000",
         tipo_carroceria: "01",

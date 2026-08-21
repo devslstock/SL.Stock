@@ -39,8 +39,8 @@ serve(async (req: Request) => {
       throw new Error("docType, recordId, and justificativa are required");
     }
 
-    if (justificativa.length < 15) {
-      throw new Error("Justificativa deve ter no mínimo 15 caracteres");
+    if (justificativa.length < 15 || justificativa.length > 255) {
+      throw new Error("Justificativa deve ter entre 15 e 255 caracteres");
     }
 
     // Get Company info for Focus NFe token
