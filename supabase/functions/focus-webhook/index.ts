@@ -12,6 +12,15 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Valida o secret compartilhado enviado como query param no registro do webhook,
+    // evitando que terceiros forjem atualizações de status fiscal.
+    const expectedSecret = Deno.env.get("FOCUS_WEBHOOK_SECRET");
+    const providedSecret = new URL(req.url).searchParams.get("secret");
+    if (!expectedSecret || providedSecret !== expectedSecret) {
+      console.error("Webhook Focus NFe: secret inválido ou ausente");
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     // A Focus NFe faz POST para este webhook com um JSON body.
     const payload = await req.json();
     

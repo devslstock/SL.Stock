@@ -30,10 +30,6 @@ export default function CompanySettings() {
     enabled: !!company?.id && isManager
   })
 
-  if (!isManager) {
-    return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
-  }
-
   const [isGeocoding, setIsGeocoding] = useState(false)
   // Backup & Restore
   const [isBackingUp, setIsBackingUp] = useState(false)
@@ -44,10 +40,6 @@ export default function CompanySettings() {
   const [certificateFile, setCertificateFile] = useState<File | null>(null)
   const [certificatePassword, setCertificatePassword] = useState('')
   const [isSyncingFiscal, setIsSyncingFiscal] = useState(false)
-
-  const fileInputRef = import('react').then(m => m.useRef<HTMLInputElement>(null))
-  // Resolving useRef synchronously since it's inside component:
-  // Actually, we can just use React.useRef. We already import { useState, useEffect, useRef } from 'react' if we add it.
 
   const [formData, setFormData] = useState({
     name: '',

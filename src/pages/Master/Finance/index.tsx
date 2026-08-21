@@ -24,6 +24,7 @@ export default function SaaSFinance() {
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
@@ -249,7 +250,6 @@ export default function SaaSFinance() {
     });
   };
 
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
 
   const totalPages = Math.ceil(payments.length / itemsPerPage);

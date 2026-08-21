@@ -43,3 +43,6 @@ dashboard_real_data.txt
 /scripts/
 .vercel
 .env*
+
+# Cache local do Supabase CLI
+supabase/.temp/

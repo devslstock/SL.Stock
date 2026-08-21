@@ -225,11 +225,11 @@ export default function RouteClients() {
       if (!mdfeRecord?.id) throw new Error('Registro de MDF-e não encontrado')
       
       const uf = prompt('UF de encerramento (ex: SP):')
-      const codMun = prompt('Código IBGE do município de encerramento:')
-      if (!uf || !codMun) throw new Error('UF e Código IBGE são obrigatórios')
+      const nomeMunicipio = prompt('Nome do município de encerramento:')
+      if (!uf || !nomeMunicipio) throw new Error('UF e nome do município são obrigatórios')
 
       const { data, error } = await supabase.functions.invoke('encerrar-mdfe', {
-        body: { recordId: mdfeRecord.id, uf, codigo_municipio: codMun }
+        body: { recordId: mdfeRecord.id, sigla_uf: uf, nome_municipio: nomeMunicipio }
       })
 
       if (error) throw new Error(`Erro de conexão: ${error.message}`)

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi } from '@/api/users'
 import { useAuth } from '@/contexts/AuthContext'
@@ -62,10 +62,6 @@ export default function AccessControl() {
     queryFn: () => usersApi.getUsers(company?.id),
     enabled: !!company?.id && isManager,
   })
-
-  if (!isManager) {
-    return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
-  }
 
   const createMutation = useMutation({
     mutationFn: (data: Parameters<typeof usersApi.createUser>[0]) => usersApi.createUser(data, company?.id),
@@ -172,6 +168,10 @@ export default function AccessControl() {
     if (window.confirm('Tem certeza que deseja remover este usuário?. Esta ação não pode ser desfeita.')) {
       deleteMutation.mutate(id)
     }
+  }
+
+  if (!isManager) {
+    return <div className="p-8 text-center text-muted-foreground">Acesso restrito a gestores e administradores.</div>
   }
 
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando usuários...</div>

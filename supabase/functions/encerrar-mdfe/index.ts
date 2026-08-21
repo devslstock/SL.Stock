@@ -34,9 +34,9 @@ serve(async (req: Request) => {
 
     if (profileError || !callerProfile) throw new Error("Caller profile not found");
 
-    const { recordId, uf, codigo_municipio } = await req.json();
-    if (!recordId || !uf || !codigo_municipio) {
-      throw new Error("recordId, uf, and codigo_municipio are required");
+    const { recordId, sigla_uf, nome_municipio } = await req.json();
+    if (!recordId || !sigla_uf || !nome_municipio) {
+      throw new Error("recordId, sigla_uf, and nome_municipio are required");
     }
 
     // Get Company info for Focus NFe token
@@ -73,9 +73,9 @@ serve(async (req: Request) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        uf,
-        codigo_municipio,
-        data_encerramento: new Date().toISOString()
+        data: new Date().toISOString(),
+        sigla_uf,
+        nome_municipio
       })
     });
 

@@ -321,12 +321,14 @@ export default async function handler(req, res) {
       
       const baseUrl = 'https://api.focusnfe.com.br'
       
-      // We will register a webhook for multiple events: NFe, NFe Recebidas
-      // The exact URL would normally be determined by process.env.PUBLIC_URL or req.headers.host
-      // Because we are on vercel, we can infer it or assume a known env var.
-      const host = req.headers.host || 'slstock.com'
-      const protocol = host.includes('localhost') ? 'http' : 'https'
-      const webhookUrl = `${protocol}://${host}/api/webhook/focus`
+      // Registramos o webhook apontando direto para a Edge Function do Supabase,
+      // que é quem efetivamente atualiza nfe_records/mdfe_records (tabelas usadas pela UI).
+      // Protegido por um secret compartilhado validado na Edge Function.
+      const webhookSecret = process.env.FOCUS_WEBHOOK_SECRET
+      if (!webhookSecret) {
+        return res.status(500).json({ error: 'FOCUS_WEBHOOK_SECRET não configurado no backend.' })
+      }
+      const webhookUrl = `${supabaseUrl}/functions/v1/focus-webhook?secret=${webhookSecret}`
 
       const events = ['nfe', 'nfes_recebidas']
       const results = []

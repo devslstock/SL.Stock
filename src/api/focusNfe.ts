@@ -200,13 +200,13 @@ export const focusNfeApi = {
     });
   },
 
-  async encerrarMdfe(ref: string, uf: string, codigo_municipio: string) {
+  async encerrarMdfe(ref: string, sigla_uf: string, nome_municipio: string) {
     return focusFetch(`/v2/mdfe/${ref}/encerrar`, {
       method: 'POST',
       body: JSON.stringify({
-        uf,
-        codigo_municipio,
-        data_encerramento: new Date().toISOString()
+        data: new Date().toISOString(),
+        sigla_uf,
+        nome_municipio
       })
     });
   },

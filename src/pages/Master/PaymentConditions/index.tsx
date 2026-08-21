@@ -17,16 +17,6 @@ export default function PaymentConditions() {
   const { user, isMaster } = useAuth()
   const isManager = user?.role === 'admin' || user?.role === 'gestor' || isMaster
 
-  if (!isManager) {
-    return (
-      <div className="p-8 text-center">
-        <h2 className="text-xl font-bold text-red-500 mb-2">Acesso Negado</h2>
-        <p className="text-muted-foreground mb-4">Você não tem permissão para acessar o cadastro de condições de pagamento.</p>
-        <Button onClick={() => navigate(-1)}>Voltar</Button>
-      </div>
-    )
-  }
-
   const { data: conditions = [], isLoading } = useQuery({
     queryKey: ['payment_conditions'],
     queryFn: salesApi.getPaymentConditions,
@@ -118,6 +108,16 @@ export default function PaymentConditions() {
     if (window.confirm('Tem certeza que deseja remover esta condição de pagamento? Ela pode estar sendo usada por clientes.. Esta ação não pode ser desfeita.')) {
       deleteMutation.mutate(id)
     }
+  }
+
+  if (!isManager) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-bold text-red-500 mb-2">Acesso Negado</h2>
+        <p className="text-muted-foreground mb-4">Você não tem permissão para acessar o cadastro de condições de pagamento.</p>
+        <Button onClick={() => navigate(-1)}>Voltar</Button>
+      </div>
+    )
   }
 
   return (
