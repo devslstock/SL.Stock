@@ -120,9 +120,9 @@ export default async function handler(req, res) {
       if (company.exibir_logo_nf && company.logo_url) {
         // Remover prefixo do data URL (ex: "data:image/png;base64,")
         const base64Data = company.logo_url.replace(/^data:image\/[a-z]+;base64,/, '')
-        payload.logo = base64Data
+        payload.arquivo_logo_base64 = base64Data
       } else {
-        payload.logo = null // Forçar remoção caso tenha sido desativado
+        payload.delete_logo = true // Forçar remoção caso tenha sido desativado
       }
 
       if (certificateBase64) {
