@@ -12,7 +12,7 @@ import { Printer, RefreshCw, XCircle, FileText, AlertTriangle, FileCode, Mail } 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NfeEventHistory } from './NfeEventHistory'
 import { CceModal } from './CceModal'
-import { parseFocusNfeError } from '@/utils/focusNfeError'
+import { parseFocusError } from '@/utils/focusNfeError'
 import { downloadOrShareFile } from '@/utils/fileDownloader'
 import { CancelNfeModal } from './CancelNfeModal'
 import { EmailNfeModal } from './EmailNfeModal'
