@@ -6,6 +6,7 @@ import { deliveriesApi } from '@/api/deliveries'
 import { usersApi } from '@/api/users'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -79,8 +80,8 @@ export default function DeliveriesList() {
       queryClient.invalidateQueries({ queryKey: ['delivery_routes'] })
       toast.success('Entrega excluída com sucesso')
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao excluir: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao excluir: ${getErrorMessage(error)}`)
     }
   })
 
@@ -93,8 +94,8 @@ export default function DeliveriesList() {
       toast.success('Rota atualizada com sucesso')
       setEditingRoute(null)
     },
-    onError: (err: any) => {
-      toast.error(`Erro ao atualizar rota: ${err.message}`)
+    onError: (err: unknown) => {
+      toast.error(`Erro ao atualizar rota: ${getErrorMessage(err)}`)
     }
   })
 

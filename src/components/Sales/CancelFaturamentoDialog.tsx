@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { AlertCircle, XCircle, Trash2 } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface CancelFaturamentoDialogProps {
   orderId: string | null
@@ -32,7 +33,7 @@ export function CancelFaturamentoDialog({ orderId, onClose }: CancelFaturamentoD
       toast.success('Cobranças canceladas com sucesso.')
       setStep(2)
     },
-    onError: (e: any) => toast.error(`Erro ao cancelar cobranças: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao cancelar cobranças: ${getErrorMessage(e)}`)
   })
 
   const deleteMutation = useMutation({
@@ -46,7 +47,7 @@ export function CancelFaturamentoDialog({ orderId, onClose }: CancelFaturamentoD
       toast.success('Faturamento desfeito e cobranças apagadas. O pedido retornou para Aprovado.')
       onClose()
     },
-    onError: (e: any) => toast.error(`Erro ao excluir cobranças: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao excluir cobranças: ${getErrorMessage(e)}`)
   })
 
   const updateStatusMutation = useMutation({
@@ -59,7 +60,7 @@ export function CancelFaturamentoDialog({ orderId, onClose }: CancelFaturamentoD
       toast.success('Pedido retornou para Aprovado, mantendo o histórico de cobranças canceladas.')
       onClose()
     },
-    onError: (e: any) => toast.error(`Erro ao atualizar pedido: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao atualizar pedido: ${getErrorMessage(e)}`)
   })
 
   // Reset state on open

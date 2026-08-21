@@ -10,6 +10,7 @@ import { fiscalOperationsApi } from '@/api/fiscalOperations'
 import { Receipt, Loader2 } from 'lucide-react'
 import { nfeApi } from '@/api/nfe'
 import type { SalesOrder } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface NfeEmissionModalProps {
   isOpen: boolean
@@ -51,7 +52,7 @@ export function NfeEmissionModal({ isOpen, onClose, orderId }: NfeEmissionModalP
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       onClose()
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   if (!isOpen) return null

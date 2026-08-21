@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { ArrowLeft, ScanLine, Search, CheckCircle2, AlertTriangle, PenTool, Undo2, Camera, Plus } from 'lucide-react'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
 
@@ -126,8 +127,8 @@ export default function ReturnConference() {
         navigate(`/cargas`)
       }
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao finalizar retorno: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao finalizar retorno: ${getErrorMessage(e)}`)
     }
   })
 

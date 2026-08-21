@@ -12,6 +12,7 @@ import { financeApi } from '@/api/finance'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import { geocodeAddress } from '@/api/routing'
@@ -185,8 +186,8 @@ export default function CustomerForm() {
       queryClient.invalidateQueries({ queryKey: ['customer_payment_conditions'] })
       navigate('/cadastros/clientes')
     },
-    onError: (e: any) => {
-      toast.error(`Erro: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro: ${getErrorMessage(e)}`)
     }
   })
 
@@ -742,8 +743,8 @@ export default function CustomerForm() {
                                       equipment: eq
                                     };
                                     await generateContractPDF(enrichedOrder, company);
-                                  } catch (error: any) {
-                                    toast.error(error.message || 'Erro ao gerar o PDF do contrato.');
+                                  } catch (error: unknown) {
+                                    toast.error(getErrorMessage(error));
                                   }
                                 } else {
                                   toast.error('Nenhuma OS de entrega/troca encontrada para este equipamento.');

@@ -6,6 +6,7 @@ import { focusIntegrationApi } from '@/api/focusIntegration'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from '@/components/ui/toaster'
 import type { FocusNfeSettings } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface Props {
   initialSettings: FocusNfeSettings | null
@@ -40,7 +41,7 @@ export function SettingsTab({ initialSettings }: Props) {
       queryClient.invalidateQueries({ queryKey: ['focus_nfe_settings'] })
       toast.success('Configurações salvas com sucesso!')
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: unknown) => toast.error(getErrorMessage(e))
   })
 
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
@@ -52,9 +53,9 @@ export function SettingsTab({ initialSettings }: Props) {
       const res = await focusIntegrationApi.testConnection(testToken || undefined)
       setTestStatus('success')
       setTestMessage(res.message || 'Conexão bem sucedida!')
-    } catch (e: any) {
+    } catch (e: unknown) {
       setTestStatus('error')
-      setTestMessage(e.message)
+      setTestMessage(getErrorMessage(e))
     }
   }
 

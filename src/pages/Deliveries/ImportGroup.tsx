@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { Boxes, ArrowLeft, Send, CheckCircle2 } from 'lucide-react'
 import type { OrderGroup, SalesOrder } from '@/types/database'
 import { supabase } from '@/lib/supabase'
@@ -124,8 +125,8 @@ export default function ImportGroup() {
       queryClient.invalidateQueries({ queryKey: ['delivery_routes'] })
       navigate(`/entregas/${route.id}`)
     },
-    onError: (err: any) => {
-      toast.error(`Erro ao gerar rota: ${err.message}`)
+    onError: (err: unknown) => {
+      toast.error(`Erro ao gerar rota: ${getErrorMessage(err)}`)
     }
   })
 

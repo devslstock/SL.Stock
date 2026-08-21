@@ -13,6 +13,7 @@ import { InvoicePrintTemplate } from './InvoicePrintTemplate'
 import { useNavigate } from 'react-router-dom'
 import { useSalesCart } from '@/stores/salesCart'
 import { FileText, RefreshCw } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface OrderDetailsModalProps {
   orderId: string | null;
@@ -61,7 +62,7 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
       if (!error && data) {
         setDetails(data)
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e)
     } finally {
       setIsLoading(false)
@@ -89,9 +90,9 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
       pdf.save(`Pedido_${details.order_number}.pdf`)
       
       toast.success('PDF gerado com sucesso!')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("ERRO PDF:", error)
-      toast.error(`Erro ao gerar PDF: ${error?.message || JSON.stringify(error) || 'Desconhecido'}`)
+      toast.error(`Erro ao gerar PDF: ${getErrorMessage(error)}`)
     } finally {
       setIsGeneratingPdf(false)
     }
@@ -114,9 +115,9 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
       
       toast.success('NF-e enviada para processamento!');
       loadDetails(orderId);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(`Erro ao emitir NF-e: ${e.message || 'Desconhecido'}`);
+      toast.error(`Erro ao emitir NF-e: ${getErrorMessage(e)}`);
     } finally {
       setIsEmittingNfe(false);
     }
@@ -139,9 +140,9 @@ export function OrderDetailsModal({ orderId, isOpen, onOpenChange }: OrderDetail
       
       toast.success('Status da NF-e atualizado!');
       loadDetails(orderId!);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(`Erro ao consultar NF-e: ${e.message || 'Desconhecido'}`);
+      toast.error(`Erro ao consultar NF-e: ${getErrorMessage(e)}`);
     } finally {
       setIsCheckingNfe(false);
     }

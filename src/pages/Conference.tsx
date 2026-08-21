@@ -20,6 +20,7 @@ import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
 import { ShortageResolverModal } from '@/components/ShortageResolverModal'
 import type { Shortage } from '@/components/ShortageResolverModal'
 import { SyncGroupModal } from '@/components/SyncGroupModal'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function Conference() {
   const { id } = useParams()
@@ -195,8 +196,8 @@ export default function Conference() {
       toast.success('Carga reaberta com sucesso! Estoque restaurado.')
       setActiveTab('scan')
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao reabrir carga: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao reabrir carga: ${getErrorMessage(e)}`)
     }
   })
 
@@ -238,8 +239,8 @@ export default function Conference() {
       toast.success('Rota despachada, estoque deduzido e alertas gerados!')
       // Permanece na mesma tela para exibir o card de retorno
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao despachar rota: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao despachar rota: ${getErrorMessage(e)}`)
     }
   })
 
@@ -283,7 +284,7 @@ export default function Conference() {
       toast.success('Recebimento finalizado e estoque atualizado!')
       navigate('/recebimentos')
     },
-    onError: (e: any) => toast.error(`Erro ao finalizar recebimento: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao finalizar recebimento: ${getErrorMessage(e)}`)
   })
 
   const finalizeReturnMutation = useMutation({
@@ -326,7 +327,7 @@ export default function Conference() {
       toast.success('Retorno finalizado e estoque atualizado!')
       navigate('/recebimentos')
     },
-    onError: (e: any) => toast.error(`Erro ao finalizar retorno: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao finalizar retorno: ${getErrorMessage(e)}`)
   })
 
   const deleteOpMutation = useMutation({
@@ -336,7 +337,7 @@ export default function Conference() {
       toast.info('Rota excluída com sucesso.')
       navigate('/cargas')
     },
-    onError: (e: any) => toast.error(`Erro ao excluir rota: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao excluir rota: ${getErrorMessage(e)}`)
   })
 
   const verifyItemMutation = useMutation({
@@ -367,8 +368,8 @@ export default function Conference() {
       queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
       toast.success('Confirmação física registrada!')
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao salvar confirmação: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao salvar confirmação: ${getErrorMessage(e)}`)
     }
   })
 

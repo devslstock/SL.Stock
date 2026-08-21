@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { ArrowLeft, Plus, Trash2, ClipboardList, Truck, User, Search, Upload, AlertTriangle, RefreshCw } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
@@ -154,8 +155,8 @@ export default function CreateLoad() {
       }
       navigate('/cargas')
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao criar: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar: ${getErrorMessage(error)}`)
     }
   })
 
@@ -167,8 +168,8 @@ export default function CreateLoad() {
       queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
       navigate(`/conferencia/${id}`)
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao atualizar carga: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar carga: ${getErrorMessage(error)}`)
     }
   })
 

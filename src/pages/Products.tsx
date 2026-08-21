@@ -17,6 +17,7 @@ import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { getErrorMessage } from '@/utils/errorMessage'
 export default function Products() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -61,12 +62,12 @@ export default function Products() {
       setIsDialogOpen(false)
       setEditingProduct(null)
     },
-    onError: (e: any) => {
-      const msg = e.message || ''
+    onError: (e: unknown) => {
+      const msg = getErrorMessage(e)
       if (msg.includes('products_company_code_key') || (msg.includes('unique constraint') && msg.includes('code'))) {
         toast.error('Código já está cadastrado')
       } else {
-        toast.error(`Erro ao criar: ${e.message}`)
+        toast.error(`Erro ao criar: ${msg}`)
       }
     }
   })
@@ -79,12 +80,12 @@ export default function Products() {
       setIsDialogOpen(false)
       setEditingProduct(null)
     },
-    onError: (e: any) => {
-      const msg = e.message || ''
+    onError: (e: unknown) => {
+      const msg = getErrorMessage(e)
       if (msg.includes('products_company_code_key') || (msg.includes('unique constraint') && msg.includes('code'))) {
         toast.error('Código já está cadastrado')
       } else {
-        toast.error(`Erro ao atualizar: ${e.message}`)
+        toast.error(`Erro ao atualizar: ${msg}`)
       }
     }
   })
@@ -103,11 +104,12 @@ export default function Products() {
       queryClient.invalidateQueries({ queryKey: ['products'] })
       toast.success('Todos os produtos foram removidos.')
     },
-    onError: (e: any) => {
-      if (e.message?.includes('foreign key') || e.message?.includes('violates')) {
+    onError: (e: unknown) => {
+      const msg = getErrorMessage(e)
+      if (msg.includes('foreign key') || msg.includes('violates')) {
         toast.error('Existem produtos vinculados a cargas. Exclua as cargas primeiro.')
       } else {
-        toast.error(`Erro ao remover: ${e.message}`)
+        toast.error(`Erro ao remover: ${msg}`)
       }
     }
   })
@@ -118,8 +120,8 @@ export default function Products() {
       queryClient.invalidateQueries({ queryKey: ['products'] })
       toast.success('Todo o estoque foi ajustado para 100 itens!')
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao ajustar estoque: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao ajustar estoque: ${getErrorMessage(e)}`)
     }
   })
 
@@ -159,7 +161,7 @@ export default function Products() {
       queryClient.invalidateQueries({ queryKey: ['products'] })
       toast.success(`Estoque previsto corrigido! ${updates} produtos atualizados.`)
     },
-    onError: (e: any) => toast.error(`Erro ao corrigir: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao corrigir: ${getErrorMessage(e)}`)
   })
 
   const groups = useMemo(() => {
@@ -377,14 +379,14 @@ export default function Products() {
                   products.push(newProduct)
                 }
                 count++
-              } catch (err: any) {
+              } catch (err: unknown) {
                 console.error(err)
                 errors++
-                const msg = err.message || ''
+                const msg = getErrorMessage(err)
                 if (msg.includes('products_company_code_key') || (msg.includes('unique constraint') && msg.includes('code'))) {
                   lastError = 'Código já está cadastrado'
                 } else {
-                  lastError = err.message || JSON.stringify(err)
+                  lastError = msg
                 }
               }
             }

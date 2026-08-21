@@ -7,6 +7,7 @@ import { ReceiptMethodFormModal } from './ReceiptMethodFormModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import type { ReceiptMethod } from '@/types/database'
 
 export default function ReceiptMethods() {
@@ -31,8 +32,8 @@ export default function ReceiptMethods() {
       queryClient.invalidateQueries({ queryKey: ['receipt_methods'] })
       toast.success('Status atualizado com sucesso!')
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao atualizar status: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar status: ${getErrorMessage(error)}`)
     }
   })
 

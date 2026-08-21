@@ -10,6 +10,7 @@ import { ArrowLeft, ScanLine, Search, CheckCircle2, AlertTriangle, Save, PenTool
 import { useAuth } from '@/contexts/AuthContext'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
 import { generateDeliveryProofPDF } from '@/utils/pdf'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function ClientConference() {
   const { clientId } = useParams()
@@ -74,8 +75,8 @@ export default function ClientConference() {
       toast.success('Item removido com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['delivery_items', clientId] })
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao remover item: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao remover item: ${getErrorMessage(e)}`)
     }
   })
 
@@ -129,8 +130,8 @@ export default function ClientConference() {
       toast.success('Pedido retornado com sucesso!')
       navigate(`/entregas/${client?.delivery_route_id || ''}`)
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao retornar pedido: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao retornar pedido: ${getErrorMessage(error)}`)
     }
   })
 
@@ -147,8 +148,8 @@ export default function ClientConference() {
       queryClient.invalidateQueries({ queryKey: ['delivery_client', clientId] })
       toast.success('Pedido reaberto com sucesso!')
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao reabrir pedido: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao reabrir pedido: ${getErrorMessage(error)}`)
     }
   })
 
@@ -315,8 +316,8 @@ export default function ClientConference() {
             await updateItemMutation.mutateAsync({ itemId: item.id, qty: item.quantity_scanned, status: 'divergent', return_reason: reason, requested_by_name: user?.name || '' })
           }
         }
-      } catch (error: any) {
-        toast.error(`Erro ao atualizar item divergente: ${error.message}`)
+      } catch (error: unknown) {
+        toast.error(`Erro ao atualizar item divergente: ${getErrorMessage(error)}`)
         setIsFinishing(false)
         return
       }

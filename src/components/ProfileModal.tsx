@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { usersApi } from '@/api/users'
 import { supabase } from '@/lib/supabase'
 import { Camera, Loader2, User as UserIcon } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface ProfileModalProps {
   isOpen: boolean
@@ -90,9 +91,9 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
       toast.success('Perfil atualizado com sucesso!')
       onClose()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating profile:', error)
-      toast.error(error.message || 'Erro ao atualizar perfil')
+      toast.error(getErrorMessage(error) || 'Erro ao atualizar perfil')
     } finally {
       setIsLoading(false)
     }

@@ -18,6 +18,7 @@ import { ProductSearchInline } from '../SalesApp/NewOrder/ProductSearchInline'
 import { supabase } from '@/lib/supabase'
 import { parsePaymentCondition } from '@/utils/paymentParser'
 import { FiscalEmissionDialog } from '@/components/Fiscal/FiscalEmissionDialog'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { ItemDetailsModal } from './ItemDetailsModal'
 
 export default function AdminOrderEdit() {
@@ -234,7 +235,7 @@ export default function AdminOrderEdit() {
       queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
       toast.success('Pedido e itens atualizados com sucesso!')
     },
-    onError: (e: any) => toast.error(`Erro ao atualizar: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao atualizar: ${getErrorMessage(e)}`)
   })
 
   const emitirMutation = useMutation({
@@ -247,7 +248,7 @@ export default function AdminOrderEdit() {
       queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
       toast.success('Nota Fiscal emitida com sucesso!')
     },
-    onError: (e: any) => toast.error(`Erro ao emitir NF: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao emitir NF: ${getErrorMessage(e)}`)
   })
 
   const faturarMutation = useMutation({
@@ -259,7 +260,7 @@ export default function AdminOrderEdit() {
       queryClient.invalidateQueries({ queryKey: ['sales_order', id] })
       toast.success('Pedido faturado com sucesso! Cobranças geradas.')
     },
-    onError: (e: any) => toast.error(`Erro ao faturar: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao faturar: ${getErrorMessage(e)}`)
   })
 
   const handleFaturar = () => {
@@ -321,8 +322,8 @@ export default function AdminOrderEdit() {
       })
       setLocalItems(newItems)
       toast.info('Valores atualizados na tela! Clique em Salvar Alterações para gravar.')
-    } catch (e: any) {
-      toast.error('Erro ao atualizar preços: ' + e.message)
+    } catch (e: unknown) {
+      toast.error('Erro ao atualizar preços: ' + getErrorMessage(e))
     } finally {
       setIsUpdatingPrices(false)
     }
@@ -696,7 +697,7 @@ export default function AdminOrderEdit() {
                         queryClient.invalidateQueries({ queryKey: ['order_groups'] })
                         setFormData({...formData, order_group_id: newGroup.id})
                         toast.success('Grupo criado!')
-                      } catch (err: any) {
+                      } catch (err: unknown) {
                         toast.error('Erro ao criar grupo')
                         setFormData({...formData, order_group_id: ''})
                       }

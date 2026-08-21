@@ -15,6 +15,7 @@ import { focusIntegrationApi } from '@/api/focusIntegration'
 import { supabase } from '@/lib/supabase'
 import { Database, Download, Upload, Crown, Star, CheckCircle2, ArrowUpCircle, Image as ImageIcon, Receipt, Key as KeyIcon, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function CompanySettings() {
   const queryClient = useQueryClient()
@@ -122,7 +123,7 @@ export default function CompanySettings() {
       toast.success('Dados da empresa atualizados com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['company_settings'] })
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const requestUpgradeMutation = useMutation({
@@ -138,7 +139,7 @@ export default function CompanySettings() {
     onSuccess: () => {
       toast.success('Solicitação enviada com sucesso! Nossa equipe comercial entrará em contato em breve para apresentar os benefícios do Upgrade.');
     },
-    onError: (err: any) => toast.error(`Erro ao enviar solicitação: ${err.message}`)
+    onError: (err: unknown) => toast.error(`Erro ao enviar solicitação: ${getErrorMessage(err)}`)
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -184,8 +185,8 @@ export default function CompanySettings() {
       URL.revokeObjectURL(url)
 
       toast.success('Backup gerado e baixado com sucesso!')
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao gerar backup')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || 'Erro ao gerar backup')
     } finally {
       setIsBackingUp(false)
     }
@@ -205,8 +206,8 @@ export default function CompanySettings() {
       setCertificateFile(null)
       setCertificatePassword('')
       queryClient.invalidateQueries({ queryKey: ['company_settings'] })
-    } catch (err: any) {
-      toast.error('Erro na sincronização fiscal: ' + err.message)
+    } catch (err: unknown) {
+      toast.error('Erro na sincronização fiscal: ' + getErrorMessage(err))
     } finally {
       setIsSyncingFiscal(false)
     }
@@ -279,8 +280,8 @@ export default function CompanySettings() {
 
       toast.success('Backup restaurado com sucesso!')
       queryClient.invalidateQueries()
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao restaurar backup')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || 'Erro ao restaurar backup')
     } finally {
       setIsRestoring(false)
       setRestoreProgress('')
@@ -790,8 +791,8 @@ export default function CompanySettings() {
                       try {
                         await focusIntegrationApi.criarWebhook(companyData.cnpj!)
                         toast.success('Webhooks configurados com sucesso!')
-                      } catch (e: any) {
-                        toast.error(e.message)
+                      } catch (e: unknown) {
+                        toast.error(getErrorMessage(e))
                       }
                     }}
                   >

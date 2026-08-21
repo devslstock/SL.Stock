@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { ArrowLeft, Plus, ScanLine, Search, CheckCircle2, LayoutGrid, Camera, ChevronRight, ChevronDown, ScanBarcode, Trash2 } from 'lucide-react'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
 
@@ -278,8 +279,8 @@ function AreaCountView({ inventory, area, allProducts, user, onBack }: {
         if (navigator.vibrate) navigator.vibrate(50)
       } catch (e) {}
     },
-    onError: (error: any) => {
-      toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro: ${getErrorMessage(error)}`)
       if (navigator.vibrate) navigator.vibrate([200, 100, 200])
     }
   })
@@ -292,7 +293,7 @@ function AreaCountView({ inventory, area, allProducts, user, onBack }: {
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['planned_inventory_counts'] }),
-    onError: (error: any) => toast.error(`Erro ao atualizar quantidade: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao atualizar quantidade: ${getErrorMessage(error)}`)
   })
 
   const deleteItemMutation = useMutation({
@@ -304,7 +305,7 @@ function AreaCountView({ inventory, area, allProducts, user, onBack }: {
       queryClient.invalidateQueries({ queryKey: ['planned_inventory_counts'] })
       toast.success('Item removido')
     },
-    onError: (error: any) => toast.error(`Erro ao apagar item: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao apagar item: ${getErrorMessage(error)}`)
   })
 
   const updateAreaStatusMutation = useMutation({
@@ -318,7 +319,7 @@ function AreaCountView({ inventory, area, allProducts, user, onBack }: {
       queryClient.invalidateQueries({ queryKey: ['planned_inventory_areas'] })
       toast.success('Status da área atualizado')
     },
-    onError: (error: any) => toast.error(`Erro ao atualizar status: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao atualizar status: ${getErrorMessage(error)}`)
   })
 
   const processScannedBarcode = (raw: string) => {

@@ -5,6 +5,7 @@ import { deliveriesApi } from '@/api/deliveries'
 import { toast } from '@/components/ui/toaster'
 import { AlertTriangle, Minus, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export interface Shortage {
   product_id: string
@@ -61,8 +62,8 @@ export function ShortageResolverModal({ isOpen, onClose, onResolved, shortages, 
       // 2. Fetch Delivery Clients and Items
       const clientsData = await deliveriesApi.getDeliveryClients(routeData.id)
       setClients(clientsData || [])
-    } catch (err: any) {
-      toast.error('Erro ao buscar dados da rota: ' + err.message)
+    } catch (err: unknown) {
+      toast.error('Erro ao buscar dados da rota: ' + getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }
@@ -134,8 +135,8 @@ export function ShortageResolverModal({ isOpen, onClose, onResolved, shortages, 
       await Promise.all(promises)
       toast.success('Faltas resolvidas e pedidos ajustados com sucesso!')
       onResolved()
-    } catch (err: any) {
-      toast.error('Erro ao salvar cortes: ' + err.message)
+    } catch (err: unknown) {
+      toast.error('Erro ao salvar cortes: ' + getErrorMessage(err))
     } finally {
       setIsSaving(false)
     }

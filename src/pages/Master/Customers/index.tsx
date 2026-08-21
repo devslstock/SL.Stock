@@ -13,6 +13,7 @@ import { toast } from '@/components/ui/toaster'
 import { ActionMenu, ActionMenuItem } from '@/components/ui/action-menu'
 import { useAuth } from '@/contexts/AuthContext'
 import { Pagination } from '@/components/ui/Pagination'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function CustomersList() {
   const queryClient = useQueryClient()
@@ -82,8 +83,8 @@ export default function CustomersList() {
       toast.success('Cliente removido com sucesso')
       queryClient.invalidateQueries({ queryKey: ['customers'] })
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao remover cliente: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao remover cliente: ${getErrorMessage(e)}`)
     }
   })
 
@@ -100,8 +101,8 @@ export default function CustomersList() {
       queryClient.invalidateQueries({ queryKey: ['customers'] })
       setIsImporting(false)
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao importar: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao importar: ${getErrorMessage(e)}`)
       setIsImporting(false)
     }
   })
@@ -202,7 +203,7 @@ export default function CustomersList() {
           }
 
           importMutation.mutate(payload)
-        } catch (e: any) {
+        } catch (e: unknown) {
           toast.error('Erro ao ler a planilha. Verifique o formato.')
           setIsImporting(false)
         }

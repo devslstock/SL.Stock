@@ -13,6 +13,7 @@ import { toast } from '@/components/ui/toaster'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { History, PenTool, Wrench, PackagePlus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import type { EquipmentOrder, Supply } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface ExecutionModalProps {
   isOpen: boolean
@@ -196,7 +197,7 @@ export function ExecutionModal({ isOpen, onClose, order }: ExecutionModalProps) 
       queryClient.invalidateQueries({ queryKey: ['equipments'] })
       onClose()
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const addPart = () => {

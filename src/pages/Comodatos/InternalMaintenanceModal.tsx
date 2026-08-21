@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toaster'
 import { PackagePlus, Trash2 } from 'lucide-react'
 import type { Equipment, Supply } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface InternalMaintenanceModalProps {
   isOpen: boolean
@@ -118,7 +119,7 @@ export function InternalMaintenanceModal({ isOpen, onClose, equipment }: Interna
       queryClient.invalidateQueries({ queryKey: ['supplies'] })
       onClose()
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const addPart = () => {

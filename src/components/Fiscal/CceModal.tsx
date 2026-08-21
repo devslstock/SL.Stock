@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/ui/toaster'
 import { Loader2, FileText, AlertCircle } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface CceModalProps {
   isOpen: boolean
@@ -39,9 +40,9 @@ export function CceModal({ isOpen, onClose, nfeId, onSuccess }: CceModalProps) {
       toast.success('Carta de Correção emitida com sucesso!')
       onSuccess()
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao emitir CC-e:', err)
-      toast.error(err.message || 'Erro ao emitir Carta de Correção. Verifique sua comunicação com a SEFAZ.')
+      toast.error(getErrorMessage(err) || 'Erro ao emitir Carta de Correção. Verifique sua comunicação com a SEFAZ.')
     } finally {
       setIsSubmitting(false)
     }

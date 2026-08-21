@@ -1,5 +1,7 @@
 import type { TestBattery } from '../types';
 import { focusNfeApi } from '@/api/focusNfe';
+import type { FocusNFeError } from '@/utils/focusNfeError';
+import { getErrorMessage } from '@/utils/errorMessage';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -22,11 +24,13 @@ export const fiscalTests: TestBattery[] = [
           try {
             const emp = await focusNfeApi.checkCompany(cnpj);
             ctx.log(`Empresa encontrada: ${emp.nome}`, emp);
-          } catch (e: any) {
-             if (e.statusCode === 401 || e.isAuthenticationError) {
-               throw new Error(`Falha de Autenticação na API Focus: ${e.message}`);
+          } catch (e: unknown) {
+             const fe = e as Partial<FocusNFeError>;
+             const msg = getErrorMessage(e);
+             if (fe.statusCode === 401 || fe.isAuthenticationError) {
+               throw new Error(`Falha de Autenticação na API Focus: ${msg}`);
              } else {
-               ctx.log(`Aviso (CNPJ não encontrado): ${e.message}. Continuando os testes.`);
+               ctx.log(`Aviso (CNPJ não encontrado): ${msg}. Continuando os testes.`);
              }
           }
         }
@@ -52,15 +56,17 @@ export const fiscalTests: TestBattery[] = [
           try {
             const nfeRes = await focusNfeApi.emitirNfe(ref, payload);
             ctx.log('NFe enviada para processamento', nfeRes);
-          } catch (e: any) {
-            if (e.isCertificateError) {
+          } catch (e: unknown) {
+            const fe = e as Partial<FocusNFeError>;
+            const msg = getErrorMessage(e);
+            if (fe.isCertificateError) {
               ctx.log('Integração OK, mas SEFAZ/Focus barrou por falta de certificado', e);
               (globalThis as any).__TEST_FSC_CERT_ERROR = true;
-            } else if (e.message?.includes('CNPJ do emitente não autorizado') || e.isAuthenticationError) {
+            } else if (msg?.includes('CNPJ do emitente não autorizado') || fe.isAuthenticationError) {
               ctx.log('Integração OK, mas CNPJ de teste não está autorizado para emitir NFe.', e);
               (globalThis as any).__TEST_FSC_CERT_ERROR = true;
             } else {
-              throw new Error(`Falha envio NFe: ${e.message}`);
+              throw new Error(`Falha envio NFe: ${msg}`);
             }
           }
         }
@@ -91,7 +97,7 @@ export const fiscalTests: TestBattery[] = [
                 consultError = statusRes;
                 break;
               }
-            } catch (e: any) {
+            } catch (e: unknown) {
               consultError = e;
               break;
             }
@@ -114,11 +120,13 @@ export const fiscalTests: TestBattery[] = [
             const pdfBlob = await focusNfeApi.generateNFeDanfePreview(payload);
             ctx.assert(pdfBlob.size > 0, 'PDF Vazio');
             ctx.log(`DANFE gerado com sucesso. Tamanho: ${pdfBlob.size} bytes`);
-          } catch (e: any) {
-            if (e.message?.includes('CNPJ do emitente não autorizado') || e.isCertificateError || e.isAuthenticationError) {
+          } catch (e: unknown) {
+            const fe = e as Partial<FocusNFeError>;
+            const msg = getErrorMessage(e);
+            if (msg?.includes('CNPJ do emitente não autorizado') || fe.isCertificateError || fe.isAuthenticationError) {
               ctx.log('Integração OK, mas SEFAZ rejeitou o preview devido a CNPJ/Certificado de teste.', e);
             } else {
-              throw new Error(`Erro DANFE Preview: ${e.message}`);
+              throw new Error(`Erro DANFE Preview: ${msg}`);
             }
           }
         }
@@ -159,13 +167,15 @@ export const fiscalTests: TestBattery[] = [
           try {
             const mdfeRes = await focusNfeApi.emitirMdfe(ref, payload);
             ctx.log('MDFe enviado para processamento', mdfeRes);
-          } catch (e: any) {
-            if (e.isCertificateError) {
+          } catch (e: unknown) {
+            const fe = e as Partial<FocusNFeError>;
+            const msg = getErrorMessage(e);
+            if (fe.isCertificateError) {
               ctx.log('Integração OK, barrado por falta de certificado', e);
-            } else if (e.message?.includes('CNPJ do emitente não autorizado') || e.isAuthenticationError) {
+            } else if (msg?.includes('CNPJ do emitente não autorizado') || fe.isAuthenticationError) {
               ctx.log('Integração OK, mas CNPJ de teste não está autorizado para emitir MDFe.', e);
             } else {
-              throw new Error(`Falha envio MDFe: ${e.message}`);
+              throw new Error(`Falha envio MDFe: ${msg}`);
             }
           }
         }
@@ -177,11 +187,12 @@ export const fiscalTests: TestBattery[] = [
            try {
              const mdfeConsult = await focusNfeApi.consultarMdfe(ref);
              ctx.log('Consulta MDFe realizada', mdfeConsult);
-           } catch(e: any) {
-              if (e.isCertificateError || e.isAuthenticationError) {
+           } catch(e: unknown) {
+              const fe = e as Partial<FocusNFeError>;
+              if (fe.isCertificateError || fe.isAuthenticationError) {
                 ctx.log('Integração OK, barrado por falta de certificado ou permissão', e);
               } else {
-                throw new Error(`Falha consulta MDFe: ${e.message}`);
+                throw new Error(`Falha consulta MDFe: ${getErrorMessage(e)}`);
               }
            }
         }

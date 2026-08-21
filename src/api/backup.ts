@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export interface BackupData {
   version: string;
@@ -155,8 +156,8 @@ export const backupApi = {
       await upsertData('equipments', backup.data.equipments)
 
       onProgress?.('Restauração concluída com sucesso!')
-    } catch (e: any) {
-      throw new Error(e.message || 'Falha durante o processo de restauração.')
+    } catch (e: unknown) {
+      throw new Error(getErrorMessage(e) || 'Falha durante o processo de restauração.')
     }
   }
 }

@@ -1,5 +1,6 @@
 import db from '@/db/db';
 import { deliveriesApi } from '@/api/deliveries';
+import { getErrorMessage } from '@/utils/errorMessage';
 
 class SyncManager {
   private isSyncing = false;
@@ -72,10 +73,10 @@ class SyncManager {
           if (action.id) {
             await db.sync_queue.delete(action.id);
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error(`[SyncManager] Failed to sync action ${action.id}`, error);
           if (action.id) {
-            await db.sync_queue.update(action.id, { status: 'failed', error: error.message });
+            await db.sync_queue.update(action.id, { status: 'failed', error: getErrorMessage(error) });
           }
         }
       }

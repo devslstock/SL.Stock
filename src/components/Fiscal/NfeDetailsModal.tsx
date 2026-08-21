@@ -22,6 +22,7 @@ import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/ui/toaster'
 import { Loader2 } from 'lucide-react'
 import { nfeApi } from '@/api/nfe'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface NfeDetailsModalProps {
   isOpen: boolean
@@ -95,9 +96,9 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
       
       toast.success('Status sincronizado com a SEFAZ!')
       onRefresh()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao buscar status NFe:', err)
-      toast.error(err.message || 'Erro ao sincronizar status')
+      toast.error(getErrorMessage(err) || 'Erro ao sincronizar status')
       onRefresh() // Atualiza a tela mesmo em erro pra puxar DB
     } finally {
       setIsRefreshing(false)
@@ -127,8 +128,8 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
           filename: `NFe_${nfe.nfe_number || nfe.id.slice(0,8)}.xml`
         })
       }
-    } catch (err: any) {
-      toast.error(err.message || `Erro ao visualizar ${type.toUpperCase()}`);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || `Erro ao visualizar ${type.toUpperCase()}`);
     } finally {
       if (type === 'pdf') setIsDownloadingPdf(false)
       else setIsDownloadingXml(false)
@@ -143,8 +144,8 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
         const ext = type === 'pdf' ? '.pdf' : '.xml';
         await downloadOrShareFile(blob, `Documento-${nfe.nfe_number || nfe.id.slice(0,8)}${ext}`);
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao baixar arquivo');
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || 'Erro ao baixar arquivo');
     }
   }
 

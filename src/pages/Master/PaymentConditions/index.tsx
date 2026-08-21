@@ -10,6 +10,7 @@ import { toast } from '@/components/ui/toaster'
 import { Banknote, Plus, Pencil, Search, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Pagination } from '@/components/ui/Pagination'
+import { getErrorMessage } from '@/utils/errorMessage'
 export default function PaymentConditions() {
   const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
@@ -29,7 +30,7 @@ export default function PaymentConditions() {
       queryClient.invalidateQueries({ queryKey: ['payment_conditions'] })
       toast.success('Status atualizado')
     },
-    onError: (e: any) => toast.error(`Erro: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro: ${getErrorMessage(e)}`)
   })
 
   const deleteMutation = useMutation({
@@ -38,7 +39,7 @@ export default function PaymentConditions() {
       queryClient.invalidateQueries({ queryKey: ['payment_conditions'] })
       toast.success('Condição removida')
     },
-    onError: (e: any) => toast.error(`Erro: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro: ${getErrorMessage(e)}`)
   })
 
   const filteredConditions = conditions.filter(c => 

@@ -9,6 +9,7 @@ import { salesApi } from '@/api/sales'
 import { operationsApi } from '@/api/operations'
 import { deliveriesApi } from '@/api/deliveries'
 import type { OperationItem, DeliveryClient } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface Difference {
   product_code: string
@@ -264,8 +265,8 @@ export function SyncGroupModal({
 
       setClientDiffs(analyzedClientDiffs)
       setHasAnalyzed(true)
-    } catch (err: any) {
-      toast.error(`Erro ao analisar alterações: ${err.message}`)
+    } catch (err: unknown) {
+      toast.error(`Erro ao analisar alterações: ${getErrorMessage(err)}`)
     } finally {
       setIsAnalyzing(false)
     }
@@ -470,8 +471,8 @@ export function SyncGroupModal({
       }
       onSyncComplete()
       onClose()
-    } catch (err: any) {
-      toast.error(`Erro ao sincronizar: ${err.message}`)
+    } catch (err: unknown) {
+      toast.error(`Erro ao sincronizar: ${getErrorMessage(err)}`)
     } finally {
       setIsSyncing(false)
     }

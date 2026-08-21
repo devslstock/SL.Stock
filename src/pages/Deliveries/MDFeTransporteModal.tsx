@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Plus, Trash2, MapPin, Truck, FileText, ShieldAlert } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface Props {
   isOpen: boolean
@@ -146,8 +147,8 @@ export function MDFeTransporteModal({ isOpen, onClose, routeId }: Props) {
         if (error) throw error
       }
       onClose()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

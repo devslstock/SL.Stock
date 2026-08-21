@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/toaster';
 import { CheckCircle2, AlertTriangle } from 'lucide-react';
+import { getErrorMessage } from '@/utils/errorMessage';
 
 export default function ResetPasswordAuto() {
   const navigate = useNavigate();
@@ -40,10 +41,10 @@ export default function ResetPasswordAuto() {
         await supabase.auth.signOut();
         
         setStatus('success');
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err);
         setStatus('error');
-        toast.error(err.message || 'Erro ao processar o link.');
+        toast.error(getErrorMessage(err) || 'Erro ao processar o link.');
       }
     };
 

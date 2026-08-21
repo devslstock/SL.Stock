@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { ArrowLeft, CheckCircle2, Eraser, PenTool, MapPin, MapPinOff } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation'
@@ -62,8 +63,8 @@ export default function SignaturePad() {
         navigate('/entregas')
       }
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao salvar: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao salvar: ${getErrorMessage(error)}`)
     }
   })
 
@@ -111,8 +112,8 @@ export default function SignaturePad() {
         signature_lat: location?.lat || null,
         signature_lng: location?.lng || null
       })
-    } catch (err: any) {
-      toast.error(`Erro ao processar a assinatura: ${err.message}`)
+    } catch (err: unknown) {
+      toast.error(`Erro ao processar a assinatura: ${getErrorMessage(err)}`)
     }
   }
 

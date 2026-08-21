@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/ui/toaster'
 import { Loader2, XCircle, AlertCircle } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface CancelNfeModalProps {
   isOpen: boolean
@@ -52,9 +53,9 @@ export function CancelNfeModal({ isOpen, onClose, nfeId, onSuccess }: CancelNfeM
       toast.success('NF-e cancelada com sucesso!')
       onSuccess()
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao cancelar NF-e:', err)
-      toast.error(err.message || 'Erro ao cancelar a NF-e. Verifique a comunicação com a SEFAZ.')
+      toast.error(getErrorMessage(err) || 'Erro ao cancelar a NF-e. Verifique a comunicação com a SEFAZ.')
     } finally {
       setIsSubmitting(false)
     }

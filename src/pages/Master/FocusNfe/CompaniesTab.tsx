@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { Badge } from '@/components/ui/badge'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export function CompaniesTab() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -35,8 +36,8 @@ export function CompaniesTab() {
       toast.success(variables.isDryRun ? 'Simulação (Dry Run) bem sucedida!' : 'Empresa sincronizada com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['focus_nfe_companies'] })
     },
-    onError: (e: any) => {
-      toast.error(e.message || 'Erro ao sincronizar empresa')
+    onError: (e: unknown) => {
+      toast.error(getErrorMessage(e))
       queryClient.invalidateQueries({ queryKey: ['focus_nfe_companies'] })
     }
   })

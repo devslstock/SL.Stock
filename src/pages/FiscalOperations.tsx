@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { FileText, Plus, Pencil, Trash2, X, Save, ShieldCheck } from 'lucide-react'
 import type { FiscalOperation } from '@/types/database'
 import cfopList from '@/data/cfop.json'
@@ -138,7 +139,7 @@ export default function FiscalOperations() {
       setIsModalOpen(false)
       resetForm()
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const deleteMutation = useMutation({
@@ -147,7 +148,7 @@ export default function FiscalOperations() {
       queryClient.invalidateQueries({ queryKey: ['fiscal_operations'] })
       toast.success('Operação removida!')
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const resetForm = () => {

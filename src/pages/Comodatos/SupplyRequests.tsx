@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Plus, Tag, Check, X, Clock } from 'lucide-react'
 import type { SupplyRequest } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function SupplyRequests() {
   const queryClient = useQueryClient()
@@ -56,7 +57,7 @@ export default function SupplyRequests() {
       queryClient.invalidateQueries({ queryKey: ['supply_requests'] })
       setIsModalOpen(false)
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const updateStatusMutation = useMutation({
@@ -66,7 +67,7 @@ export default function SupplyRequests() {
       queryClient.invalidateQueries({ queryKey: ['supply_requests'] })
       queryClient.invalidateQueries({ queryKey: ['supplies'] }) // atualiza estoque
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const handleSubmit = (e: React.FormEvent) => {

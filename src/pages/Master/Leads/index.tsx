@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Phone, Mail, Trash2, User, Calendar, MessageSquare, Search, Building2, HelpCircle } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
+import { getErrorMessage } from '@/utils/errorMessage';
 
 export default function SaaSLeads() {
   const { isMaster } = useAuth();
@@ -25,8 +26,8 @@ export default function SaaSLeads() {
       queryClient.invalidateQueries({ queryKey: ['system_leads'] });
       toast.success('Lead removido com sucesso!');
     },
-    onError: (err: any) => {
-      toast.error('Erro ao remover lead: ' + err.message);
+    onError: (err: unknown) => {
+      toast.error('Erro ao remover lead: ' + getErrorMessage(err));
     }
   });
 

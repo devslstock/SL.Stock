@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { ArrowLeft, Save, Banknote } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function PaymentConditionForm() {
   const { id } = useParams()
@@ -48,7 +49,7 @@ export default function PaymentConditionForm() {
       toast.success(isEditing ? 'Condição atualizada' : 'Condição criada')
       navigate('/cadastros/condicoes-pagamento')
     },
-    onError: (e: any) => toast.error(`Erro: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro: ${getErrorMessage(e)}`)
   })
 
   const handleSubmit = (e: React.FormEvent) => {

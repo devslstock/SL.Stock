@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function RegionForm() {
   const { id } = useParams()
@@ -47,8 +48,8 @@ export default function RegionForm() {
       queryClient.invalidateQueries({ queryKey: ['regions'] })
       navigate('/cadastros/regioes')
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao salvar região: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao salvar região: ${getErrorMessage(e)}`)
     }
   })
 

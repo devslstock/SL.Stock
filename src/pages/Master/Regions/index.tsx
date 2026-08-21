@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
 import { Pagination } from '@/components/ui/Pagination'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function RegionsList() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -26,8 +27,8 @@ export default function RegionsList() {
       toast.success('Região removida com sucesso')
       queryClient.invalidateQueries({ queryKey: ['regions'] })
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao remover região: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao remover região: ${getErrorMessage(e)}`)
     }
   })
 

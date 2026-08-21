@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
 import { salesApi } from '@/api/sales'
 import { productsApi } from '@/api/products'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface ImportOrdersModalProps {
   isOpen: boolean
@@ -287,8 +288,8 @@ export function ImportOrdersModal({ isOpen, onOpenChange }: ImportOrdersModalPro
         toast.success(`${createdCount} pedidos importados com sucesso!`)
         queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
         onOpenChange(false)
-      } catch (err: any) {
-        toast.error(`Erro ao processar planilha: ${err.message}`)
+      } catch (err: unknown) {
+        toast.error(`Erro ao processar planilha: ${getErrorMessage(err)}`)
       } finally {
         setIsImporting(false)
         if (fileInputRef.current) fileInputRef.current.value = ''

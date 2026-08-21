@@ -1,4 +1,5 @@
 import type { TestBattery, TestContext, TestExecutionResult, TestLog, TestStatus } from './types';
+import { getErrorMessage } from '@/utils/errorMessage';
 
 export class TestRunner {
   
@@ -69,10 +70,10 @@ export class TestRunner {
 
       status = 'PASSOU';
       appendLog('success', `Bateria concluída com sucesso! Todos os testes passaram.`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       // 3. ERROR CATCHING
-      errorMsg = e.message || 'Erro desconhecido';
-      stackTrace = e.stack;
+      errorMsg = getErrorMessage(e);
+      stackTrace = e instanceof Error ? e.stack : undefined;
       
       if (errorMsg?.includes('row-level security policy')) {
         status = 'BLOQUEADO';
@@ -88,12 +89,13 @@ export class TestRunner {
         try {
           await battery.cleanup(ctx);
           appendLog('success', 'Limpeza concluída.');
-        } catch (cleanupError: any) {
-          appendLog('error', `Falha ao executar limpeza: ${cleanupError.message}`);
+        } catch (cleanupError: unknown) {
+          const cleanupMsg = getErrorMessage(cleanupError);
+          appendLog('error', `Falha ao executar limpeza: ${cleanupMsg}`);
           if (status === 'PASSOU') {
              // Se o teste passou mas o cleanup falhou, consideramos como alerta ou falha parcial.
              status = 'FALHOU';
-             errorMsg = `Bateria passou, mas CLEANUP falhou: ${cleanupError.message}`;
+             errorMsg = `Bateria passou, mas CLEANUP falhou: ${cleanupMsg}`;
           }
         }
       }

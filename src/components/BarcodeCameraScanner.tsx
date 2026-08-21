@@ -86,7 +86,7 @@ export function BarcodeCameraScanner({ isOpen, onClose, onScan }: BarcodeCameraS
           setHasPermission(false);
           setPermissionError('Nenhuma câmera encontrada no dispositivo.');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setHasPermission(false);
         setPermissionError(
           'A permissão para o uso da câmera foi negada ou não pôde ser obtida. Por favor, habilite o acesso à câmera nas configurações do seu navegador ou celular para poder utilizar o leitor.'
@@ -155,7 +155,7 @@ export function BarcodeCameraScanner({ isOpen, onClose, onScan }: BarcodeCameraS
         setIsTorchSupported(false);
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Falha ao iniciar o scanner de câmera:", err);
       setIsScanning(false);
     }

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { useAuth } from '@/contexts/AuthContext'
 import { Pagination } from '@/components/ui/Pagination'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function SalesRepsList() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -30,13 +31,14 @@ export default function SalesRepsList() {
       toast.success('Representante removido com sucesso')
       queryClient.invalidateQueries({ queryKey: ['salesReps'] })
     },
-    onError: (e: any) => {
+    onError: (e: unknown) => {
       // The API will throw an error with the inactivation message, which we show as an info/warning toast instead of an error if it's the 23503 handler
-      if (e.message.includes('inativado')) {
-        toast.success(e.message) // Show as success because the inactivation worked
+      const msg = getErrorMessage(e)
+      if (msg.includes('inativado')) {
+        toast.success(msg) // Show as success because the inactivation worked
         queryClient.invalidateQueries({ queryKey: ['salesReps'] })
       } else {
-        toast.error(`Erro ao remover representante: ${e.message}`)
+        toast.error(`Erro ao remover representante: ${msg}`)
       }
     }
   })
@@ -52,8 +54,8 @@ export default function SalesRepsList() {
       queryClient.invalidateQueries({ queryKey: ['salesReps'] })
       setIsImporting(false)
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao importar: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao importar: ${getErrorMessage(e)}`)
       setIsImporting(false)
     }
   })
@@ -109,8 +111,8 @@ export default function SalesRepsList() {
       toast.success(`${count} logins de vendedores criados com sucesso!`)
       setIsCreatingUsers(false)
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao criar logins: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao criar logins: ${getErrorMessage(e)}`)
       setIsCreatingUsers(false)
     }
   })
@@ -142,7 +144,7 @@ export default function SalesRepsList() {
           }
 
           importMutation.mutate(payload)
-        } catch (e: any) {
+        } catch (e: unknown) {
           toast.error('Erro ao ler a planilha.')
           setIsImporting(false)
         }

@@ -7,6 +7,7 @@ import { accountingAccountsApi } from '@/api/accountingAccounts'
 import { costCentersApi } from '@/api/costCenters'
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import type { AccountingAccount, CostCenter, AccountingAccountCostCenter } from '@/types/database'
 import { cn } from '@/lib/utils'
 
@@ -108,8 +109,8 @@ export function AccountingAccountFormModal({ isOpen, onClose, account, allAccoun
       toast.success(account ? 'Conta atualizada!' : 'Conta criada!')
       onClose()
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Erro ao salvar a conta')
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error))
     }
   })
 
@@ -120,8 +121,8 @@ export function AccountingAccountFormModal({ isOpen, onClose, account, allAccoun
       toast.success('Conta excluída com sucesso!')
       onClose()
     },
-    onError: (error: any) => {
-      toast.error(error.message)
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error))
     }
   })
 
@@ -147,7 +148,7 @@ export function AccountingAccountFormModal({ isOpen, onClose, account, allAccoun
       setNewLinkRef('')
       toast.success('Vínculo adicionado')
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: unknown) => toast.error(getErrorMessage(e))
   })
 
   const removeLinkMutation = useMutation({

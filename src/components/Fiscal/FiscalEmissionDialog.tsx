@@ -12,6 +12,7 @@ import { focusIntegrationApi } from '@/api/focusIntegration'
 import { fiscalSeriesApi } from '@/api/fiscalSeries'
 import { companiesApi } from '@/api/companies'
 import { Receipt, Loader2, Send, FileText, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export function FiscalEmissionDialog({ 
   isOpen, 
@@ -73,7 +74,7 @@ export function FiscalEmissionDialog({
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
       setSendStep(1)
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   if (sendStep > 0) {
@@ -157,8 +158,8 @@ export function FiscalEmissionDialog({
                     
                     toast.success('Nota Fiscal Autorizada pela SEFAZ!')
                     setSendStep(2)
-                  } catch (err: any) {
-                    toast.error(err.message)
+                  } catch (err: unknown) {
+                    toast.error(getErrorMessage(err))
                   } finally {
                     setIsSendingToSefaz(false)
                   }

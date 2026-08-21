@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import * as XLSX from 'xlsx'
 import { ActionMenu, ActionMenuItem } from '@/components/ui/action-menu'
 import { Pagination } from '@/components/ui/Pagination'
+import { getErrorMessage } from '@/utils/errorMessage'
 export default function PriceTablesList() {
   const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
@@ -36,8 +37,8 @@ export default function PriceTablesList() {
       toast.success('Tabela de preço removida com sucesso')
       queryClient.invalidateQueries({ queryKey: ['priceTables'] })
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao remover tabela de preço: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao remover tabela de preço: ${getErrorMessage(e)}`)
     }
   })
 

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { ArrowLeft, Truck, CheckCircle2 } from 'lucide-react'
 import { Navigate } from 'react-router-dom'
 
@@ -47,8 +48,8 @@ export default function CreateDelivery() {
       queryClient.invalidateQueries({ queryKey: ['delivery_routes'] })
       navigate(`/entregas/${data.id}`) // go straight to route clients page to add clients
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao criar: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar: ${getErrorMessage(error)}`)
     }
   })
 

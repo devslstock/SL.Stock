@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { ArrowLeft, User, Search, Trash2, Save, MapPin, Phone, StickyNote, Hash } from 'lucide-react'
 import { Navigate } from 'react-router-dom'
 import { geocodeAddress } from '@/api/routing'
@@ -182,8 +183,8 @@ export default function RouteClientForm() {
       toast.success('Cliente adicionado com sucesso!')
       navigate(-1)
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao salvar cliente: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao salvar cliente: ${getErrorMessage(error)}`)
     }
   })
 
@@ -230,8 +231,8 @@ export default function RouteClientForm() {
       toast.success('Pedido do cliente atualizado!')
       navigate(-1)
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao atualizar cliente: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar cliente: ${getErrorMessage(error)}`)
     }
   })
 

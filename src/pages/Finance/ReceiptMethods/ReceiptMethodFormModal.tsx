@@ -7,6 +7,7 @@ import { BRAZILIAN_BANKS } from '@/utils/banks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import type { ReceiptMethod } from '@/types/database'
 
 interface Props {
@@ -92,7 +93,7 @@ export function ReceiptMethodFormModal({ isOpen, onClose, methodToEdit }: Props)
       toast.success('Forma de recebimento cadastrada!')
       onClose()
     },
-    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro: ${getErrorMessage(error)}`)
   })
 
   const updateMutation = useMutation({
@@ -102,7 +103,7 @@ export function ReceiptMethodFormModal({ isOpen, onClose, methodToEdit }: Props)
       toast.success('Cadastro atualizado!')
       onClose()
     },
-    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro: ${getErrorMessage(error)}`)
   })
 
   const handleSubmit = (e: React.FormEvent) => {

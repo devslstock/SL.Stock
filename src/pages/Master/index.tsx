@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import type { Company } from '@/types/database';
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation';
 import { FiscalSeriesManager } from './FiscalSeriesManager';
+import { getErrorMessage } from '@/utils/errorMessage';
 
 export default function MasterPanel() {
   const { isMaster, switchCompany, exitCompany, company: currentCompany } = useAuth();
@@ -103,7 +104,7 @@ export default function MasterPanel() {
       toast.success('Empresa excluída com sucesso!');
       setIsModalOpen(false);
     },
-    onError: (e: any) => toast.error(`Erro ao excluir empresa: ${e.message || e}`)
+    onError: (e: unknown) => toast.error(`Erro ao excluir empresa: ${getErrorMessage(e)}`)
   });
 
   const handleBackup = async (id: string, name: string) => {
@@ -127,8 +128,8 @@ export default function MasterPanel() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       toast.success('Backup baixado com sucesso!');
-    } catch (error: any) {
-      toast.error('Erro ao gerar backup: ' + error.message);
+    } catch (error: unknown) {
+      toast.error('Erro ao gerar backup: ' + getErrorMessage(error));
     }
   };
 
@@ -247,7 +248,7 @@ export default function MasterPanel() {
               // Executa de forma assíncrona para não travar a tela
               focusIntegrationApi.syncCompany(targetCompanyId, false)
                 .then(() => toast.success('Empresa sincronizada com a Focus NFe!'))
-                .catch((e: any) => toast.error('Sincronização Focus falhou: ' + e.message));
+                .catch((e: unknown) => toast.error('Sincronização Focus falhou: ' + getErrorMessage(e)));
             }
           }
         }
@@ -261,7 +262,7 @@ export default function MasterPanel() {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setIsModalOpen(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(editingCompanyId ? 'Erro ao atualizar empresa.' : 'Erro ao criar empresa. Verifique os dados.');
     } finally {
       setIsSubmitting(false);

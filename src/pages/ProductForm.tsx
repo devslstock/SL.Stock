@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/toaster'
 import { ArrowLeft, Package, Save, CheckCircle2, AlertCircle, X, Plus, Trash2, Lock, Loader2, Search } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function ProductForm() {
   const { id } = useParams()
@@ -136,8 +137,8 @@ export default function ProductForm() {
       if (error) throw error
       if (!data.success) throw new Error(data.error)
       toast.success(`NCM encontrado: ${data.data.descricao}`)
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao consultar NCM')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || 'Erro ao consultar NCM')
     } finally {
       setIsSearchingNcm(false)
     }
@@ -156,8 +157,8 @@ export default function ProductForm() {
       if (error) throw error
       if (!data.success) throw new Error(data.error)
       toast.success(`CFOP encontrado: ${data.data.descricao}`)
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao consultar CFOP')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || 'Erro ao consultar CFOP')
     } finally {
       setIsSearchingCfop(false)
     }
@@ -252,12 +253,12 @@ export default function ProductForm() {
       toast.success(isEditing ? 'Produto atualizado com sucesso!' : 'Produto criado com sucesso!')
       navigate('/produtos')
     },
-    onError: (e: any) => {
-      const msg = e.message || ''
+    onError: (e: unknown) => {
+      const msg = getErrorMessage(e)
       if (msg.includes('products_company_code_key') || (msg.includes('unique constraint') && msg.includes('code'))) {
         toast.error('Código já está cadastrado em outro produto.')
       } else {
-        toast.error(`Erro ao salvar: ${e.message}`)
+        toast.error(`Erro ao salvar: ${msg}`)
       }
     }
   })

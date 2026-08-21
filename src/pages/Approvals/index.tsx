@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Check, X, Clock, Package, MapPin, Truck, ArrowLeft, AlertTriangle } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 // Helper for relative time
 function getRelativeTime(dateStr: string) {
@@ -87,8 +88,8 @@ export default function ApprovalsPage() {
       queryClient.invalidateQueries({ queryKey: ['pending_stock_adjustments'] })
       queryClient.invalidateQueries({ queryKey: ['products'] })
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao ajustar estoque: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao ajustar estoque: ${getErrorMessage(e)}`)
     }
   })
 
@@ -98,8 +99,8 @@ export default function ApprovalsPage() {
       toast.success('Alerta marcado como lido!')
       queryClient.invalidateQueries({ queryKey: ['pending_operation_alerts'] })
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao resolver alerta: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao resolver alerta: ${getErrorMessage(e)}`)
     }
   })
 
@@ -109,8 +110,8 @@ export default function ApprovalsPage() {
       toast.success('Todos os alertas foram arquivados!')
       queryClient.invalidateQueries({ queryKey: ['pending_operation_alerts'] })
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao arquivar alertas: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao arquivar alertas: ${getErrorMessage(e)}`)
     }
   })
 

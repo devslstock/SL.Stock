@@ -42,7 +42,7 @@ export default function Landing() {
       toast.success('Solicitação enviada com sucesso! Entraremos em contato em breve.')
       setDemoModalOpen(false)
       setDemoForm({ nome: '', empresa: '', telefone: '', email: '', descricao: '' })
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error('Erro ao enviar solicitação. Tente novamente mais tarde.')
     } finally {
       setDemoLoading(false)

@@ -11,6 +11,7 @@ import type { SalesRep } from '@/types/database'
 import { usersApi } from '@/api/users'
 import { useAuth } from '@/contexts/AuthContext'
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function SalesRepForm() {
   const { company } = useAuth()
@@ -96,8 +97,8 @@ export default function SalesRepForm() {
       queryClient.invalidateQueries({ queryKey: ['salesReps'] })
       navigate('/cadastros/representantes')
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao salvar representante: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao salvar representante: ${getErrorMessage(e)}`)
     }
   })
 

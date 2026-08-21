@@ -14,6 +14,7 @@ import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
@@ -91,8 +92,8 @@ export default function CreateReceipt() {
       toast.success('Recebimento criado com sucesso!')
       navigate('/recebimentos')
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao criar recebimento: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar recebimento: ${getErrorMessage(error)}`)
     }
   })
 
@@ -104,8 +105,8 @@ export default function CreateReceipt() {
       queryClient.invalidateQueries({ queryKey: ['operation_items', id] })
       navigate(`/conferencia/${id}`)
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao atualizar recebimento: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar recebimento: ${getErrorMessage(error)}`)
     }
   })
 
@@ -271,9 +272,9 @@ export default function CreateReceipt() {
         } else {
           toast.error('Nenhum produto válido encontrado no PDF.')
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err)
-        toast.error(`Erro ao ler PDF: ${err?.message || 'Erro desconhecido'}`)
+        toast.error(`Erro ao ler PDF: ${getErrorMessage(err)}`)
       }
       if (fileInputRef.current) fileInputRef.current.value = ''
       return

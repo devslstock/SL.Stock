@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client'
 import { toPng } from 'html-to-image'
 import { supabase } from '@/lib/supabase'
 import { InvoicePrintTemplate } from '@/components/Sales/InvoicePrintTemplate'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 // Date formatters
 function formatDateTime(dateStr: string | undefined) {
@@ -153,9 +154,9 @@ export async function generateDeliveryProofPDF(client: any, company: any): Promi
         url: result.uri,
         dialogTitle: 'Compartilhar Comprovante'
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sharing native file', error)
-      throw new Error(`Erro ao compartilhar PDF no celular: ${error.message}`)
+      throw new Error(`Erro ao compartilhar PDF no celular: ${getErrorMessage(error)}`)
     }
   } else {
     // Normal browser download
@@ -328,8 +329,8 @@ Porto Seguro, ${new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 
         text: 'Segue o contrato assinado',
         url: result.uri
       })
-    } catch (e: any) {
-      throw new Error(`Erro ao compartilhar PDF: ${e.message}`)
+    } catch (e: unknown) {
+      throw new Error(`Erro ao compartilhar PDF: ${getErrorMessage(e)}`)
     }
   } else {
     doc.save(filename)
@@ -599,8 +600,8 @@ export async function generateRouteReportPDF(route: any, clients: any[], routeOr
         text: 'Segue relatório da rota',
         url: result.uri
       })
-    } catch (e: any) {
-      throw new Error(`Erro ao compartilhar PDF: ${e.message}`)
+    } catch (e: unknown) {
+      throw new Error(`Erro ao compartilhar PDF: ${getErrorMessage(e)}`)
     }
   } else {
     doc.save(filename)

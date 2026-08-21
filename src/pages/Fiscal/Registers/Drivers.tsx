@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { Users, Plus, Pencil, Trash2, X, Save } from 'lucide-react'
 import type { Driver } from '@/types/database'
 
@@ -53,7 +54,7 @@ export default function FiscalDrivers() {
       setIsModalOpen(false)
       resetForm()
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const deleteMutation = useMutation({
@@ -62,7 +63,7 @@ export default function FiscalDrivers() {
       queryClient.invalidateQueries({ queryKey: ['drivers'] })
       toast.success('Condutor removido!')
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const resetForm = () => {

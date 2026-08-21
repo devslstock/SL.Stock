@@ -9,8 +9,8 @@ export async function downloadOrShareFile(blob: Blob, filename: string) {
         title: filename
       });
       return;
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
+    } catch (e: unknown) {
+      if ((e as { name?: string })?.name !== 'AbortError') {
         console.error('Share failed', e);
         fallbackDownload(blob, filename);
       }

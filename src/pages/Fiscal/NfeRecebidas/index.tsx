@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { FileText, Search, Filter, RefreshCw, Loader2, CheckCircle, AlertTriangle, FileDown } from 'lucide-react'
 import { Pagination } from '@/components/ui/Pagination'
 import { NfeRecebidasImportModal } from '@/components/Fiscal/NfeRecebidasImportModal'
@@ -84,8 +85,8 @@ export default function NfeRecebidas() {
       toast.success(`Foram sincronizadas ${result.data?.length || 0} notas fiscais.`)
       refetch()
     },
-    onError: (error: any) => {
-      toast.error(error.message)
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error))
     }
   })
 
@@ -107,8 +108,8 @@ export default function NfeRecebidas() {
       toast.success('Manifestação registrada com sucesso!')
       refetch()
     },
-    onError: (error: any) => {
-      toast.error(error.message)
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error))
     }
   })
 

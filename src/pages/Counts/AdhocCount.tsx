@@ -11,6 +11,7 @@ import { toast } from '@/components/ui/toaster'
 import { Plus, ScanLine, Search, CheckCircle2, ArrowLeft, Download, FileSpreadsheet, ClipboardList, Trash2, Camera, ChevronRight } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { BarcodeCameraScanner } from '@/components/BarcodeCameraScanner'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function AdhocCountPage() {
   const { user } = useAuth()
@@ -61,11 +62,12 @@ export default function AdhocCountPage() {
       setActiveCountId(data.id)
       toast.success('Contagem iniciada')
     },
-    onError: (error: any) => {
-      if (error.message?.includes('relation "adhoc_counts" does not exist')) {
+    onError: (error: unknown) => {
+      const msg = getErrorMessage(error)
+      if (msg.includes('relation "adhoc_counts" does not exist')) {
         toast.error('O banco de dados não possui as tabelas necessárias. Execute o script SQL no Supabase!')
       } else {
-        toast.error(`Erro ao criar: ${error.message}`)
+        toast.error(`Erro ao criar: ${msg}`)
       }
     }
   })
@@ -79,8 +81,8 @@ export default function AdhocCountPage() {
       queryClient.invalidateQueries({ queryKey: ['adhoc_counts'] })
       toast.success('Contagem excluída com sucesso')
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao excluir: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao excluir: ${getErrorMessage(error)}`)
     }
   })
 
@@ -109,8 +111,8 @@ export default function AdhocCountPage() {
       XLSX.utils.book_append_sheet(wb, ws, "Contagem")
       XLSX.writeFile(wb, `Contagem_${count.count_number.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`)
       toast.success('Arquivo exportado com sucesso!')
-    } catch (error: any) {
-      toast.error(`Erro ao exportar: ${error.message}`)
+    } catch (error: unknown) {
+      toast.error(`Erro ao exportar: ${getErrorMessage(error)}`)
     }
   }
 
@@ -328,8 +330,8 @@ function ActiveCountView({ countId, allProducts, onBack, user }: { countId: stri
         if (navigator.vibrate) navigator.vibrate(50)
       } catch (e) {}
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao adicionar: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao adicionar: ${getErrorMessage(error)}`)
       if (navigator.vibrate) navigator.vibrate([200, 100, 200])
     }
   })
@@ -342,7 +344,7 @@ function ActiveCountView({ countId, allProducts, onBack, user }: { countId: stri
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['adhoc_count_items', countId] }),
-    onError: (error: any) => toast.error(`Erro ao atualizar quantidade: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao atualizar quantidade: ${getErrorMessage(error)}`)
   })
 
   const deleteItemMutation = useMutation({
@@ -354,7 +356,7 @@ function ActiveCountView({ countId, allProducts, onBack, user }: { countId: stri
       queryClient.invalidateQueries({ queryKey: ['adhoc_count_items', countId] })
       toast.success('Item removido')
     },
-    onError: (error: any) => toast.error(`Erro ao apagar item: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao apagar item: ${getErrorMessage(error)}`)
   })
 
   const processScannedBarcode = (raw: string) => {

@@ -14,6 +14,7 @@ import { Plus, Search, ClipboardList, CheckCircle2, Truck, Wrench, ArrowRightLef
 import type { EquipmentOrder } from '@/types/database'
 import { ExecutionModal } from './ExecutionModal'
 import { generateContractPDF } from '@/utils/pdf'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function EquipmentOrdersList() {
   const queryClient = useQueryClient()
@@ -81,7 +82,7 @@ export default function EquipmentOrdersList() {
       queryClient.invalidateQueries({ queryKey: ['equipment_orders'] })
       setIsModalOpen(false)
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const updateMutation = useMutation({
@@ -91,7 +92,7 @@ export default function EquipmentOrdersList() {
       queryClient.invalidateQueries({ queryKey: ['equipment_orders'] })
       setIsModalOpen(false)
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const deleteMutation = useMutation({
@@ -100,7 +101,7 @@ export default function EquipmentOrdersList() {
       toast.success('Ordem de Serviço excluída com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['equipment_orders'] })
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const approveMutation = useMutation({
@@ -109,7 +110,7 @@ export default function EquipmentOrdersList() {
       toast.success('Chamado aprovado e convertido em OS!')
       queryClient.invalidateQueries({ queryKey: ['equipment_orders'] })
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -319,8 +320,8 @@ export default function EquipmentOrdersList() {
                         onClick={async () => {
                           try {
                             await generateContractPDF(order, company)
-                          } catch (err: any) {
-                            toast.error(err.message || 'Erro ao gerar PDF')
+                          } catch (err: unknown) {
+                            toast.error(getErrorMessage(err) || 'Erro ao gerar PDF')
                           }
                         }}
                       >
@@ -538,8 +539,8 @@ export default function EquipmentOrdersList() {
                 onClick={async () => {
                   try {
                     await generateContractPDF(detailsOrder, company)
-                  } catch (err: any) {
-                    toast.error(err.message || 'Erro ao gerar PDF')
+                  } catch (err: unknown) {
+                    toast.error(getErrorMessage(err) || 'Erro ao gerar PDF')
                   }
                 }}
               >

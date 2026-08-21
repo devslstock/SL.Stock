@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from '@/components/ui/toaster'
 import { Trash2, Plus, RefreshCw, Save, FileText } from 'lucide-react'
 import type { FiscalSeries } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface Props {
   companyId: string
@@ -37,7 +38,7 @@ export function FiscalSeriesManager({ companyId, companyName, open, onOpenChange
       toast.success('Série adicionada com sucesso!')
       setIsAdding(false)
     },
-    onError: (err: any) => toast.error(`Erro: ${err.message}`)
+    onError: (err: unknown) => toast.error(`Erro: ${getErrorMessage(err)}`)
   })
 
   const updateMutation = useMutation({
@@ -46,7 +47,7 @@ export function FiscalSeriesManager({ companyId, companyName, open, onOpenChange
       queryClient.invalidateQueries({ queryKey: ['fiscal_series', companyId] })
       toast.success('Série atualizada!')
     },
-    onError: (err: any) => toast.error(`Erro: ${err.message}`)
+    onError: (err: unknown) => toast.error(`Erro: ${getErrorMessage(err)}`)
   })
 
   const deleteMutation = useMutation({
@@ -55,7 +56,7 @@ export function FiscalSeriesManager({ companyId, companyName, open, onOpenChange
       queryClient.invalidateQueries({ queryKey: ['fiscal_series', companyId] })
       toast.success('Série removida!')
     },
-    onError: (err: any) => toast.error(`Erro: ${err.message}`)
+    onError: (err: unknown) => toast.error(`Erro: ${getErrorMessage(err)}`)
   })
 
   const handleAdd = () => {

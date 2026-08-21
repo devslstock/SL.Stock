@@ -19,6 +19,7 @@ import { ChevronDown, Copy, Mail, Ban, CreditCard } from 'lucide-react'
 import jsPDF from 'jspdf'
 import { toPng } from 'html-to-image'
 import { Share } from '@capacitor/share'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function NewOrder() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -177,8 +178,8 @@ export default function NewOrder() {
     onSuccess: (data) => {
       setSearchParams({ id: data.id })
     },
-    onError: (err: any) => {
-      toast.error('Erro ao gerar pedido em digitação: ' + err.message)
+    onError: (err: unknown) => {
+      toast.error('Erro ao gerar pedido em digitação: ' + getErrorMessage(err))
       navigate(returnTo)
     }
   })
@@ -232,8 +233,8 @@ export default function NewOrder() {
         }])
       }
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
-    } catch (e: any) {
-      toast.error('Erro ao atualizar produto: ' + e.message)
+    } catch (e: unknown) {
+      toast.error('Erro ao atualizar produto: ' + getErrorMessage(e))
     }
   }
 
@@ -248,8 +249,8 @@ export default function NewOrder() {
       }
       await salesApi.updateSalesOrder(orderId, updates)
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
-    } catch (e: any) {
-      toast.error('Erro ao atualizar: ' + e.message)
+    } catch (e: unknown) {
+      toast.error('Erro ao atualizar: ' + getErrorMessage(e))
     }
   }
 
@@ -263,8 +264,8 @@ export default function NewOrder() {
         total_price: quantity * price
       })
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
-    } catch (e: any) {
-      toast.error('Erro ao atualizar item: ' + e.message)
+    } catch (e: unknown) {
+      toast.error('Erro ao atualizar item: ' + getErrorMessage(e))
     }
   }
 
@@ -273,8 +274,8 @@ export default function NewOrder() {
       const { salesApi } = await import('@/api/sales')
       await salesApi.deleteSalesOrderItem(itemId)
       queryClient.invalidateQueries({ queryKey: ['sales_order', orderId] })
-    } catch (e: any) {
-      toast.error('Erro ao remover item: ' + e.message)
+    } catch (e: unknown) {
+      toast.error('Erro ao remover item: ' + getErrorMessage(e))
     }
   }
 
@@ -285,8 +286,8 @@ export default function NewOrder() {
         await salesApi.deleteSalesOrder(orderId!)
         toast.success('Pedido apagado com sucesso!')
         navigate(returnTo)
-      } catch (e: any) {
-        toast.error('Erro ao apagar pedido: ' + e.message)
+      } catch (e: unknown) {
+        toast.error('Erro ao apagar pedido: ' + getErrorMessage(e))
       }
     }
   }
@@ -327,8 +328,8 @@ export default function NewOrder() {
       toast.success('Pedido duplicado com sucesso!')
       setShowOptionsTop(false)
       setSearchParams({ id: newOrder.id })
-    } catch (e: any) {
-      toast.error('Erro ao duplicar pedido: ' + e.message)
+    } catch (e: unknown) {
+      toast.error('Erro ao duplicar pedido: ' + getErrorMessage(e))
     }
   }
 
@@ -358,8 +359,8 @@ export default function NewOrder() {
       const pdf = await generatePdfFile();
       pdf.save(`pedido_${order?.order_number || 'novo'}.pdf`);
       toast.success('PDF baixado com sucesso!');
-    } catch (e: any) {
-      toast.error('Erro ao gerar PDF: ' + e.message);
+    } catch (e: unknown) {
+      toast.error('Erro ao gerar PDF: ' + getErrorMessage(e));
     }
   };
 
@@ -383,13 +384,13 @@ export default function NewOrder() {
           // Fallback if system share not supported (like on some desktop browsers)
           toast.error("O compartilhamento de arquivo não é suportado pelo seu navegador.");
         }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          toast.error("Erro ao compartilhar: " + err.message);
+      } catch (err: unknown) {
+        if ((err as { name?: string })?.name !== 'AbortError') {
+          toast.error("Erro ao compartilhar: " + getErrorMessage(err));
         }
       }
-    } catch (e: any) {
-      toast.error('Erro ao gerar PDF para WhatsApp: ' + e.message);
+    } catch (e: unknown) {
+      toast.error('Erro ao gerar PDF para WhatsApp: ' + getErrorMessage(e));
     }
   };
 
@@ -416,8 +417,8 @@ export default function NewOrder() {
       toast.success('Orçamento salvo com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       navigate(returnTo)
-    } catch (e: any) {
-      toast.error('Erro ao gerar pedido: ' + e.message)
+    } catch (e: unknown) {
+      toast.error('Erro ao gerar pedido: ' + getErrorMessage(e))
     }
   }
 
@@ -443,8 +444,8 @@ export default function NewOrder() {
       toast.success('Pedido enviado com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       navigate(returnTo)
-    } catch (e: any) {
-      toast.error('Erro ao concluir pedido: ' + e.message)
+    } catch (e: unknown) {
+      toast.error('Erro ao concluir pedido: ' + getErrorMessage(e))
     }
   }
 
@@ -468,8 +469,8 @@ export default function NewOrder() {
                 await queryClient.invalidateQueries({ queryKey: ['order_groups'] })
                 handleUpdate({ order_group_id: newGroup.id })
                 toast.success('Grupo criado e selecionado!')
-              } catch (err: any) {
-                toast.error('Erro ao criar grupo: ' + err.message)
+              } catch (err: unknown) {
+                toast.error('Erro ao criar grupo: ' + getErrorMessage(err))
               }
             }
           } else {

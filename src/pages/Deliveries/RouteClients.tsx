@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { ArrowLeft, User, MapPin, FileSpreadsheet, Trash2, ChevronRight, AlertTriangle, Search, Plus, Map as MapIcon, ListOrdered, Menu, FileDown, CheckSquare, Truck, DownloadCloud, GitMerge, Receipt, RefreshCw, Lock } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -135,7 +136,7 @@ export default function RouteClients() {
       setChecklistKm('')
       setChecklistTemp('')
     },
-    onError: (error: any) => toast.error(`Erro ao salvar checklist: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao salvar checklist: ${getErrorMessage(error)}`)
   })
 
   const { data: route, isLoading: isLoadingRoute } = useQuery({
@@ -169,7 +170,7 @@ export default function RouteClients() {
       toast.success('Emissão de MDF-e iniciada!')
       refetchMdfe()
     },
-    onError: (e: any) => toast.error(`Erro ao emitir MDF-e: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao emitir MDF-e: ${getErrorMessage(e)}`)
   })
 
   const checkMdfeStatusMutation = useMutation({
@@ -194,7 +195,7 @@ export default function RouteClients() {
       refetchMdfe()
       toast.success('Status atualizado')
     },
-    onError: (e: any) => toast.error(`Erro ao verificar status: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao verificar status: ${getErrorMessage(e)}`)
   })
 
   const cancelarMdfeMutation = useMutation({
@@ -217,7 +218,7 @@ export default function RouteClients() {
       refetchMdfe()
       toast.success('MDF-e cancelado com sucesso')
     },
-    onError: (e: any) => toast.error(`Erro ao cancelar: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao cancelar: ${getErrorMessage(e)}`)
   })
 
   const encerrarMdfeMutation = useMutation({
@@ -241,7 +242,7 @@ export default function RouteClients() {
       refetchMdfe()
       toast.success('MDF-e encerrado com sucesso')
     },
-    onError: (e: any) => toast.error(`Erro ao encerrar: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao encerrar: ${getErrorMessage(e)}`)
   })
 
   const { data: routeOrders = [], isLoading: isLoadingOrders } = useQuery({
@@ -282,8 +283,8 @@ export default function RouteClients() {
       toast.success('Clientes importados com sucesso!')
       setIsImporting(false)
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao importar: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao importar: ${getErrorMessage(error)}`)
       setIsImporting(false)
     }
   })
@@ -294,7 +295,7 @@ export default function RouteClients() {
       queryClient.invalidateQueries({ queryKey: ['delivery_clients', id] })
       toast.success('Cliente removido')
     },
-    onError: (error: any) => toast.error(`Erro ao remover: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao remover: ${getErrorMessage(error)}`)
   })
 
   const updateSequenceMutation = useMutation({
@@ -309,7 +310,7 @@ export default function RouteClients() {
       queryClient.invalidateQueries({ queryKey: ['delivery_clients', id!] })
       queryClient.invalidateQueries({ queryKey: ['route_orders', id!] })
     },
-    onError: (error: any) => toast.error(`Erro ao salvar sequência: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao salvar sequência: ${getErrorMessage(error)}`)
   })
 
   const handleSequenceChange = (stopId: string, val: string, type: 'client' | 'os') => {
@@ -325,7 +326,7 @@ export default function RouteClients() {
       queryClient.invalidateQueries({ queryKey: ['route_orders', id!] })
       toast.success('OS removida da rota')
     },
-    onError: (error: any) => toast.error(`Erro ao remover OS: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao remover OS: ${getErrorMessage(error)}`)
   })
 
 
@@ -424,7 +425,7 @@ export default function RouteClients() {
       setSortBy('sequence') // Force sort by sequence to see result
       toast.success('Rota otimizada com sucesso!')
     },
-    onError: (error: any) => toast.error(`Erro ao otimizar rota: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao otimizar rota: ${getErrorMessage(error)}`)
   })
 
   const normalizeCode = (s: any) => s ? String(s).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
@@ -898,9 +899,9 @@ export default function RouteClients() {
       queryClient.invalidateQueries({ queryKey: ['route_orders', id] })
       setIsMergeDialogOpen(false)
       setSelectedSourceRouteId('')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      toast.error(`Erro ao mesclar rotas: ${err.message || err}`)
+      toast.error(`Erro ao mesclar rotas: ${getErrorMessage(err)}`)
     } finally {
       setIsMerging(false)
     }
@@ -1622,7 +1623,7 @@ function AddOsModal({ isOpen, onClose, routeId }: { isOpen: boolean, onClose: ()
       queryClient.invalidateQueries({ queryKey: ['available_orders_for_route'] })
       toast.success('OS adicionada à rota!')
     },
-    onError: (error: any) => toast.error(`Erro ao adicionar OS: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao adicionar OS: ${getErrorMessage(error)}`)
   })
 
   const filteredOrders = availableOrders.filter(o => {

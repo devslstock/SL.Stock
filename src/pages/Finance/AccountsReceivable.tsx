@@ -6,6 +6,7 @@ import { DollarSign, Search, Calendar, FileText, CheckCircle2, XCircle, AlertCir
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import type { AccountReceivable } from '@/types/database'
 
@@ -45,7 +46,7 @@ export default function AccountsReceivable() {
       queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
       toast.success('Conta baixada com sucesso!')
     },
-    onError: (e: any) => toast.error('Erro ao baixar conta: ' + e.message)
+    onError: (e: unknown) => toast.error('Erro ao baixar conta: ' + getErrorMessage(e))
   })
 
   const cancelarMutation = useMutation({
@@ -67,7 +68,7 @@ export default function AccountsReceivable() {
       // Avança para a pergunta de exclusão
       setCancelDialogState(prev => ({ ...prev, step: 2, idsToProcess: variables.ids, cancelAll: variables.cancelAll }))
     },
-    onError: (e: any) => toast.error('Erro ao cancelar: ' + e.message)
+    onError: (e: unknown) => toast.error('Erro ao cancelar: ' + getErrorMessage(e))
   })
 
   const excluirMutation = useMutation({
@@ -79,7 +80,7 @@ export default function AccountsReceivable() {
       toast.success('Cobrança(s) excluída(s) permanentemente!')
       setCancelDialogState(prev => ({ ...prev, isOpen: false }))
     },
-    onError: (e: any) => toast.error('Erro ao excluir: ' + e.message)
+    onError: (e: unknown) => toast.error('Erro ao excluir: ' + getErrorMessage(e))
   })
 
   const batchBaixarMutation = useMutation({
@@ -89,7 +90,7 @@ export default function AccountsReceivable() {
       toast.success('Baixa efetuada em massa com sucesso!')
       setSelectedIds([])
     },
-    onError: (e: any) => toast.error('Erro na baixa em massa: ' + e.message)
+    onError: (e: unknown) => toast.error('Erro na baixa em massa: ' + getErrorMessage(e))
   })
 
   const batchCancelarMutation = useMutation({
@@ -99,7 +100,7 @@ export default function AccountsReceivable() {
       toast.success('Cobranças canceladas com sucesso!')
       setSelectedIds([])
     },
-    onError: (e: any) => toast.error('Erro ao cancelar em massa: ' + e.message)
+    onError: (e: unknown) => toast.error('Erro ao cancelar em massa: ' + getErrorMessage(e))
   })
 
   const handleBaixar = (account: AccountReceivable) => {

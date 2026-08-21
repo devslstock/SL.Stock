@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toaster';
+import { getErrorMessage } from '@/utils/errorMessage';
 
 const rawData = `CNPJ/CPF	tabela	descriçao
 13.518.904/0001-55	01	TABELA GERAL
@@ -733,9 +734,9 @@ export default function ImportPriceTables() {
 
       toast.success(`Importação concluída! ${updatedCount} atualizados. ${notFoundCount} não encontrados.`);
 
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error('Erro na importação: ' + e.message);
+      toast.error('Erro na importação: ' + getErrorMessage(e));
     } finally {
       setLoading(false);
     }

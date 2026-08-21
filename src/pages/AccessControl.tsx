@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/toaster'
 import { ShieldCheck, Plus, Pencil, Trash2, UserCircle, KeyRound, AlertTriangle } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 
 const roleLabels: Record<UserRole, string> = { admin: 'Admin', gestor: 'Gestor', conferente: 'Conferente', motorista: 'Motorista', ajudante: 'Ajudante', vendedor: 'Vendedor', representante: 'Representante', operador: 'Operador', mecanico: 'Técnico', master: 'Master' }
@@ -70,7 +71,7 @@ export default function AccessControl() {
       toast.success('Usuário criado')
       setIsOpen(false)
     },
-    onError: (e: any) => toast.error(`Erro ao criar: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao criar: ${getErrorMessage(e)}`)
   })
 
   const updateMutation = useMutation({
@@ -80,7 +81,7 @@ export default function AccessControl() {
       toast.success('Usuário atualizado')
       setIsOpen(false)
     },
-    onError: (e: any) => toast.error(`Erro ao atualizar: ${e.message}`)
+    onError: (e: unknown) => toast.error(`Erro ao atualizar: ${getErrorMessage(e)}`)
   })
 
   const deleteMutation = useMutation({
@@ -89,13 +90,14 @@ export default function AccessControl() {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.info('Usuário removido com sucesso')
     },
-    onError: (e: any) => {
+    onError: (e: unknown) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       // Se for a mensagem de fallback de inativação, mostra como info/alerta amigável
-      if (e.message?.includes('inativado')) {
-        toast.info(e.message)
+      const msg = getErrorMessage(e)
+      if (msg.includes('inativado')) {
+        toast.info(msg)
       } else {
-        toast.error(`Erro ao remover: ${e.message}`)
+        toast.error(`Erro ao remover: ${msg}`)
       }
     }
   })

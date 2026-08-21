@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import type { OrderGroup } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function OrderGroups() {
   const { company } = useAuth()
@@ -42,7 +43,7 @@ export default function OrderGroups() {
       toast.success('Grupo criado com sucesso')
       handleCloseModal()
     },
-    onError: (error: any) => toast.error(`Erro ao criar: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao criar: ${getErrorMessage(error)}`)
   })
 
   const updateMutation = useMutation({
@@ -52,7 +53,7 @@ export default function OrderGroups() {
       toast.success('Grupo atualizado com sucesso')
       handleCloseModal()
     },
-    onError: (error: any) => toast.error(`Erro ao atualizar: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro ao atualizar: ${getErrorMessage(error)}`)
   })
 
   const deleteMutation = useMutation({
@@ -61,12 +62,13 @@ export default function OrderGroups() {
       queryClient.invalidateQueries({ queryKey: ['order_groups'] })
       toast.success('Grupo excluído com sucesso')
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       // Exibe uma mensagem mais amigável se for erro de restrição (pedidos vinculados)
-      if (error.message.includes('violates foreign key constraint') || error.message.includes('Foreign key violation')) {
+      const msg = getErrorMessage(error)
+      if (msg.includes('violates foreign key constraint') || msg.includes('Foreign key violation')) {
         toast.error('Não é possível excluir este grupo pois ele possui pedidos vinculados.')
       } else {
-        toast.error(`Erro ao excluir: ${error.message}`)
+        toast.error(`Erro ao excluir: ${msg}`)
       }
     }
   })

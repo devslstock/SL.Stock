@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/ui/toaster'
 import { Loader2, Mail } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface EmailNfeModalProps {
   isOpen: boolean
@@ -55,9 +56,9 @@ export function EmailNfeModal({ isOpen, onClose, nfeId, defaultEmail }: EmailNfe
 
       toast.success('E-mail enviado com sucesso!')
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao enviar NF-e por e-mail:', err)
-      toast.error(err.message || 'Erro ao enviar NF-e. Verifique a comunicação com a SEFAZ.')
+      toast.error(getErrorMessage(err) || 'Erro ao enviar NF-e. Verifique a comunicação com a SEFAZ.')
     } finally {
       setIsSubmitting(false)
     }

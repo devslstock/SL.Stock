@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/toaster'
 import { focusIntegrationApi } from '@/api/focusIntegration'
 import { useAuth } from '@/contexts/AuthContext'
 import { ShieldAlert, Loader2 } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface InutilizacaoModalProps {
   isOpen: boolean
@@ -42,8 +43,8 @@ export function InutilizacaoModal({ isOpen, onClose, serie }: InutilizacaoModalP
       toast.success('Numeração inutilizada com sucesso!')
       handleClose()
     },
-    onError: (error: any) => {
-      toast.error(error.message)
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error))
     }
   })
 

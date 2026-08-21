@@ -1,5 +1,6 @@
 import type { TestBattery } from '../types';
 import { supabase } from '@/lib/supabase';
+import { getErrorMessage } from '@/utils/errorMessage';
 
 export const smokeTests: TestBattery[] = [
   {
@@ -35,8 +36,8 @@ export const smokeTests: TestBattery[] = [
             const res = await fetch('/api/focus-proxy', { method: 'OPTIONS' });
             ctx.assert(res.ok, `Proxy retornou status ${res.status}`);
             ctx.log('Proxy Vercel está online e aceitando conexões.');
-          } catch (err: any) {
-            throw new Error(`Falha ao contactar a API interna Vercel: ${err.message}`);
+          } catch (err: unknown) {
+            throw new Error(`Falha ao contactar a API interna Vercel: ${getErrorMessage(err)}`);
           }
         }
       }

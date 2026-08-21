@@ -10,6 +10,7 @@ import { toast } from '@/components/ui/toaster'
 import type { PriceTableItem } from '@/types/database'
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/contexts/AuthContext'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function PriceTableForm() {
   const { id } = useParams()
@@ -86,8 +87,8 @@ export default function PriceTableForm() {
         navigate(`/cadastros/tabelas-de-preco/${data.id}/editar`, { replace: true })
       }
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao salvar tabela: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao salvar tabela: ${getErrorMessage(e)}`)
     }
   })
 
@@ -102,8 +103,8 @@ export default function PriceTableForm() {
       setIsModalOpen(false)
       setEditingItemId(null)
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao salvar item: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao salvar item: ${getErrorMessage(e)}`)
     }
   })
 
@@ -113,8 +114,8 @@ export default function PriceTableForm() {
       toast.success('Item removido com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['priceTable', id] })
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao remover item: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao remover item: ${getErrorMessage(e)}`)
     }
   })
 
@@ -126,8 +127,8 @@ export default function PriceTableForm() {
       setIsImportModalOpen(false)
       setSelectedGroups([])
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao importar: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao importar: ${getErrorMessage(e)}`)
     }
   })
 

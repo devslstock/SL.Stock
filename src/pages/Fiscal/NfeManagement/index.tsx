@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { downloadOrShareFile } from '@/utils/fileDownloader'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { FileText, Printer, FileDown, Search, Filter, AlertTriangle, CheckCircle, RefreshCw, XCircle, FileCode, Mail, Save, FileUp, Download, ChevronDown, ChevronUp, Layers, Loader2, Archive, AlertCircle } from 'lucide-react'
 import { Pagination } from '@/components/ui/Pagination'
 import { NfeEmissionModal } from '@/components/Fiscal/NfeEmissionModal'
@@ -123,8 +124,8 @@ export default function NfeManagement() {
       } else {
         window.open(url, '_blank');
       }
-    } catch (e: any) {
-      toast.error(e.message || 'Erro ao carregar PDF');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e));
     }
   }
 
@@ -140,8 +141,8 @@ export default function NfeManagement() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (e: any) {
-      toast.error(e.message || 'Erro ao baixar PDF');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e));
     }
   }
 
@@ -190,7 +191,7 @@ export default function NfeManagement() {
       window.open(url, '_blank');
       setSelectedOrderIds([]);
       toast.success('Arquivo de impressão gerado com sucesso!');
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       toast.error('Ocorreu um erro ao gerar o arquivo de impressão em lote.');
     } finally {
@@ -217,7 +218,7 @@ export default function NfeManagement() {
       try {
         await nfeApi.emitirNfe(company.id, order.id)
         sucesso++
-      } catch (e: any) {
+      } catch (e: unknown) {
         erro++
         console.error(`Erro ao emitir NF para o pedido ${order.id}:`, e)
       }
@@ -237,7 +238,7 @@ export default function NfeManagement() {
       toast.success('Nota Fiscal cancelada com sucesso')
       refetch()
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: unknown) => toast.error(getErrorMessage(e))
   })
 
   const cceMutation = useMutation({
@@ -246,7 +247,7 @@ export default function NfeManagement() {
       toast.success('Carta de Correção emitida com sucesso')
       refetch()
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: unknown) => toast.error(getErrorMessage(e))
   })
 
   const handleBatchCancel = async () => {
@@ -277,13 +278,13 @@ export default function NfeManagement() {
           await nfeApi.cancelarNfe(company.id, nfe.id, justificativa)
           sucesso++
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         erro++
       }
     })
 
     await Promise.allSettled(promises)
-    
+
     setIsBatchProcessing(false)
     setSelectedOrderIds([])
     refetch()
@@ -310,7 +311,7 @@ export default function NfeManagement() {
           await nfeApi.consultarNfe(company.id, nfe.id)
           sucesso++
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         erro++
       }
     })
@@ -545,8 +546,8 @@ export default function NfeManagement() {
                               await nfeApi.consultarNfe(company.id, nfeRecord.id)
                               toast.success('Status sincronizado!')
                               refetch()
-                            } catch (e: any) {
-                              toast.error(e.message)
+                            } catch (e: unknown) {
+                              toast.error(getErrorMessage(e))
                             }
                           }}>
                             <RefreshCw className="h-4 w-4 mr-1" /> Sincronizar

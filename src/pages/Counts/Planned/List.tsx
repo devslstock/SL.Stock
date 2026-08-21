@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function PlannedInventoriesList() {
   const { user, company } = useAuth()
@@ -66,8 +67,8 @@ export default function PlannedInventoriesList() {
       setNewInvName('')
       navigate(`/contagens/planejados/${data.id}/gestao`)
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao criar: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar: ${getErrorMessage(error)}`)
     }
   })
 
@@ -150,8 +151,8 @@ export default function PlannedInventoriesList() {
       queryClient.invalidateQueries({ queryKey: ['planned_inventories'] })
       toast.success('Inventário duplicado com sucesso!')
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao duplicar: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao duplicar: ${getErrorMessage(error)}`)
     }
   })
 

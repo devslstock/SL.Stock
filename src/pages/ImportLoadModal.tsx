@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { Boxes } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { salesApi } from '@/api/sales'
@@ -170,8 +171,8 @@ export function ImportLoadModal({ isOpen, onOpenChange }: ImportLoadModalProps) 
       onOpenChange(false)
       navigate(`/conferencia/${op.id}`)
 
-    } catch (err: any) {
-      toast.error(`Erro ao importar rota: ${err.message}`)
+    } catch (err: unknown) {
+      toast.error(`Erro ao importar rota: ${getErrorMessage(err)}`)
     } finally {
       setIsImporting(false)
     }

@@ -13,6 +13,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { GitMerge, Loader2, AlertTriangle, ArrowRight, Truck } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface MergeRoutesModalProps {
   isOpen: boolean
@@ -200,9 +201,9 @@ export function MergeRoutesModal({ isOpen, onClose, routes }: MergeRoutesModalPr
       onClose()
       setTargetRouteId('')
       setSelectedSourceIds([])
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      toast.error(`Erro ao mesclar rotas: ${err.message || err}`)
+      toast.error(`Erro ao mesclar rotas: ${getErrorMessage(err)}`)
     } finally {
       setIsMerging(false)
     }

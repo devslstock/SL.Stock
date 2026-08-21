@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { DeliveryRoute, DeliveryClient, DeliveryItem } from '@/types/database'
 import db from '@/db/db'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export const deliveriesApi = {
   async getDeliveryRoutes() {
@@ -190,8 +191,9 @@ export const deliveriesApi = {
         throw error
       }
       return data as DeliveryClient
-    } catch (e: any) {
-      if (e.message?.toLowerCase().includes('fetch') || e.message?.toLowerCase().includes('network')) {
+    } catch (e: unknown) {
+      const msg = getErrorMessage(e).toLowerCase()
+      if (msg.includes('fetch') || msg.includes('network')) {
         return fallbackToLocal()
       }
       throw e
@@ -243,8 +245,9 @@ export const deliveriesApi = {
       }
 
       return data as DeliveryClient
-    } catch (error: any) {
-      if (error.message === 'Network timeout' || error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')) {
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error).toLowerCase()
+      if (msg === 'network timeout' || msg.includes('fetch') || msg.includes('network')) {
         return saveOffline()
       }
       throw error
@@ -441,8 +444,9 @@ export const deliveriesApi = {
         throw error
       }
       return data as DeliveryItem[]
-    } catch (e: any) {
-      if (e.message?.toLowerCase().includes('fetch') || e.message?.toLowerCase().includes('network')) {
+    } catch (e: unknown) {
+      const msg = getErrorMessage(e).toLowerCase()
+      if (msg.includes('fetch') || msg.includes('network')) {
         return fallbackToLocal()
       }
       throw e
@@ -478,8 +482,9 @@ export const deliveriesApi = {
       
       if (error) throw error
       return data as DeliveryItem
-    } catch (error: any) {
-      if (error.message === 'Network timeout' || error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')) {
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error).toLowerCase()
+      if (msg === 'network timeout' || msg.includes('fetch') || msg.includes('network')) {
         return saveOffline()
       }
       throw error

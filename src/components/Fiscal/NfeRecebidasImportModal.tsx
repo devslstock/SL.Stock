@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { Loader2, FileCheck, AlertTriangle } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 interface NfeRecebidasImportModalProps {
   isOpen: boolean
@@ -42,8 +43,8 @@ export function NfeRecebidasImportModal({ isOpen, onClose, chaveNfe }: NfeRecebi
       setParsedData(nfe)
       return nfe
     },
-    onError: (error: any) => {
-      toast.error(error.message)
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error))
       onClose()
     }
   })
@@ -74,8 +75,8 @@ export function NfeRecebidasImportModal({ isOpen, onClose, chaveNfe }: NfeRecebi
       queryClient.invalidateQueries({ queryKey: ['nfe-recebidas'] })
       onClose()
     },
-    onError: (error: any) => {
-      toast.error(error.message)
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error))
     }
   })
 

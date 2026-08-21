@@ -7,6 +7,7 @@ import { AccountingAccountFormModal } from './AccountingAccountFormModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import type { AccountingAccount } from '@/types/database'
 import { cn } from '@/lib/utils'
 
@@ -34,8 +35,8 @@ export default function AccountingAccounts() {
       queryClient.invalidateQueries({ queryKey: ['accounting_accounts'] })
       toast.success('Status atualizado com sucesso!')
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao atualizar status: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar status: ${getErrorMessage(error)}`)
     }
   })
 

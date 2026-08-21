@@ -16,6 +16,7 @@ import { Plus, Edit2, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, History, 
 import type { Equipment } from '@/types/database'
 
 import { InternalMaintenanceModal } from './InternalMaintenanceModal'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function EquipmentsList() {
   const queryClient = useQueryClient()
@@ -122,7 +123,7 @@ export default function EquipmentsList() {
       queryClient.invalidateQueries({ queryKey: ['equipments'] })
       setIsModalOpen(false)
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const updateMutation = useMutation({
@@ -132,7 +133,7 @@ export default function EquipmentsList() {
       queryClient.invalidateQueries({ queryKey: ['equipments'] })
       setIsModalOpen(false)
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const deleteMutation = useMutation({
@@ -141,7 +142,7 @@ export default function EquipmentsList() {
       toast.success('Equipamento excluído com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['equipments'] })
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const handleDelete = (id: string) => {

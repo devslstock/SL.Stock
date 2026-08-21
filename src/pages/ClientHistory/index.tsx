@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { generateDeliveryProofPDF } from '@/utils/pdf'
 import { useAuth } from '@/contexts/AuthContext'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 function formatDateTime(dateStr: string | undefined) {
   if (!dateStr) return 'Data não registrada'
@@ -40,8 +41,8 @@ export default function ClientHistory() {
       toast.info('Gerando comprovante em PDF...')
       await generateDeliveryProofPDF(client, company)
       toast.success('Comprovante exportado com sucesso!')
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao exportar PDF')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || 'Erro ao exportar PDF')
     } finally {
       setIsExporting(null)
     }

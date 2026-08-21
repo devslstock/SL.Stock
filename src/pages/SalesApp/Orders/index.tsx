@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { OrderDetailsModal } from '@/components/Sales/OrderDetailsModal'
 import { ImportOrdersModal } from './ImportOrdersModal'
 import { Pagination } from '@/components/ui/Pagination'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function SalesOrders() {
   const navigate = useNavigate()
@@ -80,7 +81,7 @@ export default function SalesOrders() {
       toast.success('Status atualizado com sucesso!')
       setSelectedOrders([])
     },
-    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro: ${getErrorMessage(error)}`)
   })
 
   const batchUpdateGroupMutation = useMutation({
@@ -90,7 +91,7 @@ export default function SalesOrders() {
       toast.success('Grupo atribuído com sucesso!')
       setSelectedOrders([])
     },
-    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro: ${getErrorMessage(error)}`)
   })
 
   const batchDeleteMutation = useMutation({
@@ -100,7 +101,7 @@ export default function SalesOrders() {
       toast.success('Pedidos excluídos com sucesso!')
       setSelectedOrders([])
     },
-    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro: ${getErrorMessage(error)}`)
   })
 
   const handleToggleSelection = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {

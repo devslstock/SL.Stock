@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
 import { Plus, Search, Package, Edit2, Trash2 } from 'lucide-react'
 import type { Supply } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 export default function SuppliesList() {
   const queryClient = useQueryClient()
@@ -38,7 +39,7 @@ export default function SuppliesList() {
       queryClient.invalidateQueries({ queryKey: ['supplies'] })
       setIsModalOpen(false)
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const updateMutation = useMutation({
@@ -48,7 +49,7 @@ export default function SuppliesList() {
       queryClient.invalidateQueries({ queryKey: ['supplies'] })
       setIsModalOpen(false)
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const deleteMutation = useMutation({
@@ -57,7 +58,7 @@ export default function SuppliesList() {
       toast.success('Insumo removido!')
       queryClient.invalidateQueries({ queryKey: ['supplies'] })
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const handleSubmit = (e: React.FormEvent) => {

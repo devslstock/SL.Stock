@@ -19,6 +19,7 @@ import {
   Trash2,
   ArrowLeft,
 } from 'lucide-react'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'warning' | 'success'; icon: typeof Clock }> = {
   pending: { label: 'Aguardando Descarregamento', variant: 'warning', icon: Clock },
@@ -57,8 +58,8 @@ export default function ReceiptsList() {
       queryClient.invalidateQueries({ queryKey: ['operations'] })
       toast.success('Recebimento excluído com sucesso')
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao excluir: ${error.message}`)
+    onError: (error: unknown) => {
+      toast.error(`Erro ao excluir: ${getErrorMessage(error)}`)
     }
   })
 

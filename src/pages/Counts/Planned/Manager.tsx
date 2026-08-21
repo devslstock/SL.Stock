@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import * as XLSX from 'xlsx'
 import { ArrowLeft, Plus, MapPin, CheckCircle2, Play, Pause, Download, Trash2, MoreVertical, Search, ScanBarcode, CloudDownload, FileX, ShieldAlert, ListChecks, FileText, Pencil } from 'lucide-react'
 import {
@@ -148,7 +149,7 @@ export default function PlannedInventoryManager() {
       setRangeEnd('')
       setEditingSectorId(null)
     },
-    onError: (error: any) => toast.error(error.message)
+    onError: (error: unknown) => toast.error(getErrorMessage(error))
   })
 
   const deleteSectorMutation = useMutation({
@@ -172,7 +173,7 @@ export default function PlannedInventoryManager() {
       queryClient.invalidateQueries({ queryKey: ['planned_inventory_areas', id] })
       toast.success('Endereço da área atualizado')
     },
-    onError: (error: any) => toast.error('Erro ao atualizar área: ' + error.message)
+    onError: (error: unknown) => toast.error('Erro ao atualizar área: ' + getErrorMessage(error))
   })
 
   const handleEditSector = (sector: PlannedInventorySector) => {

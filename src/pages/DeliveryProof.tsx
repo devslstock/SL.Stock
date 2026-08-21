@@ -4,6 +4,7 @@ import { operationsApi } from '@/api/operations'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { ArrowLeft, FileSignature, Check } from 'lucide-react'
 
 export default function DeliveryProof() {
@@ -25,8 +26,8 @@ export default function DeliveryProof() {
       toast.success('Comprovante de entrega registrado e operação finalizada!')
       setTimeout(() => navigate('/dashboard'), 1500)
     },
-    onError: (e: any) => {
-      toast.error(`Erro ao finalizar operação: ${e.message}`)
+    onError: (e: unknown) => {
+      toast.error(`Erro ao finalizar operação: ${getErrorMessage(e)}`)
     }
   })
 

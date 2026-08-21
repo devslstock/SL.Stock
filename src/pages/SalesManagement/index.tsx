@@ -12,6 +12,7 @@ import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, Arr
 import { CancelFaturamentoDialog } from '@/components/Sales/CancelFaturamentoDialog'
 import { Pagination } from '@/components/ui/Pagination'
 import type { SalesOrder } from '@/types/database'
+import { getErrorMessage } from '@/utils/errorMessage'
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -79,7 +80,7 @@ export default function SalesManagement() {
       toast.success('Status atualizado com sucesso!')
       setSelectedOrderIds([])
     },
-    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro: ${getErrorMessage(error)}`)
   })
 
   const batchUpdateGroupMutation = useMutation({
@@ -89,7 +90,7 @@ export default function SalesManagement() {
       toast.success('Grupo atribuído com sucesso!')
       setSelectedOrderIds([])
     },
-    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro: ${getErrorMessage(error)}`)
   })
 
   const batchDeleteMutation = useMutation({
@@ -99,7 +100,7 @@ export default function SalesManagement() {
       toast.success('Pedidos excluídos com sucesso!')
       setSelectedOrderIds([])
     },
-    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro: ${getErrorMessage(error)}`)
   })
 
   const updateStatusMutation = useMutation({
@@ -109,7 +110,7 @@ export default function SalesManagement() {
       queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
       toast.success('Status atualizado com sucesso!')
     },
-    onError: (error: any) => toast.error(`Erro: ${error.message}`)
+    onError: (error: unknown) => toast.error(`Erro: ${getErrorMessage(error)}`)
   })
 
   const faturarMutation = useMutation({
@@ -119,7 +120,7 @@ export default function SalesManagement() {
       queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
       toast.success('Pedido faturado e cobranças geradas com sucesso!')
     },
-    onError: (e: any) => toast.error('Erro ao faturar pedido: ' + e.message)
+    onError: (e: unknown) => toast.error('Erro ao faturar pedido: ' + getErrorMessage(e))
   })
 
   const uniqueSalesReps = useMemo(() => {
@@ -545,7 +546,7 @@ export default function SalesManagement() {
                                 queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
                                 toast.success('Pedido excluído com sucesso')
                               })
-                              .catch((e: any) => toast.error('Erro ao excluir pedido: ' + e.message))
+                              .catch((e: unknown) => toast.error('Erro ao excluir pedido: ' + getErrorMessage(e)))
                           }
                         }}>
                           <XCircle className="h-4 w-4" />

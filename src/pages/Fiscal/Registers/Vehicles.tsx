@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { Truck, Plus, Pencil, Trash2, X, Save } from 'lucide-react'
 import type { Vehicle } from '@/types/database'
 
@@ -63,7 +64,7 @@ export default function FiscalVehicles() {
       setIsModalOpen(false)
       resetForm()
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const deleteMutation = useMutation({
@@ -72,7 +73,7 @@ export default function FiscalVehicles() {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] })
       toast.success('Veículo removido!')
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: unknown) => toast.error(getErrorMessage(err))
   })
 
   const resetForm = () => {
