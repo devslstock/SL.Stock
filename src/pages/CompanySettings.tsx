@@ -421,6 +421,30 @@ export default function CompanySettings() {
                   <p className="text-[11px] text-muted-foreground">Máx. 2MB. Formatos JPG ou PNG.</p>
                 </div>
               </div>
+              
+              <div className="mt-6 flex items-center justify-between bg-muted/20 p-4 rounded-md border border-border">
+                <div className="space-y-1">
+                  <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Exibir logo da empresa na NF
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Quando ativado, a logo cadastrada será enviada para a Receita e exibida no cabeçalho do DANFE.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={!!formData.exibir_logo_nf}
+                      disabled={!formData.logo_url}
+                      onChange={(e) => setFormData({...formData, exibir_logo_nf: e.target.checked})}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                  </label>
+                  <span className="text-sm font-bold w-8 text-foreground">{formData.exibir_logo_nf ? 'ON' : 'OFF'}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -639,37 +663,6 @@ export default function CompanySettings() {
                 <p className="text-xs text-muted-foreground mt-1">
                   Obtenha seu token no painel do sistema fiscal. Se você trocar de ambiente, certifique-se de colar o token correto (Homologação ou Produção).
                 </p>
-              </div>
-            </div>
-            
-            <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border md:col-span-2">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <label className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <FileText className="h-4 w-4" /> Exibir logo da empresa na NF
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    Quando ativado, a logo cadastrada em "Minha Empresa" será enviada para a Receita (via Focus NFe) e exibida no cabeçalho do DANFE.
-                    {(!formData.logo_url) && (
-                      <span className="block text-amber-600 mt-1 font-semibold">
-                        Sua empresa ainda não possui uma logo cadastrada. Cadastre a logo acima para utilizá-la na NF.
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      checked={!!formData.exibir_logo_nf}
-                      disabled={!formData.logo_url}
-                      onChange={(e) => setFormData({...formData, exibir_logo_nf: e.target.checked})}
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
-                  </label>
-                  <span className="text-sm font-bold w-8 text-foreground">{formData.exibir_logo_nf ? 'ON' : 'OFF'}</span>
-                </div>
               </div>
             </div>
 
