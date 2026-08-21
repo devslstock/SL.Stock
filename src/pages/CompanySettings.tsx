@@ -229,11 +229,40 @@ export default function CompanySettings() {
       return
     }
 
+    const img = new Image()
     const reader = new FileReader()
+    
     reader.onload = (event) => {
-      const base64 = event.target?.result as string
-      setFormData(prev => ({ ...prev, logo_url: base64 }))
+      img.src = event.target?.result as string
     }
+    
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      let width = img.width
+      let height = img.height
+
+      if (width > 200 || height > 200) {
+        if (width > height) {
+          height = Math.round((height * 200) / width)
+          width = 200
+        } else {
+          width = Math.round((width * 200) / height)
+          height = 200
+        }
+      }
+
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.clearRect(0, 0, width, height)
+        ctx.drawImage(img, 0, 0, width, height)
+        // Forçar PNG para compatibilidade com Focus NFe
+        const base64Png = canvas.toDataURL('image/png')
+        setFormData(prev => ({ ...prev, logo_url: base64Png }))
+      }
+    }
+    
     reader.readAsDataURL(file)
   }
 
