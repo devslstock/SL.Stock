@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { supabase } from '@/lib/supabase'
+import { downloadOrShareFile } from '@/utils/fileDownloader'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
 import { FileText, Printer, FileDown, Search, Filter, AlertTriangle, CheckCircle, RefreshCw, XCircle, FileCode, Mail, Save, FileUp, Download, ChevronDown, ChevronUp, Layers, Loader2, Archive, AlertCircle } from 'lucide-react'
@@ -114,21 +116,11 @@ export default function NfeManagement() {
     if (!nfeId) return;
     try {
       toast.info('Carregando PDF...');
-      const { url } = await nfeApi.downloadNfe(nfeId, 'pdf');
+      const { url, blob } = await nfeApi.downloadNfe(nfeId, 'pdf');
       
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        // No celular, abrir blob em nova aba costuma dar tela branca. O ideal é forçar o download.
-        // O sistema operacional do celular irá abrir o leitor nativo.
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `DANFE-${nfeId.slice(0,8)}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+      if (blob) {
+        await downloadOrShareFile(blob, `DANFE-${nfeId.slice(0,8)}.pdf`);
       } else {
-        // Desktop
         window.open(url, '_blank');
       }
     } catch (e: any) {

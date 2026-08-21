@@ -12,6 +12,8 @@ import { Printer, RefreshCw, XCircle, FileText, AlertTriangle, FileCode, Mail } 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NfeEventHistory } from './NfeEventHistory'
 import { CceModal } from './CceModal'
+import { parseFocusNfeError } from '@/utils/focusNfeError'
+import { downloadOrShareFile } from '@/utils/fileDownloader'
 import { CancelNfeModal } from './CancelNfeModal'
 import { EmailNfeModal } from './EmailNfeModal'
 import { XmlViewerModal } from './XmlViewerModal'
@@ -109,18 +111,13 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
     else setIsDownloadingXml(true)
     
     try {
-      const { url, text } = await nfeApi.downloadNfe(nfe.id, type);
+      const { url, text, blob } = await nfeApi.downloadNfe(nfe.id, type);
       
       if (type === 'pdf') {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        if (isMobile) {
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `DANFE-${nfe.nfe_number || nfe.id.slice(0,8)}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+        if (blob) {
+          await downloadOrShareFile(blob, `DANFE-${nfe.nfe_number || nfe.id.slice(0,8)}.pdf`);
         } else {
+          // fallback
           window.open(url, '_blank');
         }
       } else {
@@ -141,16 +138,13 @@ export function NfeDetailsModal({ isOpen, onClose, order, onRefresh, onEmit }: N
   const handleDownloadOnly = async (type: 'pdf' | 'xml') => {
     if (!nfe) return;
     try {
-      const { url } = await nfeApi.downloadNfe(nfe.id, type);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${type.toUpperCase()}_NFe_${nfe.nfe_number || nfe.id.slice(0,8)}.${type}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const { blob } = await nfeApi.downloadNfe(nfe.id, type);
+      if (blob) {
+        const ext = type === 'pdf' ? '.pdf' : '.xml';
+        await downloadOrShareFile(blob, `Documento-${nfe.nfe_number || nfe.id.slice(0,8)}${ext}`);
+      }
     } catch (err: any) {
-      toast.error(err.message || `Erro ao baixar ${type.toUpperCase()}`);
+      toast.error(err.message || 'Erro ao baixar arquivo');
     }
   }
 

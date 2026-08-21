@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Copy, Download, XCircle } from 'lucide-react'
 import { toast } from '@/components/ui/toaster'
+import { downloadOrShareFile } from '@/utils/fileDownloader'
 
 interface XmlViewerModalProps {
   isOpen: boolean
@@ -22,17 +23,10 @@ export function XmlViewerModal({ isOpen, onClose, xmlString, filename = 'nota_fi
     });
   }
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!xmlString) return;
     const blob = new Blob([xmlString], { type: 'application/xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    await downloadOrShareFile(blob, filename);
   }
 
   // Basic pretty print for XML if it's minified

@@ -196,7 +196,8 @@ export const nfeApi = {
     
     return {
       url: URL.createObjectURL(blob),
-      text
+      text,
+      blob
     };
   }
 }
