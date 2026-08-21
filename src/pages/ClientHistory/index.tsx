@@ -246,20 +246,45 @@ export default function ClientHistory() {
                               className="w-full h-auto max-h-48 object-contain mix-blend-multiply"
                             />
                           </div>
-                          <div className="grid grid-cols-2 gap-4 bg-background p-3 rounded-lg border border-border">
+                          <div className="grid grid-cols-2 gap-4 bg-background p-3 rounded-lg border border-border mt-3">
                             <div>
-                              <p className="text-[10px] uppercase font-bold text-muted-foreground">Recebedor</p>
-                              <p className="font-medium text-sm text-foreground">{client.receiver_name || 'Não informado'}</p>
+                              <p className="text-[10px] uppercase font-bold text-muted-foreground">NF-e Chave de Acesso</p>
+                              <p className="font-medium text-xs font-mono text-foreground">{client.nfe_access_key || 'Não informada'}</p>
                             </div>
                             <div>
-                              <p className="text-[10px] uppercase font-bold text-muted-foreground">Documento (RG/CPF)</p>
-                              <p className="font-medium text-sm font-mono text-foreground">{client.receiver_doc || 'Não informado'}</p>
-                            </div>
-                            <div className="col-span-2 pt-2 border-t border-border mt-1">
-                              <p className="text-[10px] uppercase font-bold text-muted-foreground">Data/Hora da Assinatura</p>
-                              <p className="font-medium text-xs text-foreground">
-                                {formatDateTime(client.signed_at)}
+                              <p className="text-[10px] uppercase font-bold text-muted-foreground">Nº / Série / Valor</p>
+                              <p className="font-medium text-xs font-mono text-foreground">
+                                {client.nfe_number ? `${client.nfe_number} / ${client.nfe_series || '1'}` : 'N/A'} 
+                                {client.nfe_value ? ` - R$ ${client.nfe_value.toFixed(2)}` : ''}
                               </p>
+                            </div>
+                            
+                            <div className="col-span-2 pt-2 border-t border-border mt-1 grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground">Recebedor</p>
+                                <p className="font-medium text-sm text-foreground">{client.receiver_name || 'Não informado'}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground">Documento (RG/CPF)</p>
+                                <p className="font-medium text-sm font-mono text-foreground">{client.receiver_doc || 'Não informado'}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="col-span-2 pt-2 border-t border-border mt-1 grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground">Data/Hora da Assinatura</p>
+                                <p className="font-medium text-xs text-foreground">
+                                  {formatDateTime(client.signed_at)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground">Geolocalização</p>
+                                <p className="font-medium text-xs font-mono text-foreground">
+                                  {client.signature_lat && client.signature_lng 
+                                    ? `${client.signature_lat.toFixed(6)}, ${client.signature_lng.toFixed(6)}` 
+                                    : 'Não registrada'}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>

@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { ArrowLeft, CheckCircle2, Eraser, PenTool } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Eraser, PenTool, MapPin, MapPinOff } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { isValidCPFOrCNPJ, formatDocument } from '@/utils/documentValidation'
+import { useEffect } from 'react'
 
 export default function SignaturePad() {
   const { clientId } = useParams()
@@ -17,7 +18,30 @@ export default function SignaturePad() {
   
   const [receiverName, setReceiverName] = useState('')
   const [receiverDoc, setReceiverDoc] = useState('')
+  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null)
+  const [locationStatus, setLocationStatus] = useState<'pending' | 'captured' | 'failed'>('pending')
   const sigCanvas = useRef<any>(null)
+
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          })
+          setLocationStatus('captured')
+        },
+        (error) => {
+          console.error("Error getting location:", error)
+          setLocationStatus('failed')
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      )
+    } else {
+      setLocationStatus('failed')
+    }
+  }, [])
 
   const { data: client } = useQuery({
     queryKey: ['delivery_client', clientId],
@@ -83,7 +107,9 @@ export default function SignaturePad() {
         signature_data: signatureData,
         receiver_name: receiverName.trim(),
         receiver_doc: receiverDoc ? receiverDoc.trim() : '',
-        signed_at: new Date().toISOString()
+        signed_at: new Date().toISOString(),
+        signature_lat: location?.lat || null,
+        signature_lng: location?.lng || null
       })
     } catch (err: any) {
       toast.error(`Erro ao processar a assinatura: ${err.message}`)
@@ -157,6 +183,12 @@ export default function SignaturePad() {
           <CheckCircle2 className="h-5 w-5 mr-2" />
           {saveSignatureMutation.isPending ? 'Salvando...' : 'Confirmar Recebimento'}
         </Button>
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center mt-4 text-center">
+          {locationStatus === 'pending' && <><MapPin className="h-4 w-4 animate-pulse text-yellow-500" /> Obtendo geolocalização do aparelho...</>}
+          {locationStatus === 'captured' && <><MapPin className="h-4 w-4 text-emerald-500" /> Coordenadas GPS registradas no comprovante.</>}
+          {locationStatus === 'failed' && <><MapPinOff className="h-4 w-4 text-red-500" /> GPS indisponível. A assinatura será salva sem a localização.</>}
+        </div>
       </div>
     </div>
   )

@@ -977,6 +977,11 @@ export interface DeliveryClient {
   signed_at?: string
   delivery_sequence?: number
   nfe_access_key?: string
+  nfe_number?: string
+  nfe_series?: string
+  nfe_value?: number
+  signature_lat?: number | null
+  signature_lng?: number | null
   created_at: string
 }
 
