@@ -684,8 +684,8 @@ export default function RouteClients() {
                      qtyCell = row[4]
                    }
 
-                   let finalDesc = foundProduct ? foundProduct.description : (descCell ? String(descCell).trim() : 'Produto sem descrição')
-                   let finalCode = foundProduct ? foundProduct.code : strCode
+                   const finalDesc = foundProduct ? foundProduct.description : (descCell ? String(descCell).trim() : 'Produto sem descrição')
+                   const finalCode = foundProduct ? foundProduct.code : strCode
 
                    let qty = 1
                    if (qtyCell) {

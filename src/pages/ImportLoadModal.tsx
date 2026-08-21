@@ -56,7 +56,7 @@ export function ImportLoadModal({ isOpen, onOpenChange }: ImportLoadModalProps) 
       // We don't have items in getSalesOrders by default (only some fields). We need to fetch them.
       let allItems: any[] = []
       let loadNotes = ''
-      let clientsMap = new Map<string, any>()
+      const clientsMap = new Map<string, any>()
 
       for (const order of groupOrders) {
         const orderDetails = await salesApi.getSalesOrder(order.id)

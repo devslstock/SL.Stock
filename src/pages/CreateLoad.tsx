@@ -282,7 +282,7 @@ export default function CreateLoad() {
         if (hasClientData) {
           const clientsMap = new Map<string, any>()
                   let notFoundCount = 0
-                  let clientsNotFoundInBase = 0
+                  const clientsNotFoundInBase = 0
                   let currentClientName = ''
                   let currentOrderNumber = ''
                   let currentClientKey = ''
@@ -436,8 +436,8 @@ export default function CreateLoad() {
                                qtyCell = row[4]
                              }
           
-                             let finalDesc = foundProduct ? foundProduct.description : (descCell ? String(descCell).trim() : 'Produto sem descrição')
-                             let finalCode = foundProduct ? foundProduct.code : strCode
+                             const finalDesc = foundProduct ? foundProduct.description : (descCell ? String(descCell).trim() : 'Produto sem descrição')
+                             const finalCode = foundProduct ? foundProduct.code : strCode
           
                              let qty = 1
                              if (qtyCell) {
@@ -518,7 +518,7 @@ export default function CreateLoad() {
             const row = data[i]
             if (!row || row.length === 0) continue
 
-            let parts = row.map(cell => {
+            const parts = row.map(cell => {
               if (cell === undefined || cell === null) return ''
               return String(cell).trim()
             }).filter(Boolean)
@@ -537,7 +537,7 @@ export default function CreateLoad() {
             if (rawCode.includes(' - ')) {
               rawCode = rawCode.split(' - ')[0].trim()
             }
-            let code = rawCode;
+            const code = rawCode;
             if (!code) continue;
         
             const normalizedImportCode = normalizeCode(code);
@@ -547,7 +547,7 @@ export default function CreateLoad() {
               const qty = Math.round(parseFloat(qtyPart.replace(',', '.')))
 
               if (code && !isNaN(qty)) {
-                let finalQty = qty
+                const finalQty = qty
                 if (finalQty > product.stock) {
                   if (product.stock <= 0) {
                     toast.warning(`Falta de estoque (estoque zerado): ${product.description}. Pedido: ${qty}. Confirmar no físico durante a conferência.`)

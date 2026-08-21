@@ -88,7 +88,7 @@ export default function Conference() {
 
   const pendingReturnsList = useMemo(() => {
     const list: { code: string, desc: string, expected: number }[] = []
-    let count = 0
+    const count = 0
     
     // 1. O que foi carregado no caminhão
     const loadedMap = new Map<string, number>()

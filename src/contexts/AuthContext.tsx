@@ -215,7 +215,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Verifica sessão atual no banco
     const { data: userProfile } = await supabase.from('users').select('id, last_session_id').eq('auth_user_id', data.session.user.id).maybeSingle();
-    let localSessionId = localStorage.getItem('device_session_id');
+    const localSessionId = localStorage.getItem('device_session_id');
 
     // Se já existe um session ID no banco para este usuário e ele for diferente do atual, pede confirmação
     if (userProfile && userProfile.last_session_id && userProfile.last_session_id !== localSessionId) {

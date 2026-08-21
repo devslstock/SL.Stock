@@ -326,7 +326,7 @@ export default function PriceTableForm() {
   const items: PriceTableItem[] = priceTable?.price_table_items || []
 
   const sortedItems = useMemo(() => {
-    let sortableItems = [...items]
+    const sortableItems = [...items]
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         let valA: any = ''

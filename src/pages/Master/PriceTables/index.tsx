@@ -168,7 +168,7 @@ export default function PriceTablesList() {
   }
 
   const filteredTables = useMemo(() => {
-    let result = priceTables.filter(t => {
+    const result = priceTables.filter(t => {
       const s = searchTerm.toLowerCase()
       return (
         (t.name || '').toLowerCase().includes(s) ||

@@ -70,7 +70,7 @@ export function SalesDashboard() {
     })
   }, [orders, isManager, user?.name, selectedRep, selectedMonth, selectedYear])
 
-  let vendidoNoMes = filteredOrders.reduce((sum, o) => sum + (o.net_amount || 0), 0)
+  const vendidoNoMes = filteredOrders.reduce((sum, o) => sum + (o.net_amount || 0), 0)
   
   const objetivoNoMes = useMemo(() => {
     // Se não for gestor, pega a meta apenas do vendedor logado
@@ -92,7 +92,7 @@ export function SalesDashboard() {
   const lastDay = new Date(selectedYear, selectedMonth + 1, 0).getDate()
   const currentDay = (today.getMonth() === selectedMonth && today.getFullYear() === selectedYear) ? today.getDate() : 1
   const daysLeft = Math.max(1, lastDay - currentDay)
-  let necessarioVender = missingGoal / daysLeft
+  const necessarioVender = missingGoal / daysLeft
 
   const evolucaoData = useMemo(() => {
     const dataByDay: Record<number, number> = {}
@@ -127,8 +127,8 @@ export function SalesDashboard() {
     })
   }, [customers, isManager, user?.name, selectedRep])
 
-  let ativosCount = relevantCustomers.filter(c => c.active).length
-  let inativosCount = relevantCustomers.filter(c => !c.active).length
+  const ativosCount = relevantCustomers.filter(c => c.active).length
+  const inativosCount = relevantCustomers.filter(c => !c.active).length
 
   const carteiraData = [
     { name: 'Ativos', value: ativosCount, color: '#10b981' },
@@ -136,8 +136,8 @@ export function SalesDashboard() {
   ]
 
   const customersWithOrders = new Set(filteredOrders.map(o => o.customer_id))
-  let positivadosCount = customersWithOrders.size
-  let naoPositivadosCount = Math.max(0, ativosCount - positivadosCount)
+  const positivadosCount = customersWithOrders.size
+  const naoPositivadosCount = Math.max(0, ativosCount - positivadosCount)
 
   const positivacaoData = [
     { name: 'Positivados', value: positivadosCount, color: '#10b981' },
@@ -255,7 +255,7 @@ export function SalesDashboard() {
                   const day = new Date(o.created_at).getDate()
                   dailyData[day] += (o.net_amount || 0)
                 })
-                let chartData = Object.keys(dailyData).map(day => ({
+                const chartData = Object.keys(dailyData).map(day => ({
                   dia: parseInt(day),
                   valor: dailyData[parseInt(day)]
                 }))

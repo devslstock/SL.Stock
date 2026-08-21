@@ -88,7 +88,7 @@ export const focusIntegrationApi = {
 
   async syncCompany(companyId: string, isDryRun = false, certificateFile?: File, certificatePassword?: string) {
     // If we have a file, we need to send as FormData or base64
-    let body: any = { action: 'SYNC_COMPANY', companyId, isDryRun }
+    const body: any = { action: 'SYNC_COMPANY', companyId, isDryRun }
     
     if (certificateFile) {
       const base64 = await new Promise<string>((resolve, reject) => {

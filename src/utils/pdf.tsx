@@ -358,7 +358,7 @@ export async function generateRouteReportPDF(route: any, clients: any[], routeOr
   doc.setTextColor(15, 23, 42)
   doc.text('RELATÓRIO DE ROTA', 195, y, { align: 'right' })
 
-  let currentY = y + (compNameLines.length * 5)
+  const currentY = y + (compNameLines.length * 5)
   y = Math.max(currentY, y + 10)
   
   doc.setDrawColor(226, 232, 240)

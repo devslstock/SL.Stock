@@ -197,7 +197,7 @@ export default function CreateReceipt() {
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
         const pdf = await loadingTask.promise
         
-        let parsedItems: NewItem[] = []
+        const parsedItems: NewItem[] = []
         let notFoundCount = 0
 
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -212,7 +212,7 @@ export default function CreateReceipt() {
             return a.transform[4] - b.transform[4]
           })
 
-          let lines: string[] = []
+          const lines: string[] = []
           let currentLine = ""
           let currentY = -1
 
@@ -316,8 +316,8 @@ export default function CreateReceipt() {
           }
 
           const descCell = row[4] || row[5] || row[3]
-          let finalDesc = foundProduct ? foundProduct.description : (descCell ? String(descCell).trim() : 'Produto sem descrição')
-          let finalCode = foundProduct ? foundProduct.code : strCode
+          const finalDesc = foundProduct ? foundProduct.description : (descCell ? String(descCell).trim() : 'Produto sem descrição')
+          const finalCode = foundProduct ? foundProduct.code : strCode
 
           const qtyCell = row[11] || row[10] || row[12]
           let qty = 1
