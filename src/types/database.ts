@@ -1,5 +1,5 @@
 // ============================================
-// Database Types - Estoque Fácil
+// Database Types - SL Stock
 // ============================================
 
 export type OperationType = 'LOAD' | 'INVENTORY' | 'BLIND_RECEIPT' | 'RECEIPT' | 'RETURN'
@@ -68,11 +68,6 @@ export interface Company {
   exibir_logo_nf?: boolean
   garage_lat?: number | null
   garage_lng?: number | null
-  maxiprod_api_token?: string | null
-  maxiprod_last_sync?: string | null
-  maxiprod_moeda_id?: number | null
-  maxiprod_operacao_id?: number | null
-  maxiprod_unidade_id?: number | null
   focusnfe_token?: string | null
   focusnfe_env?: 'producao' | 'homologacao' | null
   tax_regime?: 'simples_nacional' | 'regime_normal' | null
@@ -297,7 +292,6 @@ export interface Customer {
   allow_unit_price_change: boolean | null
   region_id: string | null
   sales_rep_id: string | null
-  maxiprod_id?: number | null
   created_at: string
   updated_at: string
   equipments?: CustomerEquipment[]
@@ -592,7 +586,6 @@ export interface Product {
   group_name?: string
   stock: number
   reserved_stock?: number
-  maxiprod_id?: number | null
   min_stock_alert?: number
   batch?: string
   unit_weight?: number

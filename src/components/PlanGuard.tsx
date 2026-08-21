@@ -55,7 +55,6 @@ export function PlanGuard({ children, requiredPlan }: PlanGuardProps) {
               {requiredPlan === 'platina' && (
                 <>
                   <li>E-commerce e CRM</li>
-                  <li>Sincronização com ERP Maxiprod</li>
                   <li>Representantes Comerciais</li>
                 </>
               )}

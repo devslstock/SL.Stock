@@ -486,6 +486,8 @@ CREATE TRIGGER handle_updated_at_sales_orders
     BEFORE UPDATE ON public.sales_orders
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
+-- NOTA: colunas legadas da integração Maxiprod (ferramenta descontinuada, código removido em 2026-08).
+-- Colunas mantidas no banco (dado morto, inofensivo) para evitar migration de DROP sem certeza de uso.
 ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS maxiprod_api_token TEXT;
 ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS maxiprod_last_sync TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_role_check;

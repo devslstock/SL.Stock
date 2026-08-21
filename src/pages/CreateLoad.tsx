@@ -296,7 +296,7 @@ export default function CreateLoad() {
                     const col2 = typeof row[1] === 'string' ? row[1].trim() : ''
                     const col3 = typeof row[2] === 'string' ? row[2].trim() : ''
           
-                    // ==== TEMPLATE ESTOQUE FACIL ====
+                    // ==== TEMPLATE SL STOCK ====
                     if (col1.includes('Numero de pedido') || col2.includes('Numero de pedido')) {
                        currentOrderNumber = (col1.includes('Numero de pedido') ? col2 : col3).replace(/[^\d]/g, '')
                     }
@@ -431,7 +431,7 @@ export default function CreateLoad() {
                              let qtyCell = row[11] || row[10] || row[12]
                              
                              if (row[11] === undefined && row[10] === undefined && row[12] === undefined) {
-                               // Probably EstoqueFacil
+                               // Probably SL Stock
                                descCell = row[3]
                                qtyCell = row[4]
                              }

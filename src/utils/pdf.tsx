@@ -572,7 +572,7 @@ export async function generateRouteReportPDF(route: any, clients: any[], routeOr
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.5)
   doc.setTextColor(148, 163, 184)
-  doc.text('Relatório gerado eletronicamente pelo sistema Estoque Fácil WMS.', 15, 287)
+  doc.text('Relatório gerado eletronicamente pelo sistema SL Stock WMS.', 15, 287)
 
   if (includeProofs) {
     const completedClients = clients.filter(c => c.status === 'delivered' || c.status === 'delivered_with_divergence' || c.status === 'returned')

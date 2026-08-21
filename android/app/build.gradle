@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.estoquefacil.coletor"
+    namespace = "com.slstock.coletor"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.estoquefacil.coletor"
+        applicationId "com.slstock.coletor"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

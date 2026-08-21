@@ -1,6 +1,6 @@
-# 📦 SL Stock (Estoque Fácil) - Documentação do Sistema
+# 📦 SL Stock - Documentação do Sistema
 
-O **SL Stock** (também denominado *Estoque Fácil*) é uma plataforma ERP/WMS SaaS Multitenant completa, projetada para gerenciar operações em Centros de Distribuição (CD), armazéns e logística de última milha (Last-Mile). O sistema se destaca por sua renderização dupla de interface (Modo Moderno vs. Modo Tradicional Windows 2000), mecanismos eficientes de travas duras, liberação remota em tempo real e compilação híbrida nativa para dispositivos móveis.
+O **SL Stock** é uma plataforma ERP/WMS SaaS Multitenant completa, projetada para gerenciar operações em Centros de Distribuição (CD), armazéns e logística de última milha (Last-Mile). O sistema se destaca por sua renderização dupla de interface (Modo Moderno vs. Modo Tradicional Windows 2000), mecanismos eficientes de travas duras, liberação remota em tempo real e compilação híbrida nativa para dispositivos móveis.
 
 ---
 

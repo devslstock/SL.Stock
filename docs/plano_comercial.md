@@ -1,6 +1,6 @@
 # 📈 Plano Comercial, de Vendas e Onboarding - SL Stock
 
-Este documento detalha a estratégia comercial, posicionamento de mercado, modelo de monetização, funil de aquisição de novos clientes e o roteiro de onboarding (ativação) para o **SL Stock** (Estoque Fácil).
+Este documento detalha a estratégia comercial, posicionamento de mercado, modelo de monetização, funil de aquisição de novos clientes e o roteiro de onboarding (ativação) para o **SL Stock**.
 
 ---
 

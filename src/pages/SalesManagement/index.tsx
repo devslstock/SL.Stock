@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toaster'
-import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Upload, Edit, Eye, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Send, Trash2 } from 'lucide-react'
-import { ImportMaxiprodModal } from '@/components/Sales/ImportMaxiprodModal'
+import { FileText, Search, FileSignature, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown, Edit, Eye, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2 } from 'lucide-react'
 import { CancelFaturamentoDialog } from '@/components/Sales/CancelFaturamentoDialog'
 import { Pagination } from '@/components/ui/Pagination'
 import type { SalesOrder } from '@/types/database'
@@ -44,7 +43,6 @@ export default function SalesManagement() {
 
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [filterDateFrom, setFilterDateFrom] = useState('')
   const [filterDateTo, setFilterDateTo] = useState('')
@@ -52,9 +50,7 @@ export default function SalesManagement() {
   const [filterSalesRep, setFilterSalesRep] = useState('all')
   const [filterRegion, setFilterRegion] = useState('all')
   const [filterOrderGroup, setFilterOrderGroup] = useState('')
-  const [sendingOrderId, setSendingOrderId] = useState<string | null>(null)
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([])
-  const [isBatchSending, setIsBatchSending] = useState(false)
   const [cancelFaturamentoOrderId, setCancelFaturamentoOrderId] = useState<string | null>(null)
   
   const [currentPage, setCurrentPage] = useState(1)
@@ -251,79 +247,6 @@ export default function SalesManagement() {
     }
   }
 
-  const handleSendToMaxiprod = async (orderId: string) => {
-    setSendingOrderId(orderId)
-    toast.info('Enviando pedido para o Maxiprod...', { duration: 3000 })
-    try {
-      const { maxiprodApi } = await import('@/api/maxiprod')
-      await maxiprodApi.sendSalesOrder(orderId)
-      
-      // Update local status to Faturado
-      await salesApi.updateSalesOrder(orderId, { status: 'Faturado' })
-      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
-      
-      toast.success('Pedido enviado com sucesso e faturado!')
-    } catch (e: any) {
-      console.error(e)
-      toast.error(`Erro ao enviar pedido: ${e.message || e}`)
-    } finally {
-      setSendingOrderId(null)
-    }
-  }
-
-  const handleBatchSendToMaxiprod = async () => {
-    if (selectedOrderIds.length === 0) return
-    
-    if (!window.confirm(`Deseja transmitir os ${selectedOrderIds.length} pedidos selecionados para o Maxiprod?`)) {
-      return
-    }
-
-    setIsBatchSending(true)
-    let successCount = 0
-    let failCount = 0
-    
-    try {
-      const { maxiprodApi } = await import('@/api/maxiprod')
-      
-      toast.info(`Iniciando transmissão de ${selectedOrderIds.length} pedidos...`, { duration: 4000 })
-
-      for (const orderId of selectedOrderIds) {
-        try {
-          const ord = orders.find(o => o.id === orderId)
-          if (!ord) continue
-
-          if (ord.status === 'Faturado') {
-            successCount++
-            continue
-          }
-
-          // Envia para o Maxiprod
-          await maxiprodApi.sendSalesOrder(orderId)
-
-          // Atualiza status local para Faturado
-          await salesApi.updateSalesOrder(orderId, { status: 'Faturado' })
-          successCount++
-        } catch (e: any) {
-          console.error(`Erro ao enviar pedido ${orderId}:`, e)
-          failCount++
-        }
-      }
-
-      setSelectedOrderIds([])
-      queryClient.invalidateQueries({ queryKey: ['sales_orders'] })
-
-      if (failCount > 0) {
-        toast.error(`Transmissão concluída. ${successCount} pedidos enviados com sucesso, ${failCount} falharam.`)
-      } else {
-        toast.success(`Todos os ${successCount} pedidos foram enviados com sucesso para o Maxiprod!`)
-      }
-    } catch (e: any) {
-      toast.error(`Erro na transmissão em lote: ${e.message}`)
-    } finally {
-      setIsBatchSending(false)
-    }
-  }
-
   const openDetails = (id: string) => {
     setSelectedOrderId(id)
     setIsDetailsOpen(true)
@@ -349,15 +272,6 @@ export default function SalesManagement() {
             Gestão de Pedidos
           </h1>
           <p className="text-muted-foreground mt-1">Acompanhe e fature os pedidos enviados pelos vendedores.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button 
-            variant="outline" 
-            className="text-blue-600 border-blue-500 hover:bg-blue-50 font-bold px-4 h-10 shadow-sm rounded-md"
-            onClick={() => setIsImportModalOpen(true)}
-          >
-            <Upload className="h-4 w-4 mr-2" /> Importar Planilha
-          </Button>
         </div>
       </div>
 
@@ -748,7 +662,6 @@ export default function SalesManagement() {
           </div>
         </DialogContent>
       </Dialog>
-      <ImportMaxiprodModal isOpen={isImportModalOpen} onOpenChange={setIsImportModalOpen} />
 
       {cancelFaturamentoOrderId && (
         <CancelFaturamentoDialog
@@ -769,16 +682,7 @@ export default function SalesManagement() {
           </div>
           
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-9 shadow-sm"
-              size="sm"
-              onClick={handleBatchSendToMaxiprod}
-              disabled={isBatchSending}
-            >
-              <Send className="h-4 w-4 mr-2" /> {isBatchSending ? 'Transmitindo...' : 'Transmitir (Maxiprod)'}
-            </Button>
-
-            <select 
+            <select
               className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-auto"
               value=""
               onChange={(e) => {

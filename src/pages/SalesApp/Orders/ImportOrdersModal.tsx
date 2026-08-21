@@ -78,7 +78,7 @@ export function ImportOrdersModal({ isOpen, onOpenChange }: ImportOrdersModalPro
           const col2 = typeof row[1] === 'string' ? row[1].trim() : ''
           const col3 = typeof row[2] === 'string' ? row[2].trim() : ''
 
-          // ==== TEMPLATE ESTOQUE FACIL ====
+          // ==== TEMPLATE SL STOCK ====
           if (col1.includes('Numero de pedido') || col2.includes('Numero de pedido')) {
              currentOrderNumber = (col1.includes('Numero de pedido') ? col2 : col3).replace(/[^\d]/g, '')
           }
@@ -301,7 +301,7 @@ export function ImportOrdersModal({ isOpen, onOpenChange }: ImportOrdersModalPro
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Importar Planilha MaxiProd</DialogTitle>
+          <DialogTitle>Importar Planilha</DialogTitle>
           <DialogDescription>
             Importe pedidos através de uma planilha. Você pode opcionalmente vinculá-los a um grupo.
           </DialogDescription>

@@ -1,4 +1,4 @@
-package com.estoquefacil.coletor;
+package com.slstock.coletor;
 
 import com.getcapacitor.BridgeActivity;
 
