@@ -80,6 +80,9 @@ export interface Company {
   focus_nfe_updated_at?: string | null
   focus_nfe_cert_expires_at?: string | null
   ibge_code?: string | null
+  asaas_api_key?: string | null
+  asaas_env?: 'sandbox' | 'producao' | null
+  asaas_webhook_token?: string | null
   created_at: string
 }
 
@@ -292,6 +295,7 @@ export interface Customer {
   allow_unit_price_change: boolean | null
   region_id: string | null
   sales_rep_id: string | null
+  asaas_customer_id?: string | null
   created_at: string
   updated_at: string
   equipments?: CustomerEquipment[]
@@ -508,9 +512,13 @@ export interface AccountReceivable {
   bank_slip_barcode?: string
   bank_slip_digitable_line?: string
   bank_slip_url?: string
+  asaas_payment_id?: string | null
+  gateway_provider?: string | null
+  receipt_method_id?: string | null
+  asaas_last_webhook_at?: string | null
   created_at: string
   updated_at: string
-  
+
   customer?: Customer
   sales_order?: SalesOrder
 }

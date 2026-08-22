@@ -9,3 +9,13 @@ entrypoint = "./functions/email-doc/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/email-doc/*.html" ]
+
+# Webhooks recebidos de servicos externos (Focus NFe, Asaas) nao enviam um JWT
+# do Supabase - a autenticacao e feita dentro da propria function (secret/token).
+[functions.focus-webhook]
+enabled = true
+verify_jwt = false
+
+[functions.asaas-webhook]
+enabled = true
+verify_jwt = false

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { financeApi } from '@/api/finance'
+import { asaasApi } from '@/api/asaas'
 import { formatCurrency } from '@/utils/formatters'
 import { DollarSign, Search, Calendar, FileText, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -101,6 +102,23 @@ export default function AccountsReceivable() {
       setSelectedIds([])
     },
     onError: (e: unknown) => toast.error('Erro ao cancelar em massa: ' + getErrorMessage(e))
+  })
+
+  const emitirBoletosMutation = useMutation({
+    mutationFn: (ids: string[]) => asaasApi.emitirBoletos(ids),
+    onSuccess: (results) => {
+      queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
+      const ok = results.filter(r => r.success)
+      const fail = results.filter(r => !r.success)
+      if (ok.length) toast.success(`${ok.length} boleto(s) emitido(s) com sucesso!`)
+      if (fail.length) {
+        toast.error(`${fail.length} falharam: ${fail.map(f => f.error).join('; ')}`, { duration: 8000 })
+        setSelectedIds(fail.map(f => f.accountId))
+      } else {
+        setSelectedIds([])
+      }
+    },
+    onError: (e: unknown) => toast.error('Erro ao emitir boletos: ' + getErrorMessage(e))
   })
 
   const handleBaixar = (account: AccountReceivable) => {
@@ -302,8 +320,13 @@ export default function AccountsReceivable() {
             {selectedIds.length} cobrança{selectedIds.length > 1 ? 's' : ''} selecionada{selectedIds.length > 1 ? 's' : ''}
           </span>
           <div className="flex gap-2 flex-wrap">
-            <Button size="sm" variant="default" onClick={() => toast.info('Emissão de boletos em massa em breve!')}>
-              <FileText className="h-4 w-4 mr-2" /> Imprimir Boletos
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => emitirBoletosMutation.mutate(selectedIds)}
+              disabled={emitirBoletosMutation.isPending}
+            >
+              <FileText className="h-4 w-4 mr-2" /> {emitirBoletosMutation.isPending ? 'Emitindo...' : 'Imprimir Boletos'}
             </Button>
             <Button 
               size="sm" 
@@ -435,6 +458,16 @@ export default function AccountsReceivable() {
                         <span className="inline-flex items-center gap-1 text-amber-600 bg-amber-500/10 px-2 py-1 rounded-full text-xs font-medium">
                           <AlertCircle className="h-3 w-3" /> {account.status.replace('_', ' ')}
                         </span>
+                      )}
+                      {account.bank_slip_url && (
+                        <a
+                          href={account.bank_slip_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block mt-1 text-xs text-blue-600 hover:underline"
+                        >
+                          Ver Boleto
+                        </a>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">

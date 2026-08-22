@@ -62,7 +62,10 @@ export default function CompanySettings() {
     logo_url: '',
     exibir_logo_nf: false,
     focusnfe_env: 'homologacao' as 'producao' | 'homologacao',
-    focusnfe_token: ''
+    focusnfe_token: '',
+    asaas_env: 'sandbox' as 'sandbox' | 'producao',
+    asaas_api_key: '',
+    asaas_webhook_token: ''
   })
 
   useEffect(() => {
@@ -87,7 +90,10 @@ export default function CompanySettings() {
         logo_url: companyData.logo_url || '',
         exibir_logo_nf: companyData.exibir_logo_nf || false,
         focusnfe_env: companyData.focusnfe_env || 'homologacao',
-        focusnfe_token: companyData.focusnfe_token || ''
+        focusnfe_token: companyData.focusnfe_token || '',
+        asaas_env: companyData.asaas_env || 'sandbox',
+        asaas_api_key: companyData.asaas_api_key || '',
+        asaas_webhook_token: companyData.asaas_webhook_token || ''
       })
     }
   }, [companyData])
@@ -799,6 +805,104 @@ export default function CompanySettings() {
                     Ativar Notificações
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Integração de Cobrança (Asaas) */}
+        <div className="glass-card p-6 border-t-4 border-t-blue-500">
+          <div className="flex items-center gap-2 mb-4 text-lg font-bold text-foreground">
+            <Receipt className="h-5 w-5 text-blue-500" />
+            Integração de Cobrança (Asaas)
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Configure sua conta Asaas para emitir boletos de cobrança direto pelos pedidos, na tela de Contas a Receber.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" /> Ambiente Asaas
+                </label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={formData.asaas_env || 'sandbox'}
+                  onChange={e => setFormData({...formData, asaas_env: e.target.value as 'sandbox' | 'producao'})}
+                >
+                  <option value="sandbox">Sandbox (Testes sem valor real)</option>
+                  <option value="producao">Produção (Boletos reais)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <KeyIcon className="h-4 w-4" /> Chave de API Asaas
+                </label>
+                <Input
+                  placeholder="Cole aqui a API Key correspondente ao ambiente acima"
+                  value={formData.asaas_api_key || ''}
+                  onChange={e => setFormData({...formData, asaas_api_key: e.target.value})}
+                  type="password"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Gere a chave no painel da Asaas em Configurações → Integrações → API. Se trocar de ambiente, cole a chave correspondente (Sandbox ou Produção).
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <Link className="h-4 w-4" /> URL do Webhook
+                </label>
+                <div className="flex gap-2">
+                  <Input readOnly value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-webhook`} className="text-xs" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-webhook`)
+                      toast.success('URL copiada!')
+                    }}
+                  >
+                    Copiar
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <KeyIcon className="h-4 w-4" /> Token do Webhook
+                </label>
+                {formData.asaas_webhook_token ? (
+                  <div className="flex gap-2">
+                    <Input readOnly type="password" value={formData.asaas_webhook_token} className="text-xs" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(formData.asaas_webhook_token)
+                        toast.success('Token copiado!')
+                      }}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setFormData({...formData, asaas_webhook_token: crypto.randomUUID()})}
+                  >
+                    Gerar Token
+                  </Button>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Depois de salvar, cadastre a URL e o token acima no painel da Asaas em Configurações → Integrações → Webhooks, selecionando os eventos: Cobrança recebida, Cobrança confirmada e Cobrança vencida.
+                </p>
               </div>
             </div>
           </div>
