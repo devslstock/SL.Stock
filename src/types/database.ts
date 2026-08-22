@@ -463,10 +463,12 @@ export interface SalesOrder {
   obs_contribuinte?: string | null
   operacao_fiscal?: string | null
   forma_pagamento?: string | null
+  meio_pagamento?: string | null
+  receipt_method_id?: string | null
   condicao_frete?: string | null
   created_at: string
   updated_at: string
-  
+
   customer?: Customer
   sales_rep?: SalesRep
   payment_condition?: PaymentCondition
@@ -474,6 +476,7 @@ export interface SalesOrder {
   carrier?: Carrier
   items?: SalesOrderItem[]
   order_group?: OrderGroup
+  receipt_method?: ReceiptMethod | null
 }
 
 export interface Carrier {

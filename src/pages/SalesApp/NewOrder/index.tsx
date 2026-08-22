@@ -739,8 +739,24 @@ export default function NewOrder() {
 
           <div className="flex gap-4 max-w-md mt-2">
             <div className="flex-1">
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">* Forma de pagamento</label>
+              <select
+                className="w-full border border-border bg-background rounded-md h-12 px-3 focus:outline-none focus:ring-1 focus:ring-primary/50 text-base"
+                value={order.forma_pagamento || ''}
+                onChange={(e) => handleUpdate({ forma_pagamento: e.target.value || null, ...(e.target.value !== 'A prazo' ? { payment_condition_id: null } : {}) })}
+              >
+                <option value="">Selecione...</option>
+                <option value="À vista">À vista</option>
+                <option value="A prazo">A prazo</option>
+              </select>
+            </div>
+          </div>
+
+          {order.forma_pagamento === 'A prazo' && (
+          <div className="flex gap-4 max-w-md mt-4">
+            <div className="flex-1">
               <label className="text-xs text-muted-foreground font-medium mb-1 block">* Condição de pagamento</label>
-              <select 
+              <select
                 className="w-full border border-border bg-background rounded-md h-12 px-3 focus:outline-none focus:ring-1 focus:ring-primary/50 text-base"
                 value={order.payment_condition_id || ''}
                 onChange={(e) => handleUpdate({ payment_condition_id: e.target.value || null })}
@@ -754,7 +770,7 @@ export default function NewOrder() {
             <div className="w-[140px] flex gap-2">
               <div className="w-1/2">
                 <label className="text-[10px] text-muted-foreground font-medium mb-1 block truncate">Desc(%)</label>
-                <Input 
+                <Input
                   type="number"
                   min="0"
                   max="100"
@@ -788,6 +804,7 @@ export default function NewOrder() {
               </div>
             </div>
           </div>
+          )}
         </section>
         </div>
 
@@ -1153,10 +1170,24 @@ export default function NewOrder() {
               />
             </div>
 
+            <div>
+              <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Forma de Pagamento</label>
+              <select
+                className="w-full border border-input bg-background rounded-lg h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                value={order.forma_pagamento || ''}
+                onChange={(e) => handleUpdate({ forma_pagamento: e.target.value || null, ...(e.target.value !== 'A prazo' ? { payment_condition_id: null } : {}) })}
+              >
+                <option value="">Selecione...</option>
+                <option value="À vista">À vista</option>
+                <option value="A prazo">A prazo</option>
+              </select>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {order.forma_pagamento === 'A prazo' && (
               <div>
                 <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Condição de Pagamento</label>
-                <select 
+                <select
                   className="w-full border border-input bg-background rounded-lg h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                   value={order.payment_condition_id || ''}
                   onChange={(e) => handleUpdate({ payment_condition_id: e.target.value || null })}
@@ -1167,6 +1198,7 @@ export default function NewOrder() {
                   ))}
                 </select>
               </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground font-semibold mb-1.5 block">Desconto (%)</label>

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ProductSearchInline } from '../SalesApp/NewOrder/ProductSearchInline'
+import { PaymentMethodSelector } from '@/components/Sales/PaymentMethodSelector'
 import { supabase } from '@/lib/supabase'
 import { parsePaymentCondition } from '@/utils/paymentParser'
 import { FiscalEmissionDialog } from '@/components/Fiscal/FiscalEmissionDialog'
@@ -126,6 +127,8 @@ export default function AdminOrderEdit() {
     obs_contribuinte: '',
     nfe_series: 3,
     forma_pagamento: '',
+    meio_pagamento: '',
+    receipt_method_id: '',
     condicao_frete: ''
   })
 
@@ -158,6 +161,8 @@ export default function AdminOrderEdit() {
         operacao_fiscal: order.operacao_fiscal || '5405',
         nfe_series: order.nfe_series || 3,
         forma_pagamento: order.forma_pagamento || '',
+        meio_pagamento: order.meio_pagamento || '',
+        receipt_method_id: order.receipt_method_id || '',
         condicao_frete: order.condicao_frete || ''
       }))
       setLocalItems(order.items || [])
@@ -504,6 +509,8 @@ export default function AdminOrderEdit() {
       operacao_fiscal: formData.operacao_fiscal,
       nfe_series: formData.nfe_series,
       forma_pagamento: formData.forma_pagamento,
+      meio_pagamento: formData.meio_pagamento || null,
+      receipt_method_id: formData.receipt_method_id || null,
       condicao_frete: formData.condicao_frete
     }
     updateMutation.mutate(updates)
@@ -1116,51 +1123,18 @@ export default function AdminOrderEdit() {
         <div className="flex gap-4 items-center mb-4">
           <div className="flex items-center gap-2">
             <label className="text-right w-36">Forma de pagamento</label>
-            <select 
-              className="h-7 text-[13px] border rounded px-1 w-32 bg-background"
-              value={formData.forma_pagamento || ''}
-              onChange={e => setFormData({...formData, forma_pagamento: e.target.value})}
-            >
-              <option value="">Selecione...</option>
-              <option value="A prazo">A prazo</option>
-              <option value="À vista">À vista</option>
-              <option value="Outros">Outros</option>
-            </select>
-            <select 
-              className="h-7 text-[13px] border rounded px-1 w-48 bg-background"
-              value={(formData as any).meio_pagamento || ''}
-              onChange={e => setFormData({...formData, meio_pagamento: e.target.value} as any)}
-            >
-              <option value="">Selecione...</option>
-              <option value="01">Dinheiro</option>
-              <option value="02">Cheque</option>
-              <option value="03">Cartão de crédito</option>
-              <option value="04">Cartão de débito</option>
-              <option value="05">Crédito loja</option>
-              <option value="10">Vale alimentação</option>
-              <option value="11">Vale refeição</option>
-              <option value="12">Vale presente</option>
-              <option value="13">Vale combustível</option>
-              <option value="15">Boleto bancário</option>
-              <option value="16">Depósito bancário</option>
-              <option value="17">Pagamento instantâneo (PIX)</option>
-              <option value="18">Transferência bancária, carteira digital</option>
-              <option value="19">Programa de fidelidade, cashback, crédito virtual</option>
-              <option value="90">Sem pagamento</option>
-              <option value="99">Outros</option>
-            </select>
-            <select 
-              className="h-7 text-[13px] border rounded px-1 w-64 bg-background"
-              value={(formData as any).conta_bancaria || ''}
-              onChange={e => setFormData({...formData, conta_bancaria: e.target.value} as any)}
-            >
-              <option value="">Selecione a conta/banco...</option>
-              <option value="Dinheiro">Dinheiro</option>
-              <option value="Boleto_BNB">Boleto (com registro) Banco do Nordeste</option>
-              <option value="Cheque_Sicoob">Cheque Bancoob</option>
-              <option value="Boleto_Sicoob">Boleto (com registro) Bancoob</option>
-              <option value="Deposito_Sicoob">Depósito Bancoob</option>
-            </select>
+            <PaymentMethodSelector
+              companyId={company?.id || ''}
+              formaPagamento={formData.forma_pagamento || null}
+              meioPagamento={formData.meio_pagamento || null}
+              receiptMethodId={formData.receipt_method_id || null}
+              onChange={updates => setFormData(prev => ({
+                ...prev,
+                ...(updates.forma_pagamento !== undefined ? { forma_pagamento: updates.forma_pagamento || '' } : {}),
+                ...(updates.meio_pagamento !== undefined ? { meio_pagamento: updates.meio_pagamento || '' } : {}),
+                ...(updates.receipt_method_id !== undefined ? { receipt_method_id: updates.receipt_method_id || '' } : {}),
+              }))}
+            />
           </div>
         </div>
          <div className="flex flex-col gap-4">

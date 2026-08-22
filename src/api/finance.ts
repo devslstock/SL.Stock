@@ -111,7 +111,8 @@ export const financeApi = {
       amount: inst.amount,
       due_date: inst.dueDate.toISOString().split('T')[0],
       status: 'pendente',
-      payment_method: order.forma_pagamento || 'Boleto'
+      payment_method: order.forma_pagamento || 'Boleto',
+      receipt_method_id: order.receipt_method_id || null
     }))
     
     // 4. Inserir contas a receber
