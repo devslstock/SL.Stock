@@ -166,8 +166,7 @@ serve(async (req: Request) => {
           continue;
         }
 
-        // 3. Buscar linha digitável / código de barras
-        // TODO: validar este endpoint contra a documentação oficial da Asaas quando a sandbox key estiver disponível
+        // 3. Buscar linha digitável / código de barras (GET /payments/{id}/identificationField)
         let digitableLine: string | undefined;
         let barCode: string | undefined;
         try {
