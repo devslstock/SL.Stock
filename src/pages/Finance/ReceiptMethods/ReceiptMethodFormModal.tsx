@@ -72,6 +72,9 @@ export function ReceiptMethodFormModal({ isOpen, onClose, methodToEdit }: Props)
     bb_client_id: '',
     bb_client_secret: '',
     bb_app_key: '',
+    sicoob_client_id: '',
+    sicoob_certificate_pfx_base64: '',
+    sicoob_certificate_password: '',
     pix_key: '',
     validation_credential_1: '',
     validation_credential_2: '',
@@ -593,6 +596,7 @@ export function ReceiptMethodFormModal({ isOpen, onClose, methodToEdit }: Props)
                       >
                         <option value="">Selecione...</option>
                         <option value="banco_do_brasil">Banco do Brasil</option>
+                        <option value="sicoob">Sicoob</option>
                       </select>
                     </div>
                   )}
@@ -661,6 +665,55 @@ export function ReceiptMethodFormModal({ isOpen, onClose, methodToEdit }: Props)
                           className="w-full bg-white"
                           value={formData.bb_app_key || ''}
                           onChange={e => setFormData({ ...formData, bb_app_key: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {formData.integration_type === 'WebService' && formData.gateway_provider === 'sicoob' && (
+                  <div className="bg-emerald-50/50 p-5 rounded-lg border border-emerald-200 space-y-4">
+                    <h3 className="font-semibold text-emerald-900 border-b border-emerald-200 pb-3">Credenciais da API de Cobrança do Sicoob</h3>
+                    <p className="text-xs text-emerald-800">
+                      Gere o Client ID e o certificado digital (.pfx) no Portal Developers Sicoob, dentro do aplicativo cadastrado para a API de Cobrança Bancária. Com isso preenchido e "confirmado com o gerente" marcado abaixo, os boletos dessa conta passam a ser emitidos automaticamente.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Client ID *</label>
+                        <Input
+                          required
+                          className="w-full bg-white"
+                          value={formData.sicoob_client_id || ''}
+                          onChange={e => setFormData({ ...formData, sicoob_client_id: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Senha do certificado</label>
+                        <Input
+                          type="password"
+                          className="w-full bg-white"
+                          value={formData.sicoob_certificate_password || ''}
+                          onChange={e => setFormData({ ...formData, sicoob_certificate_password: e.target.value })}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Certificado digital (.pfx) {formData.sicoob_certificate_pfx_base64 ? <span className="text-emerald-600 font-normal">— já enviado, escolha outro arquivo só se quiser substituir</span> : '*'}
+                        </label>
+                        <input
+                          type="file"
+                          accept=".pfx,.p12"
+                          className="w-full text-sm"
+                          onChange={e => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            const reader = new FileReader()
+                            reader.onload = () => {
+                              const result = reader.result as string
+                              setFormData(prev => ({ ...prev, sicoob_certificate_pfx_base64: result.split(',')[1] }))
+                            }
+                            reader.readAsDataURL(file)
+                          }}
                         />
                       </div>
                     </div>

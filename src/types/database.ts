@@ -445,6 +445,9 @@ export interface ReceiptMethod {
   bb_client_id?: string | null
   bb_client_secret?: string | null
   bb_app_key?: string | null
+  sicoob_client_id?: string | null
+  sicoob_certificate_pfx_base64?: string | null
+  sicoob_certificate_password?: string | null
 
   created_at: string
   updated_at: string

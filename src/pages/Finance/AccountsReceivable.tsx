@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { financeApi } from '@/api/finance'
 import { asaasApi, type AsaasEmitResult } from '@/api/asaas'
 import { bbApi } from '@/api/bb'
+import { sicoobApi } from '@/api/sicoob'
 import { formatCurrency } from '@/utils/formatters'
 import { DollarSign, Search, Calendar, FileText, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -109,19 +110,22 @@ export default function AccountsReceivable() {
     mutationFn: async (ids: string[]): Promise<AsaasEmitResult[]> => {
       const asaasIds: string[] = []
       const bbIds: string[] = []
+      const sicoobIds: string[] = []
       const semIntegracao: string[] = []
 
       for (const id of ids) {
         const account = accounts.find((a: AccountReceivable) => a.id === id)
         const provider = account?.receipt_method?.gateway_provider
         if (provider === 'banco_do_brasil') bbIds.push(id)
+        else if (provider === 'sicoob') sicoobIds.push(id)
         else if (provider === 'asaas' || !provider) asaasIds.push(id) // sem forma de cobrança definida cai no comportamento antigo (Asaas)
         else semIntegracao.push(id)
       }
 
-      const [asaasResults, bbResults] = await Promise.all([
+      const [asaasResults, bbResults, sicoobResults] = await Promise.all([
         asaasIds.length ? asaasApi.emitirBoletos(asaasIds) : Promise.resolve([]),
         bbIds.length ? bbApi.emitirBoletos(bbIds) : Promise.resolve([]),
+        sicoobIds.length ? sicoobApi.emitirBoletos(sicoobIds) : Promise.resolve([]),
       ])
 
       const semIntegracaoResults = semIntegracao.map(id => ({
@@ -130,7 +134,7 @@ export default function AccountsReceivable() {
         error: 'Forma de cobrança sem integração automática configurada',
       }))
 
-      return [...asaasResults, ...bbResults, ...semIntegracaoResults]
+      return [...asaasResults, ...bbResults, ...sicoobResults, ...semIntegracaoResults]
     },
     onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
