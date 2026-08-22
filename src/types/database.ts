@@ -83,6 +83,11 @@ export interface Company {
   asaas_api_key?: string | null
   asaas_env?: 'sandbox' | 'producao' | null
   asaas_webhook_token?: string | null
+  asaas_subaccount_id?: string | null
+  asaas_wallet_id?: string | null
+  asaas_subaccount_status?: 'nao_criada' | 'pendente_avaliacao' | 'ativa' | 'erro' | null
+  asaas_subaccount_last_error?: string | null
+  asaas_subaccount_created_at?: string | null
   created_at: string
 }
 

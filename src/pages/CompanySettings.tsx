@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toaster'
-import { Building, MapPin, Save, Phone, Mail, FileText, Info, Link, Key, RefreshCw } from 'lucide-react'
+import { Building, MapPin, Save, Phone, Mail, FileText, Info, Key, RefreshCw } from 'lucide-react'
 import { geocodeAddress } from '@/api/routing'
 
 import { backupApi } from '@/api/backup'
@@ -817,94 +817,49 @@ export default function CompanySettings() {
             Integração de Cobrança (Asaas)
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            Configure sua conta Asaas para emitir boletos de cobrança direto pelos pedidos, na tela de Contas a Receber.
+            A cobrança via boleto é configurada pelo administrador SaaS, que cria uma subconta Asaas para sua empresa. Assim que ativa, você já pode emitir boletos pela tela de Contas a Receber.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" /> Ambiente Asaas
-                </label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={formData.asaas_env || 'sandbox'}
-                  onChange={e => setFormData({...formData, asaas_env: e.target.value as 'sandbox' | 'producao'})}
-                >
-                  <option value="sandbox">Sandbox (Testes sem valor real)</option>
-                  <option value="producao">Produção (Boletos reais)</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                  <KeyIcon className="h-4 w-4" /> Chave de API Asaas
-                </label>
-                <Input
-                  placeholder="Cole aqui a API Key correspondente ao ambiente acima"
-                  value={formData.asaas_api_key || ''}
-                  onChange={e => setFormData({...formData, asaas_api_key: e.target.value})}
-                  type="password"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Gere a chave no painel da Asaas em Configurações → Integrações → API. Se trocar de ambiente, cole a chave correspondente (Sandbox ou Produção).
-                </p>
-              </div>
+          <div className="bg-muted/20 p-4 rounded-md border border-border space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" /> Status da Integração
+              </label>
+              {companyData?.asaas_subaccount_status === 'ativa' ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">Ativa</span>
+              ) : companyData?.asaas_subaccount_status === 'pendente_avaliacao' ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Pendente de avaliação</span>
+              ) : companyData?.asaas_subaccount_status === 'erro' ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">Erro na configuração</span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">Não configurada</span>
+              )}
             </div>
 
-            <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-border">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                  <Link className="h-4 w-4" /> URL do Webhook
-                </label>
-                <div className="flex gap-2">
-                  <Input readOnly value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-webhook`} className="text-xs" />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-webhook`)
-                      toast.success('URL copiada!')
-                    }}
-                  >
-                    Copiar
-                  </Button>
+            {companyData?.asaas_subaccount_id ? (
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="block text-xs text-muted-foreground">Ambiente</span>
+                  <span className="font-medium">{companyData.asaas_env === 'producao' ? 'Produção' : 'Sandbox'}</span>
+                </div>
+                <div>
+                  <span className="block text-xs text-muted-foreground">Configurada em</span>
+                  <span className="font-medium">
+                    {companyData.asaas_subaccount_created_at ? new Date(companyData.asaas_subaccount_created_at).toLocaleDateString() : '-'}
+                  </span>
                 </div>
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma subconta Asaas configurada ainda. Fale com o administrador SaaS para habilitar a emissão de boletos.
+              </p>
+            )}
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                  <KeyIcon className="h-4 w-4" /> Token do Webhook
-                </label>
-                {formData.asaas_webhook_token ? (
-                  <div className="flex gap-2">
-                    <Input readOnly type="password" value={formData.asaas_webhook_token} className="text-xs" />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(formData.asaas_webhook_token)
-                        toast.success('Token copiado!')
-                      }}
-                    >
-                      Copiar
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setFormData({...formData, asaas_webhook_token: crypto.randomUUID()})}
-                  >
-                    Gerar Token
-                  </Button>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">
-                  Depois de salvar, cadastre a URL e o token acima no painel da Asaas em Configurações → Integrações → Webhooks, selecionando os eventos: Cobrança recebida, Cobrança confirmada e Cobrança vencida.
-                </p>
-              </div>
-            </div>
+            {companyData?.asaas_subaccount_status === 'erro' && companyData.asaas_subaccount_last_error && (
+              <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2">
+                {companyData.asaas_subaccount_last_error}
+              </p>
+            )}
           </div>
         </div>
 
