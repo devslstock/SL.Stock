@@ -280,11 +280,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const switchCompany = async (companyId: string) => {
     if (!user?.is_super_admin) return false;
     const comp = await companiesApi.getCompany(companyId);
-    if (comp && comp.active) { 
-      setCompany(comp); 
+    if (comp && comp.active) {
+      setCompany(comp);
       // Update impersonated_company_id in db for RLS impersonation
       await supabase.from('users').update({ impersonated_company_id: companyId }).eq('auth_user_id', user.auth_user_id);
-      return true; 
+      // Força a emissão de um novo JWT já com o company_id impersonado no claim
+      // (custom_access_token_hook), senão só atualizaria no próximo refresh natural.
+      await supabase.auth.refreshSession();
+      return true;
     }
     toast.error('Empresa inativa ou inexistente.');
     return false;
@@ -294,6 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user?.is_super_admin) return;
     setCompany(null);
     await supabase.from('users').update({ impersonated_company_id: null }).eq('auth_user_id', user.auth_user_id);
+    await supabase.auth.refreshSession();
   };
 
   const hasPermission = (permission: keyof UserPermissions) => {
