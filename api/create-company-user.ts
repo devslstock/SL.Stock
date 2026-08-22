@@ -7,21 +7,60 @@ export default async function handler(req, res) {
 
   try {
     const { user, forceCompanyId, isSuperAdmin } = req.body;
-    
+
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
+    const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase Environment Variables in Serverless Function.', { 
-        url: !!supabaseUrl, 
-        key: !!supabaseKey 
+    if (!supabaseUrl || !supabaseKey || !anonKey) {
+      console.error('Missing Supabase Environment Variables in Serverless Function.', {
+        url: !!supabaseUrl,
+        key: !!supabaseKey,
+        anonKey: !!anonKey
       });
-      return res.status(500).json({ error: 'Configuração do servidor ausente (VITE_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configurados no Vercel).' });
+      return res.status(500).json({ error: 'Configuração do servidor ausente (VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY ou VITE_SUPABASE_ANON_KEY não configurados no Vercel).' });
+    }
+
+    // Este endpoint cria usuários (inclusive super admins) - precisa verificar quem está
+    // chamando antes de fazer qualquer coisa. Sem isso, qualquer requisição não autenticada
+    // com isSuperAdmin:true criava um super admin com acesso total ao SaaS.
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Não autenticado.' });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+    const callerClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user: callerUser }, error: callerError } = await callerClient.auth.getUser();
+    if (callerError || !callerUser) {
+      return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
+    }
+
+    const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
+      .from('users')
+      .select('role, is_super_admin, company_id')
+      .eq('auth_user_id', callerUser.id)
+      .single();
+
+    if (callerProfileError || !callerProfile) {
+      return res.status(401).json({ error: 'Perfil do usuário chamador não encontrado.' });
+    }
+
+    if (isSuperAdmin && !callerProfile.is_super_admin) {
+      return res.status(403).json({ error: 'Apenas super administradores podem criar outros super administradores.' });
+    }
+    if (!isSuperAdmin && !callerProfile.is_super_admin && !['admin', 'gestor'].includes(callerProfile.role)) {
+      return res.status(403).json({ error: 'Apenas administradores podem criar usuários.' });
+    }
+    if (!isSuperAdmin && !callerProfile.is_super_admin && forceCompanyId && forceCompanyId !== callerProfile.company_id) {
+      return res.status(403).json({ error: 'Não autorizado a criar usuários em outra empresa.' });
+    }
+
     let finalCompanyId = null;
-    
+
     if (!isSuperAdmin) {
       finalCompanyId = forceCompanyId;
       // Default to the first created company if no context provided (fallback)

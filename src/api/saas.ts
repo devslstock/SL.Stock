@@ -28,12 +28,17 @@ export const saasApi = {
       throw new Error(`O usuário de login '${user.username}' já está em uso no sistema. Escolha outro nome de usuário.`)
     }
 
+    const { data: { session } } = await supabase.auth.getSession()
+
     const response = await fetch('/api/create-company-user', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        user: { ...user, username: normalizedUsername }, 
-        isSuperAdmin: true 
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: session?.access_token ? `Bearer ${session.access_token}` : ''
+      },
+      body: JSON.stringify({
+        user: { ...user, username: normalizedUsername },
+        isSuperAdmin: true
       })
     });
     
