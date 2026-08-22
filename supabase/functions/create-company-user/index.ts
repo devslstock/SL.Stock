@@ -42,7 +42,7 @@ serve(async (req: Request) => {
 
     if (profileError || !callerProfile) throw new Error("Caller profile not found");
 
-    const { user: newUser, forceCompanyId } = await req.json();
+    const { user: newUser, forceCompanyId, redirectTo } = await req.json();
 
     const isMaster = callerProfile.is_super_admin === true;
     const isGestorOrAdmin = callerProfile.role === 'admin' || callerProfile.role === 'gestor';
@@ -58,19 +58,14 @@ serve(async (req: Request) => {
       throw new Error("Não autorizado a criar usuários em outra empresa");
     }
 
-    // Gerar e-mail temporário e senha provisória se não vier email
-    const rawUsername = newUser.username.trim().toLowerCase();
-    const isEmail = rawUsername.includes('@');
-    
-    const email = newUser.email || (isEmail ? rawUsername : `${rawUsername.replace(/[^a-z0-9]/g, '')}@${defaultDomain}`);
-    const password = 'Trocar@123'; // Padrão forçado
+    // O username sempre é um e-mail (validado no formulário de cadastro).
+    const email = newUser.email || newUser.username.trim().toLowerCase();
 
-    // Criar no Auth
-    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { company_id: targetCompanyId },
+    // Cria o usuário sem senha e manda o e-mail de convite do Supabase Auth (link único que
+    // verifica o e-mail e autentica - o must_change_password abaixo joga direto pra troca de senha).
+    const { data: authData, error: authError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+      data: { company_id: targetCompanyId },
+      redirectTo: redirectTo || undefined,
     });
 
     if (authError) {

@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { user, forceCompanyId, isSuperAdmin } = req.body;
+    const { user, forceCompanyId, isSuperAdmin, redirectTo } = req.body;
 
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
@@ -74,19 +74,18 @@ export default async function handler(req, res) {
       }
     }
 
-    // Default password 'Trocar@123'
     // Now that username is an email, we use it directly.
     const userEmail = user.username;
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: userEmail,
-      password: 'Trocar@123',
-      email_confirm: true,
-      user_metadata: {
+    // Cria sem senha e manda o e-mail de convite do Supabase Auth (link único que verifica o
+    // e-mail e autentica - must_change_password abaixo joga direto pra tela de troca de senha).
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(userEmail, {
+      data: {
         role: user.role,
         company_id: finalCompanyId,
         is_super_admin: !!isSuperAdmin
-      }
+      },
+      redirectTo: redirectTo || undefined,
     });
 
     if (authError) {
@@ -110,7 +109,8 @@ export default async function handler(req, res) {
         company_id: finalCompanyId,
         auth_user_id: authUser.id,
         is_super_admin: !!isSuperAdmin,
-        active: true
+        active: true,
+        must_change_password: true
       }])
       .select()
       .single();

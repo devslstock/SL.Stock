@@ -38,7 +38,8 @@ export const saasApi = {
       },
       body: JSON.stringify({
         user: { ...user, username: normalizedUsername },
-        isSuperAdmin: true
+        isSuperAdmin: true,
+        redirectTo: window.location.origin
       })
     });
     

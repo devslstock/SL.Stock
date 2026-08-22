@@ -22,7 +22,7 @@ export const usersApi = {
     const { data: { session } } = await supabase.auth.getSession()
     
     const { data, error } = await supabase.functions.invoke('create-company-user', {
-      body: { user, forceCompanyId },
+      body: { user, forceCompanyId, redirectTo: window.location.origin },
       headers: {
         Authorization: session?.access_token ? `Bearer ${session.access_token}` : ''
       }
