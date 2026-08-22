@@ -9,6 +9,20 @@ export const FUNCTIONALITY_CATALOG = [
     tipo: "E2E",
     rota: "global"
   },
+  {
+    id: "E2E-002",
+    nome: "Separação com Falta de Mercadoria",
+    modulo: "Fluxo Completo",
+    tipo: "E2E",
+    rota: "global"
+  },
+  {
+    id: "E2E-003",
+    nome: "Entrega com Devolução Parcial",
+    modulo: "Fluxo Completo",
+    tipo: "E2E",
+    rota: "global"
+  },
 
   // ==============================
   // DASHBOARD
