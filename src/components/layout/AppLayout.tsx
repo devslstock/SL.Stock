@@ -21,7 +21,7 @@ import { supabase } from '@/lib/supabase'
 import type { LucideIcon } from 'lucide-react'
 
 // ATUALIZE ESTA VERSÃO PARA TESTAR SE O APLICATIVO ATUALIZOU NOS DISPOSITIVOS
-const APP_VERSION = 'v4.0.022'
+const APP_VERSION = 'v4.0.023'
 
 interface NavItem {
   label: string;
@@ -106,7 +106,8 @@ const navGroups: NavGroup[] = [
     title: 'SISTEMA',
     items: [
       { label: 'Minha Empresa', icon: Building2, path: '/configuracoes/empresa', permission: 'can_manage_company' },
-      { label: 'Acessos', icon: ShieldCheck, path: '/acesso', permission: 'can_manage_users' }
+      { label: 'Acessos', icon: ShieldCheck, path: '/acesso', permission: 'can_manage_users' },
+      { label: 'Histórico de Modificações', icon: History, path: '/configuracoes/auditoria', permission: 'can_manage_company' }
     ]
   }
 ]
@@ -336,6 +337,7 @@ export default function AppLayout() {
     // SISTEMA
     if (path === '/configuracoes/empresa') return 'bronze'
     if (path === '/acesso') return 'bronze'
+    if (path === '/configuracoes/auditoria') return 'bronze'
 
     return 'bronze'
   }

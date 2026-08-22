@@ -127,6 +127,34 @@ export interface FocusNfeSyncLog {
   created_at: string
 }
 
+export const AUDITED_TABLES = [
+  'products',
+  'customers',
+  'sales_orders',
+  'sales_order_items',
+  'price_tables',
+  'price_table_items',
+  'receipt_methods',
+  'accounts_receivable',
+  'users',
+  'companies',
+] as const
+
+export type AuditedTable = typeof AUDITED_TABLES[number]
+
+export interface AuditLog {
+  id: string
+  company_id: string | null
+  table_name: AuditedTable
+  record_id: string | null
+  action: 'INSERT' | 'UPDATE' | 'DELETE'
+  changed_by: string | null
+  changed_by_name: string | null
+  old_data: Record<string, any> | null
+  new_data: Record<string, any> | null
+  created_at: string
+}
+
 export interface FiscalSeries {
   id: string
   company_id: string

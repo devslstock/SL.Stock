@@ -10,6 +10,7 @@ import Products from './pages/Products'
 import ProductForm from './pages/ProductForm'
 import AccessControl from './pages/AccessControl'
 import CompanySettings from './pages/CompanySettings'
+import AuditLogPage from './pages/AuditLog'
 import FiscalOperations from './pages/FiscalOperations'
 import FiscalRegisters from './pages/Fiscal/Registers/index'
 import FiscalVehicles from './pages/Fiscal/Registers/Vehicles'
@@ -219,6 +220,7 @@ function App() {
               <Route path="/fiscal/notas" element={<NfeManagement />} />
               <Route path="/fiscal/nfe-recebidas" element={<NfeRecebidas />} />
               <Route path="/acesso" element={<AccessControl />} />
+              <Route path="/configuracoes/auditoria" element={<AuditLogPage />} />
             </Route>
              <Route path="/ajuda" element={<HelpAndSupport />} />
              <Route path="/importar-tabelas" element={<ImportPriceTables />} />
