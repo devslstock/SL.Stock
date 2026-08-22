@@ -442,6 +442,9 @@ export interface ReceiptMethod {
   notes?: string | null
   status: 'Ativo' | 'Inativo'
   gateway_provider?: string | null
+  bb_client_id?: string | null
+  bb_client_secret?: string | null
+  bb_app_key?: string | null
 
   created_at: string
   updated_at: string
@@ -538,6 +541,7 @@ export interface AccountReceivable {
 
   customer?: Customer
   sales_order?: SalesOrder
+  receipt_method?: Pick<ReceiptMethod, 'gateway_provider'> | null
 }
 
 export interface BankIntegration {

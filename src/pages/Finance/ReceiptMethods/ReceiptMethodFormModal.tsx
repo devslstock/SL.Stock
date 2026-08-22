@@ -68,6 +68,10 @@ export function ReceiptMethodFormModal({ isOpen, onClose, methodToEdit }: Props)
     generate_nfe_record: false,
     confirmed_with_manager: false,
     sum_tariff_on_return: false,
+    gateway_provider: '',
+    bb_client_id: '',
+    bb_client_secret: '',
+    bb_app_key: '',
     pix_key: '',
     validation_credential_1: '',
     validation_credential_2: '',
@@ -578,6 +582,20 @@ export function ReceiptMethodFormModal({ isOpen, onClose, methodToEdit }: Props)
                       <option value="WebService">WebService</option>
                     </select>
                   </div>
+                  {formData.integration_type === 'WebService' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Provedor da integração *</label>
+                      <select
+                        required
+                        className="w-full h-10 border border-gray-300 rounded-md px-3 bg-white outline-none focus:border-primary"
+                        value={formData.gateway_provider || ''}
+                        onChange={e => setFormData({ ...formData, gateway_provider: e.target.value || null })}
+                      >
+                        <option value="">Selecione...</option>
+                        <option value="banco_do_brasil">Banco do Brasil</option>
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1 text-truncate" title="Data de liquidação de títulos (arquivo retorno/WebService)">
                       Data Liquidação (Retorno)
@@ -608,6 +626,46 @@ export function ReceiptMethodFormModal({ isOpen, onClose, methodToEdit }: Props)
                     />
                   </div>
                 </div>
+
+                {formData.integration_type === 'WebService' && formData.gateway_provider === 'banco_do_brasil' && (
+                  <div className="bg-yellow-50/50 p-5 rounded-lg border border-yellow-200 space-y-4">
+                    <h3 className="font-semibold text-yellow-900 border-b border-yellow-200 pb-3">Credenciais da API de Cobrança do Banco do Brasil</h3>
+                    <p className="text-xs text-yellow-800">
+                      Gere essas credenciais no Portal Developers BB, dentro da sua aplicação cadastrada para a API de Cobrança. Com isso preenchido e "confirmado com o gerente" marcado abaixo, os boletos dessa conta passam a ser emitidos automaticamente.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Client ID *</label>
+                        <Input
+                          required
+                          className="w-full bg-white"
+                          value={formData.bb_client_id || ''}
+                          onChange={e => setFormData({ ...formData, bb_client_id: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Client Secret *</label>
+                        <Input
+                          required
+                          type="password"
+                          className="w-full bg-white"
+                          value={formData.bb_client_secret || ''}
+                          onChange={e => setFormData({ ...formData, bb_client_secret: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Chave do aplicativo (gw-dev-app-key) *</label>
+                        <Input
+                          required
+                          type="password"
+                          className="w-full bg-white"
+                          value={formData.bb_app_key || ''}
+                          onChange={e => setFormData({ ...formData, bb_app_key: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="p-3 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800 leading-relaxed flex items-start gap-2">
                   <input 

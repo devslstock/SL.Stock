@@ -21,7 +21,8 @@ export const financeApi = {
       .select(`
         *,
         customer:customers(*),
-        sales_order:sales_orders(*, nfe:nfe_records(*))
+        sales_order:sales_orders(*, nfe:nfe_records(*)),
+        receipt_method:receipt_methods(gateway_provider)
       `)
       .eq('company_id', userRecord.company_id)
       .order('due_date', { ascending: true })

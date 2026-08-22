@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { financeApi } from '@/api/finance'
-import { asaasApi } from '@/api/asaas'
+import { asaasApi, type AsaasEmitResult } from '@/api/asaas'
+import { bbApi } from '@/api/bb'
 import { formatCurrency } from '@/utils/formatters'
 import { DollarSign, Search, Calendar, FileText, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -105,7 +106,32 @@ export default function AccountsReceivable() {
   })
 
   const emitirBoletosMutation = useMutation({
-    mutationFn: (ids: string[]) => asaasApi.emitirBoletos(ids),
+    mutationFn: async (ids: string[]): Promise<AsaasEmitResult[]> => {
+      const asaasIds: string[] = []
+      const bbIds: string[] = []
+      const semIntegracao: string[] = []
+
+      for (const id of ids) {
+        const account = accounts.find((a: AccountReceivable) => a.id === id)
+        const provider = account?.receipt_method?.gateway_provider
+        if (provider === 'banco_do_brasil') bbIds.push(id)
+        else if (provider === 'asaas' || !provider) asaasIds.push(id) // sem forma de cobrança definida cai no comportamento antigo (Asaas)
+        else semIntegracao.push(id)
+      }
+
+      const [asaasResults, bbResults] = await Promise.all([
+        asaasIds.length ? asaasApi.emitirBoletos(asaasIds) : Promise.resolve([]),
+        bbIds.length ? bbApi.emitirBoletos(bbIds) : Promise.resolve([]),
+      ])
+
+      const semIntegracaoResults = semIntegracao.map(id => ({
+        accountId: id,
+        success: false,
+        error: 'Forma de cobrança sem integração automática configurada',
+      }))
+
+      return [...asaasResults, ...bbResults, ...semIntegracaoResults]
+    },
     onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ['accounts_receivable'] })
       const ok = results.filter(r => r.success)
