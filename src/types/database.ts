@@ -441,7 +441,8 @@ export interface ReceiptMethod {
   holder_document?: string | null
   notes?: string | null
   status: 'Ativo' | 'Inativo'
-  
+  gateway_provider?: string | null
+
   created_at: string
   updated_at: string
 }

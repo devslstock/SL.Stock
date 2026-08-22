@@ -73,11 +73,14 @@ serve(async (req: Request) => {
 
     const { data: company, error: companyError } = await adminClient
       .from('companies')
-      .select('id, name, fantasy_name, cnpj, email, garage_cep, garage_street, garage_number, garage_neighborhood')
+      .select('id, name, fantasy_name, cnpj, email, garage_cep, garage_street, garage_number, garage_neighborhood, asaas_subaccount_id')
       .eq('id', companyId)
       .single();
 
     if (companyError || !company) throw new Error("Empresa não encontrada");
+    if (company.asaas_subaccount_id) {
+      throw new Error("Esta empresa já tem uma subconta Asaas criada — não é possível criar outra. Se precisar alterar dados, faça isso direto no painel da Asaas.");
+    }
     if (!company.cnpj) throw new Error("Empresa sem CNPJ cadastrado — obrigatório para criar subconta Asaas");
     if (!company.email) throw new Error("Empresa sem e-mail cadastrado — obrigatório para criar subconta Asaas");
 
@@ -145,6 +148,31 @@ serve(async (req: Request) => {
       asaas_subaccount_last_error: null,
       asaas_subaccount_created_at: new Date().toISOString(),
     }).eq('id', companyId);
+
+    // Garante que a subconta apareça como forma de cobrança selecionável em Gestão de Pedidos
+    const { data: existingMethod } = await adminClient
+      .from('receipt_methods')
+      .select('id')
+      .eq('company_id', companyId)
+      .eq('gateway_provider', 'asaas')
+      .maybeSingle();
+
+    if (existingMethod) {
+      await adminClient.from('receipt_methods').update({
+        status: 'Ativo',
+      }).eq('id', existingMethod.id);
+    } else {
+      await adminClient.from('receipt_methods').insert({
+        company_id: companyId,
+        name: 'Asaas',
+        payment_method: 'Boleto (com registro)',
+        is_receivable: true,
+        is_payable: false,
+        financial_institution: 'Asaas',
+        status: 'Ativo',
+        gateway_provider: 'asaas',
+      });
+    }
 
     return new Response(JSON.stringify({
       success: true,

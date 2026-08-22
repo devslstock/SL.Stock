@@ -101,22 +101,23 @@ export default function SaaSAsaas() {
                         </td>
                         <td className="px-4 py-3 text-gray-500 font-mono text-xs">{company.asaas_subaccount_id || '-'}</td>
                         <td className="px-4 py-3 text-right">
-                          {(() => {
+                          {company.asaas_subaccount_id ? (
+                            <span className="text-xs text-gray-400 italic">Subconta já criada — altere dados direto no painel da Asaas</span>
+                          ) : (() => {
                             const missing: string[] = []
                             if (!company.cnpj) missing.push('CNPJ')
                             if (!company.email) missing.push('e-mail')
                             return (
                               <div className="flex flex-col items-end gap-1">
                                 <Button
-                                  variant={company.asaas_subaccount_id ? 'outline' : 'default'}
                                   size="sm"
-                                  className={company.asaas_subaccount_id ? 'h-8 gap-1.5' : 'h-8 gap-1.5 bg-purple-600 hover:bg-purple-700 text-white'}
+                                  className="h-8 gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
                                   onClick={() => setProvisioningCompany(company)}
                                   disabled={missing.length > 0}
                                   title={missing.length > 0 ? `Cadastro incompleto: falta ${missing.join(' e ')}` : undefined}
                                 >
                                   <Landmark className="w-3.5 h-3.5" />
-                                  {company.asaas_subaccount_id ? 'Reconfigurar' : 'Criar subconta Asaas'}
+                                  Criar subconta Asaas
                                 </Button>
                                 {missing.length > 0 && (
                                   <p className="text-xs text-red-500">Falta {missing.join(' e ')} no cadastro</p>
