@@ -23,17 +23,24 @@ serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const masterApiKey = Deno.env.get("ASAAS_MASTER_API_KEY");
-    const masterEnv = Deno.env.get("ASAAS_MASTER_ENV") === "producao" ? "producao" : "sandbox";
-
-    if (!masterApiKey) {
-      throw new Error("ASAAS_MASTER_API_KEY não configurada no ambiente da função");
-    }
 
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    const { data: masterSettings } = await adminClient
+      .from('asaas_master_settings')
+      .select('api_key, environment')
+      .limit(1)
+      .single();
+
+    const masterApiKey = masterSettings?.api_key;
+    const masterEnv = masterSettings?.environment === "producao" ? "producao" : "sandbox";
+
+    if (!masterApiKey) {
+      throw new Error("Chave master da Asaas não configurada. Configure em /saas/asaas antes de criar subcontas.");
+    }
 
     const { data: { user: callerUser }, error: userError } = await userClient.auth.getUser();
     if (userError || !callerUser) throw new Error("Unauthorized");

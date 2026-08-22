@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Landmark, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
+import { Search, Landmark, CheckCircle2, AlertCircle, Clock, Save, ShieldCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { asaasMasterApi } from '@/api/asaasMaster'
 import { Input } from '@/components/ui/input'
@@ -51,7 +51,9 @@ export default function SaaSAsaas() {
       </div>
 
       <div className="flex-1 p-8">
-        <div className="max-w-6xl mx-auto space-y-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <MasterSettingsCard />
+
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -127,6 +129,78 @@ export default function SaaSAsaas() {
           queryClient.invalidateQueries({ queryKey: ['asaas_companies'] })
         }}
       />
+    </div>
+  )
+}
+
+function MasterSettingsCard() {
+  const queryClient = useQueryClient()
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['asaas_master_settings'],
+    queryFn: () => asaasMasterApi.getMasterSettings(),
+  })
+
+  const [apiKey, setApiKey] = useState('')
+  const [environment, setEnvironment] = useState<'sandbox' | 'producao'>('sandbox')
+
+  useEffect(() => {
+    if (settings) {
+      setApiKey(settings.api_key || '')
+      setEnvironment(settings.environment)
+    }
+  }, [settings])
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!settings) throw new Error('Configurações ainda não carregadas')
+      return asaasMasterApi.updateMasterSettings(settings.id, { api_key: apiKey, environment })
+    },
+    onSuccess: () => {
+      toast.success('Chave master salva com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['asaas_master_settings'] })
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e))
+  })
+
+  if (isLoading) return null
+
+  return (
+    <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+      <div className="p-4 border-b bg-gray-50 flex items-center gap-2">
+        <ShieldCheck className="w-5 h-5 text-gray-500" />
+        <h2 className="font-semibold text-gray-900">Conta Master Asaas</h2>
+      </div>
+      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <div>
+          <label className="block text-sm font-medium mb-1">Chave de API (sua conta principal)</label>
+          <Input
+            type="password"
+            placeholder="Cole aqui a API Key da sua conta Asaas"
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Usada para criar as subcontas das empresas-cliente. Nunca é exposta ao cliente final.
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Ambiente</label>
+          <select
+            className="w-full h-10 border rounded-md px-3 text-sm focus:ring-2 focus:ring-purple-600 outline-none"
+            value={environment}
+            onChange={e => setEnvironment(e.target.value as 'sandbox' | 'producao')}
+          >
+            <option value="sandbox">Sandbox (Testes sem valor real)</option>
+            <option value="producao">Produção (Boletos reais)</option>
+          </select>
+        </div>
+      </div>
+      <div className="p-4 bg-gray-50 border-t flex justify-end">
+        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="bg-purple-600 hover:bg-purple-700 gap-2 text-white">
+          <Save className="w-4 h-4" />
+          {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
+        </Button>
+      </div>
     </div>
   )
 }

@@ -91,6 +91,14 @@ export interface Company {
   created_at: string
 }
 
+export interface AsaasMasterSettings {
+  id: string
+  api_key: string | null
+  environment: 'sandbox' | 'producao'
+  created_at: string
+  updated_at: string
+}
+
 export interface FocusNfeSettings {
   id: string
   is_active: boolean
