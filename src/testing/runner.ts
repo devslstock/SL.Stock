@@ -47,10 +47,7 @@ export class TestRunner {
 
     try {
       if (!ctx.companyId) {
-        appendLog('info', 'Obtendo company_id genérico de fallback...');
-        const { supabase } = await import('@/lib/supabase');
-        const { data } = await supabase.from('companies').select('id').limit(1).single();
-        if (data?.id) ctx.companyId = data.id;
+        appendLog('warning', 'Nenhuma empresa selecionada (super admin sem impersonação ativa). Testes que gravam dados provavelmente serão bloqueados pelo RLS — entre em uma empresa em Master > Empresas antes de rodar baterias de escrita.');
       }
 
       // 1. SETUP

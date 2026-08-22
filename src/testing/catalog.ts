@@ -1,5 +1,16 @@
 export const FUNCTIONALITY_CATALOG = [
   // ==============================
+  // FLUXO COMPLETO (E2E)
+  // ==============================
+  {
+    id: "E2E-001",
+    nome: "Fluxo Completo — Venda até Entrega",
+    modulo: "Fluxo Completo",
+    tipo: "E2E",
+    rota: "global"
+  },
+
+  // ==============================
   // DASHBOARD
   // ==============================
   {

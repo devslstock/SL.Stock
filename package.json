@@ -1,7 +1,7 @@
 {
   "name": "coletor",
   "private": true,
-  "version": "4.0.016",
+  "version": "4.0.017",
   "type": "module",
   "scripts": {
     "dev": "vite",

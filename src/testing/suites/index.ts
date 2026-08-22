@@ -11,6 +11,7 @@ import { saasTests } from './saas';
 import { offlineTests } from './offline';
 import { fiscalTests } from './fiscal';
 import { focusIntegrationSuite } from './focusIntegration';
+import { e2eTests } from './e2e';
 
 export function initializeTestRegistry() {
   testRegistry.clear();
@@ -27,6 +28,7 @@ export function initializeTestRegistry() {
   testRegistry.registerMany(offlineTests);
   testRegistry.registerMany(fiscalTests);
   testRegistry.registerMany(focusIntegrationSuite);
-  
+  testRegistry.registerMany(e2eTests);
+
   console.log(`[TestRegistry] Registradas ${testRegistry.getAllBatteries().length} baterias.`);
 }

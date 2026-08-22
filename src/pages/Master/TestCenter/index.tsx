@@ -18,7 +18,7 @@ import { CATEGORIES } from '@/testing/catalog';
 initializeTestRegistry();
 
 export function TestCenter() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   const [activeTab, setActiveTab] = useState('modulos');
   
   const [selectedBatteries, setSelectedBatteries] = useState<TestBattery[]>([]);
@@ -57,7 +57,7 @@ export function TestCenter() {
       const result = await TestRunner.runBattery(
         battery,
         user?.id,
-        user?.company_id,
+        company?.id || user?.company_id,
         (logs) => setCurrentLogs(logs)
       );
       
@@ -95,6 +95,13 @@ export function TestCenter() {
           Sistema profissional de validação de Qualidade (QA). {allBatteries.length} baterias disponíveis.
         </p>
       </div>
+
+      {!company && (
+        <div className="p-3 border border-yellow-500/40 bg-yellow-500/10 rounded text-sm text-yellow-500 flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 shrink-0" />
+          Nenhuma empresa selecionada. Baterias que gravam dados (produtos, pedidos, cargas, etc.) serão bloqueadas pelo RLS até você entrar em uma empresa em Master &gt; Empresas.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Painel Esquerdo: Seleção e Controle */}

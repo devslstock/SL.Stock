@@ -21,7 +21,7 @@ import { supabase } from '@/lib/supabase'
 import type { LucideIcon } from 'lucide-react'
 
 // ATUALIZE ESTA VERSÃO PARA TESTAR SE O APLICATIVO ATUALIZOU NOS DISPOSITIVOS
-const APP_VERSION = 'v4.0.016'
+const APP_VERSION = 'v4.0.017'
 
 interface NavItem {
   label: string;
