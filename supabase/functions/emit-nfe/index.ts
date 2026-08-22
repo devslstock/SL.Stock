@@ -56,6 +56,10 @@ serve(async (req: Request) => {
 
     if (orderError || !order) throw new Error("Sales Order not found");
 
+    if (order.company_id !== callerProfile.company_id) {
+      throw new Error("Pedido de venda não pertence à sua empresa");
+    }
+
     // Get Company info for Focus NFe token using the order's company_id
     const { data: company, error: companyError } = await adminClient
       .from('companies')
