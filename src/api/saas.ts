@@ -229,7 +229,7 @@ export const saasApi = {
     
     let localLeads: any[] = []
     try {
-      const stored = localStorage.getItem('estoque_facil_leads')
+      const stored = localStorage.getItem('sl_stock_leads')
       localLeads = stored ? JSON.parse(stored) : []
       if (!Array.isArray(localLeads)) localLeads = []
     } catch (e) {
@@ -271,11 +271,11 @@ export const saasApi = {
 
     // Always save to local storage first as a local backup
     try {
-      const stored = localStorage.getItem('estoque_facil_leads')
+      const stored = localStorage.getItem('sl_stock_leads')
       let list = stored ? JSON.parse(stored) : []
       if (!Array.isArray(list)) list = []
       list.unshift(newLead)
-      localStorage.setItem('estoque_facil_leads', JSON.stringify(list))
+      localStorage.setItem('sl_stock_leads', JSON.stringify(list))
     } catch (e) {
       console.error('Error saving lead to local storage:', e)
     }
@@ -313,12 +313,12 @@ export const saasApi = {
 
     // 2. Always delete from localStorage as well
     try {
-      const stored = localStorage.getItem('estoque_facil_leads')
+      const stored = localStorage.getItem('sl_stock_leads')
       if (stored) {
         let list = JSON.parse(stored)
         if (Array.isArray(list)) {
           list = list.filter((item: any) => item.id !== id)
-          localStorage.setItem('estoque_facil_leads', JSON.stringify(list))
+          localStorage.setItem('sl_stock_leads', JSON.stringify(list))
         }
       }
     } catch (e) {
@@ -343,12 +343,12 @@ export const saasApi = {
 
     // 2. Update in localStorage
     try {
-      const stored = localStorage.getItem('estoque_facil_leads')
+      const stored = localStorage.getItem('sl_stock_leads')
       if (stored) {
         const list = JSON.parse(stored)
         if (Array.isArray(list)) {
           const updated = list.map((item: any) => ({ ...item, viewed: true }))
-          localStorage.setItem('estoque_facil_leads', JSON.stringify(updated))
+          localStorage.setItem('sl_stock_leads', JSON.stringify(updated))
         }
       }
     } catch (e) {
