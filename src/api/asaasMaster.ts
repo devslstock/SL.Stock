@@ -5,6 +5,7 @@ interface ProvisionarSubcontaInput {
   companyId: string
   mobilePhone: string
   incomeValue: number
+  companyType: 'MEI' | 'LIMITED' | 'INDIVIDUAL' | 'ASSOCIATION'
   address?: string
   addressNumber?: string
   province?: string

@@ -212,6 +212,7 @@ function ProvisionDialog({ company, onOpenChange, onSuccess }: {
 }) {
   const [mobilePhone, setMobilePhone] = useState('')
   const [incomeValue, setIncomeValue] = useState('')
+  const [companyType, setCompanyType] = useState<'MEI' | 'LIMITED' | 'INDIVIDUAL' | 'ASSOCIATION' | ''>('')
   const [address, setAddress] = useState('')
   const [addressNumber, setAddressNumber] = useState('')
   const [province, setProvince] = useState('')
@@ -220,10 +221,12 @@ function ProvisionDialog({ company, onOpenChange, onSuccess }: {
   const provisionMutation = useMutation({
     mutationFn: async () => {
       if (!company) throw new Error('Empresa não selecionada')
+      if (!companyType) throw new Error('Selecione o tipo de empresa')
       const result = await asaasMasterApi.provisionarSubconta({
         companyId: company.id,
         mobilePhone,
         incomeValue: Number(incomeValue),
+        companyType,
         address: address || undefined,
         addressNumber: addressNumber || undefined,
         province: province || undefined,
@@ -263,6 +266,21 @@ function ProvisionDialog({ company, onOpenChange, onSuccess }: {
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium mb-1">Tipo de empresa *</label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={companyType}
+              onChange={e => setCompanyType(e.target.value as 'MEI' | 'LIMITED' | 'INDIVIDUAL' | 'ASSOCIATION')}
+            >
+              <option value="">Selecione...</option>
+              <option value="MEI">MEI (Microempreendedor Individual)</option>
+              <option value="LIMITED">Limitada (Ltda / Empresa de responsabilidade limitada)</option>
+              <option value="INDIVIDUAL">Empresário Individual</option>
+              <option value="ASSOCIATION">Associação / Organização sem fins lucrativos</option>
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">CEP</label>
@@ -294,7 +312,7 @@ function ProvisionDialog({ company, onOpenChange, onSuccess }: {
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button
             className="bg-purple-600 hover:bg-purple-700 text-white"
-            disabled={!mobilePhone || !incomeValue || provisionMutation.isPending}
+            disabled={!mobilePhone || !incomeValue || !companyType || provisionMutation.isPending}
             onClick={() => provisionMutation.mutate()}
           >
             {provisionMutation.isPending ? 'Criando...' : 'Criar subconta'}

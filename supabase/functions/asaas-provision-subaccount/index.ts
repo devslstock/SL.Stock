@@ -60,10 +60,15 @@ serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { companyId, mobilePhone, incomeValue, address, addressNumber, province, postalCode } = body;
+    const { companyId, mobilePhone, incomeValue, companyType, address, addressNumber, province, postalCode } = body;
 
-    if (!companyId || !mobilePhone || !incomeValue) {
-      throw new Error("companyId, mobilePhone e incomeValue são obrigatórios");
+    if (!companyId || !mobilePhone || !incomeValue || !companyType) {
+      throw new Error("companyId, mobilePhone, incomeValue e companyType são obrigatórios");
+    }
+
+    const validCompanyTypes = ["MEI", "LIMITED", "INDIVIDUAL", "ASSOCIATION"];
+    if (!validCompanyTypes.includes(companyType)) {
+      throw new Error("companyType inválido — use MEI, LIMITED, INDIVIDUAL ou ASSOCIATION");
     }
 
     const { data: company, error: companyError } = await adminClient
@@ -87,6 +92,7 @@ serve(async (req: Request) => {
       name: company.fantasy_name || company.name,
       email: company.email,
       cpfCnpj: company.cnpj.replace(/\D/g, ''),
+      companyType,
       mobilePhone,
       incomeValue: Number(incomeValue),
       address: address || company.garage_street || undefined,
